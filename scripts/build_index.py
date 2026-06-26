@@ -38,7 +38,7 @@ html = f"""<!DOCTYPE html>
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
 <title>Signals &amp; Threads</title>
-<script>(function(){{var s=localStorage.getItem('dark'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='1'||(s===null&&d))document.documentElement.className='dark';}})();</script>
+<script>(function(){{var s=localStorage.getItem('dark'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='1'||(s===null&&d)){{document.documentElement.className='dark';document.documentElement.style.background='#13161f';}}}})();</script>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: -apple-system, "Segoe UI", sans-serif;
