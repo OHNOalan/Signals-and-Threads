@@ -1,0 +1,2647 @@
+{
+  "slug": "memory-management",
+  "title": "Memory Management with Stephen Dolan",
+  "mp3_rel": "audio/memory-management.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Stephen Dolan works on Jane Street’s Tools and Compilers team where he\nfocuses on the OCaml compiler. In this episode, Stephen and Ron take a\ntrip down memory lane, discussing how to manage computer memory\nefficiently and safely. They consider trade-offs between reference\ncounting and garbage collection, the surprising gains achieved by\nprefetching, and how new language features like local allocation and\nunboxed types could give OCaml users more control over their memory."
+    },
+    {
+      "type": "p",
+      "text": "Stephen Dolan works on Jane Street’s Tools and Compilers team where he\nfocuses on the OCaml compiler. In this episode, Stephen and Ron take a\ntrip down memory lane, discussing how to manage computer memory\nefficiently and safely. They consider trade-offs between reference\ncounting and garbage collection, the surprising gains achieved by\nprefetching, and how new language features like local allocation and\nunboxed types could give OCaml users more control over their memory."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. It is my\npleasure to introduce Stephen Dolan. Stephen Dolan works here at Jane\nStreet on the Tools and Compilers team, in particular working on the\nOCaml compiler. Stephen has an interesting set of experiences, both in\nindustry and in academia."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "A thing that you might have heard about that he’s done is he wrote a\nlittle tool called jq for querying JSON objects, which lots and lots\nof people have run into. And his dissertation, which made a lot of\nwaves, was about a system for reconciling subtyping and type\ninference, and a prototype system for doing that together called\nMLsub. And we are totally not going to talk about that today. Instead,\nwe’re going to talk about what Stephen has spent his time\nprocrastinating on while he was doing his dissertation, which is\nmemory management."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In particular, Stephen did a bunch of work on OCaml’s multicore\ngarbage collector. Stephen joined Jane Street in 2019, and he’s worked\non OCaml’s garbage collector directly and also on extending OCaml’s\nlanguage to give programmers more direct control over how memory is\nmanaged, which is very important from a performance perspective. And\nwe’re going to talk about a lot of that today. To start with, Stephen,\nmaybe you could give us a little bit of an overview of how memory\nmanagement works, not just in OCaml, which is what you’ve been working\non here, but in general, across lots of different programming\nlanguages."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Sure, that sounds like a good idea. And thanks for the\nintroduction. So I suppose at a basic level, programs need to put\ntheir data in memory somewhere and need to make sure that there aren’t\ntwo things in the same place at the same time. I suppose at the very\nbasic level, the simplest way of doing that is you just write a big\nmap of where everything goes. Everything goes into a specific spot and\nnever moves. And there’s just a fixed amount of memory in use for all\ntime."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I mean, people actually do that for tiny programs running on tiny\nmachines in microcontrollers, but it reaches its limits fairly quickly\nafter that. So I suppose for full-scale programming languages, the two\nbasic things that you have for managing memory are the stack and the\nheap. So the stack is, you notice that an awful lot of values that our\nprogram manipulates are used for a very short space of time."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There’s a local variable in a function. You need some memory to store\nit. Then when the function returns, it’s gone and you don’t need it\nagain. So you can just reserve a large piece of memory, use it as a\nstack. So it just grows from one end, whenever you need a bit of\nmemory, you put it on the end, whenever you’re done with it, you pop\nit off and you ensure that you do things in a strictly last in, first\nout manner."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And the ordering there is in part enforced by the discipline of\nfunction calls. You call a function, it gets a new stack frame, you do\nsome stuff. Then when the function returns, the stack frame vanishes,\nand it looks like a stack data structure."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. It works particularly well for the local variables of a\nfunction. Of course not all memory that a program uses is going to\nwork in such a straightforward way. Sometimes exactly how long a piece\nof data is going to hang around for is not completely obvious, or even\nwhen it’s obvious doesn’t line up perfectly with a single function\ncall."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So then you’ve got heap allocations where you have some lifetime which\nis more complicated than a stack. And there are lots and lots of\ntechniques for dealing with those. I suppose the oldest one is the\nC-style one, where there’s a function called to malloc some memory, to\nallocate a new piece of memory. And then when you’re done with it, you\nfree it. And if you make some minor slip-up here, so you free\nsomething twice accidentally, or you continue using something after\nyou’ve freed it, then your program has an exploitable security\nvulnerability and everything breaks in a million different ways."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So the ones I’m interested in are what’s called safe languages, where\nthere’s some means of managing heap memory, where this doesn’t happen,\nwhere it’s actually memory safe. You end up not crashing or being\nexploitable or reusing memory with different types and so on. Those\nboil down to some form of garbage collection when the language is\nresponsible for working out when memory is in use and freeing it when\nit’s no longer in use."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And the alternative being some form of static tracking, a static\nverification that you’ve done your manual memory management correctly,\nlike the ownership and borrowing in Rust. So at the moment OCaml, the\nprogramming language very heavily used in Jane Street, is very far off\nthe garbage-collect-everything scales, which is the right trade-off\nonly some of the time. And some of the things that we’re working on,\nthis is to try to allow some other styles of memory management so you\ncan do more explicit control over how long things are aligned for."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So just to summarize that, heap and stack are the two basic\ndata structures. It is maybe worth saying with the heap, you have some\nbig region of memory and one way or another, you keep track of some\nnotion of what’s free and what’s in use and in the C world, where\nyou’re doing things manually and unsafely, malloc and free are the\nthings for moving those data structures around."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And you have to make sure you call them in exactly the right\nplaces. And then in a garbage-collected language, we have some system\nthat’s still got some notion of what’s allocated and what isn’t\nallocated, but we have automated techniques for computing an\napproximation of what are the things that you actually need to keep\naround and making sure that you keep around at least all the things\nthat you need to keep around and maybe a little bit extra. Is it maybe\nworth talking about what are those techniques for approximating what\nis the stuff that you need to keep around?"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Yeah. So I suppose the big two of them are what’s called tracing\ncollection and reference counting, which have their own innumerably\nmany different variants. But in tracing collection, you periodically\nwork out what’s live by starting with the stuff that you definitely\nknow is in use. So the local variables of functions that are running\nand global variables and tracing from there. So following every\npointer that they point to to see which… So the structure has a\nreference to that structure, has a reference to that structure. So you\nfollow all of the references until you find the set of all of the\nstructures that are in use."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And when you get to the end and you have no more references left to\nfollow, then everything that you haven’t yet touched is garbage. That\nspace cannot possibly ever be used again. So that’s available for\nfuture allocations. The alternative is reference counting. So each\npiece of memory that’s in use, you keep track of how many references\nthere are to it. And you increment or decrement that when more\nreferences are created or destroyed. So you’re constantly maintaining\nthis counter for how many other pieces of data refer to a piece of\ndata. And if it ever reaches zero, then that bit of memory can be\nreused."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I guess one immediate problem with the naive ref counting\napproach is when you have cycles, when you have a set of data that\npoints circularly to itself. And then if you just do the kind of naive\nref counting thing, the count will never get decremented to zero. And\nas a result, you’ll never collect that data."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. I suppose a really good overview of this is there’s a\npaper called “A Unified Theory of Garbage Collection,” which is David\nBacon, I think, which, one way of looking at this is that in tracing\nGC, you need to walk over all of the stuff that’s still in use. And\nthen everything that you don’t touch is the stuff that’s dead and can\nbe garbage collected."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Whereas in reference counting, you need to walk over all of the stuff\nthat’s dead. Whenever a reference reaches zero, you need to go through\nall of its references, decrement all of those references and see that\nthose reach zero. So you end up tracing a different set of stuff. You\nend up tracing through all the stuff that you’re about to get rid of\ninstead of the stuff that you’re trying to keep alive. But as you say,\nif there are cycles here, then the cycle ref counts never go to zero,\nessentially."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Although there are various hacks that people have for getting\nrid of this. I don’t know if I have the right summary of this, but my\nsense is that you, roughly speaking, you occasionally do some tracing\nto figure out what’s actually dead to get rid of cycles. Is that a\ngood summary of how these cycle-removal techniques for ref counting\nsystems work?"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Python does the one you’re saying, it has a mostly reference-counted\nsystem and periodically runs a tracing collector to collect\ncycles. The other technique is you can have some programmer annotation\nthat says certain references should be weak and shouldn’t contribute\nto the reference counts so that those references aren’t enough to keep\nthings alive."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So a cycle that involves those gets collected anyway. But it’s a\nlittle trickier though and requires the programmer to really\nunderstand what’s going on and cooperate in telling you which\nreferences are which. The general solutions that work without any\nprogrammer annotation boil down to occasionally do tracing."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how do you think of the trade-off between ref counting and\ntracing-based garbage collection? I feel like there’s an intuition out\nthere of, oh, ref counting is faster and tracing is slower and that’s\nthe trade-off between them, which I think is a bad summary. How would\nyou describe the difference?"
+    },
+    {
+      "type": "ts",
+      "text": "00:08:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think that’s certainly not a great summary. It is a big enough\nchunk of work to implement a memory-management system for a language\nthat it’s quite difficult to compare like with like, because there\naren’t that many that have a choice between the two. The few\nexperiments that have been done have mostly shown that ref counting,\nespecially ref counting in a multi-threaded system, is really quite\nslow."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There are some tricks called deferred reference counting to avoid some\nof the overhead, but mostly you end up having to do an awful lot of\nincreasing and decreasing the reference counts every time you move\npointers around. And in a multi-threaded system, those operations end\nup being atomic operations, which carry their own overhead. The\nbenefit that you do get though is that memory can be reused much\nfaster than it can be reused in a tracing system."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So ref counting systems tend to detect more or less immediately when a\npiece of data is free and is available for reuse, whereas tracing\ngarbage collected systems, even when they don’t stop the whole world\nto do everything at once, even when they run incrementally, they tend\nto operate in phases. And if a piece of memory becomes available for\nreuse, becomes garbage during this phase, it’s not going to be noticed\nuntil the next phase."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So it tends to hang around for a bit longer before being reused. So\nthat trade-off usually means that ref counting can often work in a\nsmaller amount of memory than tracing garbage collection can. I think\na very rough one would be ref counting tends to take up less memory\nand tracing would usually be faster, but that’s also pretty simplistic\nbecause tracing garbage collection has a lot of knobs to twiddle."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "In particular, you get to choose afterwards how often you want the\ngarbage collector to run. You can choose to trace frequently or not to\ntrace frequently, which means that you can’t really describe the\nperformance of a program in terms of a single point saying it takes\nthis long and uses this much memory. It’s more like a curve that you\nget."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "With a tracing system, you could decide to say, “I want my program to\nnot take very long,” and then you’ll need a ton of memory. Or you\ncould say, “I want my program to not use very much memory,” and then\nit’ll take a long time, garbage collecting constantly. So you get this\nknob that you can slide from one extreme to the other."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And then one of the dark arts of building performant garbage\ncollected programs is figuring out just how to twiddle that knob just\nso that you get the right behavior for the program in question."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, this varies a lot from collector to collector. I mean,\nsome of them have a lot of things to twiddle and they can be very\ndifficult to get the performance to go the way you want. I quite like\nthe design of the OCaml one in this regard. I mean, there are a few,\nbut there’s basically only one that matters. And if you put it one\ndirection, the program takes more memory and goes faster and if you\nput it the other direction, the program takes less memory and goes\nslower."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s pleasingly simple. I guess another thing that people think of\nas a trade-off there has to do with the length of pauses, right? If\nyou want responsive programs, then I think people think, oh, tracing\ncollectors are problematic because they have these phases where they\nstop the program and scan everything and then ref counting ones less\nso because there’s kind of incrementally doing the work immediately as\nsoon as it becomes relevant."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But that’s not quite right either, right? Because the whole thing\nwhere once you decrement the counts to zero, there could be a whole\nbig thing that becomes immediately unavailable. And then you have to\nimmediately, synchronously collect all of it. Whereas tracing\ncollectors are often designed, and the OCaml one in particular is\ndesigned, to operate incrementally, where you can collect things in\nslices and do a few 100 microseconds of work here and a few 100\nmicroseconds of work there and never have to delete a whole big data\nstructure all at once."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s a bit of a pity that that’s a fairly common\nmisconception. It is exactly as you say it. When you remove the final\nreference to the root of a very large tree, most ref counting systems\nwill then immediately have to traverse the entire tree just to\ndecrement all of the references and mark them all as free. In a very\nnaively implemented garbage collector where you just periodically stop\nthe world and do everything, you end up with massive pauses and a very\nnaively implemented reference counting system tends to work reasonably\nwell."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But when you get really down into the details of optimizing for post\ntimes, there’s a bit more that you can do in a tracing collector. The\nwork there is already in phases, and it’s easy to divide up into\nchunks. It’s a bit trickier to do that kind of thing with a ref\ncounting collector. It’s not impossible. There are ref counting\ncollectors that do lazy destruction of things."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do they do lazy propagation of the counts as well?"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "This has been implemented and this has been done. I don’t think this\nis deployed much in production systems because you lose what’s often\ndescribed as one of the major benefits of ref counting, in that the\ndisruptors run promptly. If you’re going to delay them, then you end\nup with having something that has the bad finalization semantics of a\ntracing garbage collector with the overhead of actually maintaining\nreference counts all the time. So it’s not…"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s a clever design which obtains for you the worst of both worlds."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "More or less. Yeah. Actually, it’s not strictly the worst because the\ncase where reference counting does really well is when there are\nobjects that just only ever have one reference and they don’t have\nreferences to anything else. A good example of this is a large I/O\nbuffer, that you’re opening a file, allocating a big buffer, using it\nfor some stuff, and then throwing away the buffer."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And in a ref-counted system, you don’t need to worry about the\ntraversals because it’s a buffer. It’s got no pointers in it. It’s\njust got some bytes. The ref count goes from zero to one when you\nallocate the buffer. You do some stuff with it, and then it goes from\none to zero when you’re done. And then the next buffer you want, you\nget the same buffer back. So your program keeps running only ever\nusing one of these buffers for every single file that it opens."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "That style of memory usage where there’s a single large object, it’s\nquite difficult to get that to perform well with a tracing garbage\ncollector. You often end up cycling through 100 buffers because it\ntakes that long for the collector to notice that the first one is now\navailable for reuse, because that’s how often it’s cycling through the\nentire heap. This is partially why it’s so difficult to compare these\nbecause they’re so heavily workload dependent. And if you have a\nfavorite, you can easily come up with programs where your favorite\nstrategy is the best one."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And also in a given language ecosystem, the programs are going\nto evolve towards the efficient idioms. So you take a set of\nbenchmarks and you change how memory management works and you may get\nworse performance than it seems like you should because things have\nbeen tuned for the other behavior."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. I mean, to some extent, even the example I just said\nabout buffer management is a candidate for that. In languages with\nlots of garbage collection, you’ll often find APIs where the caller\nprovides the buffer. So reading a file, should reading a file return\nyou some bytes or should it accept a byte buffer into which to put the\ncontents? And in languages where you’re using tracing GC and it’s\ndifficult to efficiently allocate and deallocate a large buffer all\nthe time, you’ll often end up with APIs where the caller provides the\nbuffer. I mean, that’s more efficient in ref-counted languages, too,\nbut it’s less of a gap."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The other thing that’s interesting about ref-counted GCs is the\ndeterminism of finalizers, which I guess you don’t get if you do lazy\nfinalization, but you do get otherwise, also makes it easier to manage\nthings other than memory in the garbage collector, right? Because you\nknow, when things are going to be deallocated."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So if you’re managing something like memory in your GPU, which you\nhave a very small amount of and would like to give back as soon as\npossible, you can do that in a ref counted system, and in a tracing\nGC, it’s much harder because you really want to know that when you’re\ndone with this particular round of training, that you’ve given up the\nrelevant resources on the GPU. And it’s just harder to know that if\nthat memory is being again managed by this unpredictable tracer."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Well, I suppose for that sort of example, what you really want is\nownership, for instance like Rust provides or uniqueness types like in\nClean or linear types or any of the various implementations of this\nidea, but where you know that you have the only reference to this GPU\nmemory or this hardware resource or whatever, so that you can see on a\nparticular line of code, that’s where I get rid of what I know to be\nthe only reference."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "If you’re using ref counting, then you don’t necessarily know that\nmaybe something you have called has accidentally captured a reference\nto that GPU buffer and stored it in a global data structure or a cache\nor something. And it’s hanging around there. And at the point where\nyou think you’re done with the reference count is actually two, not\none. You don’t quite have the level of determinism with ref counting\nthat you might imagine. You know that if this is the only reference,\nthen it will definitely be cleaned up at this point. But it can be\nhard to tell that it’s genuinely the only reference to something."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I guess the behavior is more deterministic, but you can’t quite\nreason about it locally. You can’t just look at the code in front of\nyou and know that it’s gone. Some other thing that you may have called\nmay have stashed a reference. So it’s a little harder to predict\nwhat’s going on. So we’ve talked a bunch about the trade-off between\ntwo different flavors of automatic garbage collection. How do you\nthink about the trade-off between C- or Rust-style manual garbage\ncollection versus automatic collection?"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Well, since you did say C or Rust style, I’m going to have to jump on\nthat one first because I see a big difference between the safe and the\nunsafe styles. The unchecked style in C is essentially a mechanism for\nupgrading any bug in your program into an exploitable security\nhole. There are no benign mistakes when you’re using truly manual\nunchecked memory management."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. There was some results not so far in the past where Microsoft,\nI think, said something like 40 or 60 or something percent of their\nbugs were just buffer overflows or some basic memory management\nproblems."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it is a bit saddening, but on happier topics, Rust exists. That\nbasically gets you the coding style of very well written C++, where\nall of the memory management is being correctly done. And the compiler\ncan actually verify this and tell you that all of the memory\nmanagement is being correctly done. Which is a style that I like if\nI’m writing that sort of low-level code where I’m paying lots of\nattention to exactly how memory is laid out."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But not a style that I like if I’m writing a type checker or writing\nsomething higher level that deals with lots of complicated linked\ntree-like structures, because it’s just a lot of work to explain to\nthe compiler exactly why it’s okay to hold onto a particular\nreference. Sometimes it’s easier to just have a long-time tracing\ngarbage collector work out which ones it’s safe to hold onto."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So trade-off number one, manual collection is manual. It\nrequires work. Okay. But how about in the other direction? What are\nthe upsides of manual management?"
+    },
+    {
+      "type": "ts",
+      "text": "00:17:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So for purely memory, it’s primarily performance. You can go faster,\nyou can write the API, looks like it’s returning strings and not have\nto deal with manually managing buffers, working out when it’s safe to\nreuse a buffer, worrying about aliasing between two mutable\nstructures."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "You can write in-place mutation of things and know that you’re\nmutating the only reference to this thing. So nobody else’s data\nstructures are suddenly going to change underneath them. And you can\ngenerally write in the very efficient programming style that you can\ndo in, say, C, but you can write in that style while still writing\nrobust modular software and not worrying about having mysterious side\neffects because you mutated or freed something."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I guess you’re really highlighting two benefits. One benefit is\nmore precise control makes things more performant. And then the other\none is the same type-level mechanisms that let you get rid of the\ngarbage collector also let you get rid of a bunch of common and\ndifficult programming problems. Basically in order to get rid of the\nneed for a garbage collector, you want some type-level tracking of who\nowns this piece of memory. So I can tell when no one owns it and I can\nmake sure statically in the code that it’s something that gets rid of\nit at the right point in time."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And that you never use something that has already had that been done\nto it. At the same time, that tracking of ownership avoids what you\nrefer to as aliasing problems, which is basically the kind of bug you\nrun into when you have some function that has two arguments that are\nreferring to what seem like two different things. And under the\ncovers, in a way that you’re not necessarily thinking about, it turns\nout they share some structures underneath. And so when you mutate\nthings, you can end up with all sorts of bizarre results in the case\nwhere there’s aliasing, where you have two things pointed to the same\nplace, that you wouldn’t see if they were actually distinct."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And it’s not just those bugs that have a cost, it’s the things\npeople do to avoid the possibility of those bugs has a cost. In\nlanguages where you’re making heavy use of mutable data, you often\nfind people doing defensive deep copying of things. Some function\ntakes in a list. But the first thing it does is copy that to another\nlist because, oh, someone might have passed me their list and I’m\ngoing to start adding things to the end of it."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I can’t add stuff to the end of someone else’s list or some of their\ndata structures might be corrupted. So you see these kind of defensive\ncopying, or even deep copying of structures, just to make sure that\nthey’re all separate. That’s often a waste of time, but it’s difficult\nto tell exactly when it’s a waste of time without doing this careful\nporing through every line of code."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I know two good strategies to avoid having to do that. There is have\ntype-level control over aliasing like Rust does and know exactly\nwhether two things might overlap and know that if someone’s passing\nthis to me, then either it’s a borrowed and mutable reference, I don’t\nget to change it, or it’s transferred ownership or give me a mutable\nreference to it, and I do. Or alternatively, the other one is use\nimmutable data structures into a garbage collector. So you can update\nan OCaml map and you get a new map and you haven’t changed the old\none. I would quite like to be able to do both of those tricks in the\nsame language, but we’ll wait for now."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I like that account because I feel like it explains the\ndifference between a language like OCaml and a language like Rust,\nvery cleanly. And I think there’s a funny thing that on some level\nRust and OCaml seem massively different, but from a kind of\nsensibility perspective, they seem very close. In fact, I think it is\nnot accidental that the first version of Rust was written in OCaml,\ncertainly written by people who understand languages like OCaml very\nwell."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The problem is shared mutation. And there are two ways out. You can\nmake sure there’s no sharing, or you can make sure there’s no\nmutation. And sometimes you want to be able to take both in the same\nlanguage and there are varying trade-offs when you do that. So one of\nthe advantages of manual memory management is just performance. And on\nthe automatic garbage collector side, one of the ways one deals with\nthat is by just piling almost unbounded amounts of cleverness into\ntrying to make the garbage collector more efficient."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You can’t quite close all the gap. There’s nothing quite as good as a\nhuman who’s carefully designed exactly what you want. No automated\nsystem quite gets there, but there’s a lot of work that can be done to\nmake garbage collectors faster. And there’s in fact been a lot of work\nrecently on OCaml’s garbage collector, which you’ve had some\ninvolvement in, making it faster. So I’d like to talk some about\nthat. But before we do, it might be worth having a quick tour of how\nOCaml’s garbage collector works. Can you say a little bit about the\nstructure of OCaml’s GC?"
+    },
+    {
+      "type": "ts",
+      "text": "00:22:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So it’s what’s called a generational collector, which means there are\nroughly two almost independent garbage collectors in there. I’m going\nto start by describing the one called the major collector. So that one\nis responsible for most of the memory of the program. It’s got an\nallocator that’s fairly standard. I mean, it’s quite a neat one, but\nit’s interface looks more or less like a C allocator, except it\ndoesn’t have a free operation."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And every so often it samples all of the, what are called the\nroots. Those are the things that are definitely in use. They’re the\nlocal variables for the functions that are currently running and the\nglobal variables for all the modules that have been loaded. And a\ncouple of other weird special case things, but that’s most of it. And\nthen the idea is it’s going to trace everything from the roots,\neverything reachable by following any reference, starting from the\nroots, gets marked is what the term is."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There’s a little bit at the start of each object that indicates\nwhether or not it’s been marked. And if one’s out of things deserves a\nbig stack of stuff that is in the process of being marked. When it\nfinds a new object, pushes it onto that stack, marks it, and then\nperiodically pops something off, marks all of its fields. When it runs\nout of stuff to mark, then it enters the other phase, which is called\nsweeping. It runs through all of the objects and the ones that haven’t\nbeen marked, those are free memory."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The stuff that hasn’t been marked by that stage is garbage and can be\nreused.  It gets re-added to the allocator’s data structures for\nfuture allocations. This is known as a mark-and-sweep garbage\ncollector. It’s got the two phases of marking and sweeping. The one in\nOCaml is what’s called incremental, which doesn’t stop everything and\nthen walk over the entire heap. Instead, it divides up that work of\nmarking and also the work of sweeping into small, fixed-size slices\nand just does some marking periodically. And then in the sweep phase,\ndoes some sweeping periodically and maintains all of the states that\nit can leave off and resume. So the program has never stopped for very\nlong."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And importantly, this matters a lot if you’re building various\nkinds of soft real-time applications, where your response time\nmatters. The idea that you might need to scan your entire heap\nperiodically is just really destructive to having any kind of\npredictable latency profile."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Yeah. I mean, it matters for soft real-time programs, but I\nthink it even matters for any kind of program. I mean, if you have a\nheap that’s maybe a gigabyte or a couple of gigabytes, doing a full\nmark and sweep collection is going to take a second or two. Even a\nprogram that doesn’t have any soft, real-time constraint, anything\neven vaguely interactive will be unhappy or will cause unhappiness if\nit just stops for a second or two."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Any sort of graphical program or anything that’s going to respond to\nany sort of user requests is much better if it can divide up that work\ninto short, 100s of microsecond or few milliseconds pauses. That’s the\nmajor collector. There’s an observation, it’s very old, the original\npaper that spotted it. It’s a thing called the generational\nhypothesis. And it’s a remarkable fact about programming languages in\nthat it’s one of the few that’s been well confirmed across a huge\nrange of completely different programming languages."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "This is one that’s been shown to hold in functional languages and\nobject-oriented languages and imperative languages. It seems to be\nremarkably robust to what sort of language or even program you’re\ndealing with. And it’s the observation that objects which have\nrecently been allocated are likely to be the ones with the shortest\nlifetimes. That lots and lots of objects don’t live for very long."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "They’re used just as temporary storage and then thrown away. If you’ve\ngot a collection of objects, the ones that have been around the\nlongest are the ones that are likely to stay around the longest. The\nones that you’ve just allocated are likely to go away soon. So you can\nuse this to massively speed up a garbage collector. What you do is you\ndo what’s called a generational collector. You have a separate area\nfor objects that have very recently been allocated."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "You allocate new objects there using a very, very fast collector,\nwhich is just subtraction. It’s known as bump pointer allocator, which\nmeans there’s a pointer, and when you want to allocate five bytes, you\nsubtract five from the pointer and just put all of the objects one by\none in this contiguous region of memory. And then when that fills up,\nthen you do what’s called a minor garbage collection."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And you just go over the objects that are live in that region, which,\nbecause that region is relatively small, it doesn’t take too long. And\nanything that’s still alive there, you move onto the major heap or you\npromote in some way. You do something more expensive to keep them\nalive. You copy them out of that region or you move them to one end of\nthat region, or you do something with them. But the point is that\nusually you can eliminate 90% of the allocations that way, sometimes\neven more."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And a neat trick about the minor collector is that you pay for\nallocation. And for the things that aren’t promoted to the next stage,\nthe deallocation is kind of free because you only had to do work\nproportional to the number of things that were live."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yes. And also you pay very, very little for allocation. A real\nallocator, like the major heap uses, or like all heap allocations in,\nsay, C or Rust use, that has to do a certain amount of work. It can’t\njust slap objects anywhere in memory. It needs to find somewhere where\nthey fit to avoid using too much memory. It needs to make sure gaps in\nthe heap are filled in with appropriate-sized objects."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There are reasonably efficient allocators but there’s some actual work\nthat has to be done there. One of the advantages of a generational\ncollector is you can defer that work until objects have survived at\nleast one minor collection. So that means you use an extremely stupid\nallocator for the first time around and only if the objects survive a\nwhile, only then is it worth actually trying to find a permanent home\nin a fragmented heap for them. And that way you can avoid even using\nthe major allocator in 90% of cases."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess one thing that’s important to mention about the OCaml\ncollector is it’s a single-core collector or a single-threaded\ncollector. You can’t have multiple threads concurrently allocating on\nthe same heap and concurrently accessing data on the same heap. In\nOCaml we have a single lock that separates out different threads to\nmake sure that they don’t interact. And one of the other pieces of\nwork, which I don’t know how much we’ll get to, is you did a lot of\nwork on the multicore garbage collector that is currently extremely\nactively being pushed on upstream and people are trying to get out."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But within its scope as a single-core collector, OCaml’s collector is\npretty well respected. It’s considered to be a nice balance. It’s both\nsimple and pretty easy to understand and efficient and all of\nthat. And people say lots of nice things about it. And I used to\nbelieve those things too. And then recently, you worked along with a\nguy named Will Hasenplaugh on some changes to OCaml’s collector that\nmade the marking phase two to three times faster, which I found very\nsurprising for a well regarded and like 20-year-old garbage collector,\nor 25-year-old garbage collector, to suddenly get so much better and\nhave such low-hanging fruit. So what is the thing that you did to make\nit so much faster?"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it was surprising to us as well quite how much of a difference\nthat change made. I think it might be best by explaining some stuff\nabout how people write high-performance code. So one of the first\nthings that you learn when you get into writing really efficient\nprograms is following pointers is slow. There’s a cache and there’s\nthe whole memory system of the CPU. And it’s really good if you’re\njust streaming in sequentially a big, long array."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But if you’re chasing over pointers randomly, it’s going to be much\nslower. And the reason is, if you’re just copying a load of memory or\njust adding up a really long array of numbers, then it can stream that\nin from memory at, I think Skylake processors are something like 12\ngigabytes a second on one core, which is, I mean, that’s a lot of\nmemory coming in."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So if your core is running at three gigahertz, that’s four bytes a\ncycle. If a cache line is 64 bytes, you’re getting a new cache line\nworth of memory every 16 cycles. They’re just constantly coming\nin. Whereas if you set up a big, long array, you’re following a link\nlist. Every time you have to get the next element of the list, you\nhave to dereference a new pointer."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So each time you follow one of those, that means you have to make a\nnew request to the memory system to look at a new place. Not somewhere\nit’s been streaming sequentially out of, but a new different\nplace. And that request can take something like 300 cycles. So instead\nof getting a new item or a new thing every 16 cycles, you’re getting a\nnew item every 300 cycles, and your program, even though it looks\nexactly the same as the array version, it’s going over a list and\nadding up numbers for a slightly different notion of list, but it’s\nnow dozens of times slower."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I think the key insight here is to think about the things\ninside of your single computer as, in fact, a distributed system. The\nissue is the memory is very far away. You have a lot of bandwidth, but\nthe latency is high. So if you need to do a bunch of dependent fetches\nand you need to get some data and then make a decision, and get some\nother data and make a decision, and make some other data."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Just like you’re pinging some server far away and have all of these\nextra round trips, it doesn’t matter that you have 10 gigabits worth\nof bandwidth through the computer, you’re going to be kind of poking\nalong request by request if the latency is long. And it’s essentially\nthe same story here, except the long latencies are all kind of on the\nscale of what fits inside your very small computer."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly that. So the marking phase of a garbage collector is\nkind of the maximally bad example for this. It’s a thing that has to\nchase every single pointer in the system. Every time it finds a new\nobject, it has to de-reference every single point that it sees. And it\nall points to random other locations on the heap. So it spends most of\nits time just doing these one requests, wait to see whether that comes\nback. Oh, that was another thing I have to follow. Okay, follow some\nof those references. Wait to see what those come back with."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s like a garbage collector was a machine designed for creating\ncache misses."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly so. Just sitting there doing cache misses all day. And\nso at some fundamental level, it kind of has to do all of these cache\nmisses. I mean, we’re trying to mark a chunk of a heap. The heap might\nbe gigabytes large, the cache or at least the L1 level of the cache is\n32 kilobytes large. It doesn’t fit, and it doesn’t fit by a factor of\ntens of thousands. But the trouble is that the garbage collector is\ndoing those cache misses one at a time, it’s waiting for the answers\nto this one before it even begins processing the next one."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that totally makes sense."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So it turns out that the current crop of processors can do maybe 10 or\nso cache misses, can be active in parallel. It’s still that model of,\nyou’re sending requests to a faraway server and they take a while to\nget back. And there’s no really good way of making them get back any\nfaster, but you don’t have to wait for the answers to the first one\nbefore you send the next. You can have about 10 of them in flight or\nmore."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I think the new Apple chips, or so I’ve heard, can handle about 20 of\nthem in flight at once. So there’s quite a lot of width here. So the\nchange that we made to the garbage collector is to use what’s called\nprefetching instructions. Those are instructions where you say in\nadvance you start saying, “Please start loading this piece of memory.”\nWith the idea being that by the time you actually get around to using\nit, it’s already made its way into cache."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The observation that makes this work is that in the marking phase of a\ngarbage collector, your job is to mark everything that’s reachable\nthrough any of the references. But you don’t actually care what order\nyou mark them in. It doesn’t really matter. Instead of marking them\njust one at a time, what we did is we put a small queue in front of\nmarking."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So every time we discover a new object that needs marking, instead of\nimmediately walking over its fields, we issue a prefetch and add it to\nthis small queue, and then take the next thing out of that queue,\nprefetch it, add it back to the queue. And by the time we actually got\nround to traversing the fields of an object, we’ve prefetched it maybe\n10 objects ago. So firstly, there’s a good chance that the data that\nwe’re looking for has made it into cache at this point. But more\nimportantly, while it was sitting in that queue, it was 10th in the\nline. There were 10 other things being prefetched at the same time."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "We get to overlap 10 requests or 20 or 30 or whatever many number of\nrequests the hardware can handle. So we end up making much better use\nof the hardware’s resources. In that example, each individual memory\nrequest that’s not in cache still has to wait the full 300 cycles. But\nif we can get 10 of them going at the same time, then we can be\nhitting a new cache line every 30 cycles. I mean, that’s not as good\nas getting on every 16 cycles, but it’s close. You’re actually able to\nget to a reasonable fraction of the raw memory bandwidth of the\nmachine while just traversing randomly over this huge one gigabyte\nheap. It worked out very neatly."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. In fact, one of the things that surprised me about this whole\nstory is how surprised we were. As you point out, the idea isn’t\nnew. There are papers about using prefetching to make garbage\ncollectors faster, and they report speedups. And they’re all not as\ngood as this. I’m curious if you have any insight on it. What\nhappened? Is it that the OCaml garbage collector is somehow different\nor have machines just evolved since those papers were written so that\nthe constants are different and the value of making this kind of\nchange is just higher than it used to be?"
+    },
+    {
+      "type": "ts",
+      "text": "00:34:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So yeah, the memory-level parallelism. So that number that I’ve been\nsaying is around 10, of how many things you can have going at the same\ntime, that used to be smaller than 10, which meant there was a smaller\nbenefit from being able to do these tricks. As well as that, there’s\nthe fact that the OCaml garbage collector has to touch very little\nmemory other than the stuff that’s on the heap."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The thing that all garbage collectors have to do is tell whether a\npiece of memory contains a pointer because they need to traverse all\nthe pointers and they need to not traverse the things which are not\npointers. In OCaml that’s done using what’s called tagging. Each eight\nbytes of memory on the heap, the ones that end in a one are integers,\nand the ones that end in the zero are pointers."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So it’s very easy to tell in the garbage collector, as you’re walking\nalong, which is which. That’s not the case for all garbage\ncollectors. In a lot of other garbage collectors, there’s a separate\ndata structure off to one side that you have to look up with some tag\nfrom each object to work out its layout, to decide where the pointers\nare."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So, I mean, this is fairly speculative, I haven’t really dug into many\nother implementations of prefetching, but that’s one reason why it’s\nperhaps easier to get good results out of OCaml, because there are\njust very few memory accesses to be done in the first place. There are\nonly the memory accesses to the actual data. There are no, like,\noff-to-one-side table look-ups to worry about."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So in a world where we have a lot more parallel memory-fetching\nhardware than we used to, are we under-using software prefetching in\ngeneral? One of the nice things about using software prefetch\ninstructions in a garbage collector is it’s a relatively simple story."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The garbage collector is running, while it’s running, nothing else is\nrunning. It’s kind of taken over your program. You don’t have to worry\nabout competing with resources for anything else. Do you think we\nshould be surfacing software prefetching more directly to programmers\nin a more general context and one that’s not quite as simple as the\ngarbage collector case, where people are doing all sorts of ad hoc\ndata structures?"
+    },
+    {
+      "type": "ts",
+      "text": "00:36:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think that’s probably worthwhile. It’s a little bit difficult\nthough. In fact, I think Sam Ainsworth and Timothy Jones at Cambridge\nhave a couple of papers on actually doing this in OCaml, about\nexposing some prefetching instructions and using them to try and speed\nthings up. In general though, it’s pretty difficult because to get\ngood performance out of prefetching, you need to get the timing just\nright, you need to prefetch something so that you’re going to need to\naccess it soon."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "If you need to access it immediately, then there was no point in\nprefetching because the time that you end up using the data, the\nprefetch hasn’t completed. And if you end up accessing it quite a\nwhile away, then your prefetch gets fetched all the way into cache,\nbut then it gets flushed out of cache because something else comes in\nbefore you ever get around to using it."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The marking phase of a garbage collector is maybe an easy case for\nthat sort of work, because it genuinely doesn’t care what order it\ntraverses things in. Adding this little ring buffer to make sure\neverything gets traversed 10 units of time after it was accessed or\n100 or whatever the numbers are, was a relatively straightforward\nchange."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Whereas adding prefetches in ways that are definitely going to be\nuseful is a bit trickier in other contexts. An example of a case where\nyou might want to do it is in the List.map function, a very commonly\nused functional in OCaml, which applies some transformation to every\nelement of a list. And it needs to traverse this list and lists in\nOCaml are link lists. So a nice thing that you might try and do is,\nwhen you’re about to access this element of the list, and you’re about\nto run the user function on this element of the list, prefetch the\nnext element."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But the trouble is if the function that you’re mapping, the function\nthat you’re calling the user function, is very simple then, it’s just\nadding one or something, then the prefetch won’t have any real benefit\nbecause it won’t actually be very far ahead of time. The actual access\ndone to the list will happen before the prefetch is completed. If the\nfunction you’re doing is very complicated and very slow, then the\nprefetching will actually be harmful because you’ll have pushed\nsomething out of cache early and then taken up space, but it won’t be\nin cache by the time you get to the searcher that you need."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And if the thing in the list is itself a complicated linked structure,\nthen merely having prefetched the next link list node doesn’t mean\nyou’ve prefetched its contents. So it might not actually be enough to\nspeed things up. There’s definitely gains to be had in exposing it to\nprogrammers, but it’s quite tricky to do in a modular, general\nway. You’d really like that someone who understood memories of systems\ncould put the prefetching stuff into the commonly used libraries, and\nthen everyone’s code would go faster. But unfortunately it seems quite\nnot really to work like that. It depends on very subtle details of\nexactly how fast everything is and exactly how much memory it uses."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. There’s essentially a lack of composability of the performance\nsemantics. You can go and optimize some data structure and it may work\nwell in some context where you use it, and then in some other context\nwhere you’re iterating over it in different ways and doing different\nthings in between each step where you test the data structure, and\nthat can just totally change what’s happening. So it’s not even clear,\neven if you were an expert trying to design the ideal data structure,\nit’s just not clear that the thing exists. Because it doesn’t have\nenough knowledge to make the right choices given that it needs to be\ngeneral purpose and be used in lots of different contexts."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And unfortunately, it’s also an area where the performance of a\nlot of these things doesn’t smoothly degrade as things get worse. It’s\neither hitting L1 three cycles, missing L1 but getting the next best\nthing in L2 is, I don’t know, 40 cycles. There’s a sudden big jump,\nand then hitting the last level cache is, I don’t know, 60."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And then missing that is 300. So if you get some of this and it’s\nnearly right, and your program changes in a way that makes it just\nvery slightly slower or very slightly bigger, then suddenly that can\nhave a five or 10 times difference in the performance. Because the\nthing that was reliably hitting in cache was no longer hitting in\ncache or the prefetch that was reliably there is now getting evicted."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the garbage collector work you’ve done is about making the\nautomatic garbage collection story more efficient by just going and\nimproving the actual collector itself, which is great stuff. And in\nfact it had shockingly good effects on a bunch of different programs\nthat we run in real life. So that’s great."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But that’s not the only story, right? The other thing we’ve been\ntalking about is giving programmers more control over memory. And some\nof the work that you’ve been doing is about that. And one interesting\none is adding what are called local types, essentially adding safe\nstack allocation to OCaml. Can you give a summary of what you think\nthe benefit of this is? What’s the point of adding safe stack\nallocation to a language like OCaml?"
+    },
+    {
+      "type": "ts",
+      "text": "00:40:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Right. A lot of functions use temporary data. My go-to example from\nearlier of a buffer that you’re using to load the file before you\nparse its contents, or just any small data structure that’s just used\nto pass options around or something. And these data structures are\ncreated, used a couple of times, and then immediately destroyed, or\nshould be immediately destroyed. You know that five lines of code\nlater, nothing will ever use them again."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But in OCaml at the\nmoment, those\nend up being heap allocations, these small little buffers or the sum\nor list things that you might use to pass arguments to a function or\npass optional arguments, all of these end up being small\nallocations. They’re allocations on the minor heap, which is\nrelatively cheap, but they do consume some space on the minor heap and\nthey make the next minor collection happen a bit sooner and they have\na non-zero cost."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It would be nice if these things had a lower cost. If you do a stack\nallocation in C or C++ or Rust, stack allocation in those languages\nhas a cost about the same as minor heap allocation in OCaml. There’s\njust a subtraction from a pointer that’s in the register. But when\nyou’re done with it, you get to undo that stack allocation by undoing\nthe register movement, rather than having to wait for the next garbage\ncollector. You don’t contribute towards the next garbage collection\npause, you don’t add any GC work, and more importantly, you get to\nreuse that exact bit of memory, which is definitely in L1 cache,\nbecause you’ve just used it. You get to reuse those bytes for the next\ntemporary allocation that you do."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I was going to poke on exactly this question, which is if minor\nallocation is so cheap, doesn’t that get rid of a lot of the benefits\nof stack allocation? And the story you’re telling about cache provides\na good answer. In fact, a thing that we’ve noticed experimentally is\nthat there are two incompatible ways you can tweak the GC to make your\nprograms run faster. First, you can make your program faster by making\nthe minor heap bigger because making it bigger gives you more time to\ndiscover that things that were recently allocated are, in fact, going\nto become unreachable soon."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And so never need to be promoted to the major heap and you can avoid\nall the work associated with that. And then the other totally\nincompatible trick is to make the minor heap smaller. In particular, a\ntightly written program that doesn’t do that much minor allocation can\nrun faster with a smaller minor heap, because that reduces the number\nof cache lines that are touched as the allocator strides over the\nminor heap. And so stack allocation, I guess, gives you the best of\nboth worlds. You get better cache behavior, but without creating a lot\nof unnecessary promotions."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. With local stack allocations, you actually get both of those\nadvantages. As you say, you get the advantage of reusing that same\ncache memory as though your minor heap was much smaller because it’s\nall reusing the same bit of stack memory, but also all of the\nallocations that don’t go through this local mechanism, the ones that\nare still being minor collected, the ones that are still happening on\nthe minor heap, there’s a lot fewer of those. So if there’s half as\nmany of those it’s as though you had twice as big a minor heap, you\nget the same avoiding promotion benefits."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. So stack allocation is a thing that exists in languages previous\nto OCaml. Can you describe how the thing you are currently designing\nfor OCaml differs from what shows up in other places? I guess Rust is\none that I know about."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Two languages that make heavy use of stack allocation are Rust and\nGo. The comparison to Rust makes a bit more sense because the stack\nallocation in Go is for allocations that the compiler can see\ndefinitely don’t escape. There’s no particularly good way of\nexpressing in a function interface type that a certain value isn’t\ngoing to escape. If you’re passing things around to other functions,\nit’s difficult for those to be stack-allocated, to kind of a\ncompletely best-effort, invisible thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "We’d really like to be able to express some of the stuff in types that\nprogrammers can know that something is or isn’t going to be stack\nallocated. So the main challenge is to do this in a way that’s safe so\nthat the compiler can guarantee at compile time that memory isn’t\ngoing to be accessed after it’s been freed. That means that you need\nto ensure that no references to a locally allocated value are used\nafter it’s gone out of scope."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The tricky case there is about when you locally allocate something\nlike a data structure to describe how to initialize something, and you\npass it to a function. So in say, C, you could allocate that data\nstructure locally on the stack, pass a reference to it to a function,\nthen that function could say, “Ooh, a pointer to something.” And they\ncan put that in a global variable or squirrel it away in some cache or\nhide it somewhere in your program."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Then later on it returns and you’ve got this dangling reference to\nsomething which you later access and everything explodes or worse. So\nthe challenge is to allow programmers to write that kind of program\nwhere you are really passing references to locally allocated data\naround to other functions and have that somehow be safe. Definitely\nthe most well-known way of doing that is the one that Rust has."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So in Rust, there are these new entities at the type level called\nlifetimes. They’re\nlike variables in the type system, and there’s a lifetime variable\nassociated with each reference type. Instead of saying, I have a\nreference to a tuple, you say, I have a reference to a tuple with a\nparticular lifetime alpha. And then if you try to use a reference\nwhere you try to make something point to something else, you can only\ndo so if the lifetimes are compatible."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So you try to store a reference to this thing with lifetime alpha in\nthe thing with lifetime beta, then you must know that beta outlives\nalpha, so that you’ll never end up with a dangling reference. That\nmeans if you’ve got this idea of a function that accepts some locally\nallocated data, then that ends up being expressed as a function that’s\npolymorphic in lifetime. If you’ve got something which accepts as a\nparameter, a locally allocated tuple, then the type of that in Rust is\nsomething like for all lifetimes alpha, it accepts a tuple of lifetime\nalpha."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And then that’s enough to know that the function’s not going to store\nthat in a global variable because the global variable has lifetime\nstatic. And if it did that, then it wouldn’t be able to accept a tuple\nof lifetime alpha, it would have to accept the tuple of lifetime\nstatic. The fact that this function is able to compile with the type\n“for all alpha” means that it genuinely works for any possible\nlifetime. Callers of that function can make a tuple on the stack. So\nit has a particular lifetime representing its scope and can then pass\nit to this function that works for all lifetimes. And since it works\nfor any lifetime, it will work for this one too."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And since it works for any lifetime, it can’t possibly leak a\nreference to that tuple into any other scope than the one that came\nin. So that works very neatly. And you can use these lifetime\nvariables to express various complicated relationships between\nlifetimes, but there is a tricky part to it from a type-system point\nof view. It’s that this function, which just takes a tuple, now has a\nlifetime variable in it, and is in fact now a polymorphic function."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So if you find yourself writing higher-order codes, this is functions\nwhich take functions as parameters, which you find yourself doing this\nin OCaml quite a lot. If you’re writing some of those, then if your\nhigher-order function is allocating some local tuple and giving it to\na callback that it had accepted, then the type of that callback needs\nto be polymorphic. It needs to work for any alpha. It actually needs\nto be for all alpha because there’s no way of even naming the alpha\nthat it’s supposed to work with from outside the function."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It’s some anonymous alpha representing a particular lifetime that\nisn’t in scope. You need a surprising amount of type-level machinery\nto get this to work. There’s a feature in Rust for exactly this\npurpose called higher-rank trait bounds, which basically allows you to\nsay, I am accepting a parameter. And it’s not that I am polymorphic in\nthe lifetime, it’s that I require that my parameter be polymorphic in\nthe lifetime so that I can make up a particular lifetime, like the\nscope from this line to that line, and then use this callback function\nthat I took as a parameter with that lifetime."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It’s fairly well-studied machinery, but it is fairly heavyweight\nmachinery. And in particular, it’s a fact about type systems that once\nyou have that type inference, more or less stops working, that you\ncan’t do the level of, in OCaml, even higher-order functions can have\ntheir types inferred. You can just write an implementation of List.map\nor something, and OCaml will say, “Yep, that’s got this type.” Whereas\nif you’re doing it with these higher-rank types, which is the thing\nthat you need in Rust to do these sort of callbacks, you really have\nto be explicitly writing out the types of all of those higher-order\nfunctions because there’s no way that the compiler can figure them out\nby itself."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s a lot of heavy machinery, which means there’s work to do for\nthe person implementing the type system and figuring it all out. But\nworse than that, it leaks into the experience of the programmer. So\none thing it requires is that you have to do a lot of annotations. Is\nit also the case that the annotations are themselves subtle to figure\nout what the right ones are? Are these easy annotations to write or\nhard annotations to write?"
+    },
+    {
+      "type": "ts",
+      "text": "00:48:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "In principle, they’re relatively tricky. You’re dealing with rank-two\ntypes. These are fairly advanced things. On the other hand, the Rust\ncompiler is very good at guiding you down these paths. It says, “Ah,\nyou’re trying to do something that needs this feature. Copy-paste this\npiece of code into the type and it’ll probably work.” Because to be\nhonest, in Rust, it mostly just comes up in this particular context."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I’m certainly not saying that I think Rust has made a bad choice here,\nthe Rust design is quite comfortable with a fairly heavy amount of\nannotations. You end up writing types a lot. So writing these\nannotations maybe isn’t the end of the world. It’s certainly not\nappropriate for OCaml, where programmers are used to a compiler that\nknows an awful lot more about a program, where you can just start\nmashing out code and have the compiler tell you whether there are type\nerrors in it without having given it very many hints about what it is\nthat you’re trying to do."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is really a rather nice feature."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It is. I do like it. So to be able to keep some amount of that, we’ve\ngone for a different design in the local-types work. Instead of having\nlifetime variables, we have natively this concept of a function that\ndoes not capture its argument. It’s a function whose argument\ndefinitely won’t be squirreled away into a global variable or some\ncache or some memoized structure or anything. It’s definitely not\ngoing to capture its argument."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "That means if you have one of those functions, you can locally\nallocate the tuple or whatever and pass it directly to a function like\nthat. The user experience in this case is pretty similar, but\nimportantly, there are no variables and no polymorphism going on at\nthe type level. So the type inference story works out a lot more\nsimply. There is a trade-off here in that it’s a lot less flexible\nthan Rust."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It more or less only covers this case. Rust’s lifetime variables can\nbe used for lots more stuff than just saying a function that accepts\nstack-allocated arguments. You can have a function with multiple\nlifetime parameters, and you can say it takes these two arguments of\nthis lifetime, this argument is a tuple where one half is this\nlifetime, the other half is that lifetime, it returns something which\nhas a third lifetime, which is related to these two in some\ncomplicated way. And you can have really precise specifications of\nlifetime behavior, which are basically impossible with our system for\nOCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But on the other hand, in the common case of passing a reference to a\nstack-allocated thing to a function, you don’t have to write any\nannotations and the types are much simpler. I think this is kind of an\ninteresting trade-off between the two. A lot of it is driven by the\nfact that in Rust this memory management system is the only one there\nis, and it has to work for everything. That’s all memory goes through\nthe lifetime system in Rust, whereas in OCaml, when we get to the\ncomplicated cases, we haven’t thrown away the garbage collector. We\ncan still use it for anything difficult."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Yeah. It’s a very different kind of set of ergonomic\nchoices. In many ways, I think about what language I want OCaml to\nevolve in over, I don’t know, the next five to 10 years, is kind of\nexactly this, of something that is simple and ergonomic to use by\ndefault, but that when you need precise control, you have some ways of\ngiving more of that precise control. And maybe with trade-offs where\nit’s not quite as much precise control as you could get in the most\nadvanced system, but aiming for or something that is simple and easy\nfor people to use most of the time."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "That’s definitely my goal as well for this kind of thing. It can often\nbe a really tricky needle to thread because it’s actually a lot harder\nto have a language that is easy mostly, and occasionally you have\nprecise control over things. It’s actually a much more difficult\ndesign than one which allows precise control of everything and\nrequires precise control of everything all the time. The interface\nbetween the bits where it’s automatic and the bits where it’s manual\ncan be quite a tricky thing to work out."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one tricky aspect of stack allocation has to do with things like\nsmart constructors, right? Which is to say some of the time you want\nto allocate something in basically a stack-like discipline, but you’d\nalso like some abstraction capabilities. I’d like to be able to not\nhave to in-line in my present function, do all the work of doing the\nallocation. I’d like to write some function that wraps up some pattern\nthat allocates something for me. And then I can use it following a\nstack discipline. How does that fit into this design?"
+    },
+    {
+      "type": "ts",
+      "text": "00:52:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "That fits in fairly neatly, actually. There’s a lot of difficulty in\nreturning a stack-allocated thing if you take the Algol, C, Rust view\nof stacks, where there is the stack, each function call pushes a new\nframe onto the stack, and that frame is destroyed from the function\nreturns. The trouble is, it gives you very little obvious places for\nthe return value of the function to go."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "If you’re just returning an integer or something that fits in a\nregister, then it’s easy enough. You pick some register as the return\nvalue. If it’s larger than that, it’s quite tricky. You can reserve\nsome space in the caller’s side, but then the caller needs to know\nexactly how big that is. So in particular, the callee can’t decide\nitself how large an object to return. And if the callee is allocating\nthat object on its own stack, you may need to copy these things or\nmove them around or something like that."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "What we’ve actually gone for is instead something closer to actually\nhow Forth does stacks, which never really made any sense to me until I\nstarted working on this project, which is that there’s a separate code\nin a data stack. The region of memory for calls and returns, so the\nactivation records of functions. That’s slightly different from the\nregion of memory where the local allocations take place."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And they line up most of the time. So normally a function does local\nallocations, pushes some stuff to its data stack. The local\nallocations then they’re cleared out at the time it returns. But it\nmeans that you can allow a certain amount of slip between them to\nhandle these smart constructors. A smart constructor in this model is\njust a function which allocates things on the local stack, which it\nthen leaves there as it returns. The return has to pop a return\naddress, but it pops a return address off the code stack, the system\nstack, and leaves the local allocations where they are."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And they show up in exactly the same place of memory as if the caller\nhad done that allocation. You don’t need to do this little awkward\ndance where you copy them from one place to another, just to get them\nto the other side of the return address slot. I think that was quite a\ntricky problem before we settled on the idea of just having a slightly\ndifferent region of memory. It also means that it makes the\nimplementation a lot simpler because the binary format of it is more\nor less the same as the minor heap. So much of the garbage collector\nsupport is already there."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And do programmers have to think explicitly about these stack frames\nthat are going on this other stack? When we write programs with\nfunctions, basically the structure of the function stack falls\nnaturally out of the structure of the function calls. Is the structure\nof the data stack something that the programmer has to think about\nexplicitly, or does that fall out of some other part of the structure\nof the code?"
+    },
+    {
+      "type": "ts",
+      "text": "00:55:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The programmer has to think about it explicitly when they’re trying to\ndo something other than make it follow the structure of the function\ncalls. By default, it just follows the structure of the function\ncalls. But if you’re writing one of these smart-constructor things\nthat allocates something for the caller to deallocate, then those\nrequire an annotation. You need to say, “In those functions, I am\nactually allocating something that I expect to outlive this function\nframe and it’s the caller’s problem to clean up.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:55:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So you have to say that a given function is going to return\nsomething on the parent stack, and then beyond that you just use the\nfunctions and that’s that. You don’t have to explicitly say, “And now\nI’m going to open a new stack frame.” So you’re not explicitly in the\ncode manipulating stack frames."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s correct. We did at one point have a… Maybe we could\njust infer all of this and just have the compiler decide when things\ngo on the stack. And realized shortly afterwards that if we left it\nentirely up to the compiler, it would put everything on the stack,\nwhich sounds good in theory, but really isn’t because things on the\nstack don’t get deallocated for a long time. So if every single\nallocation goes there, nothing ever gets deallocated and there’s just\na massive stack all the time."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that doesn’t sound good."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So you really do want stack frames to end occasionally. The current\nsetup is that they end when things go out of scope at the end of the\nfunction, unless you explicitly tell it otherwise."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So all of this stuff about local types, that’s all about making stack\nallocation better and more available for more things. Let’s talk about\nmaking the heap better. When I think about what’s wrong with\nallocations on the OCaml heap, I think of there as being two\nproblems. One is that the data is too scattered, right? There are too\nmany pointers to chase. It’s not rectangular enough in other\nwords. And the other is that the data is too big."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think of these as both problems having to do with OCaml’s super\nnice and simple data representation. Which is to say OCaml values are\none of two things. They’re either a thing that fits inside of a single\nmachine word, call those immediates, or they’re heap allocated values,\nright? And heap allocated values all look the same. There are some\nnumber of words, the first word is some header stuff that tells you\nwhat kind of thing it is, and then for everything that you put in\nthere’s one full word."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So would you like to represent a character? Great. Here’s your machine\nword of eight bytes to represent that one character. Would you like to\nrepresent two characters? Great. Here’s eight bytes. Anything you\nwant, it fits into the same size slot. So there’s a lot of\nuniformity. OCaml is, under cover of dark, it turns out it’s really\njust like a scheme implementation in terms of its memory\nrepresentation."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another thing that we’ve been doing some thinking about is some\nways of changing this, which is a system that you’ve been working on\ncalled unboxed types. And I’m wondering if you can give us a tour of\nhow unboxed types kind of steps away from this very simple memory\nmodel that OCaml has to give the programmer more control over how\nmemory’s laid out."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Right. I mean, there’s a few things that you really want to be able to\ndo, which, I mean, as you just mentioned, the avoiding all of these\npointers, all of these indirections, all of these separate allocations\nthat OCaml currently forces you to do. Some things that we’d really\nlike to be able to do in OCaml are C-style, in-lining one struct into\nanother."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "You can have one record type include that record in another record\ntype, and have that be as though you had manually copy-pasted the\nfields in, not a separate allocation under pointer between them. Or do\nthe same, particularly with primitive integer types, like, Int32 in\nOCaml has a somewhat hilarious representation. A 32-bit integer is\ncurrently represented as a 64-bit pointer to a sequence of three\n64-bit words. There’s a header, there’s the fact that it is a 32-bit\ninteger, and then there’s the 32-bit integer expanded to fill 64 bits."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And there are good reasons why it’s like that from the point of view\nof keeping everything uniform with respect to the rest of the\nsystem. But none of those reasons are very satisfying if you are\nwriting an application that’s primarily processing 32-bit integers and\nhas to use this bizarrely verbose representation for them."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So we’d really like some of these things to be able to be represented\nnatively, both to make the heap structures more efficient so that you\ncan have a pointer to a heap structure, which is in fact a flash\nsequence of bits rather than a nest of linked structures. But also to\nmake some of the heap structures just go away entirely. At the moment,\nif you want to avoid a heap allocation, and you’re trying to pass two\nvalues to an OCaml function, you need to make a tuple on the heap to\npass them. Or you can use pass two arguments and have two separate\nvariable names. There’s no way where you can write one name and have\nthat one name represent two things without it being a heap allocation."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this, I guess, highlights a general phenomenon in OCaml and\nI think in other languages, where the abstractions that you use, which\nyou almost want to think about as, like, step back, how am I\nabstractly structuring my code, the abstractions call out very\nparticular performance choices. And as relevant in this conversation,\nvery particular memory representations. And so you need to make some\nreal changes in order to give yourself the power to have different\nmemory representations than the ones that are there by default."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And it’s that abstraction which makes this tricky. And some of\nthose things could be done fairly straightforwardly. In-lining one\nrecord into another is a fairly straightforward transformation that\nthe compiler could do if both of those records had visible type\ndefinitions. Or if you could see that this type is Int32, you could\nuse an efficient representation for that pretty straightforwardly."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But things like passing two arguments to a function and having those\nconsume two registers instead of one, that kind of flies in the face\nof a lot of how polymorphism works in OCaml. A lot of the things like\nList.map, which is supposed to work on any function, List.map unpacks\na list, the actual implementation of it, it unpacks a list whose\nelement type it does not know, plucks an element that it does not know\nabout over the list, passes that to a function, not knowing anything\nabout what that function does. Only knowing that the element type of\nthe list happens to be the same type as the argument type of the\nfunction."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And that works in OCaml without generating a million different copies\nof List.map for every time it’s used. Sometimes it gets in-lined but\nthere is a generic case. There is one map that works for any possible\nfunction or any possible list type. And the only reason that can be\nmade to work is because OCaml knows that an arbitrary argument to an\narbitrary function can in fact be represented in a single integer\nregister."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And that’s of course only true because of the inefficient\nrepresentation that it uses for various things. Things that really\nshould be represented as a floating point register or a pair of\ninteger registers, are instead represented in a single integer\nregister by making a heap allocation, passing around a pointer to\nthat."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you’re pointing at this kind of notion of polymorphism as the way\nof dealing with it. To what degree is this about the compilation\nstrategy, right? Part of what’s going on is OCaml supports separate\ncompilation. You can compile your individual file separately. And when\nyou compile List.map, there really is just one implementation of\nList.map, which is then used in lots of places, but that’s not the\nonly way to compile."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You could do a whole program compiler and optimizer, where it kind of\ngets the whole program together, in some sense, before it\ncompiles. And it can see the concrete types at which List.map is used\nand maybe specialize the behavior for those types. So I’m wondering to\nwhat degree the problem with polymorphism is fundamental and to what\ndegree it is a kind of result of the engineering choice about how the\ncompiler works on large code bases."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Right. There’s definitely been languages that work like that, as\nyou’re saying, where things like List.map, there is no possible\ngeneric implementation that works in all cases. And it has to be\nspecialized for every different type with which it’s used. For\nfunctions like List.map, that works pretty well. It gets a little bit\ntrickier when you start dealing with some more advanced forms of\npolymorphism."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "OCaml supports some things like, it supports polymorphic record fields\nand first-class modules and various other things where you can package\nup this concept of a polymorphic function, and pass it around as a\nvalue or store it in a hash table or do stuff with it. And then pluck\nit out and call it with different types. So it’s not enough to\nspecialize each call site because sometimes you don’t even know what\nfunction it is that you’re calling at the time that you’re\nspecializing. You would need to somehow package up this representation\nof every possible type or every possible type that it could be called\nat and pass those things around."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There are certainly language designs that don’t have those more\nadvanced polymorphism features or restrict them in some way, and work\nby specializing all of the polymorphic functions at each use, the\ntechnique called monomorphization. That works pretty well. It\ngenerates fast code. It generates quite large code because you’ve got\nall of these duplicated copies of slightly similar things. And it can\ntake a long time to compile because it’s not enough to just point to…\nIt can be a good, specialized List.map for performance, but when you\njust want a fast build, it’s nice to be able to just point out the\ngeneric implementation of it."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And separate compilation is really nice, right? Having an\nincremental build where you build your program bit by bit, rather than\nhaving to do the whole thing in one big go is from a kind of\nstraightforward developer-experience point of view, really rather a\nbig win."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Another point in the spectrum of techniques you can use here is\nwhat the .NET generic system does, which is essentially\nmonomorphization, but it’s happening at one time because there’s a JIT\ncompiler. There’s List.map, and there’s this thing that represents the\ngeneric List.map. And every time you call it, it says, “Ah, what type\nare you calling this at?” “Ah, I haven’t actually compiled a version\nof List.map that type yet, let me go off and compile one of those for\nyou.” And then you run that."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "That works quite neatly. It fixes the code size problem or somewhat\nfixes it. You still end up with many copies of List.map, but you end\nup with only the ones that you use rather than every possible one. You\ndo end up with some disadvantages that are hard to get around that are\nfundamental to JITs in that sometimes you will hit an uncompiled case\nand your program will stop and it enters JIT-compiling mode for a\nwhile."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s a new kind of pause, not only the garbage collector, but the\ncompiler itself can now interrupt your program."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So this wide spectrum of approaches here, the one that OCaml\nuses, everything being uniform, is definitely not the only one. I will\nsay that it’s not obviously worse than any of the others. There’s no\nclear winner here. They’re all quite tricky in various edge cases,\nespecially when you have advanced modular features."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right. So we’ve gotten a little far afield. Let’s get back to the\nunboxed types question."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Okay. So how does this actually work in the unboxed type’s view\nof the world? The design we were going for there was to try and keep\nthe nice properties of separate compilation, all of the benefits that\nOCaml has from, as you say, secretly being a Lisp machine, where there\nis a generic implementation of these functions. And the thing that\nwe’re missing from the type system is the ability to express that this\nis a generic polymorphic function, but it’s not actually going to work\nfor all types."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It’s going to work for those types that fit in a single integer\nregister and don’t require garbage collection support or those types\nwhich contain only floating point data or somewhere between saying,\nthis is a function with concrete types that works only in this\ncase. And this is a function that works for every possible type you\ncould ever write, which are the only two things you have in OCaml at\nthe moment."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "But being able to say this works for all of the types that have this\nlayout. And so we’ve prototyped some of this. It works quite neatly\nfor some cases where you can implement stuff like data structures,\nwhich are generic and parameterized by a type, but are parameterized\nonly by those types that don’t require any garbage collector\nsupport. So you never have to pay the cost of garbage collector\nbarriers, even though you are in generic code."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And just to kind of tie this to some broader nomenclature, this\nnotion of a type of type is what’s typically called a kind, right?\nWhat you’re essentially adding is a kind system to OCaml for tracking\nthe fact that different data we have might have different layouts and\nthe regular polymorphic functions work over now, one of the various\nlayouts, and we can have different layouts. And we can still write\nfunctions that are polymorphic, they’re just polymorphic for a given\nfixed layout of data."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And there is in fact one particular layout called value, which\nrepresents OCaml’s current notion of polymorphism. In the unboxed\ntype’s view of the world, a function which is polymorphic over all\ntypes of layout value is what OCaml today would call just\npolymorphic. All of the other layouts, all of the other kinds, are the\nnew additions where you can say it’s polymorphic over things which are\nunboxed tuples of a certain width or things which are immediate\nvalues, never containing pointers and so on."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So the new abstractions that we’re presenting people with are\nthese different data layouts. And some of them are about atomic bits\nof data. I can say I have an atomic piece of data and I can say how\nwide it is. This is an eight-bit-wide character. This is a 32-bit-wide\ninteger. And then the next level up from that is I can express\ncollections."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I can say a tuple or a struct and say this is like an unboxed tuple or\nan unboxed struct, and it contains inside of it things whose layout is\nspecifically specified as well. Once I have this kind of unboxed\nstruct, what can I do with it? How do I actually use it? And in fact,\nwhere is that data represented?"
+    },
+    {
+      "type": "ts",
+      "text": "01:08:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Right. The idea of an unboxed struct is that it’s just something which\nis wider than a normal data value. So there’s never any representation\nof it on the heap. There’s just, if you have a local variable of type\n“unboxed tuple of two Ints,” then that’s the same as having two local\nvariables."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It’s not one which is a pointer to something, it’s just two local\nvariables. They live in separate registers. If you pass them to a\nfunction that takes up two of its argument slots, instead of taking up\none, if you return it, it has to return a wider structure and so\non. The idea is that these things will work like normal OCaml values,\nbut will never be anywhere other than the local variable stack or\nsimilar."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So this is, in some sense, a way of encoding this pattern of\ntaking… I have a bunch of things I want to pass them to some other\nfunction, right? I kind of get a calling convention now, where if I\npass some unboxed structure to another function, then it’s just going\nto get turned into ordinary function parameters. And it also gives me\na kind of multi-argument return. If I want to return one of these\nstructures, I now have a way of returning a bunch of things without\ngoing through an intermediate heap-allocated value."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And you’re right to mention calling conventions because these,\nin fact, a lot of the design here was based on a paper by, I think\nRichard Eisenberg and co. from the Haskell community, entitled “Kinds\nare Calling Conventions.” It’s about determining the calling\nconvention of a function based not on its type, but on the kinds of\nits type."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "All functions of a given kind. So all of the things that take floating\narguments, all the things that take non-pointer arguments, those will\nall have the same calling convention. And you can write generic\npolymorphic code that calls those functions in a completely uniform\nway. It’s only when the kinds differ that you might have different\ncalling conventions. The kinds tell you how many registers a value\nneeds and so on."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. But I claim this whole thing about unboxed types is about how to\nmore efficiently represent things on the heap. And then we’ve said,\nah, we have all these structures that do not in the ordinary course\nadmit a representation on the heap. So how does this tie back to the\nheap?"
+    },
+    {
+      "type": "ts",
+      "text": "01:10:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Oh, actually, that is true. A lot of the interesting stuff, in fact, a\nlot of the hard stuff with the unboxed types work is not just about\ngetting better heap representations, it’s about not having heap\nrepresentations at all for things that don’t need to be on the heap in\nthe first place. For any of these unboxed tuples or unboxed\nstructures, you can always choose to put them on the heap if you want\nto box them up and have a single pointer to represent this collection\nof things."
+    },
+    {
+      "type": "ts",
+      "text": "01:10:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "There are a couple of restrictions on being able to do that, to do\nwith weird internal details of the OCaml garbage collector, which\ncurrently expects an object to consist either entirely of tagged\npointers that it knows how to look at, or to not contain any pointers\nat all. So while an unboxed tuple containing one pointer and one float\nis a thing that you can pass around or pass to a function and so on,\nit’s not a thing that you can store on the heap because the garbage\ncollector won’t know how to process it. You can convert back and forth\nbetween these unboxed things and heap allocations, but there are a\ncouple of sharp corners at the moment to do with exactly how the\ngarbage collector expects the heap to be laid out."
+    },
+    {
+      "type": "ts",
+      "text": "01:11:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So there’s some explicit way, if I just use an unboxed struct\non its own, that’s a kind of floating, ethereal thing. It exists at no\nfixed point in memory. And in fact, I guess, has to be immutable\nbecause in order for something to be a mutable object, it has to have\na fixed location somewhere that multiple… You need to be able to\nalias. Multiple different parts of the program have to talk about the\nsame thing."
+    },
+    {
+      "type": "ts",
+      "text": "01:11:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it needs a location as a name in order to be mutable. So we have\nthese ethereal, immutable unboxed things, and then we have some\nexplicit way of packing them into the coarse, low-level,\nheap-allocated structures. And presumably when we do that, we get all\nthe nice, tight packing of data so that we don’t have to spend a whole\n64 bits to represent our eight-bit character."
+    },
+    {
+      "type": "ts",
+      "text": "01:11:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. The design at the moment is that you either get the tight\npacking of data, or sometimes you get a compiler error saying, “I’m\nafraid I can’t do that, Dave.” You just can’t have a pointer and an\neight-bit char right beside each other. The garbage collector will be\nvery confused. It’s a separate bit of work that might be worthwhile\ndoing some time to maybe lift some of those restrictions and let the\ngarbage collector handle more densely-packed, complicated,\nhalf-pointer, half-data structures. But I think the goal at the moment\nis to actually surface the capabilities that the OCaml runtime system\nalready has to the programmer. There’s more stuff that you can do than\nyou can comfortably do in the source language at the moment."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So there’s still a thing missing from the story, as I\nunderstand it, which is, I also want to do some imperative programming\non these things. I have some big data store where I have a bunch of\nnicely, compactly packed things. And now what do I want to do? I want\nto write some code that walks over that and maybe mutates it. Because\noften the most efficient way of dealing with large chunks of memory is\nnot to do things always in a purely functional style, sometimes you\nactually want to imperatively modify data. So how does that fit into\nthe unboxed types design?"
+    },
+    {
+      "type": "ts",
+      "text": "01:13:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "I don’t think there’s any huge differences there from normal boxed\ndata. So at some point, at some level, there has to be some boxing in\nat least the way we’ve been doing things to get the\nmutability. Because as you’ve mentioned, a purely unboxed tuple is\njust some data. There’s nothing there to mutate. But as long as the\nouter structure is mutable, you can write some syntax that looks like\nyou’re mutating inner fields, even though it’s doing something a\nlittle bit more complicated."
+    },
+    {
+      "type": "ts",
+      "text": "01:13:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So at the end of the day, we have more primitives than just,\ntake some unboxed structure and flatten it onto a heap-allocated thing\nor un-flatten it. There’s also some notion of saying, I want to\naddress something deep in the middle of this unboxed structure and\nsay, let’s modify that. And that’s another language feature that kind\nof is surfaced to let you express that in a concise way."
+    },
+    {
+      "type": "ts",
+      "text": "01:13:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one of the really lovely things about OCaml is variants, right?\nVariants is this language feature that lets you express, I have some\ndata structure which is this or that or the other. And in this\ndiscussion of unboxed types, we’ve been talking entirely about records\nand tuples. The difference between variants, which are sum types\nrepresent disjunctions, this or that, versus product types, things\nthat represent this and that and the other. Should the unboxed types\nsupport in OCaml also have some kind of support for unboxed variants?\nIs that a meaningful idea?"
+    },
+    {
+      "type": "ts",
+      "text": "01:14:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "It’s definitely meaningful and the degree to which it’s easy\nvaries. So unboxing one variant into another variant is actually a\nthing that I think Gabriel Scherer and Nicolas Chataing in upstream\nOCaml development are working on. So this is if I have a variant that\nsays it’s foo or bar or baz, and bar is in fact itself a variant,\nthat’s one of these three things, then maybe we should in-line that\nand represent that as a single variant with five cases, rather than\nlike a variant whose middle case points to a third one."
+    },
+    {
+      "type": "ts",
+      "text": "01:14:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And that’s the moral equivalent of in-lining one record into another,\nit’s a fairly straightforward transformation. You could do it by\ncopying and pasting the code, but you’d rather it was done by the\ncompiler. A trickier one is doing unboxed variance as local values or\nas return values, return values being a particularly interesting\none. This is very useful for functions which we’d like that to be\nefficient. But it’s useful for larger variants as well."
+    },
+    {
+      "type": "ts",
+      "text": "01:15:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "The difficulty is that the exact size of the variant is not known in\nadvance because the different cases of a variant can have different\nnumbers of fields. So you end up needing to do something where over\napproximation reserve enough space or enough registers for the largest\nof the possible cases, which might even be larger than any of the\ncases, because the fields may have incompatible parts. You may have a\none case where there’s an unboxed floating point value and another\ncase there’s an unboxed integer value, and you need to reserve both\nthe floating and the integer registers to handle one case or the\nother."
+    },
+    {
+      "type": "ts",
+      "text": "01:15:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "And this is one aspect, it’s a thing that’s desirable to do, but it\ndoesn’t quite fit into the model of stuff the OCaml system can already\ndo that we’d like to surface to the programmer. The OCaml backend\ncompiler-optimization pipeline doesn’t know how to return things whose\nlayout may depend on which case it’s in. Some of the trickiness\ninvolved in getting that to work is what originally pushed Leo White\nand I to start thinking about the local types, because that provides a\ndifferent and much simpler way of getting many of the same benefits in\nthat a function that’s returning a variant instead doing this somewhat\nfiddly but very optimized representation of a variant could instead\nreturn a locally allocated variant. And then it would have the same\nrepresentation as variants normally do in OCaml, it would just be\nallocated somewhere else and deallocated very cheaply."
+    },
+    {
+      "type": "ts",
+      "text": "01:16:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I guess that’s one of the trade-offs. I mean, I guess in\nsome cases you can imagine doing the same kind of feature in both\nunboxed types and with local types. And one of the nice things about\ndoing it with local types is that it gets to use the same data types,\nright? The fact that unboxed types is based on a kind system means\nthat you kind of have to throw all your ordinary types away."
+    },
+    {
+      "type": "ts",
+      "text": "01:16:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Would you like to return an ordinary OCaml option value? The answer is\nno, you can’t do that as an unboxed type because it’s just not\nunboxed. It has the value representation. It doesn’t have one of these\nother representations. And so there’s a kind of code duplication and\nlack of polymorphism issue here, whereas in the case of local types,\nwell, you can just use exactly the same data layouts, which gives you\nkind of more data and code sharing than you get otherwise."
+    },
+    {
+      "type": "ts",
+      "text": "01:17:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And in fact, it’s very hard to tell which of the two approaches\nis going to be the best for any given situation. For variants like\nOk or Error, I’m leaning towards local types being a nicer way of\nexpressing that. But for things like option, actually unboxed types\nare great. For an option, what you’d really like is something like\nnull where you can say… So the option type in OCaml is… A t option is\neither Some t or None."
+    },
+    {
+      "type": "ts",
+      "text": "01:17:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So it kind of represents a nullable t. But the issue is that that Some\nt case involves an extra heap allocation just for this block. And the\nonly thing that the block does is say that it’s not None. Many\nlanguages do and have a distinguished null value. But the trouble is\nthat that gets you something different from an option. Because with an\noption, you can distinguish Some of None from None. If you have a\nnested option, you know at which level the null was introduced."
+    },
+    {
+      "type": "ts",
+      "text": "01:18:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Some of None or Some of Some of None, or Some of Some of Some\nof Some of None, right?"
+    },
+    {
+      "type": "ts",
+      "text": "01:18:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Exactly. You very rarely use these things on purpose, but the\nlack of them is quite annoying in a lot of languages. For instance,\nI’m not sure if it’s still this way, but back in the day, at least the\nJava hashtable had the standard hashtable interface in Java has a .get\nmethod. And the .get, you pass it the key and it might return null,\nbut if it returns null, does that mean that the key was not present in\nthe hash table or the key was present in the hash table, but the value\nthat was associated with it was itself null?"
+    },
+    {
+      "type": "ts",
+      "text": "01:18:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. You would never write code that just nested options directly\nbecause it would be really confusing. But it’s really an abstraction\nproblem in that you might very well have some abstract type, which\nunder the covers is implemented as an option. And then you might want\nan optional version of that. And boy oh boy do you not want to have\nthe breaking of abstraction that you would get when you collapse the\ntwo None and Some of None. Those mean really different things. And\ntotally non-perverse, reasonable code will run up against this and do\ncrazy bad things."
+    },
+    {
+      "type": "ts",
+      "text": "01:19:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. But on the other hand, an awful lot of the cases of option in\nOCaml are things like string option or Int option, where it’s very\nobvious there is not going to be any nested options going on and you\nreally could just represent it as a special magical value. So what you\nreally want to be able to do there is write a t option as t nullable,\nbut in order to be allowed to write t nullable, you would need to know\nthat t is itself not a nullable type, so that you’re never going to\nrun into this case of confusing the two nulls."
+    },
+    {
+      "type": "ts",
+      "text": "01:19:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "So that fits very neatly into the kind system of the unboxed types,\nwhere there’s a kind of non-nullable types. I mean, I think we were\neven discussing making this be the default for an abstract type t that\nyou write in an interface file with no actual annotation, because this\nmeans that you can then write t option or t nullable, get a type error\non writing t nullable nullable, and know that anywhere where t\nnullable appears, t will itself never be a nullable type. So there’ll\nbe no ambiguity by what the null is attached to and what the null\nmeans."
+    },
+    {
+      "type": "ts",
+      "text": "01:20:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That is really cool. I feel like this problem of how do you deal with\nnested options efficiently is something that has been kicking around\nthe OCaml community for, I think, a solid 20 years. I think there’s\nlike a 20-year-old discussion post I saw, discussing various ways of\nfixing this. So it’s neat. I guess one of the things I keep on coming\nback to is building a good programming language takes a really long\ntime. The idea that there’s a problem that you identify and it takes\nyou 20 years to figure out is actually just not that weird."
+    },
+    {
+      "type": "ts",
+      "text": "01:20:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think there’s always this trade-off between trying to find an\nefficient solution for the problem and trying to rearrange things so\nthat the problem never ever comes up. So the nullable thing that we’re\ndoing is not trying to find an efficient representation for nested\noptions, it’s just trying to arrange the whole type system so that we\nnever, ever have to nest them and we can prove that they will never\nnest."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I guess this is just part of a bigger set of trade-offs of\nhow much do you get the right thing to happen by cleverly arranging\nthe system without any thinking about it, the right thing happens. And\nhow much do you give the programmer explicit control? And there are\nlots of different trade-off points that you can pick there."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And as I mentioned before, the really difficult thing is when\nyou want both in the same language, because it’s very easy to get into\na bad state where the bit of the language that assumes everything will\nbe right all the time butts up against the bit of the language where\nthe programmer has explicit control and decided it would be efficient\nto sometimes do the other thing here."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, good luck, I suppose. I think your task for the next little bit\nis to figure out how effectively we can do this in OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Sounds good."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right. Well, thanks for coming. This has been a bunch of fun. I\nfeel like the part I’ve liked most about this is the way in which what\nseems like a low-level, systems-y topic turns out to be so tied into\nfancy-shmancy type theory stuff. Sometimes the best solution involves\npulling things from a couple of different domains. But anyway, thanks\nfor joining. This has been great."
+    },
+    {
+      "type": "ts",
+      "text": "01:22:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Stephen"
+    },
+    {
+      "type": "p",
+      "text": "Thanks for having me."
+    },
+    {
+      "type": "ts",
+      "text": "01:22:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode, along with links to\nsome of the things that we discussed, including some of Stephen’s\npapers and write-ups and some of the new language features he’s worked\non, at signalsandthreads.com. Thanks for joining us, and see you next\ntime."
+    }
+  ]
+}

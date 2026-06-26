@@ -1,0 +1,50 @@
+/* Bilingual translation UI — loaded by all episode pages */
+
+.translate-bar {
+  position: sticky; top: 0; z-index: 10;
+  background: #fafaf8; border-bottom: 1px solid #e0ddd8;
+  padding: 8px 0; margin: 0 0 20px;
+  display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+}
+.translate-bar button {
+  font-size: .78em; padding: 4px 12px; border-radius: 999px;
+  border: 1px solid #c05800; color: #c05800; background: transparent;
+  cursor: pointer; font-family: inherit; transition: background .15s, color .15s;
+}
+.translate-bar button:hover,
+.translate-bar button.active { background: #c05800; color: #fff; }
+.translate-bar .tbar-status { font-size: .75em; color: #aaa; margin-left: auto; }
+
+/* Per-paragraph controls bar: [EN] [中] [⎘] */
+.para-controls {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+  margin: 1.3em 0 3px 0;
+}
+.para-controls button {
+  font-size: .68em; padding: 1px 9px; border-radius: 999px;
+  border: 1px solid #ccc; color: #aaa; background: transparent;
+  cursor: pointer; font-family: inherit; line-height: 1.7;
+  transition: background .12s, color .12s, border-color .12s;
+}
+.para-controls button:hover { border-color: #888; color: #555; }
+.para-controls button.active { background: #666; border-color: #666; color: #fff; }
+.para-controls .zh-toggle { margin-left: 10px; } /* visual gap between EN group and ZH group */
+
+/* English paragraph */
+p[data-p] { cursor: default; margin-top: 0; }
+p.en-hidden { display: none; }
+
+/* Chinese block */
+.zh-block {
+  margin: 4px 0 0 0;
+  padding: 8px 14px;
+  background: #f0f4ff;
+  border-left: 3px solid #6b8fd8;
+  border-radius: 0 4px 4px 0;
+  font-size: .93em; color: #222; line-height: 1.8;
+  cursor: text;
+  user-select: text;
+}
+.zh-block.zh-folded { display: none; }

@@ -1,0 +1,2027 @@
+{
+  "slug": "the-uncertain-art-of-accelerating-ml-models",
+  "title": "The Uncertain Art of Accelerating ML Models with Sylvain Gugger",
+  "mp3_rel": "audio/the-uncertain-art-of-accelerating-ml-models.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Sylvain Gugger is a former math teacher who fell into machine learning via a MOOC and\nbecame an expert in the low-level performance details of neural networks. He’s now on the\nML-infra team at Jane Street, where he helps traders speed up their models. In this\nepisode, Sylvain and Ron go deep on learning rate schedules; the subtle performance bugs\nPyTorch lets you write; how to keep a hungry GPU well-fed; and the importance of\nreproducibility in training runs. They also discuss some of the unique challenges of doing\nML in the world of trading, like the unusual size and shape of market data and the need to\ndo inference at very low latencies."
+    },
+    {
+      "type": "p",
+      "text": "Sylvain Gugger is a former math teacher who fell into machine learning via a MOOC and\nbecame an expert in the low-level performance details of neural networks. He’s now on the\nML-infra team at Jane Street, where he helps traders speed up their models. In this\nepisode, Sylvain and Ron go deep on learning rate schedules; the subtle performance bugs\nPyTorch lets you write; how to keep a hungry GPU well-fed; and the importance of\nreproducibility in training runs. They also discuss some of the unique challenges of doing\nML in the world of trading, like the unusual size and shape of market data and the need to\ndo inference at very low latencies."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "p",
+      "text": "Learn more about machine learning at Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech stack\nfrom Jane Street. I’m Ron Minsky. It’s my pleasure to introduce Sylvain Gugger. Sylvain is\na Machine Learning Engineer here at Jane Street, and he’s done a bunch of interesting\nstuff in the outside world as well. He was a core maintainer of Hugging Face’s\nTransformers library. He wrote Hugging Face Accelerate, which is a nice library from them\nthat helps you run your models performantly on a lot of different kinds of hardware. And\nhe also wrote a lovely book along with Jeremy Howard called, Deep Learning For Coders with\nfastai and PyTorch. So he’s done a bunch of interesting stuff in the outside world, he’s\nalso doing a lot of interesting machine learning work here at Jane Street, so thanks for\njoining me."
+    },
+    {
+      "type": "ts",
+      "text": "00:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Thanks, I’m very honored to be here."
+    },
+    {
+      "type": "ts",
+      "text": "00:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to kick things off, I’d love to hear a little bit more about your background, and\nin particular, how did you get to work on machine learning in the first place?"
+    },
+    {
+      "type": "ts",
+      "text": "00:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So that’s a good question. I was originally a math teacher, like 10 years ago in France\nteaching at a first year university level. And yeah, I moved to the U.S. in 2015, I had\nkids, so I took some small projects at home to mostly take care of my kids. In 2017, AI\nwas kind of becoming more mainstream. I actually read an article in the New York Times\nabout it. It was going to steal like everyone’s jobs in the next two or three years and\nthat–"
+    },
+    {
+      "type": "ts",
+      "text": "01:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "–didn’t happen, but it’s still something that became more mainstream. And at the end of\nthe article, they were mentioning a couple of online courses for people interested in\ndiving in more, and I was interested, so I dived into it. So one of the courses mentioned\nwas a fast.ai course by Jeremy Howard, which I followed. It was very interesting and yeah,\nI started commenting a little bit more and more on the forums, and making a couple of\ncontributions to the fast.ai library, which is used throughout the course to make training\nmodels a little bit faster, a little bit easier. And then towards the end of the course,\nJeremy led a fast.ai team to this competition called the DAWNBench Competition, which is\nthe ancestor of the MLPerf benchmark. It was organized by Stanford and the goal was to\ntrain a computer vision model as fast as possible to a given accuracy.  And so, yeah, we\nentered the competition, I helped to be the team, and we were like positioned first for\nthe longest time, and yeah, at the very end, Google kind of trolled us by–"
+    },
+    {
+      "type": "ts",
+      "text": "02:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "02:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "–publicly releasing TPUs for the first time, and yeah, those massive computers that no one\nelse had access to trashed our best entry and our best time."
+    },
+    {
+      "type": "ts",
+      "text": "02:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I want to hear more about the competition, but before that, can you tell me a little\nabout, like, what is fast.ai? What’s the basic program there? What’s the mission behind\nthat organization?"
+    },
+    {
+      "type": "ts",
+      "text": "02:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So fast.ai is a non-profit whose goal is to educate people about deep learning, especially\nin those early years. It was starting to become more mainstream, but not necessarily as\nmainstream as it is today. And the idea behind it – that Jeremy Howard and I believe – is\nthat to get the best model, you need good machine learning engineers, but you also need\npeople who really understand the data that those models are gonna consume. So if you want\ngood modeling for radiology, you need a very good radiologist to kind of understand how\nmachine learning works, so that they’re gonna be able to help you build those best models.\nThe fast.ai course are aimed both at coders who want to like, really dive deep into\nmachine learning, but also like, beginning as more of an introduction that anyone who is\ninterested can take it to learn more about, “What is machine learning? What are those deep\nlearning models and what can they do?”"
+    },
+    {
+      "type": "ts",
+      "text": "03:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the basic idea is to democratize machine learning, so all sorts of domain experts can\nactually know enough about it to really leverage it in a meaningful way."
+    },
+    {
+      "type": "ts",
+      "text": "03:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. You said it way better than I did. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "03:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Let’s get back to the competition. So the end of the competition is a great\ndramatic story of, “Google gorilla stomps on everything by dropping TPUs at the last\nmoment.” But what were you actually doing in order to get into first place before Google\nkind of jumped in there?"
+    },
+    {
+      "type": "ts",
+      "text": "03:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so a couple of things. The main thing is related to the way we were training the\nmodel and in particular, the learning rate schedule. So to take a little step back, when\nyou train with machine learning models, initially, your model is random, so it’s\noutputting crappy predictions. But then you compute loss, and from that loss, some\ngradients that are going to make your model a little bit better if you adjust the weight\nfollowing those gradients. This whole process is called stochastic gradient descent."
+    },
+    {
+      "type": "ts",
+      "text": "03:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, and just to say a higher level thing about all of this. This is just an example of\na more general thing called function optimization, right? You have some function that you\nwant to optimize, in this case, the function is given the set of model weights and the\ninput you want to run on. You want to find the set of model weights that give you the best\nand most accurate answer. And we just approach this like we do in some sense, almost any\nother kind of optimization problem with techniques that actually like go back 50 years or\nsomething of, we’re just going to compute a derivative and we’re gonna walk the model\nweights in the direction of the derivative, and just do that over and over until we get to\na more optimal result."
+    },
+    {
+      "type": "ts",
+      "text": "04:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yes, exactly. Like the whole process and the whole math behind it existed for like 50, 60\nyears. It’s just that with GPU becoming more and more powerful, we actually had the\ncompute to apply that process to complex problems, like deep learning. So that very\nimportant type of parameter, the learning rate, is kind of the size of the step we take,\nfollowing those gradients.  At the time of the competition, the most popular learning rate\nschedules were, like, very inefficient, just training at a low learning rate for a very\nlong time. And then we divide that low learning rate by 10, and we train for even a longer\ntime. That did converge to a good accuracy, but it was very inefficient. And one of the\nthings we had in our competition entry was to follow a learning rate schedule that is more\nlike a warm-up from a low learning rate to a high learning rate, so not start at a high\nlearning rate because otherwise your model immediately explodes. But by warming up,\nstarting from something low and gradually increasing it to the maximum, we can have the\nmodel learn a little bit of something for those and then have a high learning rate for a\nlittle bit of time, so that we can explore the loss landscape efficiently, and then\ndecrease it towards the end. And this kind of schedule made it possible to train the model\nto the same accuracy, but way faster."
+    },
+    {
+      "type": "ts",
+      "text": "05:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Why is that a better schedule? If you kind of just think about this without knowing all of\nthe details. The idea that when you’re very far from the answer, you want to take large\nsteps, and when you get closer to the answer, you want to take smaller steps, seems\nintuitive. But here, you’re saying instead that you start with small steps, and then go up\nto big steps, and then go down to small steps. So what about the structure of the problem\nmakes that the right approach?"
+    },
+    {
+      "type": "ts",
+      "text": "05:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "I mean at the beginning of the problem, like, since your model is randomly initialized, in\nthe landscape of your loss function, you are very, very high, and you actually have very\nsteep canyons. So if you take large steps at the beginning, you can at least begin to\ndescend into one of those canyons of the loss function, and then increase that learning\nrate to dive through there fast. And you will skip over a lot of local minimas because\nyour learning rate is large. So towards the end, you need that decrease, to step down\nfurther into one of those smaller parts of the landscape of the loss that have these local\nminimas."
+    },
+    {
+      "type": "ts",
+      "text": "06:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, is the intuition here that when you start at a randomly initialized point, the terrain\naround which you’re trying to optimize is just more wild. And if you take big steps, your\nderivatives are very high, and you’re kind of jumping all over the place. But even with a\nlittle bit of optimization away from that initial randomness, you end up in something that\nfeels like a more regular space, and now you can go back to what makes more intuitive\nsense."
+    },
+    {
+      "type": "ts",
+      "text": "06:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yes. It depends also, like, we are talking about just a 3D problem. But we have millions\nof dimensions because your model has millions of parameters. So it’s the idea that, yeah,\non some of those dimensions the landscape is very, very spiky. So at least taking care of\nthat at the beginning with a low learning rate is gonna make the whole optimization\nproblem easier, and then you can have larger steps."
+    },
+    {
+      "type": "ts",
+      "text": "07:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah I do think there’s this, kind of, terrible intuition one has when one thinks about a\nproblem like this, of like, “I’ll try and visualize it in two or three–"
+    },
+    {
+      "type": "ts",
+      "text": "07:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "07:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "–dimensions.” And you’re like, “You have just lost all of the important structure and you\nreally need to think about this high-dimensional problem to really know what’s going on.”"
+    },
+    {
+      "type": "ts",
+      "text": "07:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "That was one of the optimizations. The other optimization we did was a computer vision\nproblem. And so the kind of models we applied to them – which are called CNNs, for\nconvolutional neural networks – can work on any size of images because it’s just some kind\nof filter that you apply over all of your image. And so the idea is at the beginning of\nthe model, like when you train, the model is random, it’s crappy, so it doesn’t really\nneed to see the whole picture. We kind of gave it a more blurry version of the picture,\nlike just 128x128, and then gradually as training goes on, we increase the size of those\nimages to make them more of the standard size. People are doing that problem we’re\nusing. And you have that gradual resizing as well, because if at the beginning, your image\nis smaller and you have your filter to like, put all around the place of that image, it’s\ngoing to be more efficient if you have less pixels, compared to doing the training with\nalways, like, the high-resolution images."
+    },
+    {
+      "type": "ts",
+      "text": "08:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, so there’s two neat properties of convolutional neural networks that are coming\ninto play here. Convolutional networks are, in general, a dimensionality reduction\ntrick. You can imagine a big network that’s applying to all of the different inputs, and\nall the different parts of the image, and then you could just have weights that are\nindividual to all the neurons that are associated with all the different parts of the\nimage. But that’s enormously wasteful because in the early parts of the network, you\nactually want, sort of, the same regular structure over and over.  And so the basic idea\nof a CNN is you kind of lock those weights together, so you in some sense just have one\ncopy of this neuron which is activated multiple times in multiple places. But then once\nyou’ve done that trick, you also have this resolution independence where you can write it\nat multiple different resolutions and you’re saying, “Well, we’re just gonna train this\nthing at low resolution, and then, again, after it gets into the ballpark and we need to\nmore precisely fine tune it, then we’ll increase the resolution and do the rest of it.”"
+    },
+    {
+      "type": "ts",
+      "text": "08:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "08:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And were these essentially new techniques at the time of this puzzle?"
+    },
+    {
+      "type": "ts",
+      "text": "08:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, both of them were new techniques. Like, the gradual resizing is still not that\nwidely used. The new, kind of, learning rate schedule is like, now everyone uses that,\nlike all transformers models like GPT-3.5. I think we are GPT-5 now, not for sure, because\nOpenAI does not publish its research, but like–"
+    },
+    {
+      "type": "ts",
+      "text": "09:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "09:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "–the open source versions of that are trained using that kind of schedule. And since\nbirth, we have seen that kind of learning rate schedule all the time."
+    },
+    {
+      "type": "ts",
+      "text": "09:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s how you got into fast.ai and you got into this competition space. How did you\nend up being co-author of this book?"
+    },
+    {
+      "type": "ts",
+      "text": "09:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So after collaborating on the fast.ai library and yeah, participating on the forum, that\ncompetition, Jeremy Howard kindly offered me a job at fast.ai, which I accepted. So I\nworked there for two years, built a couple versions of the fast.ai library, and two\niterations of the online course. And it was very natural going from, like, the course to\npublish a reference book with kind of the same content, just in a different format for\npeople who prefer to learn from books, instead of YouTube videos."
+    },
+    {
+      "type": "ts",
+      "text": "09:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. And then what brought you to Hugging Face? And what is Hugging Face?"
+    },
+    {
+      "type": "ts",
+      "text": "09:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So, Hugging Face is kind of the GitHub of machine learning. The idea is that we have a\nwebsite that looks kind of like GitHub – except instead of having repos with code, you\nhave repos with model weights. So like lemma one, lemma two, lemma three, and 3.2, that\nwas released a couple of days ago, are all on Hugging Face, along with I think now is a\nmillion public model from all kind of applications of machine learning, like computer\nvision, text, speech, et cetera, et cetera. And yes, the idea is that they are kind of at\nthe forefront of the open source AI by allowing people to share those models. And what’s\nhappened, a couple of libraries, because model weights are very good, but if you don’t\nhave the code to actually instantiate those models, they are kind of useless. To\ncomplement that, they have libraries like there’s a transformers library, which actually\ncontains the code of those models."
+    },
+    {
+      "type": "ts",
+      "text": "10:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how did you end up at Hugging Face?"
+    },
+    {
+      "type": "ts",
+      "text": "10:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "In 2020, there was this thing that happened worldwide."
+    },
+    {
+      "type": "ts",
+      "text": "10:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, yeah. I vaguely remember that."
+    },
+    {
+      "type": "ts",
+      "text": "10:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Yeah. And so, that kind of disrupted some plans at fast.ai. So I looked for\nanother job, and there was this start-up from French people, which was based in New York\nCity. And so, I knew them from, like, the French community in New York City, and I met\nthem a couple of times before. They were looking to expand. So I applied to Hugging Face\nand I joined them randomly in June of 2020 as a continuation of my work in open source\nfrom fast.ai to democratize machine learning and help people use the transformers library\nor their website with all the public weights on it."
+    },
+    {
+      "type": "ts",
+      "text": "11:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what kind of technical work did you end up doing at Hugging Face?"
+    },
+    {
+      "type": "ts",
+      "text": "11:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Couple of things. There was the maintenance of the open source libraries, because there\nare people doing pull requests, having issues kind of all the time. So that is already a\nhuge amount of work. Then I developed new tutorials and new examples to help people use\nthose libraries, and that kind of ended with an online course that was meant to be taken\nafter the fast.ai course, like for more – for people who wanted to specialize a little bit\nmore into transformers. So there were those two aspects, and then yeah, at some point,\nlike all the researchers at Hugging Face were kind of annoyed by our big black box\ntrainer, which contained all the stuff for the training loop. And it becomes with time,\nlike, this huge amount of spaghetti code, because you have new flags that appear to kind\nof control everything that people want to do with our trainings. And so I created a new\nopen source library to make it much more lightweight to help people with our trainings, so\nthat they can have more flexibility.  Yeah, the idea is that usually those APIs are\ntrained models. You have a trainer API and you give it some things, like your model and\nyour data, and you click “train,” and it trains, and it’s marvelous for people who just\nwant that. But yeah, researchers who wanted to change, like tweak a training loop a little\nbit, were struggling a bit more. So there are various techniques that have applied for\nthat in the past. Like in fast.ai, we had some callback-based systems. So we had callbacks\nthat the researcher could implement to change a little bit the behavior of the training\nloop at this particular point or another. The Hugging Face trainer was less\nextensible. But for that library called Accelerate, I went back to, like yeah, if the\nresearcher is just going to write their training loop, and there’s not going to be like a\nblack box trainer, and they just need to change like a couple of lines here and there to\nmake it run on any kind of systems. At first, it was like six lines, then five lines, and\nwe tried to reduce that number of lines to the absolute minimum so that there was as\nlittle intrusion as possible. That kind of gave that API from Accelerate."
+    },
+    {
+      "type": "ts",
+      "text": "13:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And when you say you want to make it possible for people to do their training on multiple\ndifferent kinds of systems, what is the diversity of systems underneath that you’re\nthinking about? What are the kinds of systems and different variations on the training\nthat you were trying to enable with Accelerate?"
+    },
+    {
+      "type": "ts",
+      "text": "13:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Training requires a lot of data. Usually when you train with large language models or like\neven other kind of models. And to make it more efficient, usually you kind of divide and\nconquer. And if you have multiple GPUs, you give a slice of the dataset to each of your\nGPUs. And so let’s say you have n GPUs then your training time should be reduced by n at\nthe end of the day because they fully parallelize the things that you cared about, just by\nsplitting your data this way. So this is called data parallelism, and it’s kind of the\nfirst level of parallelism we can use when we have multiple GPUs and we want to run a\ntraining on them.  And so you can do that in PyTorch, except it requires some kind of\nboilerplate code that is a bit annoying. So the idea of Accelerate was to remove that\nboilerplate code by just having to change a couple of lines in your training loop, and\npoof! Your model can now run training on multiple GPUs, also on TPUs – but of course the\ncode to run them with the same kind of distributed data parallelism on TPUs is different\nfrom the one on GPUs. That would be too simple otherwise."
+    },
+    {
+      "type": "ts",
+      "text": "14:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "14:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "And then if you have done the modification, nothing runs on CPU again. So the idea is that\nit kind of deals with all of that crap for you of detecting which kind of an environment\nyou are on, and then adding the boilerplate code that is needed for your training to run\nsuccessfully for all of those kinds of systems. And then it also adds like, if you want to\ntrain in a mixed precision setting because you want to use lower precision types, we can\ntalk about that later. It also dealt with the additional lines of codes that were required\nto properly do that, kind of automatically."
+    },
+    {
+      "type": "ts",
+      "text": "14:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I mean I think this whole discussion kind of underlines just the diversity of\ndifferent hardware and setups that you can do when you’re doing training. There’s the,\nkind of, in some sense, simplest thing of like, you can run your training on a CPU, which\nis a thing that people did for a long time. And then there are multiple different parallel\narchitectures: GPUs, which are like, literally descendants of graphic programming chips,\nand TPUs, which is this tensor processor that Google came up with. And the main game here,\ngoing from the CPUs to the GPUs and TPUs, is about parallelism. It turns out, CPUs are\nthese kind of funny machines that have lots of parallel circuits, but they’re interpreters\nfor a brutally sequential programming language, right?  And so they’re not that good at\ndoing lots of things in parallel, and in fact, there’s all the complexities of like,\nmulti-core architectures and stuff on that side, which is how you try and take advantage\nof parallelism there. But then GPUs and TPUs are machines that are much more directly\nparallel in their structure, and built for large-scale, highly regular parallel\ncomputations. And then at some point, those things aren’t enough either, and now you start\ngetting to various forms of distributed. You want so much parallelism, you want multiple\nGPUs. And then the first thing that you were talking about was this data parallel\ntraining, where what we’re doing is we’re running this, like, stochastic gradient descent,\nwhere we’re picking random subsets of data, breaking it up into batches, and then training\non individual GPUs and computing, like, a net gradient which we then use for updating the\nmodel.  And then there’s also pipeline style parallelism, which you might need when your\nmodel itself is too big to fit. In fact, not just pipeline parallelism, but various kinds\nof model-level parallelism, where you actually take the model and break it up and split it\namong multiple GPUs, because even the model weights themselves are too big to fit\nthere. And then Accelerate is trying to help you write your model once, and you’re\ntraining once, and do a modest amount of modifications to be able to access this whole\nsweep of different ways of doing the training."
+    },
+    {
+      "type": "ts",
+      "text": "16:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. If your model does not fit anymore on one GPU, you can split it different\nways. You can split the layer. You can say, if it’s a deep learning model, like usually\nthose come by, they are bigger because you have stacked more layer. You have layer one on\nGPU one, layer two on GPU two, layer three on GPU three, et cetera, et cetera, which is a\ngood idea because then your model fits, but then there’s this inefficiency in the sense\nof, GPU two has to wait for GPU one to be finished to be able to process as a result and\npass it along to GPU three. And so that’s where pipeline parallelism comes into play,\nwhere you’re trying to pipeline things efficiently.  So like, give a little bit of your\ndata to GPU one, which is gonna send it to GPU two, and then GPU one will process the\nsecond little bit of data, while GPU two is busy computing the first part. And there is\nthis ping pong between the forward, when you run through your model and the backward pass,\nwhere you compute all of your gradients. So you can also efficiently interlace, like, some\npart of the forward and some part of the backward computation in that pipeline\nparallelism.  And then there is tensor parallelism where instead of splitting your model\nby layers, you actually split the weights of your model into chunks. And like, each GPU\nonly sees, like, one part of the weights. And so like when the GPU need to come together\nand agree on the results of all the matrix multiplies that you compute. So this kind of\nparallelism requires way more – I mean, a very efficient way to communicate between GPUs\nto be accessible."
+    },
+    {
+      "type": "ts",
+      "text": "17:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Maybe the other interesting thing about the hardware around this kind of\nstuff is the criticality of the network. You need these very fast network transfers to do\nthe tensor exchanges. And yeah, there are some contexts where it can be a little less\ncritical because you can overlap compute and data, and some things like this tensor\nparallelism, the GPUs are just gonna be sitting idle while you’re waiting. So, we nowadays\nhave these, kind of, wild new networks which have much, much higher capacity and are very\nfocused on these very low latency and high determinism data transfers.  One of the things\nI think is interesting about this is the way in which the networking stack has changed,\nright? I think when I started learning about, “How do you do high-performance trading\nsystems?” I learned about, “Well, the operating system kernel is obviously too slow. So if\nyou want it to be reasonably fast, you have to do kernel bypass. You have to have a user\nlevel networking stack that’s doing the communication.” And these systems use a technology\ncalled RDMA, remote direct memory access, which I think an easier way of understanding\nwhat’s going on here is, it’s CPU bypass, right?  Basically network comes in on the NIC,\nand then without going through any CPU at all, just gets copied directly to the place in\nmemory that it needs to go, maybe directly into the GPU memory. So you’re really cutting\naway all of the fat from the bones that you can to make this stuff go as fast as possible."
+    },
+    {
+      "type": "ts",
+      "text": "19:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yes. And even in the more recent hardware that NVIDIA has announced, at the last GTC, like\nyou kind of stack your GPUs as close as possible, and you try to put as many as possible\nyou can in a single cab. So, like there are 72 GPUs in the same cab, very close to each\nother, so that you can have even faster network between those because you have a V. They\nstack some, the network is in the middle, some GPUs above, some GPUs below and they have\nthis big NVLink in the back that links everything together very fast, just because they\nsit very close together."
+    },
+    {
+      "type": "ts",
+      "text": "19:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, you start caring an enormous amount about the physical layer at this point. Today we\ncan get these NVLink setups where inside of a single box with, say, 8 GPUs in it, you get\nthis fast network. And yeah, what you’re describing is doing this at the cabinet level."
+    },
+    {
+      "type": "ts",
+      "text": "19:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "19:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is funny. Yeah, I mean, I remember hearing people talk about, like, earlier hacks,\nnot for machine learning but for other purposes, where people would, like, you know,\nbasically try and make little supercomputers where you unroll your PCI Express network and\nbasically spread it over an entire cabinet. And in some sense, InfiniBand sort of grew out\nof the similar supercomputer networking fabric. And indeed, InfiniBand plays a real role\nin how these GPU networks work as well. Okay. That was the stuff you did at Hugging\nFace. So more recently you’ve joined Jane Street, tell me a little bit about what your\nrole here entails."
+    },
+    {
+      "type": "ts",
+      "text": "20:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Sure. So Jane Street, I mostly work here on the engineering performance, around machine\nlearning. So day-to-day life is, a researcher will come to me with a model they’ve\ntrained, and they’re like, “Oh, my training is going really slowly. Could you help me with\nthat?” And we’ll profile it together, try to identify the bottlenecks, and make it\nfaster. To take a step back, most of the researchers here at Jane Street use PyTorch,\nwhich is the software to write neural nets and train models, which has the particularity\nof being really accessible because it’s eager.  The counterparts from Google, TensorFlow,\nand JAX are more like compiled languages. So it’s kind of harder to get started, because\nyou write your model but then it does not compile, and so you need to fix some of the\noperations that seem like valid Python operations, but you need to kind of modify them so\nthat TensorFlow or JAX recognize them and see, “Oh, this is what you are trying to do.”\nWhereas in PyTorch, you can do anything you want, but then your code can be inefficient in\nsurprising ways, because that particular operation, for instance, has no implementation in\nthe GPU.  And so, like, the computer only needs to transfer data back to the CPU just to\nbe able to execute it, and then send it back the other way. And in general, especially on\nmodern GPUs, and the way PyTorch works is that when you want to execute a model, the CPU\ndispatches the operation on the GPU async, so that, like, the CPU immediately runs to the\nnext instruction. And you’re getting your hardware in a good state, and if your CPU is\nalways ahead of your GPU, and then the GPU has lots of stuff to process, but as soon as\nyour code requires some synchronization because you need some data back from the GPU to\nthe CPU, it can become pretty inefficient. Just because you’re kind of stalling the GPU as\nthe CPU will wait to get the data back. And then it will take time for the CPU to send\nback some new operations to execute to the GPU."
+    },
+    {
+      "type": "ts",
+      "text": "21:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, and it’s that waiting, where the GPU’s waiting on the CPU, it’s slow for a lot of\nreasons. It’s slow because the memory transfers are slow. It’s slow because CPUs are\ninherently slow. And then, oh my god, it’s slow because the code that’s running is written\nin Python. Which is maybe like 60 times slower than what the corresponding thing written\nin C might have looked like."
+    },
+    {
+      "type": "ts",
+      "text": "22:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Like, even if you don’t care about GPU, most of your Python code, you will always\ntry to have it vectorized. We’re trying to write as few for loops in Python as possible,\nbecause those will be very slow. Whereas if you can execute an operation from, like,\nNumPy, which will be backed by C or C++, it will be much faster. And it’s kind of the same\nidea for the GPU, except on top of that, you have that complexity of, to avoid\nsynchronization point between the CPU and the GPU as much as possible."
+    },
+    {
+      "type": "ts",
+      "text": "22:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And notably, when a C programmer says, “Oh, I wanna make sure this is vectorized.” What\nthey mean is, “I wanna make sure I’m using, like, the SSE, AVX,” whatever instructions\nyou’re vectorizing, that are, like, using fundamental parallelism technologies baked into\nthe CPU to be able to do, like, four or eight or whatever, computations in parallel. And\nwhen a Python programmer says “vectorize,” what they mean is the inner loop is in C. And\nmaybe it’s also vectorized with AVX or whatever at the bottom. But the fundamental thing\nis getting away from the Python interactive loop."
+    },
+    {
+      "type": "ts",
+      "text": "23:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Sometimes you can have code that looks very innocuous, but you’re actually\nexecuting a for loop which is going to, at every iteration, trigger asynchronization\nbetween the CPU and the GPU, which is extremely bad, because you’ll, like, launch a tiny\noperation on the GPU, and then have to wait for the GPU to finish it and get back the\nresult to the CPU, and then launch a new tiny operation on the GPU, et cetera, et\ncetera. And this is also really bad, because one thing we forgot to mention is, starting\nsomething on the GPU is also very slow.  It takes some time for the CPU to send the code\nof the kernel, all the input and the outputs. That takes a couple of mics, or even\nsometimes a millisecond to get started and actually having your GPU starting to do the\nwork."
+    },
+    {
+      "type": "ts",
+      "text": "23:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s maybe worth saying, we’re throwing this word around, kernel, a lot, which is kind of\na funny, GPU-specific word. And basically the kernel is the small computational program\nthat you are typically running on the GPU. And writing these GPU kernels is actually\nreally hard because they’re highly parallel and they’re hard to reason about. And so the\nprograms, in fact, tend to be numerically very intense, but in terms of lines of code,\npretty small. You’re not creating, like, million-line code bases that are running on the\nGPU. They’re a lot tighter than that."
+    },
+    {
+      "type": "ts",
+      "text": "24:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. You call those individual small kernels. A kernel to do matmul, and then a kernel to\ndo some activation function in neural net. Yeah this is just one Python line which is then\ndispatched on the GPU to be executed in parallel."
+    },
+    {
+      "type": "ts",
+      "text": "24:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the thing that always kills me about this whole PyTorch story, is that if you asked me\nto design something, I would definitely design something like TensorFlow or JAX. Just to\nsay, like, the basic idea of TensorFlow and JAX is that you’re more or less hijacking\nPython as a metaprogramming system. You kind of write what looks like Python, but what\nyou’re really doing is you’re writing in some domain-specific language for expressing the\ncomputational graph that represents the program that you’re gonna run on the GPU.  And the\nreason I would’ve wanted to do it that way is because it seems just dramatically easier to\nmake sure that thing is gonna run fast. You can’t take every arbitrary Python thing and\nmake it run fast on the GPU. So you restrict yourself to some DSL where you can guarantee\nthat things are running fast, and it just seems like the whole thing is gonna be much\neasier to reason about whether I’m staying inside of the envelope of reasonable fast\nprograms, and all of that. PyTorch is kind of clearly one, JAX is new and exciting and\nmaybe that will get more mindshare over time, but TensorFlow was the big thing and then\nPyTorch has been much more successful.  And it just kind of frustrates my intuitions as a\nperson who designs APIs. Do you have a view as to, like, why is it that PyTorch kind of\nwon, and things like TensorFlow and JAX are more niche?"
+    },
+    {
+      "type": "ts",
+      "text": "25:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So, yeah, PyTorch won for the flexibility. Like we saw ML researchers want to easily fool\naround with various ideas. And maybe at first it will be very inefficient, but they want\nto be able to iterate really fast through their ideas and test quickly if they’re going to\nbe worth it or not. And even if the first training round is inefficient, if the idea turns\nout to be a good idea, then we can spend some time optimizing it and making it as fast as\npossible.  PyTorch kind of represents that model well. You can fool around very easily and\nyeah. Also, like, with that model of execution that is asynchronous, you still get the\nperformance. Unless your code triggers some of the hidden CPU, GPU, synchronization, your\ncode is still performant when you run it from PyTorch. There is this flexibility, this\nidea you can easily fool around. And they did come around having a compiled thing like\nPyTorch 2.2 introduced torch.compile, which was kind of what people didn’t like about\nTensorFlow, but they kind of had to implement it at the end.  Modern GPUs are really,\nreally fast, and that programming model of, “I’m just going to dispatch the operation\nasynchronously from Python” was starting to lose, just because the GPU was so fast that by\nthe time your CPU has scheduled the kernel, the GPU was already finished, basically. And\neven if you kept telling the CPU, like, “Schedule this kernel, this kernel, this kernel,”\nin a row, it would just not be fast enough for the GPU. And this idea behind torch.compile\nis, again, to get the whole computational graph from your model, and then try to identify\nin that graph, maybe there are places where you’re doing something that’s very inefficient\nand we can simplify the instructions. But more importantly, try to take two consecutive\ninstructions and fuse them together on the GPU so that instead of launching a lot of small\nkernels on the GPU, you launch one big kernel which does a lot of work.  And this is very\nefficient for – first, you don’t pay the overhead. And the second thing that’s very\nefficient is that very often, like, kernels that are in a row, they read the data that the\nprevious kernel has already written. So you have this inefficiency, “I’m gonna write\nsomething in GPU memory,” and then immediately in the next kernel, “Oh, I’m gonna read\nthat GPU memory I just wrote.” And there are some cache systems in the GPU but still, you\nhave some bit of overhead by doing that. Whereas in a fused kernel you can just keep that\ndata in registers in the GPU, and you don’t have to move it around if it wasn’t necessary."
+    },
+    {
+      "type": "ts",
+      "text": "27:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, so you get to skip both the memory transfers and the kernel launch time?"
+    },
+    {
+      "type": "ts",
+      "text": "27:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, kernel launch overhead. And so we do this, which is kind of a crazy hack, by using\nanother Python DSL, which is called Triton, which is kind of a subset of Python where you\ncan directly write efficient CUDA kernels, which works well. Like, if you want to write a\nfast matrix multiplication in Triton, it’s relatively easy and we have some crazy\ntemplates, basically for all of the operations you can do in a PyTorch mode. And we fuse\nthese templates from the graph that they extracted during torch.compile to create big\nTriton kernels that can execute big chunks of the model on the GPU at once."
+    },
+    {
+      "type": "ts",
+      "text": "28:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So yeah, maybe we should talk for a second about the programming language ecosystem\naround GPUs. GPUs have a really interesting underlying computational model. And then\nthere’s a big collection of programming tools for it. Maybe you can walk us through what\nsome of the major pieces of this ecosystem are."
+    },
+    {
+      "type": "ts",
+      "text": "28:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so if we start at the bottom level, like the equivalent of C for GPU is CUDA, which\nis a proprietary language from NVIDIA that they developed to program their GPUs. AMD\nsupports most of CUDA as well because they kind of have to. They are a bit late in the\ngame and if they want people to adopt their product, they kind of need to make sure the\nsoftware is what people are used to. It’s basically C except you have those kernels that\nyou write, which are executed in parallel on the GPU. And it comes with everything that’s\nkind of a pain in C, like you have to do lots of pointer arithmetic to make sure that you\nare looking at the right data, you have undefined behaviors every time you are not super\ncareful, and it’s pretty hard to debug."
+    },
+    {
+      "type": "ts",
+      "text": "28:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it’s a very low-level system, and it also exposes you directly to the performance\ncharacteristics of the GPU. Or like, not exactly directly, because it gives you some layer\nof abstraction, but you get to see a lot of the underlying details. And I guess one of the\nthings that struck me, as someone who’s mostly used to thinking about performance in the\nCPU context, is how different the concept of threads is on a GPU versus a CPU. I wonder if\nyou can say a little bit on, “How should someone who’s coming to GPUs for the first time\nthink about threads?”"
+    },
+    {
+      "type": "ts",
+      "text": "29:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Oh. (laughs) You will have lots and lots of them, for one. The GPU can launch a million\nthreads pretty easily, and all execute them in parallel. The idea is that you have those\nblocks that correspond to physical blocks on the hardware, where, like, a bunch of thread\nis executed. And even those threads are executed in a group which is called a warp. When\nyou write a kernel, it’s actually each instruction is going to be seen exactly at the same\ntime by 42 threads, which together form a warp. And one block has a number of warps. I\nmean, any number of warps that you want that’s not too, too large.  Like, one block can\naccommodate, like, 1,024 threads maximum, and then you can launch several of those blocks\nin parallel. Yeah, so the idea of that block layer is that it’s physically on the GPU chip\nat one location, so you can have, like, some memory that is shared between those threads,\nwhich is useful, for instance, if you’re doing matrix multiply, you are gonna load some of\nthe weights into that shared memory, and then use it with those threads to compute\nsomething repeatedly, instead of, like, accessing the same region in global memory several\ntimes."
+    },
+    {
+      "type": "ts",
+      "text": "30:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So there’s some more expensive, smaller, closer-to-the-thread memory that sits\nthere to be shared among these threads that are on the same SM, right?"
+    },
+    {
+      "type": "ts",
+      "text": "30:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Streaming multiprocessor."
+    },
+    {
+      "type": "ts",
+      "text": "30:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And then maybe the other thing that’s perhaps not obvious to someone who hasn’t\nthought much about GPUs is, you also have dedicated registers."
+    },
+    {
+      "type": "ts",
+      "text": "30:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Up to, like, a certain amount of registers. Like it’s 65K for the whole SM. You can\nhave a program with lots of threads that use few registers or maybe a program that has\nless threads but each thread can use more registers."
+    },
+    {
+      "type": "ts",
+      "text": "30:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And the critical difference here between CPUs and GPUs, is on a CPU you have a\nreally small number of registers, and then when there’s a thread, there’s just like one\nthread running on the CPU and using all of those registers. And then, when you want a\ndifferent thread to run, you have to swap it out in all of the registers, and swap the new\nthread in. And so you have this fairly large context switch time, and context switch times\non GPUs are incredibly small. And so this is part of what enables you to do this, kind of,\nmassive multi-threading.  You have all of these different threads, and the threads are\nboth able to execute in these warp groups so they can do stuff in parallel, in groups\nof 32. But also, they often end up being blocked. Not typically blocked on I/O, because\nthe GPU’s not doing I/O, but just blocked on memory, right? They need to do a thing, they\nneed to wait for memory to be shuffled in. And so you can immediately grab some other\ngroup of threads that’s running and get them started, and you can hide a lot of the memory\nlatency by having all of these threads that are consuming different pieces of memory\nconcurrently."
+    },
+    {
+      "type": "ts",
+      "text": "31:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s the job of the SM. So the warp controller is gonna schedule warp on a unit\nthat’s gonna do some float arithmetic however you need, specifically dedicated to matrix\nmultiply, which can do like a small 16x16 matrix multiply for those 32 threads that we\njust mentioned. And whatever units that are going to load something from global memory or\nfrom shared memory instruction is dispatched on one of those calls. And then immediately\nafter it’s finished, like another warp is gonna take its place. And this way most of the\nlatency is hidden from the user as long as you can express your program in a way that you\nalways have a warp computing something."
+    },
+    {
+      "type": "ts",
+      "text": "32:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And CUDA gives you direct, explicit, low-level access to more or less this computation\nmodel in an unsafe programming model, which is not especially clearly documented, and can\nbe, like, hard to figure out and hard to understand. And when you get it wrong, you just\nget weird, undefined behavior and your program breaks in hard to understand ways. Okay, so\nthat’s CUDA. It’s great and terrible. What else is there in the programming language\nspace?"
+    },
+    {
+      "type": "ts",
+      "text": "32:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So we mentioned PyTorch, TensorFlow, and JAX, which are kind of the exact other hand. So\nit’s something that’s in Python, with all the good and the bad of Python, that then is\ngonna express, either compile the computational graph onto side of JAX and TensorFlow or,\nlike, directly send instruction to the GPU on the side of PyTorch, which yeah, we’re gonna\ndispatch with CUDA kernels that we just talked about. And in the middle there is a flurry\nof new languages, because as it turns out, researchers love to hack and test new ideas,\nbut they also don’t love to code in CUDA, for some reason."
+    },
+    {
+      "type": "ts",
+      "text": "33:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "33:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "And in the middle, there are several languages, like Triton, which kind of sit in Python\nland in the sense that it’s a syntax that looks like Python and you have, like, some\nsubset of Python operations that are supported, but are actually just DSLs to generate\nefficient CUDA kernels. So we mentioned Triton is one of them."
+    },
+    {
+      "type": "ts",
+      "text": "33:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I guess one thing about Triton is, it’s in some ways not quite as general purpose,\nit’s really good for doing things that kinda vaguely look like matrix multiplies."
+    },
+    {
+      "type": "ts",
+      "text": "33:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I mean, in general, modern GPUs are really, really good at matrix multiplies. They\nhave special cores on them called TensorCores, which are really efficient. And any way you\ncan make your program look like a matrix multiplier, you’re gonna get way more flops than\nif it’s just regular floating point operations. Triton is really good at programming those\nstyles of arrays and matrix multiplying them, or like then reducing them if you want. If\nyour model computation is slightly different than that, sadly, very often Triton will not\ncompile your code and won’t necessarily tell you why, as your message is not always super\nclear. And the debugging experience is also not always super nice because you’re not in\nPython anymore. Like, it’s generating CUDA kernel and so, you can’t really in the middle\nof it inspect the states of everything or like, you can try to print a bit of the stuff,\nbut it kinda stops like that."
+    },
+    {
+      "type": "ts",
+      "text": "34:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s also this weird decision that the whole machine learning world has made, that we\ncan have all the innovation we want on the programming language side, but the syntax\nalways has to be Python."
+    },
+    {
+      "type": "ts",
+      "text": "34:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs). Yeah, most people are used to Python. So, you can try to move them all to\nanother language. There are some times, like Google tried Swift for TensorFlow to try to\nget Swift programmers into machine learning or to move away a Python programmer to another\nlanguage that is more efficient, but that didn’t go so well. It’s also like, there’s a\nwhole ecosystem in Python with all the rest of the libraries you need to process your data\nor inspect your results and stuff like that. You can try moving researchers away from\nwhere they like, but very usually they don’t really follow you. (laughs)."
+    },
+    {
+      "type": "ts",
+      "text": "34:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another interesting language in the space, which I actually don’t know a ton about is\nMojo. I’m kinda curious what your thoughts on that are."
+    },
+    {
+      "type": "ts",
+      "text": "34:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So Mojo, I think I don’t know a lot about it, so I hope people will excuse me if I say\nmany mistakes, but it’s kind of the same as Triton, except instead of wanting to be a new\nDSL in Python, it’s kind of its own new language which looks a bit like Python but still\nis its own language. The support for GPU in Mojo is going to be released in a couple of\nmonths from what I heard but it’s not there yet. But the idea is that you will be able to\nwrite those efficient CUDA kernels like you do in Tritan in that language Mojo. But since\nyou are not trying to do it a DSL in Python, there is going to be support for like,\ndebugging or like, maybe better handling just because you are writing in a language that\nwas specifically designed for that, instead of trying to add that functionality in Python."
+    },
+    {
+      "type": "ts",
+      "text": "35:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I think unlike writing stuff directly in CUDA, it’s a safe language, right? I\nthink it’s got enough type system support that if you do something crazy, it will actually\ntry and catch it for you. The way I understand it is that it’s, like, a little bit\nRust-inspired. I think it has some of the same Rust-like mechanisms, lifetimes, things\nlike that. And so, if it’s following that kind of approach I would expect them to try and\nmake it actually safe."
+    },
+    {
+      "type": "ts",
+      "text": "35:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah and then you have other projects in the same space, so Mosaic GPU and Mosaic TPU are\nsome Google projects that kind of do the same thing of giving you some Python interface to\ncreate efficient CUDA kernels. And if you want to write CUDA kernels but in Python,\nbecause you really love Python, there are some languages like Numba. You’re doing exactly\nthe same thing as you would do in CUDA, just the syntax is Python."
+    },
+    {
+      "type": "ts",
+      "text": "36:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. Stepping away from all this panoply of languages out there, how does this all play\ninto the work you do here? You know, researchers working on a model, they’ve put together\ntheir model in PyTorch, it’s not running as fast as they think it should, or they hoped it\nwould. What do you do? How do you approach these performance questions?"
+    },
+    {
+      "type": "ts",
+      "text": "36:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "First things first, is profiling multiple times to identify – we talked about CPU and GPU\nsynchronization points, which are inefficient, so a profile will show you that very\neasily. And you can like track, “Oh, this instruction created a choke point by\nsynchronizing GPU and CPU so let’s remove that or let’s try to find a way to remove\nit. Like some of them are easy to remove because you can express them in different\nways. Although, that can be a bit trickier, like for instance if you want your training to\nstop because your loss is none. So if you have a final loss after computing your loss from\nyour data on your random initialized weights, that is very large or none, all your\ngradients are going to be none and then all your model weights are going to be none, so\nbasically your training is finished and completely borked.  So you might as well want to\nstop and stop wasting GPU hours on it. So like, even that tiny thing is kind of difficult\nbecause when you have a GPU loss that is none in Python to be able to know which branch of\nthat, which statement the CPU should execute, it needs to know like if the loss is none or\nnot, so it needs to wait on the GPU to have finished computing to be able to inspect the\nvalue.  You have kind of a synchronization point here that looks difficult to remove. One\nof the solutions is to do that check but in another thread. Like launch another thread\nthat’s gonna do that check, where the CPU is gonna be blocked, but that’s okay because the\nmain thread will continue executing the model. And maybe you will do a couple of\niterations wrong on the CPU and your weight is bad. It will ultimately be nones but that’s\nokay, because your program will be stopped by that thread. This is one example of\nsomething that’s a bit trickier to remove.  The idea is that once you remove all those\nGPU, CPU synchronizations, your GPU is fed up as fast as possible and then the next step\nis you can try to compile your model to access this world of kernel fusion, we talked\nabout just before, to make it even faster. In the process you might also want to use\ndifferent type for your floating point operations. Most of the models have been trained\nfor a long time in float32s, but we discovered that for deep neural networks, float16 is\nactually kind of enough for the precision in the layers in the middle as long as you do\nyour sum. For instance, like when you do a matrix multiply you can have the weights of\nboth matrices be in float16s and still have the results that are kind of correct as long\nas you do that accumulation of others float32s. And that has led to NVIDIA introducing on\nthese GPUs like very efficient matrix multiplies for like, float16s. Now it’s even like\nfloat8, or even like FP4 for the new generation of Blackwell GPUs that are going to be\nreleased soon."
+    },
+    {
+      "type": "ts",
+      "text": "38:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is the float4 a real thing, or is that just a joke? (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "38:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "I have no idea. It’s on the slides, so. I don’t know. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "38:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’m looking forward to float1."
+    },
+    {
+      "type": "ts",
+      "text": "38:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) That sounds interesting."
+    },
+    {
+      "type": "ts",
+      "text": "38:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) It’s either zero or one, or something, I don’t even know."
+    },
+    {
+      "type": "ts",
+      "text": "38:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "But yeah, without going as deep as that, like float16s are really great because you can\ntrain as much as 2X or 4X faster depending on the shapes of your problem for free by doing\nthese mixed precision things, where like some operations are computing in float16, some of\nthose are computing in float32. Just because you access functions or calls that are like\npretty specialized matrix multiply units and they do it really fast if the two matrices\nare in float16 or like this variant called bfloat16 that was invented at Google, as in “b”\nstanding for “brain.”"
+    },
+    {
+      "type": "ts",
+      "text": "39:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how do you think about the programming language setup influencing the problem that you\nhave of helping people build fast models? Like one thing you might imagine wanting is\nhaving this split between, “I am doing the inefficient thing, or, I am doing the efficient\nthing” be really explicit – so that instead of having to come to someone who knows a lot\nabout performance, they could just look at their code and be like, “Huh, let me press the\n‘is it fast’ button” …"
+    },
+    {
+      "type": "ts",
+      "text": "39:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "39:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And be like, “Oh yeah, it’s not fast here and it’s not fast here,” and then they could\nmove things around until it was fast. But it sounds like that’s kind of not what’s going\non. What’s going on is, everything kinda looks okay and you can run it and stuff, but it’s\na little harder to figure out whether or not you’re doing the bad thing. So is there\nsomething to improve there to make it easier for the end users of the system to understand\nwhen they are doing the slow thing?"
+    },
+    {
+      "type": "ts",
+      "text": "40:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "It’s kind of hard. And in that regard, PyTorch is actually better than TensorFlow for\ninstance because it lets you explicitly manage what data is on the GPU and what data is on\nthe CPU. You choose when you do the transfers. Unless like, there is an instruction if\nloss then is none, like we talked about, which creates a transfer that is\nhidden. TensorFlow for instance does not even let you handle what is on the GPU and what’s\non the CPU, it’s gonna take care of everything for you because it is compiling everything\nand it decides for you like, where is your data and how it moves. And so sometimes it can\nalso result in efficient code, just because the compiler decided that this line should be\nexecuted in CPU and this line should be executed in GPU, but that day, the compiler was\nwrong. So at least in PyTorch you can fix things because you get more fine-grained control\ninto stuff like that. And yeah, an employee who was, like, in love with Keras, for\ninstance, would generate something and be like, “Huh. This thing in PyTorch is really\ngreat. I can choose where my data is, and on which device, and like, move it to where I\nwant it to move, and it’s not going to move back unless I ask for it.”"
+    },
+    {
+      "type": "ts",
+      "text": "41:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So there’s like, two different dimensions along which you might want explicit control. One\nis about, “Am I doing a thing that can be put on the GPU or not?” And the other is, “Even\nif I am doing a thing that could be put on the GPU or could be put on the CPU, I can\nexplicitly control where it goes.” And it sounds like it’s more explicit on one side and\nthat it actually just forces everything into the completely understood domain-specific\nlanguage. But then the actual execution of that language has a bunch of compiler magic\nthat you don’t get control over in an explicit way. And this echoes actually a bunch of\nstuff that we’re doing on the OCaml compiler side, where we are trying to do a lot of\nstuff to try and make OCaml faster, mostly by giving end users more explicit control, as\nopposed to making the compiler magically faster. Exactly for this reason of – when you’re\ntrying to enable performance engineering, the key to the realm is control."
+    },
+    {
+      "type": "ts",
+      "text": "41:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Which was also the idea behind Accelerate in some way. Like the key that’s to give back to\nresearchers more control over a training loop because they wanted to mess around with\nit. There is this idea of making sure our synchronization, is it good, is it bad, we only\nsee it by profiling it.  We are trying to do a better job here at Jane Street to at least\nto ultimately keep profiling all the jobs to identify and let researchers know, “Oh by the\nway, like this particular model, took very very long to do this particular step. Are you\nsure that it’s implemented efficiently? Maybe you should profile it.” And we’re trying to\nget everyone an easy way to profile and look at traces to kind of identify the\nbottlenecks. When we have done all of that, like sometimes researchers have some ideas\nthat cannot be expressed into the building blocks that we have. And if they want to do\nsomething that doesn’t have a fast CUDA implementation already in the package in Pytorch,\nwe need to dive deeper into the stacks.  So like we mentioned Triton and writing into CUDA\ndirectly. So yeah, sometimes this is needed just because there is a specific layer a\nresearcher invented and they want to either try it or put it into production and we need\nto make it as fast as possible."
+    },
+    {
+      "type": "ts",
+      "text": "42:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right and then there’s a couple of other interesting features from CUDA that I’ve heard\nyou guys talk about a bunch. One of them is CUDA graphs and the other is CUDA streams."
+    },
+    {
+      "type": "ts",
+      "text": "42:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Oh yeah."
+    },
+    {
+      "type": "ts",
+      "text": "42:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How do those fit in?"
+    },
+    {
+      "type": "ts",
+      "text": "42:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "So CUDA graphs is something that CUDA redid and that was used by PyTorch before\ntorch.compile. It’s been designed explicitly to remove that kernel launch overhead we\ntalked about earlier, like when you’re trying to launch a lot of small kernels and you pay\nthat overhead for each of the small launches. And so CUDA graph is technology that allows\nyou to play that graph of kernels once, inefficiently, but it’s going to record all of\nthose kernel launches and the next time you replay that graph, it’s going to remove all of\nthat overhead because it already knows what it has to dispatch.  It can do that more\nefficiently. So that technology is really useful to remove the overhead of launching a\nseries of small kernels."
+    },
+    {
+      "type": "ts",
+      "text": "43:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it gives you like a lightweight form of fusion, where you’re not really changing any of\nthe operations, you’re just taking all of the scheduling work and putting that on the\nhardware so you never have to go back to the CPU to do it, and you don’t do unnecessary\ncopying of memory back and forth."
+    },
+    {
+      "type": "ts",
+      "text": "43:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And you don’t get the kernel fusion, which would give you the additional benefit\nof avoiding the memory transfers. You’re still doing those memory transfers. If kernel 2\nrequires something in memory from kernel 1, you still have, like, kernel 1 is going to\nwrite it and then kernel 2 is going to read it.  This is still valid, the only way to\nremove that memory in efficiency is to fuse the two kernels either by hand or using\nsomething like torch.compile. But, you remove the overhead which is really nice."
+    },
+    {
+      "type": "ts",
+      "text": "44:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "When you think about fusion in lots of programming languages, you can get rid of memory\noperations, but you can also sometimes get rid of other operations, right? You can do\nother, kind of, optimizations across the two kernels, where like if I know I’m going to do\nthis set of things, maybe there’s some things that can be merged together. So are you also\ngetting that computational benefit?"
+    },
+    {
+      "type": "ts",
+      "text": "44:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Sometimes, yeah. If your two kernels add some inefficiency in the middle with something\nyou didn’t really need, you can remove that when you fuse them together. Usually the\nbenefits come more from avoiding memory transfers. In some instances you can remove maybe\nsome intermediate set that wasn’t really needed and we can avoid computing it."
+    },
+    {
+      "type": "ts",
+      "text": "44:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. Okay so that’s CUDA graphs. What are CUDA streams?"
+    },
+    {
+      "type": "ts",
+      "text": "44:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "It’s a way of parallelizing stuff with CUDA. When you build those CUDA kernels and when\nyou take CUDA to execute them, it’s going to execute them sequentially. So like, kernel 2\nis only going to be executed when kernel 1 is fully finished on the GPU.  And CUDA stream\nis a way to parallelize that. If you have two kernels and you know they can be run\ninparallel because they don’t touch the same data, you can use two of them in different\nstreams and they will be executed in parallel. At least, up until a certain limit. You\nshouldn’t use CUDA streams if you want to run 100 things in parallel. And NVIDIA told us\nit’s not a good idea, and it’s true that CUDA streams do not really perform well. This API\nis exposed all the way up to PyTorch. So for instance if you want to do some stuff like\nI’m running my data and I’m gonna put it on the GPU, and in parallel, I would also like to\ncompute some prediction in my previous batch of data which is already on the GPU, I would\nlike to do those two things in parallel and you can use CUDA streams for that. Like you\nhave one stream that does the compute and one stream where you transfer the data from the\nCPU to the GPU. If your model is written well with no synchronization point, your GPU is\nfully utilized all the time, without any break."
+    },
+    {
+      "type": "ts",
+      "text": "45:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So can I just think of CUDA streams as a coarse-grained threading protocol, where each of\nthe threads themselves has lots of little mini threads on the inside?"
+    },
+    {
+      "type": "ts",
+      "text": "45:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, kind of. It’s more like a hint than a hard requirement. Like it’s hinting to the GPU\nyou can run those two things in parallel and it’s safe. The GPU might choose not to do it,\nsometimes."
+    },
+    {
+      "type": "ts",
+      "text": "45:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay so a lot of the different optimizations you’ve talked about here have been very\nfocused on the GPU programming itself and the, kind of, connection between the CPU and GPU\npieces. What other parts of the process end up needing to be thought about when you’re\ntrying to get the maximum performance out of a training run?"
+    },
+    {
+      "type": "ts",
+      "text": "46:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "We talked about CPU GPU transfer, GPU programming. Networking, we talked a little bit\nabout that as well, like that is another part that is really important if you’re training\non multiple GPUs, they need to communicate efficiently. If you don’t want to be\nbottlenecked by that."
+    },
+    {
+      "type": "ts",
+      "text": "46:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think that I’ve seen us spend a bunch of time on this, thinking about – not just about\nmaking the fabric of the network efficient but also organizing the data loading in a way\nthat you’re not going to stall out. I mean, there’s this, kind of, general problem, the\nGPUs are these kind of incredibly productive compute machines. And so they’re very hungry,\nright? They want data as fast as possible. What do you need to do to make sure you can\nkeep them fed?"
+    },
+    {
+      "type": "ts",
+      "text": "46:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, yeah. Data loading is definitely an important subject. Especially when you have some\ndata that is asymmetrical. You have examples in your training set that are really really\nlong, and examples in your training set that are really really short, and you kind of need\nto patch them together to do like one iteration of that stochastic gradient descent that\nwe talked about before.  There are lots of ways you can do that. Like for instance you can\njust decide like, “I’m going to take the long and the short together and I’m going to pad\neverything so that I have a bunch of zero in my tensors, after the short sequence has\nfinished and until the end of the very long sequence, which consumes a lot of memory so\nthat is not super efficient.  You can have some kind of representation of tensors where\nyou concatenate everything together but you see the offsets at which each thing is, which\nis a bit of a more efficient memory layout. But even then, like when you do distributed\ntraining, where you’re kind of sad because if you have one GPU that has to load a very\nvery long sample, and the other GPUs have like shorter samples, since they need to\ncommunicate together to agree on which gradient is the right gradient, the GPUs with the\nvery short samples are going to wait for the GPUs with the long samples for a long time.\nYou kind of need to organize your data and everything in a way where you think about your\ndistributed training so that each GPU has kind of a balanced load of data, so it all takes\nthe same time to load the samples. And so at least like when you have the long samples,\neveryone has a long sample to load, otherwise it is pretty inefficient.  But then it might\nimpact your training accuracy because you’re not shuffling for your data set, you’re kind\nof doing a pseudo-shuffle where you still group things by size. So it’s kind of a\ntrade-off between performance and accuracy, by removing some degrees of randomness in your\nshuffle of the data."
+    },
+    {
+      "type": "ts",
+      "text": "48:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, one thing that’s maybe not obvious is that a lot of these algorithms are essentially\nstructured around barrier synchronizations. “I’m gonna do a bunch of stuff, and then\nyou’re gonna wait until everyone’s done, and then you’re gonna do a bunch of stuff and\nwait until everyone’s done.” Barrier synchronizations are super terrible if you have a lot\nof nondeterminism or just non-uniformity in the different pieces that are going into\nmeeting that barrier. Because some people are going to get to the barrier first, and then\nyou’re gonna wait on the others, and while you’re waiting you’re just not doing anything.\nHappily, GPUs are mostly pretty deterministic in terms of the amount of time it takes to\ndo a given computation. But you have to feed it a computation of the same shape everywhere\nin order to get it to really neatly line up."
+    },
+    {
+      "type": "ts",
+      "text": "48:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "And we were also talking before, when you were asking me why PyTorch was a winner – I\nthink one thing that we really want in the set of PyTorch is the way when you have like\nasymmetrical data and like different sizes and different batches, it’s way easier to code\nthat in PyTorch, which is more flexible because compiling that kind of thing is really\nreally hard. In TensorFlow or JAX, you kind of need to go to some extreme lengths in your\ncode to make your data the same shape again and then send it to your model.  Whereas in\nPyTorch it’s really easy. Like you can just batch together small things, and then the next\nbatch is going to be a very long thing, and PyTorch is still happy because it is eager and\nnot compiled."
+    },
+    {
+      "type": "ts",
+      "text": "49:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I mean, I guess this is always the problem when you go to some simpler, more highly\nstructured, domain-specific language, is like – there are some things it’s good at\nexpressing and there’s some things it’s bad at expressing. When you want to do the thing\nthat it’s bad at expressing, you can just be in a world of hurt."
+    },
+    {
+      "type": "ts",
+      "text": "49:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Exactly."
+    },
+    {
+      "type": "ts",
+      "text": "49:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You know, you’ve spent a bunch of time in your career working on various, kind of, open\nsource training, machine learning ecosystems, and you now spend a lot of time internally\nworking in our world. I think it’s fair to say we are in various ways more immature than\nlots of other organizations. I think at the time where Google was already designing their\nown custom hardware for efficiently evaluating neural net models, we weren’t really using\nneural net models at all. Like, I think all of this effort on our side has really spun up\nin the last few years. We’ve been doing various kinds of statistically driven inference of\ntrading strategies for as long as I’ve been at Jane Street. Like, that’s the first job I\nhad like 21 years ago, was doing various kinds of optimizations and model fitting stuff –\nbut very different models and didn’t have any of the same performance shape, and so all of\nour tooling around this is relatively new. And I’m kind of curious, for you, as someone\nwho’s seen stuff in the outside world and seen our ecosystem here, what are the things\nthat you see as the big gaps?  What are the kind of things that don’t work as well here as\nthey should, and that you want to see us improve and that you want to work on?"
+    },
+    {
+      "type": "ts",
+      "text": "50:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "One nice aspect of the fact that we’re newer to this machine learning stuff is that people\nare not necessarily aware of the things that are not performant and making a lot of\nmistakes when writing the code. So it’s really easy for me to come in and, like, spend a\ncouple of hours on a project and be like, “Oh yeah, no, it’s gonna train four times\nfaster, and you just have to transpose five lines of code.” So it makes my job very easy\nin that regard. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "51:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "51:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Sometimes it’s a little bit more difficult than that. But yeah, there have been a couple\nof instances where, like, optimizing a given training was really, really easy, just by\nprofiling it once because of this. We should improve our infrastructure around training\nloops in general, like making the training infrastructure work better for researchers\nbecause we’re kind of making the same mistakes as other people already did in the open\nsource world. Like these giant training loops with lots of spaghetti code that researchers\nend up not willing to use because they can’t modify what’s inside of them. It feels like\nsometimes we have that same problem internally as well."
+    },
+    {
+      "type": "ts",
+      "text": "51:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So do you think we need to, sort of, do morally the same thing that Accelerate did of\ntrying to build a set of libraries that are highly configurable and modular, instead of\nhaving, like, one training loop that everyone uses – make it easy for people to build\ntheir own training loops for different use cases?"
+    },
+    {
+      "type": "ts",
+      "text": "51:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, especially since people here are very smart and really like to hack things\ntogether. It feels like a better solution for them. The magic training loop where you\npress play and your model trains has its appeal, which I can understand for people who are\nless familiar with machine learning. But at least for people who are deeply familiar with\nall the internals of machine learning and want to deep research into, like, every part of\na training loop, they need something that’s akin to Accelerate where you just add, like,\nsmall composable building blocks that are very easy to use and not like this giant black\nbox with, like, 150 arguments that you have to pass in the correct order."
+    },
+    {
+      "type": "ts",
+      "text": "52:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s terrible. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "52:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "I’m talking about overtraining APIs, like not giving any bad time to any engineers\nhere. (laughs) That does not exist internally."
+    },
+    {
+      "type": "ts",
+      "text": "52:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Certainly, there are pieces of code that we have, you know, some of which I’ve\nwritten, that have the property of, “You have hard-coded a bunch of concrete behaviors\ninto it, and it has become ossified and hard to change. And it’s certainly a problem that\nshows up. Maybe it’s worth just saying, like, a few words about the way in which the\nproblems we solve here are different than problems solved in the outside world. And maybe\njust to talk about, like, what role machine learning actually has here. So just say, like,\nsome very high-level things.  We use machine learning for a bunch of stuff. We use it for\nsome, kind of, general purposes in the way that any organization might. We have a whole AI\nAssitants team whose job is to try and leverage various AI techniques for building various\nkinds of automations, a lot of it focused around LLMs and coding assistance, but not just\nthat. So, that’s, like, one kind of use case.  And then we have a bunch of use cases that\nare very focused on trading. Even inside of the trading world, I think there’s, kind of,\ntwo major streams of applications. There’s, “We are going off and trying to extract data\nfrom the outside world in order to inform our trading.” But we’re using the same kind of\ndata that has already been shown to be a good target for standard machine learning\ntechniques. So maybe we wanna get data out of images, or geospatial data, or text data.\nThere are all sorts of published models out there and published architectures that you can\ndo for this. And we are, like, happy to leverage, and fine tune, and exploit those\nexisting things. And there, the work that we end up doing looks a lot like the work that\npeople do on machine learning in the outside world. And then, in some sense, the magic is\nmore about, “How do we pick the data that we’re going to apply it to? And how do we\nintegrate that into the decisions we’re making on the trading side?”  And then there are\nplaces where we are applying machine learning techniques to trading data itself, like the\ndata that you get from exchanges, various alternative sources of data that can inform that\n– and I’m kind of curious, like, how do you think of that set of data as being different\nfrom the kind of data that you typically see in the larger world of machine learning?"
+    },
+    {
+      "type": "ts",
+      "text": "54:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "The data is much noisier. So it’s way harder to train good models on it, just because the\nsignal you can extract from it is actually way weaker than in something very structured\nlike text or images. Very often, you will never get the same kind of accuracy as what you\nget on computer vision and on text. But even extracting a very small amount of signal can\nstill lead to good training strategies. So you can still get valuable feedback from that\nkind of data."
+    },
+    {
+      "type": "ts",
+      "text": "54:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s maybe worth saying there are fundamental reasons why trading data sets are noisy,\nbecause the fundamental process of trading is one where, when there’s a signal, people\ntrade that signal, and that signal kind of gets removed from the data essentially. And so,\nto the first order of approximation, the time series of the prices of a security look kind\nof like a random walk. And there’s a little bit of signal in there, but it really is\nmostly noise. And so whatever your training technique is, it has to be able to deal with\nthe fact that there’s a ton of noise in the labels, essentially."
+    },
+    {
+      "type": "ts",
+      "text": "55:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "And so, yes, so that’s one aspect of it, very noisy. And as you said, it also changes and\nreacts to the way you use it. So, like, in difference with text, for instance, Huud BERT\nwas released in 2018. You use it right now, it’s still as good as it was in 2018. The same\nis definitely not true for a model that you train on market data. The kind of strategies\nthat you could run a couple of years ago won’t necessarily work right now just because the\nmarket has reacted to them and adapted to them. So you kind of need to come up with new\nmodeling strategies all the time and reinvent yourself.  Another aspect of that data that\nis different from the rest of the outside world is that it’s huge. We have massive amounts\nof market data. I think it’s a couple of terabytes per day. So you multiply that by the\nnumber of days or like a couple of years, and yeah, you have a massive amount of data to\nfeed your model. So that brings its own challenges in terms of data loading and making\nsure it’s efficient and that the GPU gets saturated."
+    },
+    {
+      "type": "ts",
+      "text": "56:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And in practice, the model sizes that we tend to do are – tend to be smaller than,\nlike, the sizes of the very largest language models. And so, the overall, like, ratios of\nflops per byte are just very, very different. And so the things that people are optimizing\nfor in the designs of the GPUs and the designs of the network are often not exactly the\nthing that we’re seeing."
+    },
+    {
+      "type": "ts",
+      "text": "56:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "We have to do a whole bunch of research, basically. We can’t just rely on what’s been done\nfor other kinds of modalities like text or images. We need to reinvent new models that are\nadapted to market data, and new ways of loading that data and keeping the GPU fed as much\nas possible. And yeah, sometimes we care about algorithms that are, like, completely\ndifferent from the one NVIDIA or PyTorch care about because they’re not necessarily used\nin LLMs and everyone is all about LLMs these days. It is a good amount of, like,\nprogramming (laughs) to do in terms of GPU performance, so."
+    },
+    {
+      "type": "ts",
+      "text": "56:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and I think it’s actually an exciting part of the machine learning world here in\ngeneral, that there’s a wide variety of coming up with and experimenting with new\narchitectures and new models and new ways of applying it to datasets, where it’s like –\nthere just aren’t a lot of papers telling you how to, like, analyze financial time series,\nbecause the people who are good at that mostly don’t publish papers."
+    },
+    {
+      "type": "ts",
+      "text": "57:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "I wonder why. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "57:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Another thing that I think comes up, which is interesting, is just inference\ntimes, right? So we care about using these things in the context of trading, and that, in\ngeneral, the level of speed at which we care about responsiveness to some input is\nsometimes very, very small. It can vary by orders of magnitude depending on the\napplication.  Like sometimes we care about turning around a packet in literally 100 nanos,\nand sometimes a few microseconds, and sometimes a few hundred microseconds is slow enough,\nsometimes milliseconds. There are some kinds of machine learning problems where, like,\n“Oh, getting an inference once an hour would be great. That’s, like, all we need, and\nsometimes even less than that.” So you just have a very wide variety of inference times\nyou need, and at the very low end of the scale, it’s nothing anyone else cares about."
+    },
+    {
+      "type": "ts",
+      "text": "57:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s why also you were mentioning before, our models have various sizes. Some are\nvery small because we want them to run very, very fast. But even if they are small, there\nare some challenges to make sure that they can run in the timeframe we need to make sure\nwe are as low latency as possible."
+    },
+    {
+      "type": "ts",
+      "text": "58:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, and just to keep up with the data rate."
+    },
+    {
+      "type": "ts",
+      "text": "58:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, because, like, there can be a million events in a single stock in one day. So if\nyou’re not fast enough to, like, just process them, it might not be the case that we need\nthe prediction very fast. But sometimes if you want to keep up and not, like, get behind\ntoo much, you just need to be a couple of mics per event and not much more than that."
+    },
+    {
+      "type": "ts",
+      "text": "58:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So those are a whole bunch of differences between the kinds of problems we look at, and\nwhat you’ve seen in other places. How do you think that influences the tooling we build?\nAre there ways in which we need to build different kinds of machine learning tools in\nresponse to the ways in which the shape of the problems are different?"
+    },
+    {
+      "type": "ts",
+      "text": "58:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, we talked about data loading, for instance, that comes with its own challenges. So\nlike, obviously we have developed a ton of custom data loading utilities that we can use\nto make this faster. We also talked about models that are not necessarily the same ones as\neveryone else cares about for other, kind of, well-studied modalities like text or\nimage. So we have a lot of custom models written internally that we have found work well\nthat we keep trying to optimize for training and inference. So this is a bunch of exciting\nwork. Like, the rest of the training is mostly the same as in any other machine learning\njob. Like, stochastic gradient descent has not changed. (laughing)"
+    },
+    {
+      "type": "ts",
+      "text": "59:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "59:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "It’s the same algorithm."
+    },
+    {
+      "type": "ts",
+      "text": "59:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the same algorithm it was 40 years ago."
+    },
+    {
+      "type": "ts",
+      "text": "59:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. (laughing)"
+    },
+    {
+      "type": "ts",
+      "text": "59:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, another thing that you’ve done a lot of in your career is education, right? You were a\nmath teacher for a bunch of years, and then you did a lot of education work, both at\nfast.ai and at Hugging Face. So you’re also involved some in the education story here. Can\nyou tell us a little bit more about what that looks like?"
+    },
+    {
+      "type": "ts",
+      "text": "59:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Jane Street is trying to up its machine learning game, both by hiring more people\nwho do machine learning, but also by educating the existing people on machine\nlearning. And we talked a little bit before about fast.ai and how it was important to,\nlike, make radiologists, for instance, competent at machine learning so that they can do\nradiology better with machine learning. It’s the same here. Like we need to educate\ntraders about machine learning, so that they can do better trading using machine learning,\nand can inform the choice of models that then machine learning researchers can pick\nbecause they know the data very well and they are kind of domain experts. So we have a\nboot camp that we run, like, every couple of months, with either traders or researchers\nthat are not super familiar with machine learning. And we try to make them up to speed\nwith the latest technique, both from the outside world and from inside Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You mentioned this point of, in part you wanna teach people – so, people who are not\nprimarily going to be machine learning modelers as like, their primary job (but still have\nthem better understand)… people who are experts in other aspects of the trading problem\nand have them understand more about machine learning. That’s one goal. I think it’s also\nthe case that you can teach people the machine learning stuff in some ways – like, it\ncan’t be that hard to learn modern machine learning because in some ways, modern machine\nlearning is 10 years old."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "I was saying like, make them into domain experts so they can help better, but they – some\nof them, like, actually end up training models, doing a lot of machine learning\nthemselves. It depends on whether they like it or not. Because machine learning is a bit\nlike cooking. Like you throw a bunch of stuff and then you let your model training stir\nfor a while and you see if it was good or not. It’s not the same kind of like, just\nprogramming some training system. So, some people like it, some people really (laughs)\ndislike it."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that makes total sense. So there’s a lot of things you’re trying to convey to people\nwhen you are running these classes and these courses. What are things that you find hard\nto get across?"
+    },
+    {
+      "type": "ts",
+      "text": "01:01:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "The point that’s most difficult to get across to people is that, yeah, no one knows\nanything about machine learning."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:01:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Like, it’s really just a cooking sense. We still don’t know why neural nets generalize so\nwell. We have a little bit of theory explaining why they are able to train on the training\ndata. But why are they any good out of training samples? We still don’t know, like, why\nthey are so good at generalizing. And in general, like, you can try to get a little bit of\nintuition into, like, trying to do this to fix this kind of problem, like, “I’m\noverfitting, so I’m gonna try this regularization technique. Maybe that will help.” But\nyeah, there’s always that maybe, like it’s not until you’ve tried that you can know for\nsure that the thing is gonna work.  So, this is really hard to convey. And then I try to\nget people very disciplined about reproducibility. Like one mistake that beginners in\nmachine learning do all the time is they train a model and then we forget what they did to\ntrain that model. And so like two months later, like, “Oh, I did train that model. It was\ngood. I should try to retrain it and maybe use it.” And they never managed to reproduce\ntheir initial results just because they didn’t write down all of the stuff that was needed\nto train that model. Those two points are really difficult to make, because of course, I\nguess you can’t fully understand them until you have gone through the pain (laughs) of two\nof them."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You don’t understand the importance of reproducibility until you’ve gone through your\nfirst reproducibility crisis."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. (laughing) Then you fully understand why it’s so important to save\nabsolutely everything down to the revision of the code so that you can run the exact same\nthing at another time."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and I think some of the reproducibility stuff is about getting people on board with\nthe discipline required. We’ve talked a lot about technology that meets the researchers\nwhere they are and makes it easy for them to express what they want. But there’s some part\nof it, if you wanna be a good researcher, you actually just need an enormous amount of\ndiscipline, because the tools are somewhat imperfect and you just have to be really\ncareful to get that reproducibility story right.  And at the same time, I think there’s\nalso a lot of work we can do on the tool side to make reproducibility easier, right? I\nthink it’s complicated in part because the overall ecosystem is complicated. Just managing\nPython packages is shockingly complicated."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "And making sure you didn’t have an upgrade of a random package that broke\neverything. Yeah, that’s all really difficult. And then making sure, your code is checked\nout and that you know the revision of the code that you are using. That’s another thing\nbecause you can change a small line of code in your model and think, “Oh, this is totally\nharmless,” but then it actually destroys the performance of your model because it was a\nkey ingredient in your cooking recipe and you hadn’t realized that.  So yeah, making sure\nthat your code is still there. And the last thing is, training involves a certain number\nof hyperparameters. Usually people write all of that in some kind of config. So make sure\nthat you save that config somewhere so that when you want to reproduce your training, you\nactually know that you had used this learning rate, this batch size, et cetera, et cetera."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess another fun source of nondeterminism is to the degree that you’re doing your\nresearch in Python notebooks. The fact that you can run Python cells in Python notebooks\nin arbitrary orders, and if you do this in the wrong way, you can end up computing a\nresult that you just, like, have no record of exactly where that result came from."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, (laughs) that’s another kind of fun. Fortunately, notebooks are still a bit\ndifficult to check into any kind of repo, so, usually people move away from notebooks by\nthe time it’s time to check the code in some kind of infrastructure. So like this issue\nkind of disappears. But it’s true while you are experimenting, this is another fun source\nof reproducibility.  And then you have, like, GPU being non-deterministic at a fundamental\nlevel because we are heavily parallel. So that’s always so fun. Like, when you’re trying\nto debug exactly why my floating-point result at the end is not the same thing as what I\nwas expecting, just because floating-point arithmetic is not associative, and GPUs have\nmany threads which may end in any kind of random order."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "GPU training is, in some sense, non-deterministic because it’s in parallel. But it’s also,\nin some sense, non-deterministic just because we can tolerate it. You could do things\nhighly in parallel and make sure that you’re always doing things in the same order and do\nstuff to conserve the determinism–"
+    },
+    {
+      "type": "ts",
+      "text": "01:05:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "It’s usually at a huge cost in performance, but yeah."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "– but it’s at a huge cost in performance. And it doesn’t totally matter, right? That’s\nactually one of the interesting things about machine learning is, because you’re doing\nthis, kind of, soft numerical optimization process, you can just take some error. And\nactually, a lot of the early research in various places is called, kind of, hogwild\nconcurrency, where you just had shared model weights and things checking out and producing\nnew gradients and updating them. And were they data races? Yes, they were. They were."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:05:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And like, it was kind of okay. But I think over time, that’s fallen somewhat into\ndisfavor, because it’s just even harder to predict what’s going on."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Yes. It’s completely unreproducible. So you can end up with a model that’s really good,\nbut you have no idea why, and you were never able to reproduce it anymore. So, that’s a\nbit annoying. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:05:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Anyway, this was a lot of fun. Thanks for joining me."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Sylvain"
+    },
+    {
+      "type": "p",
+      "text": "Thanks a lot for having me."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode, along with links to some of the things\nthat we discussed, at signalsandthreads.com. Thanks for joining us, and see you next time."
+    }
+  ]
+}

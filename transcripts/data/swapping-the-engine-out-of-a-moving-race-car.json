@@ -1,0 +1,1843 @@
+{
+  "slug": "swapping-the-engine-out-of-a-moving-race-car",
+  "title": "Swapping the Engine Out of a Moving Race Car with Ella Ehrlich",
+  "mp3_rel": "audio/swapping-the-engine-out-of-a-moving-race-car.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Ella Ehrlich has been a developer at Jane Street for close to a\ndecade. During much of that time, she’s worked on Gord, one of Jane\nStreet’s oldest and most critical systems, which is responsible for\nnormalizing and distributing the firm’s trading data. Ella and Ron\ntalk about how to grow and modernize a legacy system without\ncompromising uptime, why game developers are the “musicians of\nsoftware,” and some of the work Jane Street has done to try to hire a\nmore diverse set of software engineers."
+    },
+    {
+      "type": "p",
+      "text": "Ella Ehrlich has been a developer at Jane Street for close to a\ndecade. During much of that time, she’s worked on Gord, one of Jane\nStreet’s oldest and most critical systems, which is responsible for\nnormalizing and distributing the firm’s trading data. Ella and Ron\ntalk about how to grow and modernize a legacy system without\ncompromising uptime, why game developers are the “musicians of\nsoftware,” and some of the work Jane Street has done to try to hire a\nmore diverse set of software engineers."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack from Jane Street. I’m Ron Minsky. It is my\npleasure to introduce Ella Ehrlich, who is a software engineer here at\nJane Street, and who’s a real Jane Street lifer, she’s been here for\nabout a decade. And we’re gonna talk today about the task of\nengineering legacy systems and a particular system that Ella has\nworked on for a long time called Gord, which has been here for about\nfive years longer than she has. And we’re gonna talk about some of the\nchallenges and interesting work that comes out of all of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But to start with, Ella, can you tell us a little bit about how you\ncame here?"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Hi. Yeah, I actually took an internship at Jane Street after my junior\nsummer. I had no interest in finance. I did not think I was going to\ncome here full-time. I thought I wanted to do game design. And I was\ndeciding on my internship between Jane Street and going to EA Games,\nand a combination of two things happened. One, is I was like, “Well,\nI’m definitely gonna be in the Bay Area after I graduate from college,\nso let’s spend the summer in New York and I’ll go to some Broadway\nshows, I’ll eat at some good restaurants.” Like, “This Jane Street\nthing, whatever.” And I came and I had such a great summer, and I\nlearned so much. And I felt like I grew so much during that summer\nthat I decided, “You know what? This seems like a cool place to start\nmy career, and, you know, maybe in a couple of years I’ll go out and\ndo some game design stuff. But, like, that’s fine, I’ll go back to\nschool and get a master’s.” And then, uh, you know, 10 years later."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you still spend real time on games these days?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "I spend a lot of time playing games, and thinking about games, and\nwatching games. I am a big pro-League of Legends fan. Go EG! But it’s\nnow, I think, a thing that I’ve learned is that I’m very happy that it\nis my hobby, and I think the more I’ve learned about the gaming\nindustry, the more I’m like, “Jane Street is the right job for me.” It\nis the place I’m very, very happy to have spent the past decade of my\ncareer, and a place I continue to be happy to come to work every\nday. And I think that gaming is a great hobby, but I wouldn’t want to\ndo that full-time because, you know, I think to some extent, based on\ntalking to friends who are in game development and in that space, to\nsome extent I think game developers are a little bit the musicians of\nsoftware. Most places at software companies, like, it’s, like, you\nknow, a nice, cushy job. And game development is such a competitive\nenvironment where there are so many companies and they work long\nhours. The amount of growth and investment that Jane Street has been\nwilling to put into me, and the people in Jane Street have been\nwilling to put into me, I think it is harder to find that in the\ngaming industry. Again, based on the experience of talking to my\nfriends who are in that space."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Hopefully people in the gaming world aren’t too angry at\nus. I’ve heard similar things, that I feel like being a game developer\nis a little bit like being a violinist. It’s a hard thing and lots of\npeople love it and want to do it, so it can be very competitive."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "That being said, they make amazing things and I am so grateful that so\nmany people are passionate about that because I benefit from it."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It is indeed very impressive. Okay, so let’s talk a little bit more\nabout your actual work life here at Jane Street. I mentioned the\nsystem Gord before, can you tell us a little more about Gord and what\nit does and how it fits into Jane Street’s ecosystem?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Gord is the system that takes in all of the trading data of our\nfirm’s activity that we do on trading on platforms and exchanges all\naround the world, normalizes it, and then distributes it as a service\nwithin the firm so that we can do things like calculate our positions,\nupload our trades to clearing firms, settle our trades and make sure,\nyou know, that the money and stuff actually change hands at some point\nin the future."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you just said a bunch of words that are probably unfamiliar to\npeople. Just to explain one of them, what do you mean when you say\nposition?"
+    },
+    {
+      "type": "ts",
+      "text": "00:03:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So the idea is, right, suppose that you buy a hundred shares of\nApple, you can think of it now instead of having some number of\ndollars you make out, you have that hundred shares. And it’s important\nto know that because you need to be able to understand, like, the\nvalue of all the stuff you’re holding, which means you need to know\nall the stuff you’re holding. If you buy a hundred shares of Apple,\nyou’d say your position is a hundred shares. And if you sell 20, your\nposition is 80. So it’s just tracking all of the stuff that we’re\nholding that’s, like, not just the money."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And maybe a thing that’s not obvious to someone who isn’t in\nthis world is there are many different things that you need to do with\nthis data. So you might in real-time on a trading desk want to know,\nlike, what your positions are, what your risks are, how much money you\nhave made, all of that, as you’re going throughout the day. At the\nsame time, you might want to do firm-oriented worst case risk\nanalysis, based on the same data. Also, you need to make regulatory\ndecisions. It turns out, for example, a common one is that when we\nsell something, a weird thing that maybe people don’t realize is —\nsometimes you sell things you have, sometimes you sell things mainly\nthat you’ve borrowed, and that latter thing is called a “short sale.”\nAnd you have to know what your positions are to know whether a given\nsale is a regular sale or a short sale. And there are regulatory\nmarking requirements."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So your moment-to-moment, real-time interactions with the exchange are\ndriven by and affected by this data because you have to change what\nyou say to the exchange based on positions. And then, there’s all this\noften end-of-the-day reporting, uploading, synchronizing your\ninformation with various other players in the market. And all of these\nthings are driven off of this one central source of data."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. So that’s what it does. From an engineering perspective, like,\nwhat are the requirements out of that system?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So it has a bunch of interesting requirements that other systems might\nnot have. So one of the ones that obviously matters is performance. We\nare very actively trading all of the time. And it’s very important for\nGord to be performing to its peaks because when trading is the\nbusiest, that is when it is most important for us to have accurate\ninformation to make good decisions. And so we need to make sure that\nwe are able to perform to, you know, 2 or 3×. And what we’ve seen on\nthe most recent busiest day ever, because the next time it comes\nalong, our busiest days tend to blow our previous busiest day out of\nthe water by large margins, rather than an occasional, like, you know,\n“Oh, we get a little bit bigger, and a little big bigger, and a little\nbit bigger over time.” It tends to be the case that busy days are\nsignificantly busier than what we’ve seen in the past, and so we need\nto be always thinking about how much overhead we have in the system,\nand can we keep up with much busier than what we’ve currently seen."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And what’s, like, the rough multiplier between a regular day and,\nlike, the busiest day of a year?"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "I think that it could be as much as, you know, 5× is pretty\nreasonable. I’m trying to think back to some historical ones. One of\nthe things that’s interesting is over the last five years, our\nstandard days have become what our busiest day ever was when I started\nat the firm, or something like that. Even probably more than that. And\nso the most recent busiest day ever we saw was about two X, but also\nprevious comparison points have done five X or sometimes more than\nthat. And so we are always waiting with bated breath for what the next\nmultiplier will be, but we try and keep in mind at least two X and\nprobably more than that as a regular thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "2× more than the worst thing you’ve ever seen is something you want to\nbe able to tolerate gracefully."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And maybe a thing just to keep in mind is, like, all of these services\nthat are back-ended off of Gord means if Gord is down, the firm isn’t\ntrading."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And in addition to that, or, I guess, as a result of that, we\nhave very hard uptime guarantees. As you said, if Gord goes down, the\nentire firm stops trading automatically because we can’t make good\ndecisions if we have no idea what trading we’ve done. So we work\nincredibly hard to make sure that does not happen basically ever. The\nsystem is designed to be able to fail in pieces in constrained ways\nthat will hopefully avoid, you know, any sort of catastrophic\nfailure. An individual exchange might have problems, but the system is\ndesigned to make it so that if that exchange were to have problems, it\nwould not affect the rest of our trading."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "In addition to that, whenever we’re rolling the system, we have\nextensive and somewhat arduous testing procedures that we go through\nto ensure that we haven’t made any of these sort of fatal flaws that\nmight cause a catastrophic outage. We also always run, in addition to\nhaving the sort of real production version of the system called the\nprimary, we have a standby which we also consider production and is\njust processing all the same activity and, you know, keeping up with\neverything in real-time, but is in an entirely different data center\nand on, you know, fully separate as much as we can make them, so that\nif we were to have a network partition and lose a data center, or just\nlose a box, which with the number of actual physical machines we have,\nhappens with a surprising frequency, we could gracefully failover as\nquickly as possible to continue trading and be ready to go, you know,\nand keep things up and running."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So when I think about Gord, one of the things that I think makes it\nchallenging is that the system is old, right? As I said, you’ve been\nhere about a decade, it’s been here for five years longer than that,\nand it’s, you know, to say kind of frankly, it was written when we\nwere less good at writing software and knew less what we were\ndoing. And it’s kind of a sign of that. Like, I was involved in a\nbunch of the early design decisions around Gord, some of which I\ncontinue to regret to this day, and so a lot of the kind of story of\nthe last few years of working on Gord has been about extending, and\ngrowing, and hardening the system and figuring out how to engineer out\nof problems that were built in and baked into the original design. So\nmaybe as a kind of way of looking at that, it’s worth talking about\nwhat Gord looked like when you first came to the project."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "When I started, Gord was…sort of the core of what it is is very\nsimilar. So the pipeline we have is there are sort of sources in the\nworld which are, like, a data feed from an exchange. And there’s a\nprocess called a parser that gets a data feed by SSHing to the box and\ntailing a file on disk that is in a pipe separated number equals value\nformat. Maybe someday we’ll change that. But, uh, that’s not one we’ve\nhad, uh, actually a huge amount of success changing thus far, though\nwe do have some plans on that front."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "But…so we SSH to the boxes, we tail files. And then we need to take\nthat data. And one of the things that I was I think a decision that\nwas made early on was that Gord would deliver, quote unquote, correct\ndata, all the time. And what this means is that Gord actually does a\nlot of making up of data when we get bad data from exchanges. So for\ninstance, there was a promise that was made that Gord would deliver an\norder before it saw a fill. A fill is another word that we might use\nfor trade. You might also hear me use exec interchangeably. I will try\nto be consistent. But, uh, we use fill and exec very interchangeably\nwithin the team, and so sometimes you may hear that."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So when we get a fill, if we have not seen an order, Gord makes one\nup. We think, in retrospect, this was a mistake. But this is baked\ninto a ton of things, and a lot of things assume that when they see a\nfill from Gord they will have previously seen an order. So we’ve been\nsort of dealing with the process of unwinding all sorts of legacy\ndecisions like this."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "In addition to that, Gord is going to always deliver normalized\nsymbology. And so maybe you have the stock Apple US, and you’re\ntrading that on the New York Stock Exchange. The way they represent\nthat might be something called a Reuters code, which is something that\nmight look like “AAPL.P” or some other thing, depending on the\nextension they need. You might be trading this on an exchange that\nuses Bloomberg, which will look something like “AAPL US”. Bloomberg,\nwhen I say Bloomberg, I mean, like, Bloomberg symbol, one of the\nstandard symbology formats in the industry."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And it’s maybe worth saying, Bloomberg, not just the Mayor of\nNew York, also this company that makes an extremely pervasive terminal\nthat all sorts of financial professionals, including us, use to access\nall sorts of data. And they’re kind of an excellent data provider of\nlast resort. Like, you might want to get direct data from a particular\nexchange to get, like, the most granular or most timely version of\nsomething, but Bloomberg has everything. And so they’re a kind of\nfoundational data supplier. And they have their own symbology. And,\nlike, actually this is, like…I think summarizes a kind of terrible\nthing about this whole financial world that’s a big and weird source\nof complexity, is that just understanding what the names of things are\nis actually incredibly complicated because you have different sources\nof different names from different places. The exchange names things\none way, data providers name things other ways. And actually, the US\nis relatively tame, US equities markets in particular are relatively\ntame in this regard. But if you look at foreign exchanges, you look at\nall sorts of different asset classes, it gets exponentially more\ncomplicated. The task of just figuring out what things are called is a\nsurprisingly complicated normalization job that Gord is involved in."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s one of those standards problems that everyone has some way\nof describing a thing, and they look at all of the ways people\ndescribe symbology in the past and they say, “Oh, I’m gonna do\nsomething better.” And then you have, you know, 18 million standards\nand every one of them is bespoke, and every one of them has edge cases\nand corner cases that are weird and hard to deal with."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "But yes. So, one of the things we have to do is normalize\nsymbology. We also normalize a ton of other information, like\nusernames are an easy thing where you probably want to know which\ntrader at Jane Street was the person who did the trade. And if they’re\ntrading on a different platform, it might, you know, represent that\nwith their email address. Or they might have a specialized log in. So\nwe need to take all of those different bits of information, have a\nmapping that turns them into the actual Jane Street username that we\nuse internally, and do this for a really large number of fields."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that we’ve been sort of working towards over the\nyears is moving more of this normalization into the sources where it\nis…that information is more naturally contained, but this is still a\nproblem that we absolutely have to deal with. And, as with sort of all\nof the things, because it’s a legacy system which has a lot of\nreliability guarantees, a common thread will be we’re moving slowly in\nthis direction, but it’s difficult to make progress because you can’t\nbreak the system out from under anybody."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this…by the way, this particular bit of complexity is very old\nbecause it goes back to the original design and purpose of Gord, where\nyou said, “Oh, we have all these data sources that we’re changing so\nthat they do the normalization first, and Gord doesn’t have to.” But\nwhen Gord was first written, that was not an option because the\noriginal version of Gord was just reading out…like, we would get\ndata that we just, morally speaking, just downloaded from exchanges\nand brokers, and dumped into a file. And then the task of Gord was to\nslurp all this data up together and normalize it. And there was no\nother intermediary that could do that."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Now, today, most of the trading activity we get is not something that\ncomes from some third-party system. We have some system that’s\ndirectly interfacing with and understands the details of the\nparticular place that’s being traded with. And the software developers\nand people who are working with that system are well-positioned to\nunderstand what’s going on and think about the normalization. So,\nthat’s a kind of shift that you’re talking about, of going from one\nsystem in the middle that has to get everything right, to a kind of\nmore distributed thing where people in different parts of the\norganization understand what they’re doing and can solve the\nnormalization problem locally, rather than, like, shoving all this\ncrazy normalization on one small harried team."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes. There is still a surprising amount of trading that we do that\ncomes from these sort of weird direct third-party sources, but the\nmajority of our trading is now done through systems we write. And\nwe’ve introduced another step that sits in the process between just\nthat direct download of data from the weird third-party place that can\nalso add in a normalization layer there that can, and hopefully, get\nthat, you know, specialization into a better spot for it."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So it sounds like one of the core responsibilities of Gord is\nnormalization, and some of that normalization is what you might call\nkind of field normalization. Of, like, there is some piece of data and\nwe have to say it in the right language. And some of it is kind of\nmore almost, like, protocol-level enforcing of invariants. Making sure\nthat messages come in the right order and have the right meanings, and\ntranslating the transactions you see from the other side into a single\nconsistent language of transactions."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I think a number of choices that were made on that second\none especially, are ones that we’re trying to unwind or avoid, or fix\ngoing forward. Easy example of this is, like, the sort of core types\nthat Gord knew about when I joined the team. There were orders, there\nwere outs, which is basically we’re saying an order’s closed, and\nthere were fills. And if we wanted to encode anything else, we had to\nshove it into one of these types, often in ways that didn’t fit\nwell. So for instance, maybe you send a message to an exchange, and\nrather than getting filled, you get a reject. Rather than adding a\nfirst-class reject type to represent what just happened, this was\nrepresented in Gord by making up an order when we saw a reject, and\nthen making up a closed message. And so there was a field inside the\norder that was like, “It’s a synthesized from a reject,” and to figure\nout, you know, “Are we getting a lot of rejects?” You had to go look\nat the internals of the fields, as opposed to having a first-class\ntype that represented this."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And this sort of thing happened over and over, where it was, “Oh, we\nneed to represent a new thing, let’s just figure out how we can kind\nof shove it into the existing data model.” And one of the reasons that\nwe had to do it this way is because the original way that clients\nconnected to Gord was directly over TCP, and so the thing that we did\nis we had basically a type that represented our messages, and we used\na protocol called bin_io, which just turned it into a binary\nformat. And they had to be able to read that on the other side."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And the versioning story for this was: there wasn’t one. The way that\nyou added fields to Gord was we had a string map of fields because if\nyou wanted to add a new field at the sort of top level type here, you\nwould actually need to make all clients roll their system forward to\nbe able to understand that."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Just to jump in there, when you say a string map, what you’re saying\nis the basic data representation, instead of being something that has\na fixed clear type, it was just like a bag of fields. Key value pairs,\nand you threw them together so you could freely add new fields, and\ntake away fields, and change the composition of fields without having\nto change the format. On the face of it, what that description sounds\nlike, “Ah, this is great.” You want to evolve the schema, you want to\nevolve the way in which you represent the data. There’s nothing in the\ndata format that gets in your way, so what got in your way?"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So, first of all, things that are difficult here are, it makes\nit harder for people who are using things to know what fields they\nshould be using and how they should be using them. Again, we were able\nto represent new things by being like, “Well, here are more things we\ncan put into our bag of fields,” but we couldn’t actually change the\ntop-level representation. So when we wanted to do something new, we\nhad to simply figure out how to represent it as just more fields\nattached to a thing that was increasingly less representative of what\nthe original design of, like, an order was. When you see something\nthat’s an order, surely that’s an order. And the answer is, “No,\nsometimes it’s a reject,”which is a confusing one to explain to\npeople."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Another example of this is when you see a fill. A thing that might\nhappen to your fill is it might be corrected or you might get\nsomething called an allocation, which is basically when we do the\ntrade initially we don’t necessarily know what account it’s going into\nfor some complicated reasons. And later you get a message saying, “Put\nthat in this account,” and that’s called an allocation. And, again,\nall of these things were just represented as adjustments to the fill\nby sending the full fill message again, so you would say, “cancel this\nfill and rebook it.” You had no ability to do, like, smaller\nadjustments on top of your data in any way."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So, in some sense, there was this, like, gooey, extremely\nflexible dynamic representation of the data. Which you might think\nwould free you up, but actually it locked you down because what\nhappened was people on the other side who were consuming the data just\nimplicitly in their code depended on the structure that was embedded\nin there. And so, despite the fact that the file format, or the\nmessage format, lets you change things however you want, in practice,\nyou couldn’t change things without breaking your clients."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And because of where Gord sits in the firm and the role\nthat we play, we have hundreds of clients and many of them are\nincredibly critical to trading, and so breaking our clients is not\nreally an option for us. A thing that we used to do in the previous\nversion, which I’ll explain what we do now, but when we wanted to do a\nfundamental change to the version protocol, we had to basically add\nupgrading or downgrading inside of Gord and know the version our\nclients were connected to, and then do the downgrading ourselves for\nthem. And this is actually just kind of expensive. It turns out, one\nof the most expensive parts of Gord is serializing information. And\nwhen you’re sort of downgrading things for clients, again, the way\nthis was initially done was clients would open up a direct TCP\nconnection to Gord, and they would get the messages sent to them. And\nthe downgrading would happen server-side. And there was some stuff\nbaked in to try and make it, you know, reuse stuff appropriately. But\nif you had four versions of your clients, you’re now serializing the\nmessage four times. And then when you’re doing this and trying to send\ndata to hundreds of clients, this actually gets very expensive."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So we avoided this by trying to make the type as gooey and flexible as\npossible, and not really having the ability to change it at all. And\nthis, to be fair, worked for a very long time. But as it expanded to\ncover more things, and as we, as a firm, have gotten into more new and\ndifferent kinds of trading where we wanted to be able to represent\nmore interesting message types."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One thing you said in there was that this gooey representation didn’t\nmake changes at all. But that’s not quite right, in the sense that\nthere are some kinds of changes that you can make freely, anything\nwhere you’re just like, “Here’s an extra optional piece of\ninformation, and I just want to add it on.” The gooey, I just have a\ncollection of key value pairs. Yeah, you can just add a new key value\npair, and anyone who didn’t know about it will continue to not know\nabout it, and anyone who wants to see the data can and can interpret\nit. So some kinds of changes were easy. And I guess some kinds of\nchanges were hard. And maybe an example of the kind of change is if\nyou want to add a new kind of transaction, well, that’s a thing that\neveryone who consumes the feed needs to understand, and that’s the\nkind of thing that has to be one of these breaking changes."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. That’s true. And the sort of core types we were representing\nthings with were relatively large. And so, one of the things that’s\nexpensive about Gord is serializing all this information. And so, as\nwe were starting to do new kinds of trading that required many more\nmessages, but most of the information in them was very, very small, we\ndid not want to encode that in our existing types because it would be\nvery, very wasteful, in terms of the amount of overhead we would have\nto include. So we made a new format that we used to represent things."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We’ve talked a lot about the data and kind of at a…in some sense,\nwhat was Gord’s responsibility, in terms of getting, and normalizing,\nand distributing that data? But what was the system architecture\nitself like? You said this was…Gord is like a…the global order\ndatabase, which isn’t exactly an order database, though it is\nglobal. But what is it? How is data distributed in Gord?"
+    },
+    {
+      "type": "ts",
+      "text": "00:21:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I mentioned we had a parser, and then there was a system\ncalled the DB that basically collected the information from the\nparser, maybe made up some more extra fake information around if we\nhad a fill without an order, add in that information. Then, it would\ndistribute it to a normalizer in each office over TCP. And the\nnormalizer’s job was to apply all of those normalization passes, in\nterms of, you know, fixing symbology, fixing the users, all the things\nwe kind of mentioned there. And then, it would distribute it to\nclients, again, directly over TCP. And so one of the biggest problems\nthat Gord had at the time was fan-out because we had hundreds of\nclients, and so we were sending the same messages for our full data\nstream out to all of them. And that was a pretty expensive process."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you talked before about the contract that Gord had with its\nclients, i.e. the things that were consuming data from it. What did\nthe contract between Gord and the data sources it had, the things that\nwere feeding data into it, the exchange connections and things like\nthat, what did that contract look like?"
+    },
+    {
+      "type": "ts",
+      "text": "00:22:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "That contract was mostly, “You will give us things, and we will keep\nup, and we will never fail.” Um… (laughs)."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:22:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "…it was a hard contract to maintain. So, yeah, we didn’t actually\nhave a spelled out contract with our sources of, like, how fast it\ncould give us information. We had things that, you know, hand waves,\nlike, maybe a Gord dev had agreed with a friend dev when they first\nwrote it. Friend being one of the automated systems that writes\nactivity to Gord. But maybe two developers had at some point agreed to\nsome value, but that was certainly not written down anywhere and there\nwas nothing that enforced it in any way. And if Gord ever fell behind,\nagain, we would halt things, so our policy was we didn’t fall\nbehind. This was obviously kind of an impossible thing to maintain as\nwe grew, especially with a lot of the parts of the architecture."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So we had to figure out, like…when I started on the team, there was\nno performance testing that we did on a regular basis. I had to build\nperformance tests to know what our maximum rates were and how close to\nthem we were. We were lucky at the time that the firm’s activity was\nsmall enough that we could keep up with it on a regular basis, but we\nhad to learn, like, at what point do we require our upstream sources\nto shard their activity into multiple sources. Because one of the\nthings that is really nice about Gord’s architecture is it\nparallelizes incredibly well. A single pipeline of parser DB\nnormalizer can keep up with about…it can do 50,000 messages per\nsecond, but there’s some things on the end now that cause that to be\nslower, for good reasons. So we’re gonna say 25,000 messages per\nsecond is, like, allowable."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "But, we can parallelize that across many boxes and many copies of this\npipeline, so the actual throughput rate of Gord scales arbitrarily.\nAnd we have not run into real issues with, you know, just kind of\ncontinuing to expand horizontally. But understanding what our sort of\none single-source pipe throughput was a thing we did not know, and\nwe’d had no promises about at the time."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess one of the things that backs this is that the basic\narchitecture is what you might call another context eventually\nconsistent, meaning you have all these data sources that are providing\ndata, and the ordering guarantee when you consume data is that the\ndata from a particular source will come in the order that it was\nentered into the system. But you can get a kind of shearing between\ndifferent data sources. Things might come in different orders for\ndifferent consumers, and that allows you to build a system where there\naren’t a lot of tight dependencies by, in some sense…in exchange for\nhaving lighter guarantees that you provide to the users. You make the\nscaling story simpler and easier."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes, that is a fundamental thing that we kind of can’t build the\nsystem without because trying to keep up with the actual full\nthroughput of Gord in a single thread or a single process would be\nwell beyond what especially our architecture of OCaml at the time\ncould handle. Even now that we have put a lot more work into\nunderstanding how to make OCaml, it would still be a very difficult\ntask to handle the sort of entire stream in one single thread or in\none single process, or even on one single box. But, it is the case\nthat because basically none of our users actually care about the hard\nordering guarantees between things that happen at different exchanges,\nbecause, frankly, you kind of can’t care about that because, again,\nthey happen on different exchanges, so maybe there’s a delay from the\nexchange sending it to us, rather than from our own internals, you\ncan’t actually guarantee that you’re going to see every event in the\norder that happened in the real world, ‘cause that’s kind of not a\nmeaningful statement. So we just make promises within a single\nupstream flow through."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Even if, like, the ordering isn’t externally meaningful, you could\nhave a thing where the system agrees upon a single ordering and\neveryone always sees things in the same order. And I think that has\nsome upside. It lets you do replication and things like that in a\nsimpler way. But it also has a massive downside because it limits the\nability to which you can recover. Like, one thing that I remember us\nthinking about a lot is, well, it turns out we are a distributed\noperation, we have offices in New York, and London, and Hong Kong. And\nif we lose a connection or have a degraded connection between two\ndifferent offices, we might want to be able to kind of continue\noperation concurrently in both of those offices, even though the\ninformation from the other office is somewhat degraded, right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:26:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And so that’s the example where you, in some sense, are relying on the\nfact that you have this kind of softer guarantee to give you better\navailability than you could get otherwise."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Like I said, very, very, very useful for us. If we gave up on\nthat guarantee, we would be very sad. Or, that lack of guarantee,\nperhaps."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. That’s kind of a tour of what Gord was like when you first came\nto it. What are the things that you’ve worked on since then to kind of\ngrow the system and kind of repair some of the problems that were\nthere in the original design as you saw it?"
+    },
+    {
+      "type": "ts",
+      "text": "00:26:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the big things that was being worked on when I joined the team\nwas trying to change this process of all of our clients connecting to\nus directly over TCP. This was a very difficult scaling problem for us\nthat was causing real problems because every time you added a new\nclient, you had to serialize the data to them. And so the amount of\nwork you had to do as the sort of Gord service scaled with the number\nof clients. And as the firm was doing more things and getting bigger,\nthis was just unsustainable. So what we did is we actually looked\nexternally. We saw Kafka, which is a thing developed by LinkedIn,\nwhich is a distributed message queue that has really good properties\nfor scalability. And in addition to that, one of the properties that\nwas really, really nice is rather than being a push-based system, it\nis a pull-based system for clients."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So one of the things is when Gord was delivering activity to its users\nover TCP, it had to basically just, like…clients would open up a\npipe, and then Gord would just send them messages whenever it had\nthem. And if the client was slow, Gord would have to buffer data\nbecause it has to get buffered somewhere. And so because we did not\nwant to hold arbitrary amounts of messages and memory per client, if a\nclient was too slow, we would just kick them off. And, it turns out,\nwhile many systems do care about being highly performant, there are a\nlot of other systems where their performance just doesn’t have to be\nthat high. For instance, if you’re an end of the day regulatory\nreporting thing, you don’t actually need to keep up with Gord at its\nbusiest. You just need to make sure that by the end of the day, you’ve\nbeen able to process everything."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And so, this notion of people having to be able to perform to Gord’s\npeaks to write a Gord client was very painful. And so, Kafka has the\nproperty that clients ask for messages when they’re ready for them,\nand it just stores them in memory and can give you an arbitrary\nmessage out of the stream that you want if you have the right sort of\npointer to it. And so, this allowed us to sort of change the dynamic,\nwhich meant that if a client was slow, they would fall behind the tip\nof the stream, and we might be able to monitor and alert them about\nthat, but we wouldn’t actually make them die. And, again, if you’re a\nprocess that has to actually process every message and you can’t keep\nup, well, when you die, all you’re gonna be able to do is restart and\njust be sad. So —"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And make the upstream service sad again."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And make the upstream service sad again."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’re just creating more work."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s something confusing you said before, where you said, “Ah, we\nhad this problem where we opened all these TCP/IP connections, we had\nto do a bunch of work per client as a result of that, of sending the\ndata to them over TCP/IP, and then we switched to Kafka, and that made\nthings better.” But Kafka also uses TCP. So, like, where’s the magic?"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Really what was going on before is not just that we were using\nTCP, but that we were doing a very naïve thing with our use of TCP. So\nwhen a client connected to us, we would simply buffer the data for\nthem, and if they fell behind, we would just continue buffering the\ndata in memory."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to interrupt for a second, when you said, “We would,” right?\nBecause this is…like, a part of Gord that is a very old mistake, we\njust, you know, like morons, picked up the operating system APIs and\nused them without thinking very hard. Until we said, “Ah, there’s a\nclient, they have a TCP connection. We send them a message, we send\nthem a message, we send them a message.” And the buffering is then\ndone by, like, some combination of the operating system and the\nlow-level systems code that manages the individual TCP/IP\nconnection. So, in some sense, separated from what you think of as the\napplication layer of Gord itself, there’s all this behind the scenes\nwork in buffering that occurs."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And we weren’t really thinking about that. We did think a little\nbit about the fact that serialization is expensive, so we tried to\nserialize only once, but there was still a lot of stuff with this\nbuffering that we were just accepting what the operating system did\nand not really thinking about it. And this turned out to get just, you\nknow, more and more expensive as we had more clients."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Kafka solves this problem a lot more intelligently because it’s in the\nsort of architecture of the system. So when you write the message into\nKafka, it, like, stores it on disk, and when a client is connected,\nthey ask for messages when they’re ready to handle them, rather than\nbeing push messages. And so if a client is not keeping up, then Kafka\nis not trying to buffer the messages in memory that they’re going to\nneed eventually. They’re there on disk if the client wants to ask for\nthem, but it’s not holding them and trying to be ready and also give\nthem to the client actively."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "As we were saying, this question of what’s push and what’s pull is\nkinda subtle. At a low level, TCP is kind of doing something like\nthis, where there’s, like…there are receive buffers that the\noperating system can end when the receive buffer is full, it is in\nfact going to stop pulling data in. But, at least from the APIs that\nwe surface to programmers, we gave people an API, we’re like, “Oh,\nhere’s a TCP/IP connection. Just send data that you want to get there,\nand eventually we’ll make sure it gets there.” From the point of view\nof the sending program, it was push oriented. And we kind of weren’t\nkeeping track and weren’t thinking intelligently about, like, how the\nresources and buffering of data was happening in between in that case."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And at the level of the TCP/IP connection, it’s kind of too low-level\nto do anything smart. Like, it can’t understand that they’re sharing\nat that level without having something that’s explicitly binding all\nthose things together and understanding them as a kind of single\nlogical message queue."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One of the other things that was really expensive when a client\nconnected to Gord that I haven’t really touched on here, but also\nKafka made much better for us, was the idea that when someone connects\nto Gord, they often want to know everything that had happened up until\nthat point. So we would generate a snapshot for them of all of the\nactivity. And that generation of a snapshot had to happen per client\nbecause, you know, people connect with it at random times. And so,\nagain, Kafka allowed us to basically just have a sidealong process\nthat was consuming the stream and occasionally snapshotting, because\nit is nice for people to be able to catch up more quickly. But, again\nthere, the snapshots could be stored in a ready-to-go format, and then\nyou would just read from the latest snapshot and then pick up some\npoint in the pipe after that. As opposed to snapshotting per client\nthat connected."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some sense, the answer to my question of where is the magic, is\nthere is no magic. There’s just a bunch of engineering that you need\nto do in order to build a message queue. And rather than have this\nkind of message queue functionality be sitting in a deadly embrace\nwith the rest of the functionality of Gord, what you did was separate\nthem out. Use some standard, well-engineered, already existing piece\nof infrastructure for doing the message queue part of the work. And\nthen, focusing the work that we did on Gord on the actual part where\nthere was a unique value-add, which is the core part of the pipeline\nof, like, consuming and normalizing all of this data."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s, like, one big move you guys made to improve the\narchitecture of the system. What else have you done?"
+    },
+    {
+      "type": "ts",
+      "text": "00:32:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the other ones that was a pretty big deal I mentioned\nbriefly. So, the way that our upstream sources wrote us messages was\nusing this protocol called FIX, which is how we represent internally\nfor the files that Gord was consuming as a, like, tag equals value\npipe-separated thing. And there were no constraints on this. So a\ncommon problem that we ran into is someone wanted to write a new\nsource to Gord, and they would have to contact us and be like, “So,\nthere’s, like, a hundred different fields I could provide, what ones\ndo you need to provide, and why, and how, and, you know, what’s\nrelevant?” And we, as Gord devs, kinda had to know, “Oh, you know,\ntransaction time is required for all execs. And for bonds execs, you\nmust provide a settlement date. But for other kinds of execs, that’s\nactually an optional field.” And there were a number of these\ninvariants in how our upstream sources had to write us information to\ndeliver that information in the way Gord would interpret properly that\nwere not anywhere and we sort of provided no help in people creating\nthese."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So, we’ve made a new library that we are currently in the process of\nworking on and continuing to iterate on. This is a slow process to get\nit into a polished state where if someone wants to write us a message\nto Gord, they have a library where they can say, like, “Here’s the\ntype I want to fill out,” which is, you know, a record with all the\nfields that are required for a bond exec, or a wholesaling fill, or,\nyou know, a different kind of message that they might care about, and\nwe tell them what fields they need to provide to us. And then, they\ndon’t have to think about the translation into how Gord is actually\ngoing to consume it, which also gives us the ability to hopefully\nsomeday change that format from being this, you know, a files on disk\nthing. Which, you know, we have some stuff in the process we’re hoping\nto do there. But, that’s a big one where it’s, like, making it easier\nfor people to write correct data to Gord with less iteration on our\npart."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So when we are thinking about that, in some sense the lack of types or\nschemas, or something like that, in the story, right? Both when people\nare handing it over to you and when people are consuming. Gord is\nacting as this very complicated rendezvous point. There’s all these\npeople who are handing data over to it, there’s all these different\nsets of people and hundreds of applications, hundreds of code bases\nthat are consuming and reacting to that data. And the Gord team is\nsitting in the middle, needing to understand important things about\nall consumers and all the producers, and try and guide all of those\npieces together. And you’re kind of in this middle step where what\nyou’re doing is providing a library which is at least a place where\nGord devs and the people who are providing data can collaborate and\nthink at the level of logical and highly structured transactions,\nright? The other can say, “Here is the type that represents the thing\nthat’s happening.” And then, the Gord dev team can think about how to\ntranslate that into the, like…the gooey internal representation and\nthink about its place in the rest of the pipeline."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the longer term game plan is to actually get rid of the gooey\ninternal representation and go to something that has more structure\nthe whole way through. Because the amazing thing about type systems,\nin some sense, and there are type systems that sit inside of\nprograming languages, and there are type systems that you have that\nare on message types that span across different applications, but they\nhave this lovely property of, like, locking systems together and\ntranslating force across them. If someone wants to make a change and\nthey need to modify the types, and you see how those type changes flow\nthrough, you can understand by that process of flowing the type\nchanges through the effect on a broad set of the infrastructure. And\nit helps that we have everything in this big monorepo world where all\nof the different pieces of code, at least the most up to date versions\nthat you would get if you rolled a new one, are all sitting together\nand compiled together. And you can have these invariants that cross\nwidely separated systems. In some sense, the world you’re moving\ntowards is one where you get to leverage types kind of more\nconsistently in the way that you build systems."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, yeah, for sure. Another big one that we’ve been, again, working\ntowards over the course of many years, is when I first started on the\nteam, you could consume the entire Gord stream. Or you could consume\njust the fills. And those were kind of your two options. Around when I\nwas joining the team, we added a new stream called monitoring, which\nwas a place where people could put sources that didn’t affect our\nbookings and our positions. But, like, it turns out this process Gord\nwas providing of normalizing data was more useful than just for the\nthings that we were making sure we had to actually track in our\nposition to upload to clearing firms. There were more use cases people\nmight want to have for it, so we introduced the monitoring stream."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And it turned out two things. Either the real thing, (or sort of all\nof the real thing), or all of the fake thing — which were actually\ninsufficient as we continued to grow and do more things. It was useful\nfor people to be able to subscribe to all of the information about\njust options, or all of the information about some of our\nclient-facing trading, and some of other things like that. And so\nwe’ve been starting to be able to express meaningful subunits of\nactivity people might want to subscribe to, and give people pointers\nto options data or other things like that. Rather than, if you want\nthe options data, you have to subscribe to the full stream and just\nfilter out the stuff you care about."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So is this a kind of static segmentation of the flow? Or a more\ndynamic system where you get to express, “Here’s, like, a predicate\nthat represents the data that I want,” or, “Here’s some kind of\nlogical specification that I want,” and you get that? Or is it just,\nlike, a kind of physical breakdown of it into different sub-streams?"
+    },
+    {
+      "type": "ts",
+      "text": "00:37:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "It is currently relatively static, in that we have to know ahead of\ntime where these things are going to end up. However, we have some\ndreams about making that a little bit more dynamic over time. But that\nis something that is still quite a ways out. But even so, the\npre-ordained breakdown still provides a lot of value to people and\nstill makes it much easier for people to consume parts of the\ninformation in smaller subsets. But obviously we’d like to get to a\nworld where you could be like, “Give me information about things with\nthis symbol,” which would be very nice. But that is still a ways out."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you’ve talked a bunch about ways in which you’ve worked on\nextending Gord, in some sense kind of at, like, the core functional\nlevel. Changing the APIs and changing the way data flies around. Are\nthere things that you have had to do at the engineering process level\nto deal with just the extreme combination of growth and criticality of\nthe system, right? As it grows in complexity in the number of things\nyou have to support and the amount of data, and yet still the thing\nthat the entire firm depends on for all of its trading. What have you\ndone at the level of trying to build a process that lets you reliably\nmake changes and officially make changes?"
+    },
+    {
+      "type": "ts",
+      "text": "00:38:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "When I started, there were no in-code tests. Not quite none. There\nwas, like, maybe one or two files of very small amounts of things, but\nthere were virtually no in-code tests for anything in the system. In\naddition to that, the way that we verified that we had not broken\nanything was we would roll our system to dev and we would just look at\nthe diffs in the output from production and the thing we were testing\nover the course of many days, to just try and make sure we had seen\nenough variety of things that we’d confident that weren’t going to,\nlike, fundamentally break anything."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "In addition to that, there was a really wide range of testing\nprocedures that we did, and many of them we still do, when we’re\nrolling production, to ensure that we don’t break the system in ways\nthat we…breaking the system would, again, halt all the trading. We\ndon’t want to do that. So we had a lot of arduous procedures. When I\njoined the team, we rolled the system a few times a year."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes. One of the things that we are now at is we roll about once a\nmonth, which is still quite slow. And indeed, for a firm that does as\nmany new things as Jane Street, and on such a frequent basis, this can\nbe a pain point. We work really hard to try and make sure we know\nwhat’s coming in advance and that we’re well-prepared so we get things\nout in time, but it is still a painful thing. And we would love to get\nto a spot where we can roll the system more frequently. And we’re\ndoing a lot of work in that direction, and have done a lot of work."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the early things I did, I mentioned a…we had no performance\ntest. I added a performance test so that we could measure performance\nof the system every time we rolled, to make sure we hadn’t introduced\na concern in performance regression. In addition to that, we built an\nin-unit test that tested the entire architecture of the system so that\nwe could, you know, have our input message types all the way through\nto our output types. The way that we tested things when I started was\nyou would literally spin up an entire dev version of the system, and\nthen you would manually construct the activity that you wanted to run\nthrough it, and then you would run it through. And this process was,\nlike, slow and pretty painful to set up. So you basically just had to\ntrust that all the other developers on the team were following the\nprocedure and were doing all the things appropriately. And you would\nlook at, like, a few sketch notes in their testing of the feature. You\nknow, they checked all the right things. Once we had in-unit in-code\ntests, we could actually add a test for the behavior change you\nintended and demonstrate that it had the effect you intended. This\nallowed you to make changes a lot more confidentially and faster on\nthat note."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "There are a number of things about how we roll that were relatively\npainful processes that we have done a lot of work as a team to\nimprove. When I started, the way that we rolled Gord was there was a\nsymlink in basically our virtual file system that pointed to the\nbinary of the current production, Gord. And so the way that you\nflipped Gord to make a new version primary was you went in and you\nmanually changed that symlink. Honestly, there are things that\nare…could be worse with that. But the thing that made this really\npainful was Gord is global, so today is not today everywhere. So what\nwould happen is around 3:00 PM New York time, which is around 3:00 AM\nHong Kong time, Gord would start up for tomorrow. So you had to change\nthe symlink for Hong Kong between when Hong Kong Gord shutdown, which\nwas 9:00 AM, and 3:00 PM when it started up again in New York. And\nthen, at around 5:00 PM New York time, which is around 10:00 PM in\nLondon, and you’d have to change the symlink in London at 5:00 PM\nbefore London Gord started up. And then, when Gord shut down at 9:00\nPM, you had to go in and change the symlink in New York."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And if you failed to do any of these things, then Gord would be\nconsidering different Gords primary in different offices. And so\nclients would be getting weird data, and, like, this would cost many,\nmany major problems. And, indeed, this was a thing that had survived\nbecause the people on the team were excessively careful and\nthoughtful, and, like, it was, you know, a thing that survived right\nup until my second roll."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:42:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Um, I have ADHD, and remembering to do specific tasks at very\ncontrolled time windows is a thing that I am bad at. And so, I think\nthis was actually my second roll on the team that I was doing. I\nrolled Hong Kong at 10:00 AM, and then I went home for the day, and at\n8:00 PM realized in a moment of horror that I had not changed the\nsymlink for London. And so, at 8:00 PM, London had already started\nup. So we then had to do a relatively painful rollback procedure, and\nit turned into a relatively large production incident all over,\nforgetting to change a symlink in a particular two-hour window. So we\nfixed that."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Now, it is the case you basically can stage a change and none of the\nsymlink stuff is used anymore. There’s a process that tracks which\nGord is primary on which day. And it’s just a config file that you can\nchange in advance. You can say, “I would like Gord to flip three days\nfrom now,” and it will just do it for you. Everything is fine. It’s\nvery automated. There’s none of this sort of…it understands a notion\nof date, and then Gords just figure out what date they’re currently\nrunning on and use, “Am I primary or not?” As opposed to the thing we\nhad before, which was not awesome (laughs)."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Any time you have something that depends on people just being\nrepeatedly careful over and over, you’re eventually gonna run into a\nproblem. The story also highlights just a weird thing about our\ninfrastructure, and I think, in some sense, about the trading world,\nwhich is the notion of day, right? Like, you have a trading day, and\nlots and lots of applications start up at the beginning of the trading\nday and shut down at the end of the trading day. And that’s\nhistorically, early on, how we did kind of everything. And the\ncomplexity of Gord is it was kind of straddling those two worlds of,\nlike, we have basically three regions in which we operate, centered in\nNew York, and London, and Hong Kong for North America, and Europe, and\nAsia. And each one of those Gord instances had its own trading day,\nand it would start at one point and end at another point. But also,\nthey communicated with each other and shared information, and so you\nended up with this kind of weird handoff and overlap, and shutting\ndown and bringing back up. And this is increasingly not how we\noperate."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "More and more, Jane Street just operates 24 hours a day. And more of\nour systems have moved over to this model. But it’s just kind of a\ngood example of the kind of complexities that are, like, somewhat\nunique to the historical story about how the system evolved."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One of the things that we want to do is make it so that Gord is\nmore 24/7 available. But there’s also a lot of really nice things that\ncome out of being able to shut your system down, like having to reboot\nwindows and being able to archive things at a clean time when nothing\nnew is being written into the system. We are working towards a world\nwhere we will be able to set up our boxes dynamically and fold boxes\nsort of in and out of being used on a dynamic basis. And then\neventually hopefully get to a point where we actually can have Gord be\n24/7 without all of these sort of pain points. But because Gord wasn’t\ninitially architected with this as the plan, it is, again, a\nrelatively arduous process with many steps along the way to get from\npoint A to B."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay, so let’s switch gears. We spent a lot of time talking about\nsoftware engineering, which is the core role that you have. You also\ndo a lot of other things at Jane Street. And one thing you’ve been\ninvolved a lot in over the years is with recruiting and with our\ninternship program, and a lot of things surrounding that. And you’ve\nalso done a lot of work specifically on recruiting of underrepresented\ngroups of various kinds. I’d be curious if you could tell me a little\nbit more about, like, the kind of efforts you’ve been involved in in\nthat part of the world?"
+    },
+    {
+      "type": "ts",
+      "text": "00:46:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. When I started at Jane Street, I was the second female developer\nat the firm. Jane Street had already been around for many years, and\nso this is kind of sad. And people recognized that this was sad, but\nthey didn’t really know what to do about it. And so I, uh, relatively\nearly on, got involved in helping us figure out how to solve that\nproblem."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that was a big issue is that there is a view in the\nworld that finance is a pretty bro-ey and unpleasant place to work as\na woman. And while I have not found this to be true at Jane Street, I\nthink the culture is excellent and I’ve had really great experiences\nwith all of my colleagues. As I mentioned at the very beginning, I had\nno plans on working in finance when I graduated. And had I not done an\ninternship at Jane Street, there’s no way I would have even considered\nit. So a big part of what we’ve done is we’ve done a ton of outreach\nprograms aimed at finding folks that might be actually a really good\nfit here and might really enjoy their time at Jane Street, and giving\nthem little tastes of what it’s like to work with us. What the culture\nis like. Getting them to meet a bunch of people."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "A lot of the way we’ve done this is through a bunch of external\nrecruiting programs we’ve built. One of the first ones of these that\nwas created was actually happened the year after I was an intern, I\nstarted helping out with it relatively early on when I came back, this\nwas called Women in STEM, which was aimed at bringing a bunch of folks\nbetween their senior year of high school and freshman year of college\njust to come see Jane Street and meet some of the people, and hear a\nlittle bit about what we do. And put it in people’s brains that this\nwas, you know, maybe a thing to consider when they were applying for\ninternships down the road."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Indeed, my very first intern was someone that we found through Women\nin STEM, a woman named Haohang who now helps me run a bunch of the\nprograms that I’m going to further describe. But it really was the\ncase a lot of this is about finding folks that just would never have\napplied to us in the first place and getting them kind of into our\npipeline."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that really struck me about Women in STEM when we\nstarted doing it is it was a good example of playing the long\ngame. Trying to put together a program and tell them about us, but\nalso tell them about finance and teach them interesting things about\ntechnology. But this was planning out pretty far in advance, right?\nThese are people who were seniors, or in high school who were about to\ngo to college. And it was gonna be some time before they were people\nwho might apply for jobs here. But we’ve seen it work out, like there\nare plenty of people who went through that program who ended up\neventually coming here. And it’s also…it sort of worked I think\ndirectly on people who we’re trying to recruit, and also has, like, a\nlarger brand-building effect."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One of the things is a lot of the folks that we might be really\nexcited to have come to Jane Street, if they have a friend who does an\ninternship in finance and has a bad experience, if they haven’t had\nsort of something good to put against it, they just won’t even\nnecessarily consider a place like us. We found starting early and also\nhaving stuff, again, spanning sort of all of folks’ college years has\nbeen really effective at getting people in the door as often as\npossible."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So one of the programs that we built relatively early on that has been\none of our most effective is called INSIGHT. And what this program is,\nis we bring a bunch of sophomore women to Jane Street for a week, we\nteach them a bit about finance, we teach them some OCaml, we just have\nthem spend a lot of time interacting with full-time Jane\nStreeters. And through this, we are able to get a lot of those folks\nto apply to our internship, and then hopefully, you know, people come\nas interns, and then come back full-time, and the whole pipeline goes\nfrom there."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "INSIGHT has been sort of so successful we’ve actually expanded it. We\nhave expanded this because the number of women at Jane Street has\ngrown a ton since I’ve been here. I went from being developer number\ntwo, to having so many female developers, I no longer know them all. I\ndon’t even know the number anymore, which is, like, again-"
+    },
+    {
+      "type": "ts",
+      "text": "00:49:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:49:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "… a thing I was tracking for so long ‘cause, you know, it was like,\n“Okay, we’re at two. Okay, we got another female developer,\namazing. We’re at three. We’re at five. We’re at eight.” And, like,\nyou know, I cared about the individual numbers so much. And now, it\nreally does feel like the case that we are actually pretty good at\nrecruiting women into our internship."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Our dev intern class this summer is about 25% women, which is,\nfrankly, not where I’d want it to be. I’d really love that number to\nbe higher. But at the same time, compared to where we started, it’s a\nmassive improvement. And I really want to celebrate the progress that\nwe’ve made, but we’re also not satisfied. We’re going to continue\ndoing more programs, and more events, and trying to recruit more women\nto Jane Street, and make sure that Jane Street continues to be an\nexcellent place for women to work."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Even if it’s not perfect, we’ve made a lot of progress."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So when you run a program like INSIGHT, how do you think about the\nkind of dual problem of how to attract people, how to get people to\napply to it? And then also, among the people who apply, how do you\npick people who in a way, they’ll maximize the likelihood of success?"
+    },
+    {
+      "type": "ts",
+      "text": "00:50:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. A lot of this is amazing work done by our recruiting team to\nbuild connections on campus with women in CS groups, and building\nconnections with some of the bigger women in tech organizations like\nthe Anita Borg Foundation. So many years I went to Grace Hopper, I had\na booth, and, like, just would grab anyone walking by and be like,\n“Hey, let me talk about Jane Street and come hear about this thing.”\nAnd so a lot of it was done through sort of the work of the recruiting\nteam of finding people and getting our name on to campuses."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And the thing that we’ve found very effective is once we kind of get\nour foot in the door to school, like, we can get our reputation to\nspread there reasonably effectively. So a lot of it is figuring out\nwhat club we need to reach out to, or how we kind of find an avenue\ninto a school. And this is one of the things that our recruiting team\nis really, really excellent at. They are excellent at many things, but\nthis is one."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That points at another problem, which is maybe a different kind of\ndiversity, which is diversity in terms of the schools that you reach\nout to. Can you talk about how you get in and you get a reputation at\na school, and suddenly now you have access to a really interesting\nstream of candidates, but that requires specific investment in a\nparticular school. And there’s a ton of schools, and there are great\npeople scattered across all of these schools. Is there anything that\nwe’ve done in this to try and reach out to, like, people in the long\ntail of schools that we don’t have time to build particular\nrelationships with that school, but would still be interested in\nseeing at least some subset of the people there?"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "I think the answer is the recruiting team does a lot of stuff here,\nbut I don’t actually know."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I don’t know what the answer is in the context of INSIGHT. I know in\ngeneral we try to do all sort…I mean, just to give a dumb example,\nlike this podcast, is a way of trying —"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "…to reach out in a way that’s orthogonal to the particular efforts\nat school. And also, for that matter, reaches out to people who\nalready have jobs and are already employed in places."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yes. I mentioned the recruiting pipeline for our interns, being things\nlike INSIGHT, and some of the other programs in that space. But one of\nthe things that we are still working on trying to make better is our\nrecruiting pipeline for lateral women. Our intern class is 25% women,\nbut only about half of dev hiring is done through the internship, and\nthe other half is done through laterals, which are, you know, folks\nwho have been in the industry working at places. And the number of\nlateral women we hire is significantly lower, in terms of\npercentages. And this is a thing that we’re very actively working\non. We’ve been trying lots of different things in this space. I would\nsay we haven’t found a single silver bullet that works, but we’ve\ntried lots of different things, and some of them had some success, and\nsome we’re sort of still iterating on."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "One of the ones that is my favorite that we put together, and I really\nhope that we can now bring back as the pandemic recedes, is shortly\nbefore the pandemic we started hosting brunches for women in tech in\nthe city, just to hang out with a bunch of Jane Street developers and\nhave brunch. Because what happened was we were throwing out ideas for\nhow we might do some reach outs to women across the city who might be\ninterested in a job at Jane Street. And we were like…people were\ntalking about doing a tech talk, or doing a day where we brought\npeople to Jane Street. And I told them at the end… Casey, another\nfemale developer, and I were like, “We wouldn’t go to that. What would\nwe go to? We’d go to brunch.” (laughs) So —"
+    },
+    {
+      "type": "ts",
+      "text": "00:53:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:53:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "…so we tried that. And things like that, where it’s just kind of\nreputation building, we didn’t think we would want to go to something\nthat was incredibly sponsored and, like, you know, very pitchy and\nwhatever. And so we were like, “Let’s actually just approach this from\na relatively altruistic angle. Let’s try and help women in tech in the\ncity, build a community, and approach that as the angle. And then, if\nit is the case that, great, maybe they’re not looking for a job, but\nthey have a friend who they know who is, this now might be a thing\nthat they might consider being like, ‘Oh, have you heard of this\nplace?’” Again, playing the long game of, like, we’re not doing this\nas a, “Oh, you have to be looking for a job,” or, “Oh, you have to be,\nyou know, uh, having this thing.” It’s like, “Actually, let’s just try\nand do a thing that we think would be fun for women in the city in\ntech. And hopefully, there are good knock-on effects from that over\nthe long haul.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:54:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "And, you know, frankly, I just really enjoy meeting a bunch of other\nfemale software developers around the city. That was a really fun part\nof the brunches, and I think was achieving the goal of helping build\ncommunity, helping build connection. And I think that is a thing that\nI hope that we get to bring back now that people are maybe willing to\nbe indoors at a brunch again. Or maybe we’ll do them outdoors."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:54:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "I don’t know."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s amazing. Yeah, I actually hadn’t heard about these brunches at\nall. Sounds like a great idea and something we should totally start up\nagain. And I think your point about trying to generate something\nthat’s legitimately helpful to the people involved is, like, a really\nimportant thing and a thing that showed up in a lot of the recruiting\nprograms that we do. Like, we have a tech blog. And it’s obviously,\nlike…the subterranean purpose behind all of that is, like, we want\nto hire great people, but we also try really hard to make the things\nthat we write and publish, like, legitimately interesting and provide\nreal value for those who are reading."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think that’s kind of a thing we’ve done in general. Like, Women\nin STEM similarly, like, we had this program where the long-term goal\nis hiring people, but we also tried to make sure it was legitimately\nhelpful and taught people things that would be useful to them, whether\nor not they came. That kind of playing the long game and trying to\nmake investments that are gonna pay off down the line, and do it in a\nway that feels legitimate, and connected, and useful to the people\ninvolved is core to how we approach this for a long time."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One of the things sort of in this vein that I’m incredibly\nexcited about, that we’re running this summer for the first time —\nI’ve talked a lot about our recruiting of women to Jane Street —\nanother area I’m involved in is trying to recruit more\nunderrepresented minorities in tech in general to Jane Street. This is\nalso an area where we are woefully underrepresented and we want to get\nbetter."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So a program that we’re running this summer is for folks who are from\nunderrepresented backgrounds in tech between their freshman and\nsophomore year. And we built a program that was designed to be purely\neducational. Part of the thinking about this was how to help people\nwho come from a place where Jane Street does have a strong recruiting\npipeline to begin with. Schools where Jane Street already does a lot\nof recruiting, we have people who have gone through our internship or\nour interview process, they know how to prep for that and know how to\nprepare for the interviews. And that just does give you a leg up in\nthe interview process. So our goal was to build something that could\nhelp level the playing field a little bit for folks coming from places\nwhere they just don’t have that preparation. We’re trying to find a\nwhole group of folks who are relatively early in their careers, and\nbuild a program that is designed to be 100% educational."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "We’re gonna teach them OCaml for the first several weeks of the\nprogram, and then we’re gonna work with them on an opensource project\nso that they’ll have something they can put on their resume. Because,\nagain, it is often hard to get an internship if you haven’t had\nsomething on your resume, like an internship, already. So kind of\nbuilding a thing aimed to both hopefully help these folks in their\nsort of… furthering their CS education, and also getting them\nprepared to be able to get internships during their sophomore and\njunior years, hopefully a bunch of them with us. But also just in\ngeneral, our aim of the program is to provide a service and provide a\nprogram that will hopefully help all of these folks. And, you know,\nagain, we always have the sort of long game of, like, hopefully some\nof those people become Jane Street developers. But our aim in building\nthe program is hopefully they’ll get something out of it, whether they\ncome to Jane Street in the long term or not."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the interesting things about that program is it’s really\nconnected to opensource work that we do, right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:56:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Because one of the ways we’re making that happen is by having them do\nprojects where they don’t have to, like, come inside Jane Street’s\nwalls. They can work on stuff that we’ve open sourced already, and\nthat simplifies and smooths out that story."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And it makes it much easier. Again, if the goal is kind of\nhelping them have something that they can talk with the world about,\nit’s much easier for something they can point to. One of the things\nthat is interesting about Jane Street is we don’t have a product that\nyou can, like, point to and show to your mom. You can’t be like, “I\ndid this thing.” And, you know, maybe looking at a bunch of opensource\ncode is not necessarily something everyone’s mom would understand, but\nit is a thing that, like, you can put on your resume and a recruiter\ncan look at and be like, “Oh, there’s a GitHub link. Okay, cool, I can\nsee a thing that this person did.” And I think those things are\nhopefully really helpful in helping them, again, as they’re\nprogressing in their CS education, and also in their careers."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you have any kind of feedback or a sense of how effective these\nprograms have been?"
+    },
+    {
+      "type": "ts",
+      "text": "00:57:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "So I think for, um, INSIGHT and then also the version of it we run for\nunderrepresented minorities in tech, called IN FOCUS, they have been\nincredibly effective. The percentage of women who go through this\nprogram who then end up in one of our internships or then come back\nfull-time is something like 20%, which is, for a one-week program\nwe’re running, quite high. If we could have our interviews be 20%\neffective, that would be awesome."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Are you saying 20% of the people who go through the program eventually\ncome to the Jane Street internship?"
+    },
+    {
+      "type": "ts",
+      "text": "00:58:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Something like that."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That is astonishing."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One of the things that’s amazing is a group of people who are\nnot me who have taken over the program since I was involved…so I’m\nnot sure what the all-in numbers are these days, but at least when we\nwere involved in the program I think from our very first one, I think\nit was 25 students, and five of them ended up in the Jane Street\ninternship over the next few years."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s amazing. That’s really a lot of impact to have on the firm’s\nhiring."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "It’s nuts. From the very first IN FOCUS we ran, we had, I think,\nsomething like 15 students, and three of them ended up at Jane Street\nthat next summer. Again, we were running this for the first time in\nthe fall, so a lot of people who came to it already had\ninternships. So our hope is that some of those people will be in,\nlike, this year’s internship and next year’s. So getting from just one\nyear of turnaround, it’s been awesome. And, again, we would love all\nof these numbers to be larger, and we’re, we’re hoping to continue to\nmake them so. But the impact of these things is really large. And the\nnumber of people who come through these programs who say, “I never\nwould have considered applying to Jane Street if not for them,” is\nalso very large."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "You know, I think one of the women who helps run the programs now is\nGrace Zhang, who was actually in that first class of INSIGHTers. And,\nyeah, she said when she was applying, like, “Yeah, like, this isn’t a\nthing that I would have done before.” And, like, I’m so grateful we\nhave her ‘cause she is amazing. I think the best selling point Jane\nStreet has is just introducing full-time Jane Streeters to people\nbecause we are, in general, a very inclusive, welcoming, and friendly\nplace to work. And I think that the people here are fantastic. When\npeople are, you know, asked in interviews, “What is your favorite\nthing about the place?” People have to struggle to come up with an\nanswer that isn’t, “The people,” because everyone’s answer is, “The\npeople.” And so, that gets a little repetitive, but it’s just so true."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right. Thanks so much for coming and joining me. This has been\ngreat."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ella"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s been awesome. Thank you."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode, along with show\nnotes and links at signalsandthreads.com. One thing I wanted to\nmention is that, as you may have noticed, the pace of releasing new\nepisodes has slowed down a bit. Don’t worry, we’re not going\nanywhere. In fact, we’ve got a bunch of episodes planned that I’m\nreally excited about. But things have been busy and I do expect the\npace to be a bit slower going forward. Anyway, thanks for joining us,\nand see you next time."
+    }
+  ]
+}

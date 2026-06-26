@@ -1,0 +1,2299 @@
+{
+  "slug": "what-is-an-operating-system",
+  "title": "What Is an Operating System? with Anil Madhavapeddy",
+  "mp3_rel": "audio/what-is-an-operating-system.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Anil Madhavapeddy is an academic, author, engineer, entrepreneur, and\nOCaml aficionado. In this episode, Anil and Ron consider the evolving\nrole of operating systems, security on the internet, and the pending\narrival (at last!) of OCaml 5.0. They also discuss using Raspberry Pis\nto fight climate change; the programming inspiration found in British\npubs and on Moroccan beaches; and the time Anil went to a party, got\ndrunk, and woke up with a job working on the Mars Polar Lander."
+    },
+    {
+      "type": "p",
+      "text": "Anil Madhavapeddy is an academic, author, engineer, entrepreneur, and\nOCaml aficionado. In this episode, Anil and Ron consider the evolving\nrole of operating systems, security on the internet, and the pending\narrival (at last!) of OCaml 5.0. They also discuss using Raspberry Pis\nto fight climate change; the programming inspiration found in British\npubs and on Moroccan beaches; and the time Anil went to a party, got\ndrunk, and woke up with a job working on the Mars Polar Lander."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack from Jane Street. I’m Ron Minsky."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It is my pleasure to introduce Anil Madhavapeddy. Anil and I have\nworked together for many years in lots of different contexts. We wrote\na book together, Anil and I and Jason Hickey together wrote a book\ncalled “Real World OCaml.” We have spent lots of years talking about\nand scheming about OCaml and the future of the language and\ncollaborating together in many different ways including working\ntogether to found a lab at Cambridge University that focused on OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Anil is also a systems researcher in his own right, an academic who’s\ndone a lot of interesting work, and also an industrial programmer\nwho’s built real systems with enormous scale and reach. We’re going to\ntalk about a lot of different parts of the work that Anil has done\nover the years."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "To start with, though, I want to focus on one particular project that\nyou’re pretty well known for which is Mirage. Can you give us a\ncapsule summary of what Mirage is?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Sure, I can. And it’s great to be here, Ron."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The story of Mirage starts at the turn of the century. In the early\n2000s, pretty much every bit of software that ran on the internet was\nwritten in C and back then, we had internet worms that were just\ndestroying and tearing through services because there was lots of\nproblems like buffer overflows and memory errors and reasons why the\nunreliability of old systems code that had been written in the past\nwas becoming really obvious. And the internet was really insecure."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So there I was, as a fresh graduate student in Cambridge, and I\ndecided that after years of doing consistence programming in C, I\nwould just have a go and see what it was like to rewrite some common\ninternet protocols using a modern, high-level language. So I looked\naround and I looked at Java which was obviously the big language back\nthen, I looked at Perl which was heavily used for scripting\npurposes. But in the end, I decided I wanted something that was the\nmost Unix-like language I could find and I ended up using OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It had fast native code compilation that just ran in Unix, it could be\ndebugged very easily, it had a very thin layer to the operating\nsystem. I spent a great couple of years figuring out how to write\nreally safe applications in OCaml. I started by rewriting the domain\nname service which is how we resolve human-readable names like\ngoogle.com to IP addresses and I rewrote the Secure Shell protocol\nwhich is how most computers just talk to each other over remote\nconnections."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I rewrote all of these in pure OCaml and I showed it as part of my PhD\nresearch that you could make these not only as high-performance as the\nC versions, which really wasn’t that well-known then because there was\na perception that these high-level languages would be quite slow, but\nthen I also showed that you could start doing some high-level\nreasoning about them as well. You could use model checking and early\nverification techniques to prove high-level properties."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This is all really good fun. I wrote loads of OCaml code and then I\npublished all these papers. And then I asked myself a simple\nquestion. I’ve written all of this code to rewrite network protocols\nand have safe applications, but then the compiler just seemed to\nstop. So after all of these beautiful abstractions and compilation\nprocesses, I got a binary at the end and this binary just talked to\nthis operating system. I might have written 100,000 lines of OCaml,\nbut this operating system had 25 million lines of C code, the Linux\nkernel."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So why after all of my hard work in perfecting this beautiful network\nprotocol do I have to drag along 25 million lines of code? What value\nis that adding to me when I’ve done so much in my high-level language?\nAnd this is where MirageOS comes in."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "MirageOS is a system written in pure OCaml where not only do common\nnetwork protocols and file systems and high-level things like web\nservers and web stacks can all be expressed in OCaml but the compiler\njust refuses to stop. We then provide different abstractions to plug\nin the actual operating system as well. And so the compiler, instead\nof stopping and generating a binary that you then run inside Linux or\nWindows, will continue to specialize the application that it is\ncompiling and it will emit a full operating system that can just boot\nby itself."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The compiler has specialized your high-level application into an\noperating system that can only do one thing, the thing that is written\nto do, and it does this not just by looking at the source code, it\nalso looks at your configuration files which are also written in\nOCaml, it evaluates all of those in combination with your business\nlogic, and then it compiles the whole thing in combination with\noperating system components written in OCaml like TCP/IP stacks and\nlow-level file systems and network drivers and those kind of things,\nand emits what’s known as a unikernel. A unikernel is a highly\nspecialized binary output."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So MirageOS started off as an experiment in my PhD 15 years ago. I’ve\nbeen joined by an incredible community initially by Thomas Gazagnaire\nand David Scott and now by a large MirageOS core team. We have\nhundreds of protocols and file systems and pieces that can all fit\ntogether and be combined into very bespoke, artisanal\ninfrastructure. You can design a kernel that does exactly what you\nwant it to do and you don’t have to drag along other people’s code\nunless you want to."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Maybe an overly pithy summary of this is: Your operating system is a\nlibrary."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This is an operating system. But what is an operating system? In a\nnormal operating system, you run a bunch of processes that’s known as\nuserland where this is a failure domain where if something goes wrong\nor it needs resources from the outside world, it’s got to ask a\nhigher-level system and the higher-level system in conventional\noperating systems is the kernel. The Linux kernel, for example, is the\nthing that mediates all of the resources in your system, it manages\nthe hardware, and it acts as a middleware to give software safe and\nisolated and high-performance access to the underlying hardware."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "With unikernels, it uses a different approach of structuring operating\nsystems, one known as library operating systems. And this is one where\ninstead of the kernel acting as a big wrapper around all of your code,\nit simply is provided as a set of libraries so it is no different from\nany other library that you link to such as OpenSSL or some kind of\ngraphics library, for example. The kernel is just another one of those\nthings."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But what you sacrifice is multiuser modes because if one application\nis accessing some system libraries, it needs exclusive access to the\nhardware. It’s quite hard to provide competing or untrusted access to\ndifferent parts of your hardware stack."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So library operating systems work really well if you’re trying to\nbuild a specialized application that is maximally using the hardware\nat hand. If you just want to have a desktop with lots of applications\nrunning, then you should just use conventional operating systems. It’s\nonly if you can benefit from the specialization that you want to\nswitch into this different mode of operating system construction."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What I like about MirageOS as an idea is it’s so weird. It’s hard to\nknow whether it’s a research project or a stunt. It’s also part of\nwhat I think of as a larger story of the multi-decade-long failure of\nthe original idea of an operating system."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Back in the day, we had this idea of what we’re really going to do is\nbuild multiuser operating systems. Computers were really expensive,\nand we need to share them, share one big computer among a bunch of\npeople. And so we build systems like Multics. And then systems that\ntook inspiration from them like Unix and lots of other systems along\nthe way. We built all of these abstractions that were designed to make\nit easy to share hardware among multiple people and to do it safely."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And then in the last couple of decades, we have more completely and\nutterly given up on that project, and things like virtualization and\ncontainers are all examples where we’re like, “No, no, no, that’s not\nwhat an operating system is for. Operating systems are for piling up\nyour complicated stack of all the different components you need to do\nwhen you throw together to build an application and you want to add\nthem up and freeze them in place so you can replicably build up this\nweird agglomeration of stuff that you’ve thrown together.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The original purpose of actually having multiple users share the same\noperating system has basically vanished from the scene. And once\nyou’ve made all those changes, the idea that instead of all of the\ntraditional abstractions that we needed when we were separating out\ndifferent users, maybe we could do something radically\ndifferent. That’s where I see something like MirageOS showing up."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. It’s an interesting perspective to think that operating\nsystems have been a failure because what’s really happened in the last\n20 or 30 years is that we have invisibly added layers that provide the\nright level of abstractions needed for that point in time."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "For example, in the late ’90s, I would spend ages building a\nbeautifully configured Windows machine because I knew exactly all the\nregistry keys and all the magic that went into it. But in the early\n2000s, I worked on the Xen hypervisor."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The Xen hypervisor started off with a very simple thesis which is, it\nis possible to run multiple instances of an operating system not\ndesigned to run on the same physical hardware simultaneously and make\nsure it’s completely isolated from the other operating systems running\nin the machine but also do so with minimal performance hit. There was\na serious balancing act there."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And so what we did with the Xen hypervisor was, don’t touch anything\nin user space because you don’t want to have people rewriting all\ntheir applications, their Oracle databases or their SQL servers or\nwhatever they’re running. So we scooped out the guts of the\nkernel. And normally, the guts of the kernel in Linux is what manages\nthe low-level hardware, the memory management subsystem, the interrupt\ncontroller, and the things that map hardware to operating\nsystems. With this simple modification, we adopted a technique called\nparavirtualization."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "What paravirtualization did was, it just fooled the kernel into\nthinking it was running a real hardware but we shimmed in a little\nlayer called a hypervisor, the Xen hypervisor, which then did all the\nreal mapping to real hardware. It turned out this was extraordinarily\neffective because we could take entire physical operating system\nstacks and tens of millions of lines of code all combined and run them\nsimultaneously in a single physical machine and make sure that they’re\nall utilized to their maximum potential. If you had a bunch of\nmachines all being used 10% of the time, we could shove these in one\nplace."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Now, this worked out so well because the notion of a user wasn’t\nsomeone who’s logging into a Windows machine but it became the person\nwho’s booting up an operating system. And then suddenly, the Xen\nhypervisor became its own operating system and cloud computing and all\nof these kind of things took off by the mid 2000s. But they just\nprovided a different interface. And when MirageOS came along, it was\nkind of the leftover portions of the Xen experiment."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Xen also interestingly started off as a stunt. It was a bet in the\nCastle Pub in Cambridge that Keir Fraser couldn’t hack Linux over a\nweekend. And then Monday came along and we had the first version of\nXen and then a big team of us continued working on it."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I then spent the next few years at a startup company called XenSource\nbuilding all of the support to make it production quality so we could\nsell the Xen hypervisor as a product so that we had Windows drivers\nand Linux drivers. Those years were filled full of compatibility\nwoes. So you have to look at every single edge case and make sure it\nworks perfectly."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then life just got frustrating. You just get bored of making other\npeople’s code work well in your virtualization layer. So we had to\nhave some way to test Xen. And so MirageOS, the first version of it,\ncame along because we built a minimal operating system that didn’t\nhave all of the Windows baggage and all of the Linux baggage and all\nit did was exercise the lowest levels of the Xen functionality, the\ndevice drivers, the memory subsystem and so on. I needed to have\nslightly more complicated tests."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "With Thomas Gazagnaire, we just linked in the OCaml runtime because we\njust needed to write some high-level logic and then that was running\ninside the Xen hypervisor as a minimal operating system. It was a few\nhundred kilobytes in size at most. And then we’re sending Ethernet\npackets so wouldn’t it be nice if you could just hook up an OCaml\nlibrary to send TCP frames instead of low-level Ethernet? So then I\nstarted writing a TCP/IP stack in pure OCaml. And then once you have\nTCP, it’s a pretty small step to go write an HTTP stack in OCaml. And\nthen that happened."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "MirageOS became this organic growth of starting from low-level\ninterfaces, figuring out what the system abstractions that we need\nare, and then filling in the blanks with libraries. So it did start as\na stunt. I think all good systems projects start with a stunt because\nyou’re trying to test an experimental hypothesis, you’re trying to\nshow that if we modify the world to be the way we want it to be with\nour hypothesis, that it’s worth doing. And you need that stunt to show\nthat all of the effort and all the hard work that goes into\nproductizing something is actually worthwhile."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So Xen, the hypervisor, was a stunt just to show that you could just\nboot three Linuxes on one machine and then to this day it remains one\nof the industry’s most popular hypervisors. MirageOS also started as a\nstunt just to show you could build a credible sequence of OCaml\napplications and protocols and compose them together and build\nsomething useful. MirageOS today has tens of millions of daily active\nusers. It’s embedded in all kinds of systems that use the libraries\nand the protocols in lots of different ways and it’s invisibly\nservicing lots and lots of cloud infrastructure."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think it’s hard to overstate how impactful the Xen work has\nbeen. It’s the foundation on which the entire modern internet is\nbuilt, right? The virtualization is absolutely at the core of what an\nenormous number of companies have done, an enormous number of\ndifferent systems that have been built have been built on top of\nthis. There’s been a bunch of ways that MirageOS has gotten into big\nand important pieces of infrastructure."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One thing I wonder about is, are you happy with the set of\nabstractions that we’ve started to build up around this? In some ways\nI feel like the stunt-like nature of all of this shows a little bit in\nthe happenstance of what we got. A lot of the things that we’ve ended\nup building are things that you could kind of shim in. We started off\nbuilding a big multiuser set of operating systems and we’re like, “Oh,\nactually, the abstractions aren’t good enough for supporting multiple\nusers truly isolated from each other.” So we started doing this, in\nsome sense, very strange thing where we said, “You know what’s the\nright abstraction? Hardware.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:13:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Whatever the physical hardware happened to provide at the bottom\nlayer, that’s the thing that will allow us to take our operating\nsystems and just port them cheaply to new places. So let’s pick\nhardware as the new abstraction. And I find it hard to believe on some\nlevel that either of these are really good choices. If you were to\nactually start from scratch in a way that’s not just like a stunt but\na multi-decade-long commitment to rebuild the entire world, do you\nhave a feel for what abstractions you’d actually pick?"
+    },
+    {
+      "type": "ts",
+      "text": "00:13:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "That’s a great question."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Mirage is now 15 years old, and we are never happy with our\nabstractions. I don’t think there’s been a single day where the core\nteam has sat down and said, “We have the perfect set of interfaces and\nit will survive for the next few years.” It’s worth stepping back a\nlittle bit to explain why OCaml was the right choice for MirageOS and\nwhy that empowers this continuous evolution of our interfaces."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "In OCaml, you have the notion of modules. This is one of the defining\nfeatures of OCaml beyond being a functional programming language. And\nwhat modules do is that they let you define an interface and this\ninterface is a series of types which can then have functions that\noperate over those types and that collection is known as a module\nsignature. And whenever in MirageOS we are defining some abstract\nhardware or even a high-level thing, we define a module signature for\nthis thing. And all that does is sketch out what goes in and what goes\nout and how you create things of this module type."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But then in OCaml, you also have this notion of module\nimplementations, modules themselves, and if they satisfy that module\nsignature, then you can apply this in a type-safe way and you can\ncompose lots and lots of different module types with lots and lots of\ndifferent implementations."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "In Mirage, we have a sequence of module types which represent the full\nset of our possible hardware- and application-level and protocol-level\nsignatures. But then, we also have hundreds and hundreds of concrete\nlibraries which satisfy some of those module signatures."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "For example, if I have a networking module signature that just says\nyou can open a connection and you can read and write from it, we call\nthis a flow in MirageOS, then there are several possible\nimplementations of this flow interface. One of them is just a normal\nLinux socket stack which will compile only on Linux and another one is\na full OCaml-based implementation of TCP/IP which exports the same\nsocket interface but instead of delegating the requirements to\nactually send the network traffic to the kernel, it actually\nimplements it in pure OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So in MirageOS, whenever we’re not happy with the lack of some safe\ncode, we go write an implementation. Whenever we’re unhappy with the\nevolution of some hardware interfaces or virtualization interfaces, we\ngo rewrite our module signatures and all we have to do is to adjust\nour implementations so that they match the new module signatures. We\ncan do this in an incremental and evolutionary way."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Over the years, we’ve learned a ton of stuff, we’ve seen an evolution\nof hardware both in terms of performance and straight-line\ncapabilities, we’ve seen it change in terms of the security model, we\nstarted with just page tables for memory now we have all kinds of\ntrusted, encrypted memory enclaves and we have nested\nvirtualization. It’s become an incredibly sophisticated interface\nthere. And then we also have the dimensionality of distributed systems\nwhich is just another way of programming and abstracting across the\nfailure domain."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "OCaml lets us split up our implementations and our signatures into two\ndiscrete halves and then try to evolve continuously. That’s why the\nMirage project is called Mirage because our idea was that the Mirage\nproject would disappear and just become the default way that people\nprogrammed systems because our signatures would just become part of\nthe standard community and part of the standard way that people build\nthings and we’ve been seeing that over the last few years."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One, I think, subtle advantage of Mirage which is not, I think,\ntotally obvious to someone who encounters it as an operating systems\nproject is you can take a program that was built for Mirage and you\ncan run it with an ordinary operating system. Your point about one of\nthe ways that you can get network services is to just use the standard\nnetwork services on the operating system of your choice. And the other\nway is to have a pure OCaml implementation that goes all the way down\nand run that inside of hypervisor or maybe run it on an actual, bare\nmetal server."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s an enormous amount of flexibility in terms of how you take\nthese things and deploy them. This may be not obvious if you just\nthink about it as an operating system. In some sense, it’s both more\nthan that and kind of less, in the sense that, as you said, there’s a\nway in which the more you look at it, the more you wonder, like, “What\nactually is here?” In some sense, the whole architecture disappears\ninto the background."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Well, to give you a concrete example of this. Right now, we’re really\nworried about climate change. We thought we would build a website that\nis purely solar powered and one observation about websites, for\nexample the OCaml Labs website, is that most people probably only look\nat the website when it’s daytime. There’s not much machine access to\nthe website. So we thought, “Well, what if we had a bunch of Raspberry\nPis around the world that were just solar powered?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:18:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The process of writing this kind of thing is, first of all, just start\nwriting it in Unix like a normal OCaml Unix application and we built\nthe web server with my colleague, Patrick Ferris. And then at this\npoint, we start measuring the energy usage and the energy usage is\nhigh because it’s running Linux and the Raspberry Pi and then it’s\njust taking up more budget than our solar is letting us provide. So\nthen we wrap it in a more constrained MirageOS interface, one that\ndoesn’t give you the full access to Linux and all the syscalls and\nonly requires a small file system."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And so this is just an evolution over our existing Linux code and then\nsuddenly it becomes compatible with all of the direct unikernel\ninterfaces. And then you can replace the Raspberry Pi with an\nESP32, one of those tiny little\n32-bit microcontrollers, and your energy budget drops\ndramatically. But obviously, your capabilities drop, but I had the\nluxury of developing the Raspberry Pi environment which is a full\nLinux environment and then when I decide, “Well, okay, my high level\nlogic is right, I can bisect it, and then get rid of the lower half of\nthe operating system.” It’s all just done through iterative, normal,\npure OCaml development."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s worth noting as well that anyone can build their own custom\nkernel. If you’ve never done any kernel hacking, you can still use\nMirageOS, program in pure OCaml, and have a custom kernel that you can\nboot. It is really quite dramatic if you think that there’s mystique\nin kernel programming because there isn’t. It’s just another very,\nvery large program that is hard to debug."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think I have a pretty good sense of what’s to like about this\napproach. One advantage is that you get all of the flexibility that\nyou get out of a powerful programming language for building rich\nabstractions in a kind of kernel environment. You are restricted in\nvarious ways to building abstractions that are, in some sense, safe\nvia the hardware support that you have for separating kernel code and\nnon-kernel code. There’s a bunch of constraints about how you can\nbuild that kind of system."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Here, you get to use the abstractions very freely, you can build just\nwhat you want, and you can have a compilation process that just\ndoesn’t link in the stuff that you’re not using so you get things that\nare truly minimal and as a result more secure. So that all seems\nreally exciting."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I have an enormous amount of sympathy for the idea that part of\nthe way that you make your world better is by extending the\nprogramming language. I think this is a luxury that Jane Street has\nhad over the years and I think that, in some sense, everyone, whether\nthey know it or not, is enormously dependent on the fundamental tools\nthey use including the programming language and people mostly think of\nthemselves as being in the position of victim with respect to their\nprogramming language of choice. They mostly use it and don’t have a\nlot of control over how it works."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But being in a place where you can be in real conversation with the\ncommunity of developers that defines the language lets you, when you\nfind really important ways of changing that ecosystem, actually being\nable to push that forward, that’s a very powerful thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It is."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And OCaml, in my mind, is a generational language. One of the\nproperties I want from systems I build is that they last the test of\ntime. It’s so frustrating that a system I built in the early 2000s, if\nyou put it on the internet today, would be hacked in seconds. It just\nwould not survive for any length of time. So how do we even begin the\ndiscipline of building systems that can last for, forget a decade,\njust even a year without having some kind of security holes or some\nkind of terrible, terrible flaw?"
+    },
+    {
+      "type": "ts",
+      "text": "00:21:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Now, there is one argument saying that you should build living systems\nthat are perpetually refreshed but also we should have the hope of\nbuilding eternal systems that have beautiful mathematical properties\nand still perform useful, utilitarian functions in the world."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s one big downside I feel like I see in all of this which you\nhaven’t talked about yet which is it requires you to write all of your\ncode in OCaml. And I really like OCaml, you really like OCaml, it’s in\nsome sense not a downside, but if you’re trying to build software\nthat’s broadly useful and usable and can build a big ecosystem around\nit, restricting down to one particular programming language can be\nawkward."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Just to say the obvious, I would find it somewhat awkward if there’s\nsome operating system I wanted to use and I had to use whatever their\nfavorite language was and I couldn’t write in my favorite\nlanguage. How do you think about this trade off?"
+    },
+    {
+      "type": "ts",
+      "text": "00:22:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Totally. Well, first of all, we must use multiple languages. It’s not\nreally OCaml that is the lure for this notion of generational\ncomputing. It’s the fact that there’s at the heart of it a simple\nsemantic that could be expressed in a machine-specifiable form. And\nalthough we have the OCaml syntax and everything at the heart of it,\nthere’s no formal specification about OCaml, but it’s obvious that one\nis emerging and one can be written in the next, certainly, five to 10\nyears."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This means that once you have a large body of code that has semantics,\nthat has meaning, it’s possible to transform it into other languages\nand other future semantics. That self-description is a really, really\nimportant part of the reason why I chose OCaml. It’s still possible to\ncompile code I wrote in the early 2000s using the modern OCaml\ncompiler. I’ve compiled code I wrote 20 years ago. In fact, it was\nOCaml’s 25th birthday just a few months ago and I tested out the first\nprogram I could find, it was my CVS repository, and it compiles fine."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But when you want to use another language, then we just go through the\nforeign function interface and it’s just like the process abstraction\nI talked about. All you have to do is spin up another process, which\nis another runtime, and you have to talk to it. The industry has made\ntremendous progress in understanding how multilanguage\ninteroperability should work, specifically through WebAssembly, for\nexample, at the moment. We have a substrate where modern browsers can\nrun quite portable code but more importantly than the bytecode is\ntheir emerging understanding of what it means to make function calls\nacross languages and all we have to do is take advantage of whatever\nthose advances are and we can link multiple libraries for multiple\nlanguages together."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Again, it’s a mirage, right? By using other people’s advances, Mirage\ncan benefit because all we need are libraries to build these operating\nsystems. Nothing else. Everyone loves libraries, everyone has\nthem. That’s the only thing we need, and standards for how they can\ntalk to each other."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that I think is really important about\nprogramming-language design is building a good programming language,\nit is as much about what you leave out is what about what you put in,\nand having a set of abstractions that smoothly work together, language\nfeatures that really click, where it’s really easy to use other\npeople’s code no matter which subset of the language features they\ntried to use, and it’ll still all hook together, it’s hard to build a\nlanguage that encourages that kind of simplicity, that embodies that\nkind of simplicity."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And if what you need is now languages that need to be fully\ninteroperable with each other, there’s a degree to which each language\nhas to fully embrace the complexity of the other languages and it can\nget awkward fast. I wonder if some of the simplicity that Mirage\noffers would get harder to maintain in a context where you’re trying\nto have lots and lots of different languages interacting with each\nother."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It definitely does because you’re trying to get end-to-end\nguarantees. One of the big users of Mirage unikernels is the Tezos\nproof-of-stake blockchain, and Tezos is a\ncomplicated distributed system with lots of nodes and validators and\nsecurity keys flying around."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "To build that as a unikernel, it involves a lot of OCaml code, it’s a\nlarge OCaml codebase, but also Rust code. There’s been really\ninteresting work on hooking together the Rust type system, which is\nbased around a borrowing model, so there’s a lifetime model for how\nlong values persist, and the OCaml model which is based around garbage\ncollection, it involves dynamic collection."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But this works because typically, the Rust code is at the lowest\nlevels of the system, it’s kind of at the runtime part of the\nsystem. So as long as you have a clean layering where you’re starting\nfrom a C runtime, then you’re moving into the Rust code which is very\nunopinionated from a garbage collection perspective but very\nopinionated from a lifetime perspective, and then calling into the\nOCaml code, things work out pretty well."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We’ve made tremendous progress in building some really complicated\nunikernels from a very, very complicated distributed system but you\nhave to just make sure you look at your entire language stack and your\ndependency stack ahead of time, make sure you understand how they\ninteroperate at a high level, and then dive into turning into the\nunikernel. So it’s definitely not a magic wand that you can just wave\nand expect the build systems to just work."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Another example that we use Mirage for is in Docker which is a\ncontainer management system. If you’ve ever used Docker for Mac or\nDocker for Windows, then every byte of every container that you’re\nusing in your desktop is going through a MirageOS translation layer\nbecause whenever you mount a file system on the Mac, for example,\nsomething has to translate the semantics of your Mac file system,\nwhich is APFS or HFS, into a Linux container which is a\nsimilar-looking file system but actually completely different under\nthe hood."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "What we did was we did a very special Mirage. Dave Scott, David\nSheets, and Jeremy Yallop, they figured out that if you treat one end\nof a Mirage compilation target as Linux and the other end as macOS we\ncan build translation proxies simply by serializing network packets\ninto the OCaml stack and then deserializing it on the other end and\nturning it into socket calls. So now the Mac transparently\nreconstructs traffic coming out of a container and then admits them on\nyour Mac desktop as normal Mac networking calls. A lot of the tricky\ndifficulties of network bridging and firewalls and all of that stuff\njust go away."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "When we run a Linux container on the Mac, it goes through MirageOS and\nit looks just like a Mac application. When we deployed that in Docker,\nI think our support calls went down by about 99%. So anytime this\nsoftware was deployed in the enterprise, everyone’s got some crazy\nfirewall and antivirus software and things that break some integration\nof a virtualization stack with your system."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Today, Docker for Mac, you just double click on it, you install it on\nMac or Windows and it’s like a background daemon that just runs in the\nsystem with minimal interruption and that’s the user experience we’re\ngoing for. But it’s only possible because, again, we understood how to\ninterface Go with OCaml, but made sure we did it in exactly the right\norder. Then once you deploy it, it’s incredibly robust in\nproduction. But you just have to take the time to make sure you\nunderstand the lifetime of Go values, the lifetime of OCaml values,\nand make sure they can interoperate correctly."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This is another example of the flexibility of Mirage, right? It’s not\njust an all-at-once operating system, it needs to know everything and\nthen you run it on bare metal. Like here you are integrating it as a\nvery carefully designed shim between two operating systems running on\nthe same machine."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Along the way, KC Sivaramakrishnan joined OCaml Labs to work on\nmulticore parallelism. Hannes Mehnert from Robur and David Kaloper\nwere on a beach in Morocco and they wrote us a TLS stack and then they\ndid this incredible stunt where they decided they loved Mirage and\nthey’d never talked to me or any of the Mirage team and on this beach\nin Marrakesh they wrote a complete SSL stack in the wake of the\nHeartbleed attack."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then they put up what we called a Bitcoin piñata and this Bitcoin\npiñata was in about 2015 or so I think, they hid 10 Bitcoins inside a\nunikernel, put it on the internet, and they left the private keys\ninside the unikernel and they said to the internet, “If anyone could\nbreak into this unikernel and take those keys and trade those Bitcoin,\nwe can’t deny the fact that this thing has been hacked, and you can\nkeep the money.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:29:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Back then I think Bitcoin was worth not very much but then during the\ncourse of the experiment, there was hundreds of thousands of attacks\nagainst the system and it got onto Hacker News and all of the social\nmedia networks. People kept crashing the system by denial-of-servicing\nit. But then like a real piñata it just bounced back and rebooted in\n20 milliseconds because that’s how long a unikernel takes to reboot\nand it was back up again and no one managed to take the Bitcoin. In\nthe end, I think we donated it to charity because it was growing a bit\nmuch."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But it just goes to show how you can assemble all these things, you\ncan get a community who can then do what they want to do with it, and\nthen contribute back to the whole. So today, if you use a TLS stack in\nOCaml or indeed an HTTP stack, you’re probably using one of the Mirage\nlibraries. There’s many, many alternatives but for a long time, the\nMirage libraries became the de facto community stacks that people\nused."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I would assume that Mirage in its various forms, maybe it’s\nMirage plus Xen together, are responsible for most of the deployments\nof OCaml code onto people’s actual machines. How many machines do you\nthink software that you’ve worked on has now been installed on?"
+    },
+    {
+      "type": "ts",
+      "text": "00:30:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s a hard question to answer because we’re deployed in products."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "There was an OCaml Xenstored, which is the management daemon behind\nXenStore, which I believe Amazon used for many years so that would\ncover quite a lot of machines in the cloud. I can’t say exactly how\nmany, but a lot."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then Docker for Mac and Docker for Windows, I think, was the\nsecond most popular developer tool behind Visual Studio Code. So it’s\ndeployed on tens of millions of desktops, for sure."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But then, of course, in the community, you have people like Facebook\nwho have written their frontend for their Messenger application in a\nvariant of OCaml known as ReasonML and compiled that to\nJavaScript. That’s also to some extent deployed but not deployed in\nthe same way."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s a good point. That might be more desktops than all of the\nDocker desktops combined. In fact, it kind of has to be."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It does. That would probably address a few billion desktops. But it’s\na website, right? It’s not an application running on the other side."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But our plans right now are even bigger. I’m working on some climate\nchange projects where we need to deploy millions of sensors around the\nworld. And of course, we’re using Mirage to deal with the complicated\nlogic of carbon CO2 sensing and chemical tasting and deploying it on\nRISC-V hardware that’s quite embedded. The Mirage journey is just\ncontinuing but on different paths and different use cases."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We have in Germany the Robur team deploying all kinds of different\nunikernels for the German government. I think they have a contract to\nbuild secure VPN tunnels and lightweight overlay networks and all of\nthese are unikernels that are being deployed. So who knows how far\nit’s going to go inside critical infrastructure on the internet in the\ncoming years."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "A thing I’ve always found striking about your background is you’ve dug\ndeeply into a bunch of different areas, you’ve done a lot of different\nopen source work over the years of various different forms, you’ve\ndone lots of impactful academic research, and you’ve been involved in\na bunch of pretty major industrial projects. Can you tell us a bit\nabout how you got into this whole line of work in the first place? How\ndid you get into computers and into systems research? Where did this\njourney start?"
+    },
+    {
+      "type": "ts",
+      "text": "00:31:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Well, I’m actually not a computer scientist. I began my training as an\nengineer and I actually planned to get into electrical engineering. I\nwas fascinated by power systems and cars and planes and so on."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But then when I was studying in London, I got working on a computer\ngame, an online MUD where you could program this game and it was\nprogrammed in a really interesting language called LPC which is a\npseudo-functional, object-oriented language from the late ’90s. I went\nto a party. It was known as MUD meet and I got drunk and I woke up the\nnext day and I’d been offered an internship at NASA to work on the\nMars Polar Lander. And this is in California, it’s an exotic land far\naway from gray and dreary London."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I ended up that summer working on the various bits of infrastructure\nfor helping the Mars Polar Lander land and when it finally landed,\nthis was the first time that we had the technology to livestream the\nphotographs that were coming out of Mars. I was set up, I would say,\nas the person who set up all the infrastructure for supporting one in\nthree people on the internet to access a website all at once because\nthe world’s attention was focused on this landing in 1999."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I rapidly learned how computers worked and stuff and operating systems\nand things and I set up all of these Solaris boxes and the first thing\nthat happened was those boxes got hacked. I put them up on the\ninternet and obviously hackers love mars.nasa.gov as a domain to\ncontrol and so they took them over. I then looked around for more\nsecure alternatives and I found this operating system called OpenBSD."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And what OpenBSD is, it’s an all-in-one operating system designed with\nreliability and correctness in mind and uses a variety of security\ntechniques. I wiped all of these expensive Solaris boxes, installed\nOpenBSD, and then managed to get the system running stably again. And\nthen OpenBSD was open source. So I found a few bugs because when\nyou’re deploying something as large as that you can’t not find some\nbugs and it turns out that I could just send in some patches and they\ngot interested and they accepted my patches."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This is some massive dopamine rush because when someone takes your\ncode and incorporates it into this operating system used by loads of\nother people, it’s an incredible feeling. I got more and more into\nthat development and I ended up going to an OpenBSD hackathon and\nthese are regular, semiannual events. Back then, it was in Calgary in\nCanada because the U.S. export restrictions prevented any\ncryptographic code from being written in the U.S."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I got to travel and go to Canada. And then talking to Damien Miller\nwho’s one of the core maintainers of SSH, it set me on the path to\nthinking, “Well how can you start rewriting systems in a more secure\nfashion?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:34:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then I went back to Cambridge because the Mars Polar Lander\ncrashed straight into Mars at very high speed. So all of the\ninfrastructure we set up never actually got used. Well, it got onto\nCNN and lots of people looked at our sad faces."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "People got to watch the crash due to your hard work."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "People got to watch the crash."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We had to wait for two days until we decided it had crashed, so people\nstopped watching after about five minutes but we waited two days. And\nthen I had to find a new job because I was so depressed that all of\nour hard work had hit Mars at high speed."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I decided to go back to Cambridge and do a PhD and then I really\nstarted my training as a computer scientist. So during the PhD, I did\nlots and lots of different projects but I started working on the Xen\nhypervisor, I started using OCaml and functional programming more\nseriously in order to build the stacks that I described earlier, and\nthen it became this wonderful journey where all of the code I’ve ever\nwritten has pretty much been open source. A lot of it is terrible but\nhas been included in lots and lots of products. It’s really easy to\nmove between industry and academia and government jobs because you’re\ntaking your secret weapons with you wherever you go."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So now, it’s not like I’m obsessed with OCaml, it’s just the most\nefficient thing for me to use to solve any given problem because I’ve\njust deployed it in so many contexts that if I’m doing anything for\nbuilding my website or doing a bit of data processing, it’s just what\nI reach for. It’s a really fun thing to work with even after all these\nyears."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ve talked some about why you think OCaml is a good fit for Mirage\nand what you’re trying to do there. But OCaml is not a tool that\nsystems programmers reach for early. How did you end up coming across\nit in the first place?"
+    },
+    {
+      "type": "ts",
+      "text": "00:35:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Well, in Cambridge, OCaml is now taught to first year students because\nfirst of all, it’s a reset button because most students would come\nwith a background of JavaScript or Python and they’d have partial\nknowledge so we wanted to find something that’s a little bit obscure\nbut certainly not massively in the mainstream. Secondly, it’s the\neasiest way to teach the foundations of computer science so that the\nbasics of data structures and recursion and representations and all\nthe beautiful logics and proofs that follow from that."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "At Cambridge, there’s a long tradition of using ML-style languages\nfrom standard ML to OCaml so I couldn’t help but be exposed to it\nbecause of the university environment. Secondly, it was also the most\npractical way to do systems programming in the early 2000s. There\nweren’t really any other alternatives back then. You could go for Java\nwhich is very heavyweight, you could go for Perl which was right once,\nit still is, to some extent. Python and Ruby were still very much in\ntheir fledgling phases. There weren’t many other compiled\nlanguages. Today, we had this wonderful spring of programming\nlanguages but we didn’t back then."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But languages have momentum as well. This is that generational concept\nI keep going back to. It’s not like we’re just avoiding other\nlanguages but when you build up such a large codebase of OCaml code,\nit just gets easier and easier to build and advance it every single\nday so it’s almost at the tipping point now where it’s easier to\nextend OCaml with Rust-style features than it is to rewrite all of our\ncode in Rust, for example, or in any other language that comes\nalong. It’s easier to go do a machine proof using the Coq Proof\nAssistant and extract OCaml than it is to do\nanything else. It’s this reduction of friction that just builds up\nover the years."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I understand what you’re saying but I feel like what you’re saying is\nalso on some level, objectively false. Meaning, you’re saying, “Well,\nback in the ’90s, what systems programming languages were there other\nthan OCaml?” And I’m like, “There was C.” And in fact, that’s what\neverybody used. It is not the case that system programmers in general\nin the ’90s looked around and were like, “Oh, yeah, we’re definitely\ngoing to write all our systems in OCaml.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:37:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "No, that’s right. If I could go back in time, I would evangelize\nOCaml, not now, but in the late ’90s because I feel like I missed a\nleap of innovation there. No one had heard of OCaml back then and it\nwas just this incredibly productive tool to write Unix-like code. It\nwas just better than writing in C. And this is me emerging out of\nwriting lots of C code for many, many years and indeed writing lots of\nPHP code for websites and web mail stacks and so on."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "But OCaml went through a period of stagnation because, like any open\nsource project, if it’s not invested in, if it doesn’t have a large\nbody of programmers, then it gets really hard to sustain it over the\nyears. So around 10 years into OCaml’s life, which is roughly when I\nwas using it in about 2005, the rate of progress really stalled."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "At this point, we’ve missed a window where we could have heavily\nevangelized this to more systems programmers that didn’t have the\ntools and the right development environment to make it easily\npossible. So while we used it heavily at XenSource, it never got\npicked up by other developers within XenSource because of that lack of\ntooling."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We talked some about your background in open source. Some of the work\nthat you’ve done, and in fact that you and I have collaborated on over\nthe years, has been about developing the open source community around\nOCaml and helping in part, certainly not just us, but helping in part\nto combat some of that stagnation and part of that was the creation of\nOCaml Labs. Can you tell us a little more about where OCaml Labs came\nfrom?"
+    },
+    {
+      "type": "ts",
+      "text": "00:38:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I can."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Whenever we finished at XenSource, we got acquired by Citrix and I\nleft after a few years of happily hacking on Xen within Citrix. I went\nback to academia and I knew that I had this burning desire to build\nMirageOS because everything was set. I had all the code from the\nprevious startups, I had the problem, I had five years of funding, I\nhad this wonderful research fellowship to work on. But it was just me\nand I knew that if I wanted to make this as big as I wanted it to be,\nI needed help and it was help on multiple fronts."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The first thing was that the OCaml development team was incredible. I\nremember having dinner with Xavier Leroy in about 2009 and he just\nsaid that they would maintain OCaml forever but they were struggling\nwith all of the bug reports coming in and the fact that they didn’t\nhave any dedicated staff working on it. But he said, “Anyone can work\non it. But why isn’t anyone doing it?” I got talking to you, Ron, and\nwe said, “Well, why don’t we find someone that will help us do this?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:39:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It was really hard to find anyone who would actually work in the core\ncompiler, look at bug reports, and build out tooling because these are\nall the things that we needed. In the end, it came to a hard decision:\n“If you can’t find anyone else, then perhaps I should do it myself.”\nAnd the reason I was really motivated to do this myself was because I\nwanted this for MirageOS. So anything I did to improve OCaml would\ndirectly leverage and improve MirageOS, the project I’m really\npassionate about."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We founded OCaml Labs in Cambridge, and one of the beautiful things\nabout Cambridge University is that individual staff retain their\nintellectual property, it’s not owned by the university. This meant\nthat working in open source became really easy because anyone we hired\nat the university could just write code and there wasn’t any need for\nany legal agreements or anything with the university, we just released\nit."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I’m really, really proud that what we started with a seed in Cambridge\nhas now become a diaspora of people all around the world working in\ndifferent geographies in different environments but continue to\ncommunicate and share their code through the open source ecosystem."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think Cambridge as an institution deserves an enormous amount of\ncredit for all of this because this thing was messy and complicated\nand does not fit in in an ordinary way to a simple notion of academic\nresearch. A lot of the work that needed to be done was work about\ncoordinating open source ecosystems and maintainership work. It’s not\nthe kind of stuff that gets you tenure. Most institutions aren’t\nwilling to take it on and Cambridge was."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think it was important to have an academic institution that was\nwilling to do it because OCaml is, in many ways, a deeply academic\nlanguage, its roots, and much of the expertise just realistically\nresides in academic institutions. There’s an enormous amount of\nconnection to various different kinds of real and legitimate research\nwork. We saw lots of exciting things coming out of Cambridge on that\nkind of research side that were secondary to this and all of this\nother real infrastructure that was created."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We looked around and tried to find various homes for OCaml Labs and\nCambridge was the place that was willing to do it. It was an\nenormously important find that we found an institution that was really\nwilling to partner with us effectively in doing this kind of work."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Another thing that strikes me about the story you’re telling is the\ndegree to which OCaml Labs acted as an effective form of glue. A lot\nof the work you’re talking about which is important advances in the\nstate of the art for OCaml, they’re not all things that were done at\nOCaml Labs. Merlin was created by some Inria undergrads, if I remember\ncorrectly, but they were later working with and supported by OCaml\nLabs. OCaml Format was just done as an internal Facebook project and\nthen Jane Street adopted it and made a bunch of further changes."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But it was OCaml Labs that provided the glue to take it and turn it\ninto a maintained and general purpose piece of software and figure out\nhow to share between the various different contributors."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Dune is another example. Dune was created at Jane Street for Jane\nStreet’s kind of narrow purposes and now there’s been a really deep\ncollaboration between engineers at Jane Street including Jeremie\nDimino who wrote the first version of it and runs the team that\nmanages it at Jane Street and collaborates very closely with OCaml\nLabs. And so both the industrial side of that work and the open source\nside of that work are well handled and handled by different parts of\nwhat is essentially one big team that’s working on multiple aspects of\nthe problem."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The fundamental value that Cambridge brings is training, mentoring,\nand graduation. Graduation is a really important part of Cambridge\nwhere you leave and you go do something else. And the same is true for\nInria and the universities in France where the Merlin developers came\nfrom. I’m particularly proud of the number of people that have learned\nand moved on from Cambridge to other jobs in the ecosystem and\nsucceeded."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Stephen Dolan and Leo White, both of whom are on this podcast, started\noff their degrees in Cambridge, did their PhDs there, and have moved\ninto Jane Street and many other graduates have done similar as well."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s crucial for the longevity of a community to have this easy flow\nof people across jobs because obviously people’s lives change. They\ncan’t just stay working in a university and Cambridge was\nextraordinarily flexible in figuring out how to get people in."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "David Allsopp, for example, who is one of the most prolific\ncontributors to core OCaml, is also a countertenor singer in his spare\ntime, but when I say spare time it is actually his career. So I had to\nconvince him to come be a developer here because he was working on\nOCaml in his spare time while also maintaining his singing career. He\nsuccessfully juggled both of those and became an incredible\ncontributor and an incredible singer. But explaining to Cambridge HR\nexactly why I was hiring a singer to work in my research group was a\nchallenge but they didn’t say no. He’s still at OCaml Labs and he’s\nstill one of the prime maintainers many years on."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the big and long-running projects that OCaml Labs has taken on\nand really driven is the work towards having a multicore garbage\ncollector for OCaml and a multicore capable of runtime. This is a\nlong-running sore point about OCaml. You mentioned one of the\nlimitations in Mirage is that OCaml is not multicore-capable in terms\nthat you can’t run multiple OCaml threads that share the same\nheap. This has been a thing that people have talked about for a very\nlong time and there’s been some amount of work on and some discussion\nabout how to get there for many years."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One question I have is why has it taken so long? Why has this been\nsuch a big and long-running project to add multicore to the language?"
+    },
+    {
+      "type": "ts",
+      "text": "00:45:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "A really important part of research is understanding that 90% of what\nwe do is fail. Whenever we started adding multicore parallelism to\nOCaml, we were taking an existing ecosystem, an existing semantic for\nthe language, and just trying to extend it with the ability to run two\nthings at the same time instead of one thing. And the number of\nassumptions that break when you do two things at the same time instead\nof just one thing is incredible."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Our first naive attempt was in 2013. We presented our confident plan\nfor exactly how multicore would go into OCaml and it got okayed by\nDamien Doligez and Xavier Leroy. Then a couple of years on, we just\nrealized just how many edge cases there were and the need for a better\nconceptual core for what it means to be multicore."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We went to a Caml Consortium meeting which was where the industrial\nusers of OCaml a few years ago would present their needs and\nrequirements and we presented our work to that team and they said,\n“Well, look, you can’t add this without having a memory model to\nOCaml.” So without a memory model which says, “This is what happens\nwhen two threads simultaneously access a single OCaml value.” Without\nthat definition, it’s really hard to ascribe any meaning to multicore\nOCaml because what does the program do whenever the situation happens?"
+    },
+    {
+      "type": "ts",
+      "text": "00:46:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So we then had to go off for a year and figure out new theorems and we\ncame up with something called LDRF, local data race freedom, which is\npublished in PLDI, a top-tier conference, but it also crucially\nresulted, in addition to this nice new theorem, to a clean,\nwell-defined semantic for a multicore parallelism in OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Then we went back to the core development team and we said, “Hey, here\nis this clean memory model semantic.” They went, “Yay, great. Where’s\nthe rest of it?” But remember, there was only about two or three of us\nworking on this while juggling many other things. So we then went off\nand frantically started writing the garbage collector and making sure\nthat we could finish off the job."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The garbage collector is more difficult than a normal, single-threaded\none because it has to deal with multiple cores simultaneously wanting\nto trigger garbage collections and you have to make sure that\nirrespective of when the garbage collection is happening that the\nprogram is still maintaining type safety so nothing can ever\nobservably be violated by garbage collection happening."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We ended up with two separate schemes for garbage collection and we\ncouldn’t decide between them. We then had to write a full paper about\nthis, we had to make sure that we evaluated both sides, and we also\nhad to do this against a backdrop where we could not tolerate more\nthan a few percent of a performance hit for old OCaml code."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "If you’re building a new language, you could just go ahead and build\nit and you could build the perfect parallel algorithm because you have\nno compatibility to worry about. But meanwhile, we had the entire Coq\nProof Assistant community that said, “We’re not going to use multicore\nfor a few years, but if we compile our existing code with multicore\nOCaml, it shouldn’t get any slower.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:47:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Back then, we’d have maybe a 10 or 20% performance hit, so a\nsignificant slowdown until you use multicore. Now after a few years of\nwork, we got that down to a few percent. It was almost\nindistinguishable from noise because of all of the various techniques\nthat we put into the garbage collector and the compilation model to\nensure that that happened."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This was, again, real research. It got published in ICFP. We then had\nto figure out how to present this to the core development team, get\nconsensus, and then move it forward."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "I think we have been working on multicore incrementally since OCaml\n4.0.2. OCaml 402 was where we had the first branch of OCaml for\nmulticore. We’re now in OCaml 413 which has just been branched and I\nthink in every version since 408, we’ve put in a significant chunk of\nwork in order to get towards multicore parallelism."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Most of these things are invisible to the OCaml users so you at Jane\nStreet have been using different parts of the multicore compiler that\nwe have upstreamed into lots and lots of different versions of OCaml\nand we’ve done so in such a way that it totally respects backwards\ncompatibility because if you don’t get it just right then we’ll end up\nwith a split world where the multicore OCaml compiler is a new\nlanguage and it won’t work with older existing OCaml code and that\nwould be a disaster."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The reason we’re so careful in threading the needle is that whenever\nOCaml 5.0 lands, it will compile almost every bit of existing code in\nthe last 25 years with a minimal performance hit. It will then allow\nyou to add multicore parallelism through this domains interface and it\nhas one of the best and clean memory models out of any language."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Our research paper on bounding data races in space and time showed\nthat C++ and Java, the two gold standards for their memory models,\nhave disastrous issues, is the best way to put it. So that’s the\nopening of our paper. We show that with just no performance hit in\nx86, and 0.4 on ARM and 2% on PowerPC, we could make it all work. So\nthat’s a pretty big result."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It took a lot of theoretical computer science, a lot of experimental\nevaluation, and a lot of implementation. All of these had to happen\nsimultaneously. It wouldn’t have been possible without KC\nSivaramakrishnan who’s worked with me on this project for the last six\nyears and we’ve gotten two top-tier papers out of it. So it’s not been\na great ratio of coding to papers but the end result is something\nwe’re very, very proud of."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The story you’re telling highlights a lot of the ways in which OCaml\nis legitimately an academic language and that part of the way of\nmoving things forward and of convincing people to accept a new feature\nis actually going through the trouble of writing serious academic\npapers to really outline the design and explain what the novel\ncontributions are. And there are some novel contributions."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "From a more ordinary workaday systems programmer perspective, how\nshould someone who is used to the parallelism story in Java think\nabout the advances in OCaml? How from a pragmatic point of view is the\ncoming OCaml multicore runtime going to be better?"
+    },
+    {
+      "type": "ts",
+      "text": "00:50:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s only going to be better because it will not have any\nsurprises. So whenever you use multicore parallelism in Java, you have\nto know a lot of things. You have to know about the memory model in\nJava, you have to understand the atomics and the various interfaces\nthey expose. There’s different levels of things exposed in different\nversions of the JVM. In OCaml, this is potentially just because of the\nyoung age of multicore in OCaml, we think we just have a cleaner model\nthat avoids a lot of pitfalls that Java made."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Now one of the interesting properties about programming languages is\nthat it’s very hard to take back a semantic. If someone has written\nsome code in it, there’s just a vast number of complaints if that\nchanges because it can fail at runtime. Just by waiting for this long\nand observing how all the different languages have built their systems\nand then doing the research to thread that needle to find the least\nsurprising memory model across all of the hardware deployed today,\nthat’s what we have in OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "A Java programmer should find it the most boring experience to do\nmulticore parallelism in OCaml. They’ll just use high-level libraries\nlike domainslib that gives them all of the usual parallel programming\nlibraries and it’ll just work. No surprises, fast."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you have a pithy example of a pitfall in multicore Java that\ndoesn’t exist in multicore OCaml?"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "There’s something called a data race. And when you have a data race,\nthis means that two threads of parallel execution are accessing the\nsame memory at the same time. At this point, the program has to decide\nwhat the semantics are. In C++, for example, when you have a data\nrace, it results in undefined behavior for the rest of the program,\nthe program can do anything. Conventionally, daemons could fly out of\nyour nose is an example of just what the compiler can do."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "In Java, you can have data races that are bounded in time so the fact\nthat you change a value can mean later on in execution, because of the\nworkings of the JVM, you can then have some kind of undefined\nbehavior. It’s very hard to debug because it is happening temporally\nacross executions of multiple threads."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "In OCaml, we guarantee that the program is consistent and sequentially\nconsistent between data races. It’s hard to explain any more without\nshowing you fragments of code. But conceptually, if there’s a data\nrace in OCaml code, it will not spread in either space or time. In\nC++, if there’s a data race, it’ll spread to the rest of the\ncodebase. In Java, if there’s a data race, it’ll spread through\npotentially multiple executions of that bit of code in the future."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "In OCaml, none of those things happen. The data race happens, some\nconsequence exists in that particular part of the code but it doesn’t\nspread through the program. So if you’re debugging it, you can spot\nyour data race because it happens in a very constrained part of the\napplication and that modularity is obviously essential for any kind of\nsemantic reasoning about the program because you can’t be looking in\nyour logging library for undefined behavior when you’re working on a\ntrading strategy or something else. It’s got to be in your face, at\nthe point."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it seems to be like the core thing you’re talking about is buggy\ncode is easier to reason about. It’s enormously important because\nalmost all code is buggy, like parts of every codebase have bugs and\nproblems, and this is why the classic undefined-behavior stance of\ntraditional C and C++ compilers is so maddening because there’s an\namplification of error where you make some mistake where you step\noutside of the standard and suddenly, anything can happen."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’ve actually been seeing this happening with my son who has a summer\ninternship where he’s off hacking at a bunch of C code. When you make\na mistake in C code, it can be really hard to nail it down because the\ncompiler can make all sorts of assumptions and push the mistakes into\nplaces where you totally wouldn’t expect it."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It sounds like the same thing happens in the context of data races in\nC and C++ and to some degree in Java and reducing that just makes it\nmore predictable. It makes debugging easier. I feel pretty convinced\nby this story."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s quite pleasant working in multicore OCaml when it comes to\ndebugging things because of this property."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Are you brave enough to venture a date by which a mere mortal who\ninstalls the latest version of OCaml will be able to run two threads\nin parallel that access the same heap?"
+    },
+    {
+      "type": "ts",
+      "text": "00:54:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Well, I can’t give you a date but I will give you… Well, I can give\nyou a date. You can do that today."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "So what I did…"
+    },
+    {
+      "type": "ts",
+      "text": "00:54:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Ha."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "What I did a couple of weeks ago was to merge the multicore OCaml\nworking tree that we use which is a set of patches against the latest\nstable OCaml into the mainline opam repository. This means that with\none line, you can switch from OCaml 4.12.0 to OCaml\n4.12.0-plus-domains and all the work that the multicore OCaml team has\nbeen doing has been focused around ecosystem compatibility. You can\njust start with your existing projects and you can then start adding\nin domain support."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "If you’re really, really experimental, we have a future-looking branch\nwhich also adds something called an effect system on top of this patch\nset. This effect system is the ability to interpret certain external\nevents that happen and just deal with them through what are known as\neffect handlers."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "For example, if I’m writing to a blocking network socket instead of\nhaving to then use async/await or\nLwt or monadic-style concurrency,\nour effects system just lets another part of the OCaml program deal\nwith the blocking IO and then resume the thread of execution whenever\nit is ready to happen again."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This is highly experimental but it results in some of the most\npleasant and straight-line OCaml code I’ve ever written. It reminds me\nof writing code in the early 2000s when we just use pthreads and Unix\nfor everything. All of these different variants and levels of the\nOCaml compiler are now available in opam. Depending on how near-line\nfeatures you want to test, all of the trees are available for you to\ntry out."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The next thing we’re doing is that we’re working on OCaml 5.0 and this\nis hopefully going to be the release after 413 which contains the\ndomains-only patch set. It will expose just two extra modules that\nprovide you with the ability to launch multiple threads of\nexecution. After six years of work, it’s two modules. But those two\nmodules obviously have enormous power because you can then use those\nto spin up, without having to fork multiple processes or do lots of\ncomplicated serialization, multiple threads."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then our plan gets more experimental. 5.0 is the sole focus of\nfeatures that we have been approved to get into core OCaml because\nthey’ve gone through extensive peer review. Then for 5.1, our plan is\nto propose the runtime parts of this effect system. This lets us not\nonly express parallelism, which is what you get in OCaml 5.0, but\nconcurrency directly in the language, so the ability to interleave\nmultiple threads of control in a very natural way."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This is the original research that we just published in PLDI this year\non how we made the runtime part of the effect system as flexible as\npossible, and again without breaking any compatibility with your\nexisting tools. It uses GDB and all of the familiar debugging tools\nyou’re used to."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "And then later on, in 5.2, we’re going to expose that effect system\ninto the core OCaml language using something known as effect handlers\nand typed effect handlers. We’re doing that in close collaboration\nwith Jane Street engineers as well."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "This roadmap is multiple years of work but the first step, OCaml 5.0,\nwe’ll get into your hands as soon as we can. But all the trees are in\nopen source and the way to speed it up is by giving it a try, trying\nyour application against it, and giving us bug reports. So that’s the\nheart of open source and how you get a concrete date. Help us to help\nyou."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Question well dodged."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "By the way, just to highlight a little point you said there. You\nmentioned how the domains-only version of it is meant to provide the\nbasic parallelism and then on top of that, you want to add some notion\nof concurrency like in some sense, once you add parallelism, there’s\nsome amount of now concurrent execution. But I guess this reminds me\nof the old Solaris-style, you have some number of kernel-provided,\ntruly in-parallel threads, and then you have some kind of micro-thread\nnotion that operates inside of there that’s lighter weight."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s the split that’s really being talked about here. The idea is\nyou have something like one domain that you’d run per, say, physical\nCPU that you have and then you might have tens or hundreds or tens of\nthousands of little micro-threads that are running inside each domain\nand importantly, migratable so you can take one of these and pick them\nup and move them to a different core. That’s an important part of that\nmodel."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s a really important point. Instead of calling them micro-threads,\nwe call them fibers. These are really lightweight data structures. You\ncan have millions of these in your heap, resuming them on a different\ncore is just a matter of writing some OCaml code."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The really nice thing with effect handlers is that your schedulers,\nthe things that normally the operating system would decide to do for\nyou like thread scheduling, are written in OCaml as well. And so this\nmeans that you can write application-specific logic for things that\nconventionally the kernel would take care of for you."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "The kernel doesn’t really know how to do things optimally. It knows\nhow to do things to cause the least harm. And so by just domain\nspecialization, your applications in OCaml can get really, really\nfast."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Now this should be familiar to you, right? Because this is the future\nof MirageOS. The goal of the effect system is to internalize about a\ndecade’s worth of learnings about how to build portability libraries,\nhow to build abstractions and device drivers, and now we’re having the\ntime of our lives rebuilding all of these things in direct-style code\nusing the effect system."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "We have a new effects stack called EIO which is pure direct-line code,\nits performance is competitive with Rust and Go and so on. I think\nit’s faster than Go by quite a long way and it’s competitive with\nRust, and it uses all of the new features in operating systems,\nio_uring in Linux, it uses Grand Central Dispatch in macOS and iOS,\nand it uses IOCP subsystem on Windows. All of these things happen\ninvisibly inside the I/O subsystem written in OCaml. But as a\nprogrammer, you just write normal, straight-out OCaml code and the\neffect system takes care of all of that for you."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "It’s a very, very exciting frontier for what’s coming in OCaml in the\nfuture and it makes MirageOS code even more Mirage-y because it’s just\nnormal OCaml code that you write and all of this stuff is being\nhandled for you in the background through various effect handlers."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, I think that’s a fantastic place to stop as you tie a little bow\naround connecting Mirage and the most recent work you’ve been doing in\nOCaml."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Anil, thank you so much for joining me. This has been a real pleasure."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Anil"
+    },
+    {
+      "type": "p",
+      "text": "Thanks, Ron. Fun as always."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right, cheers."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with links to\nsome of the things that we discussed including Mirage and some of\nAnil’s other research at signalsandthreads.com. Thanks for joining us\nand see you next time."
+    }
+  ]
+}

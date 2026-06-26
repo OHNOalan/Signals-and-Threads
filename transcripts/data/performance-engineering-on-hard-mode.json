@@ -1,0 +1,1931 @@
+{
+  "slug": "performance-engineering-on-hard-mode",
+  "title": "Performance Engineering on Hard Mode with Andrew Hunter",
+  "mp3_rel": "audio/performance-engineering-on-hard-mode.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Andrew Hunter likes making code go fast. Before joining Jane Street,\nhe worked for seven years at Google on multithreaded architecture, and\nwas a tech lead for tcmalloc, Google’s world-class scalable malloc\nimplementation. In this episode, Andrew and Ron discuss how,\nparadoxically, in some ways it’s easier to optimize systems at\nhyperscale because of the impact that even miniscule changes can\nhave. Finding performance wins in trading systems, which operate at a\nsmaller scale, but which have bursty, low-latency workloads, is often\ntrickier. Andrew explains how he approaches the problem, including his\nfavorite profiling techniques and visualization tools; the unique\nchallenges of optimizing OCaml versus C++; and when you should and\nshouldn’t care about nanoseconds. They also touch on the joys of\nmusical theater, and how to pass an interview when you’re\nsleep-deprived."
+    },
+    {
+      "type": "p",
+      "text": "Andrew Hunter likes making code go fast. Before joining Jane Street,\nhe worked for seven years at Google on multithreaded architecture, and\nwas a tech lead for tcmalloc, Google’s world-class scalable malloc\nimplementation. In this episode, Andrew and Ron discuss how,\nparadoxically, in some ways it’s easier to optimize systems at\nhyperscale because of the impact that even miniscule changes can\nhave. Finding performance wins in trading systems, which operate at a\nsmaller scale, but which have bursty, low-latency workloads, is often\ntrickier. Andrew explains how he approaches the problem, including his\nfavorite profiling techniques and visualization tools; the unique\nchallenges of optimizing OCaml versus C++; and when you should and\nshouldn’t care about nanoseconds. They also touch on the joys of\nmusical theater, and how to pass an interview when you’re\nsleep-deprived."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads in-depth conversations about every\nlayer of the tech stack from Jane Street. I’m Ron Minsky. It’s my\npleasure to introduce Andrew Hunter. Andrew is a software engineer\nwho’s worked here for the last five years and he’s currently working\non our market data team. Andrew is, by inclination and background, an\nexpert performance engineer and performance is really what we’re going\nto talk about today. Andrew, just to start off, can you tell me a\nlittle bit about how you got into performance engineering and a little\nbit more kind of about what your path was to getting into software\nengineering in general?"
+    },
+    {
+      "type": "ts",
+      "text": "00:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I can, but I’m just going to be lying to you because the problem is I\ncan give you all sorts of reasons why I do this, but the real reason\nis just I find it really addictive. It’s just hard for me not to get\nexcited about how systems work. There’s all sorts of reasons why it’s\ncool or complicated or fun, but I just get this electric high when I\nmake something faster. I guess it’s not a path, right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So I kind of know why you like it, but I’m curious how you got\nhere. One thing that I think of as characteristic of performance\nengineering and actually lots of different software engineering\ndisciplines is part of how you get really good at them is getting\nreally interested in stuff that’s objectively kind of boring. You get\nsuper psyched about the details of how CPUs work and interconnects and\ncompilers and just all sorts of these little pieces and there’s just a\nlot of knowledge you need to build up over time to be really good at\nit. And I’m always interested of what were people’s paths where they\nbuilt up that kind of knowledge and understanding and background that\nlets them really dive in deeply in the way that’s necessary."
+    },
+    {
+      "type": "ts",
+      "text": "01:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Well, I think that’s exactly right. I just have to care deeply about\nall the parts of the board. And the way I got there: here was a couple\nof interesting times when in college, for example, I was taking an\noperating systems class and I realized that the best way to study this\nand to learn it well was to just go into the details of the code. And\nit’s like whenever we’re talking about a topic about virtual memory or\nwhatever, I would go look at Linux’s virtual memory implementation,\nI’d see what it looked like and I’d have more questions. And I just\nkept asking these questions and I never said, well, that’s out of\nscope. And I just kept finding these things interesting. And from then\nI just realized that like you say, all of these little details matter\nand if you keep caring about them and you just don’t accept no for an\nanswer, you get pushed towards the places where people really do care\nabout this, which often means performance. And then once you start\ndoing performance to get that little high that I’ve talked about."
+    },
+    {
+      "type": "ts",
+      "text": "02:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So in what context did you first experience working in a kind of\nserious way on performance sensitive systems?"
+    },
+    {
+      "type": "ts",
+      "text": "02:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Grad school at the very least, where one of the projects I worked on\nwas this big graph traversal system that was trying to replicate some\nreally weird complicated hardware and do it in software but maintain\nreasonable levels of performance. And we just had to think really\ncarefully about, okay, how wide is this memory controller? How many\naccesses can it do in parallel? What happens when one of them stalls?\nWait, what does this even mean to have parallel memory accesses? How\nmany cycles do these things take? Because we were roughly trying to\nreplicate this really complicated chip in software, which meant you\nhad to know exactly how would the original hardware have worked and\nhow did all the parts of it that you can replicate in software work\nand you end up looking up all these bizarre details and you learn so\nmuch about it."
+    },
+    {
+      "type": "ts",
+      "text": "02:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is that work that you went in thinking you would spend your time\nthinking about fancy math-y graph algorithms and ended up spending\nmost of your time thinking about gritty operating system and hardware\ndetails?"
+    },
+    {
+      "type": "ts",
+      "text": "03:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "A little bit. I definitely thought there was going to be a little bit\nmore algorithmic content, but I really rapidly realized that the hard\nand interesting part here was in fact just, oh God, how do you keep\nthis much stuff in flight? And the hardware has actually gotten way\nbetter or more aggressive about these sort of things over time. So I’m\nglad I learned that."
+    },
+    {
+      "type": "ts",
+      "text": "03:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how did that work in grad school end up leading to you working\nprofessionally in this area?"
+    },
+    {
+      "type": "ts",
+      "text": "03:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Well, I was interning at Google at the time for the summers and I kind\nof realized that I could do the same large-scale systems research that\nI was doing in grad school in a place that just had a lot more scale\nand a lot more usage of it. A lot of grad school research is done for\nthe point of doing the research, whereas the proper industrial\nresearch, the coolest part is it just shows up in production and\nsuddenly people care about it."
+    },
+    {
+      "type": "ts",
+      "text": "03:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this is a challenge for lots of different kinds of academic work\nwhere there’s some part of it that really only connects and makes\nsense at certain scales and a lot of those scales are just only\navailable inside of these very large organizations that are building\nenormous systems."
+    },
+    {
+      "type": "ts",
+      "text": "04:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Well, that’s true, but I think even more than just the scale issue,\nit’s the issue of what happens when this actually meets real data. And\nI think this isn’t just true about performance. One thing I will tell,\nfor example, the most common question I get towards the end of an\ninternship is like what’s going to be different when I come back as a\nfull-timer? And what I tell them is that I was shocked the first time\nthat I had a professional project in my first real job and I finished\nit and we submitted it to the code base and it rolled into production\nand everyone was using it. And then a couple weeks later I got an IM\nfrom somebody in some other group saying, Hey, we’re using your system\nand it’s behaving weirdly in this way. What do you think about it? And\nmy mental reaction to this was like, “What do you mean? I turned it\nin, I got an A!” You have to actually keep this going until you can\nhand it off to someone else or quit, right? Which sounds depressing,\nbut at the same time means you actually see what it does in reality\nand under fire and then you learn how to make it even better and you\nget to do something even more complicated and just this virtuous cycle\nof optimizations that you get, or features, depending what you’re\nworking on. Right?"
+    },
+    {
+      "type": "ts",
+      "text": "04:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. This always strikes me when I go off and give lectures at\nvarious universities of, it’s really hard to teach software\nengineering in an academic context because there is a weird thing that\nall of the work writing software in a university context, this weird\nkind of performance art where you’re like, you create this piece of\nsoftware and then it gets created and poof, it vanishes like a puff of\nsmoke and this is just not what the real world is like. Alright, so\nlet’s get back to performance engineering. One thing I’m curious about\nis you have a bunch of experience at Google thinking about the kind of\nperformance engineering problems you ran into there and also thinking\nabout it here in a number of different spots, and I’m curious how\nthose two different problems feel different to you."
+    },
+    {
+      "type": "ts",
+      "text": "05:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "The difference between performance engineering at Google and\nperformance engineering at Jane Street to me is fundamentally one of\nleverage. The easy thing about performance engineering at a place like\nGoogle or any of the other hyperscalers is that they operate with so\nmany machines consuming so many cycles, doing so many things that any\noptimization that moves the needle on how much CPU you consume is\nreally valuable, which means that it’s very easy to find good targets,\nit’s very easy to find things that are worth doing and it may be very\ndifficult to fix those problems. You have to think really carefully\nand you have to understand these systems, but the return on that\ninvestment means you can really support a lot of people who just sit\nthere doing nothing else other than how do I make memory allocation\nfaster? How do I make serialization faster? What can I do in my\ncompiler to just optimize code generation and compression and all\nthese things?"
+    },
+    {
+      "type": "p",
+      "text": "There’s actually a really interesting paper. It’s called Profiling a\nWarehouse Scale Computer, which looked at, okay, if you just look at\nall the things that a data center does for one of these hyperscalers,\nthe business logic is really, really, really diverse. Some things are\nserving videos of cats and some things are doing searches or social\nnetworking or whatever. And all of this does different stuff, but it\nall uses the same infrastructure. And it turns out that the\ninfrastructure is a huge percentage. They coined the term that I like\na lot, the data center tax and the 10, 15, 20% of your cycles that you\nspend on low level infrastructure that everything uses. And it’s not\neven that that infrastructure is bad or slow, it’s just that’s the\ncommon link that scales. Whereas fixing business logic kind of\ndoesn’t."
+    },
+    {
+      "type": "ts",
+      "text": "07:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right? It takes individual engineer effort on each individual piece of\nbusiness logic, but everyone’s using the same compiler or one of a\nsmall set of compilers. Everyone’s using just a small set of operating\nsystems. And so you grab those lower levels of the infrastructure and\nyou optimize them and you can just improve everyone."
+    },
+    {
+      "type": "ts",
+      "text": "07:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s exactly right. And you can improve it enough by just\nmoving things by half percent. Making logging cheaper just pays for\nitself way, way more easily than it does if you’re not operating at\nthat level of scale, which means that you get this nice cycle where\nyou hit one hotspot and you point another profile profiler at the\nsystem as a whole, you see the next hotspot and you just get better\nand better at this just by doing the really obvious thing that sits in\nfront of your face. So I like to think of this as easy mode, not\nbecause the optimizations are easy or because the work is easy or\nbecause it doesn’t take skill, but just because it’s really clear what\nto do."
+    },
+    {
+      "type": "ts",
+      "text": "08:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It is a target rich environment."
+    },
+    {
+      "type": "ts",
+      "text": "08:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It’s a really target rich environment. There’s money falling from the\nsky if you make something faster."
+    },
+    {
+      "type": "ts",
+      "text": "08:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right? In some sense, this has to do with cost structure. This works\nbest in an organization where a large amount of the costs are going to\nthe actual physical hardware that you’re deploying."
+    },
+    {
+      "type": "ts",
+      "text": "08:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Right. When we say that the business logic doesn’t matter, what it\nreally means is we just don’t really care what you’re working on. You\ncan be serving videos of cats, you can be doing mail, you can do\nwhatever you want. We don’t really have to care. As long as you make\nsomething that everyone uses a little bit faster, it’ll pay for itself\nbecause the only thing you care about is the number of CPUs you buy,\nthe amount of power you buy and the amount of user queries you\nservice. That’s the only three things that matter."
+    },
+    {
+      "type": "ts",
+      "text": "08:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s not that the business logic doesn’t matter, and in fact,\noptimizing the business logic might be the single most impactful thing\nyou can do to improve a given application."
+    },
+    {
+      "type": "ts",
+      "text": "08:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "But it’s harder."
+    },
+    {
+      "type": "ts",
+      "text": "08:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But the business logic doesn’t matter to you because you are working\nin the bowels of the ship fixing the things that affect everyone, and\nit’s kind of impossible for you to at scale improve the business\nlogic. So you are focused on improving the things you can improve."
+    },
+    {
+      "type": "ts",
+      "text": "09:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "That’s exactly right."
+    },
+    {
+      "type": "ts",
+      "text": "09:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. So how’s it different here?"
+    },
+    {
+      "type": "ts",
+      "text": "09:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "We don’t have that scale. The amount of total compute that we spend is\na fair bit of money, but it’s not enough that making things 1% faster\nmatters, which means that the average CPU cycle we spend is just not\nvery important. It’s kind of worthless. If you make logging faster,\neveryone’s kind of gonna shrug and say like, okay, but that doesn’t\nchange the dial. In fact, a surprising thing is that most of our\nsystems spend most of their CPU time intentionally doing nothing. It\nis just table stakes in a trading environment that you do user space\npolling IO, you just sit there spinning in a hard loop on the CPU\nwaiting for a packet to arrive, and most of the time there’s nothing\nthere. So if you point a profiler at a trading system, it’s going to\ntell you it’s been 95, 99% of its time doing nothing."
+    },
+    {
+      "type": "ts",
+      "text": "09:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And actually at this point, I want to push back a little bit on this\nnarrative because when you say most of the systems are doing nothing,\nit’s not actually most of our systems, we actually have a really\ndiverse set of different programs doing all sorts of different\npieces. But a lot of the work that you’re doing thinking about\nperformance optimization is focused on specifically trading\nsystems. And trading systems have exactly the character of what you’re\ndescribing, which is they’re sitting there consuming market data. The\nwhole idea, which you hear about a lot in large scale, traditional web\nand tech companies of trying to build systems that have high\nutilization is totally crazy from our perspective. We’re trying to get\nsystems that have low latencies, they need to be able to quickly\nrespond to things and also to be able to perform well when there are\nbursts of activity. So that means that most of the time when things\nare quiet, they need to be mostly idle."
+    },
+    {
+      "type": "ts",
+      "text": "10:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s definitely true that we have easy-mode targets that we care\na lot about at Jane Street. A really good example is historical\nresearch. If you are trying to run simulations of what some strategy\nmight’ve done over the last 10 years, turns out that’s just a question\nof throughput. You can pile as much input data as you can on the\nhopper and you see how many trades fall out the other side in the next\n10 seconds, and the faster that gets the happier we are. You can just\ndo the same easy-mode tactics that you would on hyperscalers."
+    },
+    {
+      "type": "ts",
+      "text": "10:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But even there, the size of changes we chase there is considerably\nlarger."
+    },
+    {
+      "type": "ts",
+      "text": "11:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, you don’t care about 1% because it’s not the CPU you care about\nhere, it’s the user latency in some sense, it’s whether or not the\nuser gets a result in an hour or a day or a week."
+    },
+    {
+      "type": "ts",
+      "text": "11:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Just to speak on the compilers team. We totally care about a 1%\nimprovement in code generation, but you don’t care about it on its\nown. You care about it in combination with a bunch of other changes\nbecause you want to build up bigger changes out of smaller ones. And\nif you look at a much larger organization, people are looking for\ncompiler-level improvements that are in order of magnitude smaller\nthan that."
+    },
+    {
+      "type": "ts",
+      "text": "11:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I sometimes have to push people about this. In fact, I sometimes have\nto say, oh, no, no, no. It’s not that this optimization matters on its\nown. It’s not that this thing that I did that removes a cache line\nfrom each data structure is going to make our trading exponentially\nfaster. It’s that I’m in a long process of pulling out the slack from\na system and every time I do this, it gets a little bit better and\neverything is going to slowly converge to a good state. But it’s hard\nto get the statistical power to say any of these small changes\nmatter. Sometimes I get pushback from people saying, well, did you\nmeasure this? I’m like, no, I didn’t bother. I know it’s below the\nnoise floor, but I also know it’s right. That sort of small change\nincrementally applied over time is really good. But the hard part\nabout it is you just have to have faith that you’re going to get there\nand you have to have faith that you know that this is making an\nimprovement or find ways you can test it in isolation. Whereas if you\noperate at the huge scale that some other people do, you can just look\nat a change. It can be five bips and you can know like, oh no, that’s\nreally real and it’s actually worth a lot of money on its own."
+    },
+    {
+      "type": "ts",
+      "text": "12:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think, yeah, this is a problem that hits people who are thinking\nabout performance almost everywhere."
+    },
+    {
+      "type": "ts",
+      "text": "12:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It’s kind of funny to me in that a common line of pushback I get from\npeople who are not performance-focused people is like, well, I\nremember in undergrad when my professor said, well, you should never\nmake a performance change without profiling it, and knowing that it\nmatters. And like, no, no, I actually think that’s wrong. If you know\nyou are working on systems where this is important you to have a\ncertain amount of self-discipline and, you know, not where it’s too\ncostly, it’s going to make the system more dangerous or riskier or\nmake your life worse, but make efficient choices as a matter of\ndefaults in your brain."
+    },
+    {
+      "type": "ts",
+      "text": "12:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this is one of the reasons why I think performance engineering\ndepends a lot on intuition and background and experience."
+    },
+    {
+      "type": "ts",
+      "text": "13:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "And mechanical sympathy. Knowing that you know deep down what the CPU\nis actually doing when you compile the code that you’ve got."
+    },
+    {
+      "type": "ts",
+      "text": "13:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So actually stop for a second on that word, mechanical sympathy, which\nis a phrase I really like. Tell me what that phrase means to you."
+    },
+    {
+      "type": "ts",
+      "text": "13:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "What that phrase means to me—I think a race car driver invented it\nactually— is just having an innate knowledge"
+    },
+    {
+      "type": "ts",
+      "text": "13:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Or maybe not innate, you probably weren’t born with it."
+    },
+    {
+      "type": "ts",
+      "text": "13:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Some people seem to come out of infancy just knowing these things. Did\nyou not read books about CPU architecture to your children?"
+    },
+    {
+      "type": "ts",
+      "text": "13:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I did not."
+    },
+    {
+      "type": "ts",
+      "text": "13:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Whatcha are even doing"
+    },
+    {
+      "type": "ts",
+      "text": "13:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Lambda calculus?"
+    },
+    {
+      "type": "ts",
+      "text": "13:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Oh, that tracks. I think that it’s not innate, but this really\nunconscious knowledge of just when you look at code that this is how\nit structures on real systems because different languages have very\ndifferent models of how reality works, but reality only has one\nmodel. As much as I love Lisp, the world and computers are not made of\ncons cells, they’re made of big arrays—one big array—and some integer\narithmetic that loads things from arrays. That’s all a computer\nactually does, right? And you have to understand what is the model by\nwhich we get from that low level thing to my high level types with\nstructure in them. And you have to understand what layouts mean and\nhow this branching structure gets compiled into something that a CPU\nactually knows how to operate. And you can’t just construct this from\nscratch every time you do it. You have to develop an intuition towards\nlooking at something and knowing what that’s going to be."
+    },
+    {
+      "type": "ts",
+      "text": "14:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I asked you what the difference was between the easy-mode\nperformance optimization that you experienced at Google and this kind\nof harder-to-figure-out version of the story where you don’t have the\nsame kind of scale. I’d love to hear a little bit more about what is\nthe texture of these problems? What kind of problems do you run into?\nWhat is interesting and hard about the version of the performance\noptimization problem you see here."
+    },
+    {
+      "type": "ts",
+      "text": "14:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Hard mode performance optimization typically, but not always is a\nquestion of latency. And latency is a question of what is something\ndoing at a really important time. Not what is something doing in\ngeneral, not what it does usually, but what it does when you care\nabout it, which means it’s fundamentally a measurement problem because\nto measure general performance, what your system is doing, you point a\nprofiler at it, you get an idea of it’s spending 20% of its time here\nand 10% of its time here and 5% of its time here. I don’t care about\nany of those percents. I care about what was it doing for the\nnanosecond, the millisecond, the microsecond sometimes (or some of our\nworst systems, the second) that something interesting was happening. I\ncare about what happens when it was sending an order or analyzing\nmarket data. I care only about that and I don’t care about anything\nelse. So how do I even know what it’s doing at that point in time? How\ndo I measure this is really the key question."
+    },
+    {
+      "type": "ts",
+      "text": "15:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. And maybe somewhat inherently, that puts you in the opposite\nsituation that you’re in when you’re looking at a very big\norganization where you’re thinking about the low levels of the\ninfrastructure and how to make them as fast as possible. Because if\nyou want to know what’s happening at a given point in time, you’re\nsomewhat unavoidably tied up in the business logic. You care about\nwhat is the thing that happens when the important decision is made and\nwhat are the latencies that occur and what are the code paths that\ndrive that latency? Is that a fair description?"
+    },
+    {
+      "type": "ts",
+      "text": "15:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s not universally true. There’s some really interesting cases\nwhere the infrastructure rears its ugly head in the middle of stuff\nyou want to be doing otherwise, right? But it is generally a large\npart of it is in fact just the business logic of how is this trading\nsystem making a decision? And you have to look at that and that’s\nwhat’s happening at the interesting point of time, sort of by\ndefinition."
+    },
+    {
+      "type": "ts",
+      "text": "16:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you talked about sampling profilers as one common tool. Can you\nactually just go in a little more detail of what is a sampling\nprofiler and how does it actually work at a low level?"
+    },
+    {
+      "type": "ts",
+      "text": "16:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "So there’s a lot of different implementations of this, but the general\nshape of it is you take a system and you point a tool at it that stops\nthe world every so often. Let’s say every hundred microseconds\nmaybe. And it stops the world and asks, where are you right now? And\nit looks at where the instruction pointer is, what are we currently\nexecuting? And it generally looks at the stack trace, how did you get\nhere? And then it writes this down and it lets the program keep\ngoing. And profilers only really differ on how do they stop the world\nand how do they write this down. My favorite is the Linux kernel\nprofiler. It’s called perf, and it just uses a bunch of hardware\nfeatures to get an interrupt at exactly the right moment in time. And\nthen it just very quickly writes down the stack trace in this\ncompressed format. It’s very optimized. And then you take all these\nstack traces. The profile is really just a list of stack traces and\nsometimes a little bit of augmented information, but that’s\nfundamentally the core idea. And then you present it to the user in\nsome way that adds them up. And like I say, the key thing is it tells\nyou, okay, 30% of the stack traces ended in the function foo. That’s a\nhotspot. You’re spending 30% of your time there."
+    },
+    {
+      "type": "ts",
+      "text": "17:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But there’s all these different kernel counters that you can use for\ndriving when you’re doing the sampling. How does the choice of kernel\ncounter affect the nature of the information you’re getting out of the\nprofiler?"
+    },
+    {
+      "type": "ts",
+      "text": "17:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, people tend to think about people sampling profiles in time,\nwhere the counter is just the number of cycles that’s elapsed. But one\nof the cool things about it is it lets you cycle on L2 cache misses or\nbranch prediction misses or any of these weird architectural\nevents. And so you get a profile of when did these interesting things\nhappen? You know each of them is costly and they probably have some\ncost in cycles. You can get much more precise measurements. And in\nparticular, the nice thing about it is that 10% let’s say of your\nprogram is slowed down by branch prediction misses. But if you just\nlook at the cycles, you’re just going to see like, well, it’s\nsomewhere in this function. If you profile on branch misses, you will\nsee the branch that is hard to predict and you can actually do\nsomething about that branch."
+    },
+    {
+      "type": "ts",
+      "text": "18:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So branch missed predictions is one. What’s the next most\ninteresting counter that you might use?"
+    },
+    {
+      "type": "ts",
+      "text": "18:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Actually the most interesting thing isn’t even branch prediction or it\nisn’t even a hardware counter. The next most interesting thing to\nprofile on is the unit of memory allocation. A lot of allocators, in\nfact the one we have in OCaml, but also various C++ ones, will let you\nget a profile – not out of perf but kind of done in software – that\ntells you where you were allocating memory the most. Cause that’s just\na common thing that’s very costly and reducing that it can really\nimprove the performance of a system."
+    },
+    {
+      "type": "ts",
+      "text": "18:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this comes down to something that we see in OCaml a lot, which is\nwhen we write really, really high performance systems, we often try to\nbring the amount of heap allocation we do all the way down to zero."
+    },
+    {
+      "type": "ts",
+      "text": "18:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "We try."
+    },
+    {
+      "type": "ts",
+      "text": "18:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, it’s hard to get it all the way down to zero. Something’s\nmisbehaving in a system performance=wise. A relatively common problem\nis there’s a thing that shouldn’t be allocating that is, in the hot\npath."
+    },
+    {
+      "type": "ts",
+      "text": "18:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right. And then a good optimized C++ system, it should be\nspending 5-10% of its time memory allocating and sometimes you just\nhave to do this, it’s necessary, but maybe you’re allocating twice as\nmuch as you really need to be and you can look at a memory profile and\ntake a look at it. It’s important to remember that profiles aren’t\njust about time. They’re about measuring the overall consumption of or\nuse of resources."
+    },
+    {
+      "type": "ts",
+      "text": "19:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s how perf essentially works to get you the information that\nyou need. But there’s a fundamental trade-off in a tool like perf\nwhere it’s sampling information and that itself is essentially a\nperformance optimization. Part of the reason that you sample rather\nthan capturing all of the information is you want to make it fast. You\nwant to not distort the performance behavior of the program by\ngrabbing information out of it. But in some sense there’s a real\ntension there because you’re saying I don’t want some broad\nstatistical sampling of the overall behavior of my program. I want to\nknow in detail how it’s behaving at the times that matter most."
+    },
+    {
+      "type": "ts",
+      "text": "19:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I think a really instructive example of that was an optimization that\nI hit on last year where we had a system, it was trying to send some\norders and it was doing it in a totally reasonable way and it was\ndoing it in a really cheap way. The thinking about whether or not I\nwant to send an order was really cheap. It happened really fast. The\nphysical sending of the order really cheap, happened really fast."
+    },
+    {
+      "type": "ts",
+      "text": "20:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The thinking, what do you mean by the thinking?"
+    },
+    {
+      "type": "ts",
+      "text": "20:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "The business logic to decide the looking at the markets and saying, oh\nyeah, I want to buy or and then do the physical act of sending the\nmessage, right? Both these were really cheap. If you pointed a\nprofiler at them, even a profiler that was magically restricted to the\ntimes of interest, it would tell you, yep, 5% of your time was doing\nthis. It’s all good. That’s not a hotspot. Here’s the problem:the\norder sending was happening 200 microseconds after the thinking was,\nand the reason was it was being put on a low priority queue of work to\ndo later. It was a misconfiguration of the system. It was using this\nkind of older API that it needed for complicated reasons that did\nreasonable things under most circumstances. But it assumed that\nnetwork traffic you wanted to send couldn’t be that latency\nsensitive. So it just waited to do it in an idle moment and this was\nnot a good thing to wait about. But the profiler tells you nothing\nabout this because I didn’t care about the overall cost, I didn’t care\nabout the overall time. I cared that it happened promptly. And so\nfixing this again was really easy. I just switched to an eager API\nthat didn’t wait. But a profiler tells you nothing about this."
+    },
+    {
+      "type": "ts",
+      "text": "21:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what kind of tools do you use to uncover things like that?"
+    },
+    {
+      "type": "ts",
+      "text": "21:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Magic Trace."
+    },
+    {
+      "type": "ts",
+      "text": "21:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what’s Magic Trace?"
+    },
+    {
+      "type": "ts",
+      "text": "21:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Magic Trace is a tool we wrote that gives you a view into what a\nsystem was doing over a short window of the past. It’s retrospective\nin some sense. And what I mean is that any point in time you can just\nyell, stop, tell me what you were doing for the last two milliseconds,\nthree milliseconds maybe. And you write it down. And exactly like you\nsaid earlier, this is not a profile, this is not some statistical\naverage of what you’re doing at various times. This is the exact\nsequence of where your code went. It went from this function to this\nfunction to this function, and you get a different visualization of it\nthat just shows you what things was happening over time. And in fact,\nexactly like you say, there’s more overhead for using this, but it\ngives you this really direct view into what happened at an interesting\ntime that a profiler fundamentally can’t give. Traces are in some\nsense really better. In fact, traces aren’t restricted to Magic\nTrace. I said there’s memory profiles that are really useful. Memory\nallocation traces are another thing that we care about a lot. We have\na really good one, in fact, that gives you the literal trace of–"
+    },
+    {
+      "type": "ts",
+      "text": "22:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although a memory profiler is actually statistical also, right? That’s\na sample profile."
+    },
+    {
+      "type": "ts",
+      "text": "22:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Memory tracing is in fact, it’s not a profiler, it’s a tracer, right?"
+    },
+    {
+      "type": "ts",
+      "text": "22:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Maybe it’s misnamed actually there’s a lot of annoying sort of\nterminological fuzz around this. I think people"
+    },
+    {
+      "type": "ts",
+      "text": "22:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "We are not unique in this, I’ll say"
+    },
+    {
+      "type": "ts",
+      "text": "22:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, at least the terms I’ve come to the most are people use\n“profilers” for what you might call statistical profilers. And then\npeople use “tracing” when they’re talking about capturing all of the\ndata. So a common form of tracing that shows up all over the place is\nthere’s all these nice systems for doing RPC tracing where you write\ndown the details of every message that goes by. And this is sort of a\ncommon thing to do if you want to debug, why was that web query slow?\nAnd some query came in and it kicked off a bunch of RPCs, it kicked\noff another bunch of RPCs and you can pull up an API that lets you see\nthe whole cascade of messages that were sent. So that’s like a nice\nexample of tracing. And then we also, as you mentioned, we have a\nthing called memtrace, which sadly I think is actually a profiler in\nthat it is a statistical sample and does not actually capture\neverything,"
+    },
+    {
+      "type": "ts",
+      "text": "23:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "But it does give you a time series of events, which is a key thing\nthat a profiler can’t."
+    },
+    {
+      "type": "ts",
+      "text": "23:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s interesting. I guess in some sense, all of these systems start\nby giving you a time series of events and then it’s how you process\nthem. Perf is sampling at some rate and grabbing data, and then you\nturn that into an overall statistical summary. But you could look at\nthat information temporarily. You just don’t. And in any case, the\ninformation is sampled. I think what I just said is also true about\nmemtrace. You get this information just like perf, sampled randomly\nfrom the memory allocations. Then you can interpret it statistically\nas being about the overall state of the heap."
+    },
+    {
+      "type": "ts",
+      "text": "23:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "A key difference here is that memtrace gives you all of the\ninformation about a statistical sample of some of the allocations. It\ntells you when this guy was allocated and then freed."
+    },
+    {
+      "type": "ts",
+      "text": "23:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s true"
+    },
+    {
+      "type": "ts",
+      "text": "23:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Whereas you might get a set of stacks out of perf that here’s some\nallocations and here’s some frees, but you have no guarantee it’s the\nsame thing. This lifecycle example, it’s exactly like the RPCs. A\nthing people frequently do is just capture traces for 1% of their\nRPCs. And giving the whole lifecycle of individual one is way more\ninteresting than 1% of the individual moments."
+    },
+    {
+      "type": "ts",
+      "text": "24:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I mean, maybe this just highlights this is a total terminological car\ncrash. It’s a little hard to separate it out."
+    },
+    {
+      "type": "ts",
+      "text": "24:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "All of these tools are way too hard to use and very inexact and all of\nthem use the same terminology in different ways."
+    },
+    {
+      "type": "ts",
+      "text": "24:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay, so we’ve talked about the trace part of the name Magic Trace,\nand the key thing there is it’s not just sampling, it’s giving you the\ncomplete summary of the behavior. It’s maybe worth talking a little\nbit about the magic, which is how do you do this thing? You just said,\noh, something interesting happened and then you retrospectively look\nat what happened before and grab it. How can that be done in an\nefficient way? What’s mechanically happening here?"
+    },
+    {
+      "type": "ts",
+      "text": "24:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Magic. No, there’s two parts to this, right? First is how do you get\nthe data? And the second part is how do you decide when to take the\nsample? Let’s take those in order. So how do you get the data? Well,\nthere’s this, I’m really just going to call it magic. I don’t know how\nthey managed to do this efficiently, but Intel has this technology,\nit’s called Processor Trace, that just keeps a ring buffer of\neverything the CPU does in a really compressed format, like it uses\none bit per branch or something along those lines. And it just\ncontinually writes this down and the ring buffer is the size that it\nis and it contains some amount of history—in practice, it’s a couple\nmilliseconds—and at any point in time you just snap your fingers and\nsay, give me that ring buffer."
+    },
+    {
+      "type": "ts",
+      "text": "25:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the critical thing is this is a feature integrated into the\nhardware."
+    },
+    {
+      "type": "ts",
+      "text": "25:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, we couldn’t possibly implement this. The kernel couldn’t\npossibly implement this. This is in the silicon and it’s a huge\nadvantage for Intel processors."
+    },
+    {
+      "type": "ts",
+      "text": "25:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, although I really do not understand Intel’s business strategy\naround this, which is to say they built this amazing facility in their\nCPUs, but they never released an open source toolkit that makes it\nreally easy to use. They did a lot of great work at the perf level. So\nperf has integrated support for Processor Trace. In fact, we relied\nheavily on that. But I think Magic Trace is the first thing that’s\nactually a nice usable toolkit built around this. There’s various\ncompanies that have built internal versions of this, but it seems like\nsuch a great competitive advantage. I’m surprised that Intel hasn’t\ninvested more in building nice, easy to use tools for it, because it’s\na real differentiator compared to say AMD chips."
+    },
+    {
+      "type": "ts",
+      "text": "26:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "There are a lot of performance analysis tools in the world, and\nthere’s very limited hours of the day. I really don’t feel like I know\nwhat everything the world does, but I generally agree with you that a\nreally underinvested thing is good, easy to use, obvious, idiot proof\nAPIs, right? And tools that just work in the obvious way you want them\nto."
+    },
+    {
+      "type": "ts",
+      "text": "26:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I was mentioning before how part of being a good performance engineer\nis building up a lot of experience and knowledge and\nintuition. Another part of it is just building encyclopedic knowledge\nof all the bizarre ins and outs of the somewhat awkward tooling for\ndoing performance analysis. Perf is a great tool, in many ways it’s\nbeautifully engineered, but the user experience is designed for\nexperts and the command lines kind of work the way they do. And\nsometimes their meanings have evolved over time and the flag still\nsays the old thing but you have to know that it has the new\nmeaning. And there’s really, I think a lot of space for building tools\nthat you just turn on and hit the button and it just does the obvious\nthing for you and gives you the result."
+    },
+    {
+      "type": "ts",
+      "text": "26:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "So it’s a user interface built by experts for experts, and I think\nit’s easy for them to forget that most of the people have not used it,\njust like you say, a lot of random esoteric knowledge about what CPUs\ndo. And I also just have a lot of memorized little command lines that\nI happen to know will point at certain problems. And it’s just an\nissue of having done this a lot. And I don’t know a good way of\nteaching this other than getting people to do the reps and a better\nway would be to give them tools that just give them obvious\ndefaults. But I haven’t figured out how to do this universally."
+    },
+    {
+      "type": "ts",
+      "text": "27:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But Magic Trace is one good example of a tool like that, where the\ndefaults have been pretty carefully worked out. The UX is really nice\nand you can just use it. It’s not perfect. It doesn’t work in all the\ncontexts, but it usually gives you something usable without a lot of\nthinking."
+    },
+    {
+      "type": "ts",
+      "text": "27:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It is exactly like all the best tools I know in that I’m frequently\nfurious at it for not doing quite the right thing, and that’s a sign\nof how much I want to use it. I would just, oh, can it also do this?\nCan it also do this? Can it also do this? But yeah, I mostly just use\nit in the obvious way with the one obvious flag, which gives me what I\nwant to know."
+    },
+    {
+      "type": "ts",
+      "text": "27:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the interesting things about a tool like Magic Trace is you’ve\ntold a whole narrative of when doing easy mode optimization, you care\nabout these broad-based things. Sampling profilers are mostly the\nright tools. When you care about focused latency oriented performance,\nthen you want this kind of narrowed in time analysis tools and Magic\nTrace is the right thing for that. But a thing that’s actually struck\nme by seeing people using Magic Trace inside of the organization is\nit’s often a better tool for doing easy mode style optimization than\nperf is because just the fact that you get all of the data, every\nsingle event in order and when it happened, with precision of just\nlike a handful of nanoseconds makes the results just a lot easier to\ninterpret. I feel like when you get results from perf, there’s a\ncertain amount of thinking and interpretation and how do I infer from\nthis kind of statistical sample of what’s going on what was my program\nactually probably doing and where really is the hotspot? But with\nMagic Trace, you can often just see in bright colors exactly what’s\nhappening. I’ve seen people just pick a magic trace at a totally\nrandom point in the day and use that and be able to learn more from\nthat than they’re able to learn from looking at perf data."
+    },
+    {
+      "type": "ts",
+      "text": "28:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, this is not universally true, but it’s very frequent that you\ncan get a bunch of extra information. I think one of the really good\nexamples is that a profiler tells you’re spending 40% of your time in\nthe hotspot of the send order function. But here’s an interesting\nquestion. Is that one call to send order that’s taking forever or is\nthat a thousand calls each of which was cheap, but why are you doing\nthis in a tight loop? And it turns out it’s really easy to make the\nmistake we were calling some function in a tight loop you didn’t\nintend to. And in a profiler these two things look pretty\nidentical. There are really esoteric tricks you can use to tease this\nout, but in Magic Trace, you just see, oh God, that’s really\nobvious. There’s a tight loop where it has a thousand function calls\nright in front of one another. That’s embarrassing. We should fix it,\nright? You actually develop this weird intuition for looking at the\nshape of the trace that you get the physical shape on your screen and\nthe visualization and like, oh, that weird tower. I’m clearly calling\na recursive function a thousand deep. That doesn’t seem right. You get\nto see a lot of these things."
+    },
+    {
+      "type": "ts",
+      "text": "29:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it makes me wonder whether or not there’s more space in the set\nof tools that we use for turning the dial back and forth between stuff\nthat’s more about getting broad statistical samples and stuff that\ngives you this more detailed analysis and just more in the way of\nvisualizations, more ways of taking the data and throwing it up in a\ngraph or a picture that gives you more intuition about what’s going\non."
+    },
+    {
+      "type": "ts",
+      "text": "30:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "A huge fraction of what I do in my day-to-day is visualization work,\nrather looking at them or trying to build better ones. It’s really\nimportant and we have barely scratched the surface of how to visualize\neven the simplest profiles."
+    },
+    {
+      "type": "ts",
+      "text": "30:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One thing I’ve heard you rant a lot over time is that probably\nthe most common visualization that people use for analyzing\nperformance is flame graphs. And flame graphs are great. They’re easy\nto understand, they’re pretty easy to use, but they also drop some\nimportant information. And you’re a big advocate of pprof, which is a\ntool that has a totally different way of visualizing performance\ndata. Can you give a quick testimonial for why you think people should\nuse pprof more?"
+    },
+    {
+      "type": "ts",
+      "text": "30:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Flamegraphs were way better than anything that came before\nit. By the way. They were a revelation when they were invented, I\nthink. And so this is one of those things we have to be really careful\nnot to say something is bad. I just think something better has been\ninvented. So it’s called a flame graph because it’s a linear line that\nhas a bunch of things going up out of it that look like flames. And\nwhat this is is that—"
+    },
+    {
+      "type": "ts",
+      "text": "31:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And people often use orange and red as the color, so it really looks\nlike flames."
+    },
+    {
+      "type": "ts",
+      "text": "31:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Exactly right wouldn’t look as cool if it was green. And so the first\nlevel of this is broken down 40%, 60% and that 40% of your stack\ntraces start this way and 60% start this way. And then the next level\nis just each of those gets refined up. And so every stack trace\ncorresponds to an individual peak on this mountain range. And then the\nwidth of that peak is how many stack traces looked like that. So this\nis good. It tells you where is your time going?"
+    },
+    {
+      "type": "ts",
+      "text": "31:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And one nice property is that at a glance, it makes it really easy to\nintuitively see the percentages, right? Because the width of the lines\nas compared to the width of the overall plot gives you the percentage\nthat part of the flame graph is responsible for."
+    },
+    {
+      "type": "ts",
+      "text": "31:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "If there’s one really fat mountain that’s 60% wide, you know what\nyou’re doing. It’s that. Here’s the problem with it. It misses a thing\nI like to call join points, which are points where stack traces start\ndifferently and then reach the same important thing. Because what\nhappens is suppose you’ve got 15 or 16 little peaks, none of which is\nthat big, and then right at the tippy top of each of them in tiny,\ntiny narrow things. It’s all calling the same function. It’d be really\neasy to dismiss that you don’t even notice the thing at the top, but\nit turns out if you add them all together, that’s 40% of your\ntime. And different visualizations can really show you everything\ncomes together here."
+    },
+    {
+      "type": "ts",
+      "text": "32:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how does pprof try and deal with this?"
+    },
+    {
+      "type": "ts",
+      "text": "32:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "So we’re now going to try to proceed to describe a representation of a\ndirected acyclict graph over a podcast. Which of all the dumb ways\npeople have visualized directed acyclic graphs might be the worst. But\nwhat it does is it draws a little DAG on your screen where each node\nis a function you end up calling and each arrow is a path. You can\nimagine that you have one node for every function you’re ever in. And\nthen for each stack trace, you just draw a line through each node in\norder and they go towards the things that were called. And then you\nhighlight each node with the total percentage of time you spent there\nand you put some colors on it like you say, and you make the arrows\nthicker, thinner for bigger or smaller weights. And that’s the basic\nidea. If you close your eyes, and imagine with me for a second, I\nclaim that what will happen in the scenario I described is that you’ll\nsee a bunch of bushy random small paths at the top of your screen and\nthen a bunch of arrows all converge on one function. And that function\nnow is really obviously the problem."
+    },
+    {
+      "type": "ts",
+      "text": "33:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And then underneath it’ll also branch out to lots of different things."
+    },
+    {
+      "type": "ts",
+      "text": "33:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s actually a really good point. It tells you in fact that\nmaybe it’s not that function that is the time, it’s the things it\ncalls, but now you at least know where all this is coming from. And\nthere’s a single example of this that is the most common thing, at\nleast if you’re working in say C++, that function’s always malloc."
+    },
+    {
+      "type": "ts",
+      "text": "33:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, interesting."
+    },
+    {
+      "type": "ts",
+      "text": "33:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Like I said, with the business, logic may be very diverse, but\neverything allocates memory because it’s really easy to realize, oh,\nit’s doing a little bit of malloc here. It’s doing a little bit of\nmalloc here. It’s doing a little bit of malloc here."
+    },
+    {
+      "type": "ts",
+      "text": "33:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I guess this ties a little bit into what you were talking about of\nthat style of trying to look at the foundations and get the common\nthings that everyone sees. It becomes really important to see those\ncommon things. Although I would’ve thought one of the ways you could\ndeal with this just with flame graphs is there’s just two different\norientations. You can take your flame graph and turn it upside down,\nand so you can decide which do you want to prioritize? Thinking about\nthe top of the stack or the bottom of the stack."
+    },
+    {
+      "type": "ts",
+      "text": "34:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It’s the bush below malloc that screws you over there. It’s when the\nthing’s in the middle that you get problematic. It’s when the really\nkey function is in the middle where everything converges through one\nparticular, it’s not a bottleneck, but you can think about it as a\nbottleneck in the graph, that the flame graphs really fail. And to\ntheir credit, people have built flame graph libraries where you can\nsay, give me a flame graph that goes up and down for malloc, but you\nneed to know to focus on that function."
+    },
+    {
+      "type": "ts",
+      "text": "34:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I see. And so pprof somehow has some way of essentially figuring out\nwhat are the natural join points and presenting them."
+    },
+    {
+      "type": "ts",
+      "text": "34:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I think that it outsources that problem to the graph drawing library\nthat tries to do various heuristics for how people view graphs tends\nto work."
+    },
+    {
+      "type": "ts",
+      "text": "34:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’ve looked at flame graphs and I’ve looked at pprof visualizations. I\ndo think pprof visualizations are a little bit harder to intuitively\ngrok what’s going on. So I feel like there’s probably some space there\nyet to improve the visualization to make it a little more intuitively\nclear."
+    },
+    {
+      "type": "ts",
+      "text": "34:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I definitely agree. I think that just like we were saying earlier with\nthis is one of those things that experts know, new people don’t, you\njust kind of have to get used to staring at these for a couple days\nand then you get used to it. But it’d be nice if we didn’t have\nto. It’d be nice if it was just as obvious as the other things are."
+    },
+    {
+      "type": "ts",
+      "text": "35:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So we’ve talked a bunch here about performance engineering tools and\nmeasurement tools more than anything else, which I think makes\nsense. I think the core of performance engineering is really\nmeasurement. And we’ve talked about ways in which these focused\ntracing tools like Magic Trace in some ways can kind of outperform\nsampling tools for a lot of the problems that we run into. What are\nthe kinds of cases where you think sampling tools are better?"
+    },
+    {
+      "type": "ts",
+      "text": "35:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "To me, the case I wish I could use sampling the most is once I’ve\nidentified a range of interest. The thing we care about a lot when we\nthink about latency and optimization of trading systems is tails. If\nyour system 99% of the time responds in five microseconds and then 1%\nof the time responds in a millisecond, that’s not great. You don’t\nalways get a choice of which of those is the one you trade on, right?"
+    },
+    {
+      "type": "ts",
+      "text": "35:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And also there’s the usual correlation of the busiest times are often\nthe times that are best to be fast at."
+    },
+    {
+      "type": "ts",
+      "text": "36:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "36:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And so exactly where it’s bad is the case where you care the most."
+    },
+    {
+      "type": "ts",
+      "text": "36:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "And Magic Trace is pretty good at finding tails because you can just\ndo some interesting tricks and hacks to get magic trace to sample at a\ntime where you’re in a 99-percentile tail. Now sometimes you look at\nthose trails and magic trace and you see, oh, I stopped the world to\ndo a major GC. I should maybe avoid that. I need to allocate less or\nsome other bizarre weird event. Sometimes it’s a strange thing that is\nhappening. But a remarkably common pattern we see is that your tails\naren’t weird, aren’t interesting, they’re just your medians repeated\nover and over. And like you said, you’re having a tail because the\nmarket is very busy because it’s very interesting. You saw a rapid\nburst of messages and each of them takes you a microsecond to process,\nbut that’s not the budget you have. You have 800 nanoseconds and\nyou’re just falling behind."
+    },
+    {
+      "type": "ts",
+      "text": "36:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s just a classic queuing theory result."
+    },
+    {
+      "type": "ts",
+      "text": "36:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It’s nothing but queuing theory."
+    },
+    {
+      "type": "ts",
+      "text": "36:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Get lots of data in. You’re going to have large tails when it all\npiles up in time."
+    },
+    {
+      "type": "ts",
+      "text": "36:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "So you pull up this magic trace and you say, oh, I processed 10,000\npackets. What do you do now? And sometimes you can think of obvious\nsolutions. Sometimes you realize, oh, I can know I’m in this case and\nwait and process all of these in a batch. That’s a great optimization\nthat we do all the time. But sometimes you’re just, oh wow, I just\nreally need to make each of these packet processes 20% faster. And\nwhat I really wish you could do is take that magic trace and select a\nrange and say, Hey, show that to me in pprof because it’s just like\nthe flame graph. You have all these little tiny chunks in the magic\ntrace and I really want to see them aggregated and you have some\ntrouble doing it."
+    },
+    {
+      "type": "ts",
+      "text": "37:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I asked one question and I think you answered a different one."
+    },
+    {
+      "type": "ts",
+      "text": "37:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I do that a lot."
+    },
+    {
+      "type": "ts",
+      "text": "37:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I asked the question of when do you want sampling? You answered the\nquestion of when do you want a profile view? And I totally get that,\nand that seems like a super natural thing and maybe a nice feature\nrequest for the Magic Trace folk have a nice way of flipping it into\nthe profile view. But I really wanted to poke at the other question\nwhich is when is sampling itself a better technique versus this kind\nof exhaustive tracing that Magic trace is mostly built around?"
+    },
+    {
+      "type": "ts",
+      "text": "37:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "One easy answer is the easy mode problems we have. Things like\nhistorical research, things like training machine learning models,\nthings that are really are throughput problems and we do have\nthroughput problems. And there it’s just easier to look at the\nsampling profile or you can really target it at cache misses or\nwhatever you want. So that’s a case where we definitely want it."
+    },
+    {
+      "type": "ts",
+      "text": "38:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And maybe another thing to say about it is it is definitively\ncheaper. The whole point of sampling is you’re not grabbing the data\nall the time. I guess we didn’t talk about this explicitly, but Intel\nprocessor trace, you turn it on and you end up eating 5-15% or\nsomething of the performance of the program. There is a material—"
+    },
+    {
+      "type": "ts",
+      "text": "38:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Don’t say that out loud or they’ll stop letting me use it on our\ntrading systems."
+    },
+    {
+      "type": "ts",
+      "text": "38:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I mean, it is the case that we don’t just have it turned on everywhere\nall the time. We turn it on when we want it."
+    },
+    {
+      "type": "ts",
+      "text": "38:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "And that’s a thing that the hyperscalers do. They just leave a\nsampling profile on across the fleet just getting 1% of things. And\nthat gives you kind of a great sense of what the overall world is\ndoing. And that is actually a thing I kind of wish we had. It would be\nless valuable for us than it would be for them. But I would love if I\ncould just look at it like a global view of hotspots. I think the best\nthing in the world would be like, can I get a sampled profile of all\nthe things all of our trading systems did when they weren’t spinning\nidly? If I could know that, oh, overall if I could get a little bit\nmore return from optimizing the order sending code versus the market\ndata parsing code, I think that would be a really valuable thing to\nme."
+    },
+    {
+      "type": "ts",
+      "text": "39:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another interesting thing about the way in which we approach and\nthink about performance is our choice of programming language. We are\nnot using any of the languages that people typically use for doing\nthis kind of stuff. We’re not programming in C or C++ or Rust. We’re\nwriting all of our systems in OCaml and that changes the structure of\nthe work in some ways. And I’m kind of curious how that feels from\nyour perspective as someone who very much comes from C++ background\nand is dropped in weird functional programming land. what have you\nlearned about how we approach these problems? What do you think about\nthe trade-offs here?"
+    },
+    {
+      "type": "ts",
+      "text": "39:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Well, the best thing about it’s employment guarantee, anyone can write\nfast C++, but it takes a real expert to write fast OCaml, right? You\ncan’t fire me."
+    },
+    {
+      "type": "ts",
+      "text": "39:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although I think that’s actually totally not true. I didn’t mean the\npart about firing you, but the point about writing fast C++, I\nactually think there’s a kind of naive idea of, oh, anyone can write\nfast C++. It’s like, oh man, there’s a lot of ways of writing really\nslow C++. And actually a lot of the things that you need to get right\nwhen designing high performance systems are picking the right\narchitecture, the right way of distributing the job over multiple\nprocesses, figuring out how to structure the data, structure the\nprocess of pulling things in and out. There are lots of stories of\npeople saying, oh, we’ll make it faster in C or C++. And sometimes you\nimplement it in some other language and it can be made faster still\nbecause often the design and the details of how you build it can\ndominate the language choice."
+    },
+    {
+      "type": "ts",
+      "text": "40:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I think it’s really easy for people who are performance obsessed like\nmyself to just get a little too focused on, oh, I’m going to make this\nfunction faster. And maybe the better answer is, can we avoid that\nfunction being called? Can we not listen to that data source? Can we\noutsource this to a different process that feeds us interesting\ninformation?"
+    },
+    {
+      "type": "ts",
+      "text": "40:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The single most important thing in performance engineering I think is\nfiguring out what not to do. How do you make the thing that you’re\nactually doing as minimal as possible? That is job one."
+    },
+    {
+      "type": "ts",
+      "text": "40:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Honestly, I think one of the reasons that I really like performance\noptimization as a topic to focus on. I don’t like writing code very\nmuch. I’m not very productive. It takes me a long time to do good\nwork. So I want to do the stuff that requires me to write the fewest\nlines of code and have the biggest impact. This is like one of those\nhypotheticals, you make a two line change and everything gets 10%\nfaster. The hard part was the three weeks of investigation proving\nthat it was going to work. Right? And I think this is actually a good\nexample of you really have to think about the whole board. You have to\nthink about how you’re structuring the code and how you’re structuring\nthe system, how many hops this is going to go through, how many\nsystems is it going to go through, how can you get assistance from\nhardware, any of these things? And micro optimizing the fact that\nclang has a better loop optimizer than GCC than the OCaml\ncompiler. It’s really annoying to look at the bad loop. Is that really\nwhat’s killing you? No. What’s killing you is that you’re looping over\nsomething that you shouldn’t be looking at at all."
+    },
+    {
+      "type": "ts",
+      "text": "41:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So there’s a bunch of stuff you just talked about that would\nlove to talk about more about, in fact the hardware stuff in\nparticular. But I don’t want to lose track of the language issue. So I\nbelieve what I said that people often overfocus on the details of the\nlanguage, but the language does matter and I think it matters in\nparticular for performance. And I’m kind of curious, what’s your\nfeeling about how that affects how we approach the work and how your\nown kind of interaction and engagement with it?"
+    },
+    {
+      "type": "ts",
+      "text": "42:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "I break it down into three categories. The first category in which\nOCaml provides us a challenge is, I call it the most annoying, but the\nleast important. And that’s what I was saying earlier about, oh, our\ncode generation isn’t as good. We’re branching too much. We have too\nmany silly register spills. It’s annoying to look at. It’s really not\nwhat’s killing you. I would wish it was better. And really the limit\nisn’t OCaml, the limit is scale. The C compiler people have been\nworking for 30 more years than the OCaml compiler people have, and\nthere’s more people working on optimizing clang right now across the\nworld than we have probably employees at Jane Street. We’re never\ngoing to catch up. That’s okay. It’s not really what’s killing\nyou. The second category is things that are just maybe more of an\nactual problem, but hard to deal with, but not really the key issue."
+    },
+    {
+      "type": "p",
+      "text": "Our memory model requires us to do slightly more expensive things in\nsome cases. A good example is we’re a garbage collected language, our\ngarbage collector inspects values at runtime. Therefore, uninitialized\ndata can be really problematic. And so we have to do stupid things in\nmy brain like, oh, it’s really important to null out the pointers in\nthis array and not just leave them behind or they’ll leak, or you\ncan’t just have an uninitialized array that I promise I’ll get too\nsoon. Because what happens if you GC in that range? And I do actually\nthink this is meaningfully costly in some scenarios, but I’m willing\nto put up with it. In most cases, there are things you can do about\nit. The thing that I think is most problematic for our use of a\nlanguage like OCaml gets back to mechanical sympathy. And I said that\nthe world is not made out of parentheses that Lisp uses, and it’s also\nnot made out of algebraic data types. OCaml’s fundamental\nrepresentations of the world are very boxy. There’s a lot of\npointers. There’s a lot of this object contains a pointer to something\nelse where in C++ it would just be splatted right there in the\nmiddle. And the reasons we do this, there are reasons that make it\neasy to write good, clean, safe code, but it is fundamentally costly\nand it lacks—the language, if anything, some mechanical sympathy."
+    },
+    {
+      "type": "ts",
+      "text": "44:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right? Or at least it makes it hard to express your mechanical\nsympathy because getting control over the low level details is\nchallenging. And I don’t want to go too much into the, we’re actually\ndoing a lot of work to try and make OCaml better exactly at this. But\na question I’m more interested in talking about with you is how do you\nsee us working around these limitations in the language, in the code\nbase that we have?"
+    },
+    {
+      "type": "ts",
+      "text": "44:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "There’s a couple options here. The first is you can kind of write it\nthe hard way because OCaml’s a real language. You can write whatever\nyou want. It’s just a question of difficulty. If nothing else, I can\njust, I could in theory, allocate a 64 gigabyte int array at the\nbeginning of startup and then just write C in OCaml that just\nmanipulates that as memory, right? It would work, it never GC, it\nwould do all the things you wanted it to. It’d just be miserable. And\nclearly I’m not going to do that. But given that we’re a company that\nhas a lot of people who care about programming languages, one thing\nwe’re pretty good at is DSLs. And so we have some DSLs, for example,\nthat let you describe a layout and we’re going to embed this layout\ninto some low level string that doesn’t know a lot, but it’s still, if\nyou glance at it the right way, typesafe, in that the DSL doesn’t let\nyou write out of bounds accesses or anything like this."
+    },
+    {
+      "type": "ts",
+      "text": "45:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right? And the DSL, you sit down and write down what’s the format of a\npacket that you might get from the NASDAQ exchange. And then it\ngenerates some actually relatively reasonable, easy to understand\ninterfaces that are backed by the low level, horrible manipulation of\nraw memory. And so you write a DSL, you generate some code, and what\nyou surface to the user is a relatively usable thing, but you get the\nphysical behavior that you want with all the flattening and inlining\nand tight representation of data."
+    },
+    {
+      "type": "ts",
+      "text": "45:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "You’re hitting on a really good point that a lot of these originated\nfrom our need to parse formats that were given to us. But it turns out\nyou can also just use them for representing your data in memory. I can\nbuild a book representation of the state of the market that’s just\nlaid out flatly and packedor me. It’s much less pleasant to use than\nreal OCaml. It’s difficult, and we only do this in the places that it\nmatters, but you can do it. This is what I like to call a dialect of\nOCaml. We speak in sometimes and sometimes we gently say it’s zero\nalloc OCaml. And the most notable thing about it, it tries to avoid\ntouching the garbage collector, but implied in that zero alloc dialect\nis also a lot of representational things. We have little weird corners\nof the language that are slightly less pleasant to use, but will give\nyou more control over layout and more control over not touching the GC\nand using malloc instead. And it works pretty well. It’s harder, but\nyou can do it. In the same way, another thing we think about a lot is\ninteroperability. Again, sort of out of necessity that our libraries,\nwe have to interact with that only work in C. So we have these little\nC stubs that we can call into and it’s really cheap. It’s not like\nJava. It’s not like one of those languages where there’s this huge\ncostly process for going cross language, just make a function call and\nit just works, right?"
+    },
+    {
+      "type": "ts",
+      "text": "46:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. The overhead, I think for a function call to C at the least is,\nI dunno, three or four nanos. And I think in Java it’s like three or\n400 nanos because the JNI is a beast for reasons I’ve never\nunderstood."
+    },
+    {
+      "type": "ts",
+      "text": "46:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Option two is cry a little bit and deal with it. Yeah, we fight a\nfundamental disadvantage. We’re working on reducing it. I’m super\nexcited about getting more control over the layout of OCaml\ntypes. This is like the biggest change to me that maybe will ever\nhappen in the compiler. Being able to write down a representation of\nmemory that is what I want it to be in a real OCaml type that is fun\nto play with, but fundamentally we’re kind of at a disadvantage and we\njust have to work hard and we have to think more about, okay, we’re\ngoing to have a higher cache footprint. What does this mean about our\narchitecture? How can we get cache from other places? How can we\nspread out the job across more steps, more processes, pre-process this\none place. It gets back to, you don’t want to focus on over optimizing\nthis one function. You want to make your overall architecture do the\nright things and just informs infrastructural changes."
+    },
+    {
+      "type": "ts",
+      "text": "47:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think you make an important point that it’s not that any of the\noptimizations you want to do are impossible, it’s that they’re a\nlittle bit more awkward than you would like them to be and you have to\ndo a little extra work to get them to happen. And that means\nfundamentally that we don’t always do them. And so we really do pay a\ncost in performance in that getting people to do the right thing. The\nharder you make that, the less it happens."
+    },
+    {
+      "type": "ts",
+      "text": "47:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "One of the hardest things to learn when you’re doing this sort of work\nis discipline. I have to go through the code base every day and say,\nno, I’m not fixing that. Yes, it’s like offensive to me on a personal\nlevel that it’s slow and it allocates and do these things, but it just\ndoesn’t matter. It’s legitimately hard for me not to stop whatever I’m\ndoing and just fix this optimization that I know is sitting there. If\nthis doesn’t bother you on a fundamental physical level, I just don’t\nunderstand."
+    },
+    {
+      "type": "ts",
+      "text": "48:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But you have to prioritize."
+    },
+    {
+      "type": "ts",
+      "text": "48:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "You have to prioritize. There’s so much more important things to be\ndoing."
+    },
+    {
+      "type": "ts",
+      "text": "48:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another thing I’m wondering about is how you think about the role\nof hardware in all of this. In some sense, if you’re thinking about\nmaking things as low latency as possible, why do we even bother with a\nCPU? Right? You look at the basic latency of consuming and emitting a\npacket, and on any ordinary computer you’re going to cross twice over\nthe PCI express bus, it’s going to cost you about 400 nanos each\nway. Know that and a little bit of slop between the pieces. It’s kind\nof hard to get under a mic really for anything where you’re like, I’m\ngoing to consume some data off the network, do something and respond\nto it. And on an FPGA attached to a NIC, you can write a hardware\ndesign that can turn around a packet in under a hundred\nnanoseconds. So there’s an order of magnitude improvement that’s just\nphysically impossible to get to with a computer architecture. And so\nin some sense, if all you cared about is, well, I just want the\nabsolute lowest latency thing possible, it’s like, why are we even\nusing CPUs at all? So how do you think about the role of hardware as\nintegrating and how you think about performance in the context of\nbuilding these kinds of systems?"
+    },
+    {
+      "type": "ts",
+      "text": "49:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "It informs the architecture you choose. Yeah, nothing’s ever going to\nbe as fast as hardware, but it’s really hard to write hardware. It\ncan’t do complicated things. And even the things it can do are just\nexponentially harder to write. I have never in my life written\nVerilog, which feels like a personal sin. I am reliably informed that\nit is miserable and unpleasant and your compiler takes 24 hours to\nrun. So we have a lot of strategies with really complicated logic, and\nthat logic is important and it’s valuable. And implementing that in\nhardware is, I’m just going to say flatly impossible. You couldn’t do\nit. And so the question becomes what can you outsource to hardware\nthat is easy? How do you architect your system so that you can do the\nreally, really hyper-focused speed things in a simple, simple hardware\nsystem that only does one thing and you feed that hardware the right\nway, but the rest of the software system still has need to be fast. It\nhas to be fast on a different scale, but it turns out there’s\noptimizations that matter on roughly every single timescale you can\nimagine. We have trades at this firm that, like you say, complete in\nless than a hundred nanoseconds or you might not even bother. We also\nhave trades that we send someone an email and the next day you get\nback a fill, right? And every level in between there turns out you can\ndo useful optimization work."
+    },
+    {
+      "type": "ts",
+      "text": "50:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And even with stuff that has no humans in the loop, we really do think\nabout nanoseconds, microseconds, and milliseconds. Depending on what\nyou’re doing and how complicated it is, you really do care about many\ndifferent orders of magnitude."
+    },
+    {
+      "type": "ts",
+      "text": "50:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. There’s a system that I’ve worked on where our real goal is to\nget it down from having 50 millisecond tails to one millisecond tails,\nand we’ve celebrated when we get there, and it still does a lot of\ngreat trading. We have other systems that are doing simpler, more\nspeed competitive things where your software needs to be 20\nmicroseconds or 10 microseconds or five microseconds. And that’s\nachievable. It’s harder and you have to do simpler things just like\nwith the hardware, but it’s achievable and you care about both of\nthese latencies. And I think another good thing to point out is that\nyou said systems that don’t interact with humans, but it turns out\nsome of the most important latencies of systems we interact with is\nthe systems that do interact with humans. I don’t know about you, Ron,\nbut when my editor freezes up for five seconds while I’m typing, I\njust want to put a keyboard through the window."
+    },
+    {
+      "type": "p",
+      "text": "It just drives me nuts and putting aside the aggravation. Human\nresponsive systems are just really important too, both on you’re\nactively trading and you want by hand and you want to have a good\nlatency on the thing that’s displaying the prices in front of\nyou. That matters a lot, but also I think it matters a lot for just\nyour ability to adapt and improve your systems over time. I said\nearlier, think about historical research. That’s a throughput problem,\nbut it’s also a latency problem on a human scale. This thing that will\ngive you feedback on whether your trading idea was good in a minute is\nworth so much more than one that’ll gives you an idea if it’s worth\nanything in a day."
+    },
+    {
+      "type": "ts",
+      "text": "52:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s absolutely right. I think for lots of different creative\nendeavors, and I think trading and software engineering are both count\nfrom my perspective and also all sorts of different kinds of\nresearch. The kind of speed of that interactive loop of I have an\nidea, I try an idea and I get feedback on how well that idea works\nout. The faster you can make that loop, the more that people can\nexperiment with new things and the more the creative juices can get\nflowing and more ideas you can create and try out and evaluate."
+    },
+    {
+      "type": "ts",
+      "text": "52:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "The thing I’m obsessed with telling people about is this Air Force\ncolonel from the fifties or the sixties, his name was John Boyd, he\ninvented this idea called the UDA loop, OODA, I believe. It’s observe,\norient, decide, act, just like the four stages you go through and\nfiguring out like, oh, I see something. I think about it. I decide how\nI’m going to adjust to that. I implement the adjustment. And the\nfaster this loop happens, the more control you have over the system\nand the better you can iterate. I think a great example of this\noutside software, oddly enough, is whiskey. I like bourbon a lot. And\nit turns out that to make good bourbon takes 5, 7, 10 years. And so\nyou don’t get a lot of opportunity to iterate. And there are some\npeople who are doing a really controversial thing, which is they’re\nusing technology to rapidly age spirits."
+    },
+    {
+      "type": "p",
+      "text": "And some people call this sacrilege and it’s never going to be quite\nas good as doing it the hard way. But on the other hand, it lets you\ntaste it in a month and be like, I think I’m going to change this and\nthey’re going to get 12 iterations in the time someone else might get\none. And I just think this sort of process turns out to matter a lot\nin software too, of being able to rapidly iterate on what you’re doing\nand get feedback either on the quality of the trading or for that\nmatter on the quality of the performance. One of the things I really\ncare about a lot is building systems that let me really quickly\nevaluate the performance of a system. There’s a huge difference\nbetween, I think this is going to be faster. I did a profile, I know\nthis is a hotspot. I’ve made it better. Okay, I’ll run it in prod for\na couple days and okay, I’ve made this change. I think it’s going to\nbe better. I’m going to run it on this really realistic testbed. I\nknow in 10 minutes if it’s better and I can change it and I can try it\nagain."
+    },
+    {
+      "type": "ts",
+      "text": "53:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, iteration speed matters kind of almost everywhere you are. And I\nreally like your point about this kind of performance analysis\nmattering for trading systems and also mattering for systems with\nhuman interaction. And actually I feel like the performance mindset\nisn’t really so different. You look at someone who’s really good at\nthinking hard about and optimizing the performance of stuff in the\nbrowser. There’s a very different instruction set and oh my God, is\nthat a weird and complicated virtual machine. But a lot of the same\nintuitions and habits of mind and that focus on being really\ninterested in details that are really boring. All of that really\nmatters a lot. You really have to care about all the kind of gory\ndetails of the guts of these things to do a really good job of digging\nin."
+    },
+    {
+      "type": "ts",
+      "text": "54:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "And this is why I kind of wonder if there’s just a mindset that can’t\nbe trained. You have to just look at this and go, what the hell are\nyou talking about, Ron, this isn’t boring. I get why you say that, but\nI just look at this stuff and go like, you don’t have to pay me to\nlook at this. Sorry, I take that back. You do have to pay me to look\nat this. I would not do this for free. I promise."
+    },
+    {
+      "type": "ts",
+      "text": "54:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Boring in quotes. I love this stuff too, and totally understand why it\nis, but it is from the outside. It’s a little hard to explain to your\nfriends and family why you like this stuff. They’re like, you can’t\neven explain in words out loud, what are the details that are going\non. People will fall asleep."
+    },
+    {
+      "type": "ts",
+      "text": "55:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Do you know my dad once sat me down in college and said, are you sure\nyou want to do this CSS thing and not go into something where you can\nfind a job? Like being a lawyer? I’m the only person who disappointed\nhis parents by not becoming an English major."
+    },
+    {
+      "type": "ts",
+      "text": "55:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, maybe that’s a good point to end it on. Thanks so much for\njoining me. This has been great."
+    },
+    {
+      "type": "ts",
+      "text": "55:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrew"
+    },
+    {
+      "type": "p",
+      "text": "Thanks for having me on. This was a really good talk."
+    }
+  ]
+}

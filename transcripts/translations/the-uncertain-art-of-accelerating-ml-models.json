@@ -1,0 +1,861 @@
+{
+  "slug": "the-uncertain-art-of-accelerating-ml-models",
+  "source": "google-translate",
+  "paragraphs": [
+    {
+      "idx": 0,
+      "en": "Sylvain Gugger is a former math teacher who fell into machine learning via a MOOC and\nbecame an expert in the low-level performance details of neural networks. He’s now on the\nML-infra team at Jane Street, where he helps traders speed up their models. In this\nepisode, Sylvain and Ron go deep on learning rate schedules; the subtle performance bugs\nPyTorch lets you write; how to keep a hungry GPU well-fed; and the importance of\nreproducibility in training runs. They also discuss some of the unique challenges of doing\nML in the world of trading, like the unusual size and shape of market data and the need to\ndo inference at very low latencies.",
+      "zh": "Sylvain Gugger 是一名前数学老师，通过 MOOC 进入机器学习领域，\n成为神经网络低级性能细节方面的专家。他现在在\nJane Street 的 ML-infra 团队，帮助交易者加快模型速度。在这个\n在这一集中，Sylvain 和 Ron 深入探讨了学习率计划；微妙的性能错误\nPyTorch 让您可以编写；如何让饥饿的GPU保持充足的食物；以及的重要性\n训练运行的可重复性。他们还讨论了一些独特的挑战\n交易世界中的机器学习，例如市场数据的不寻常规模和形状以及需要\n以非常低的延迟进行推理。"
+    },
+    {
+      "idx": 1,
+      "en": "Sylvain Gugger is a former math teacher who fell into machine learning via a MOOC and\nbecame an expert in the low-level performance details of neural networks. He’s now on the\nML-infra team at Jane Street, where he helps traders speed up their models. In this\nepisode, Sylvain and Ron go deep on learning rate schedules; the subtle performance bugs\nPyTorch lets you write; how to keep a hungry GPU well-fed; and the importance of\nreproducibility in training runs. They also discuss some of the unique challenges of doing\nML in the world of trading, like the unusual size and shape of market data and the need to\ndo inference at very low latencies.",
+      "zh": "Sylvain Gugger 是一名前数学老师，通过 MOOC 进入机器学习领域，\n成为神经网络低级性能细节方面的专家。他现在在\nJane Street 的 ML-infra 团队，帮助交易者加快模型速度。在这个\n在这一集中，Sylvain 和 Ron 深入探讨了学习率计划；微妙的性能错误\nPyTorch 让您可以编写；如何让饥饿的GPU保持充足的食物；以及的重要性\n训练运行的可重复性。他们还讨论了一些独特的挑战\n交易世界中的机器学习，例如市场数据的不寻常规模和形状以及需要\n以非常低的延迟进行推理。"
+    },
+    {
+      "idx": 2,
+      "en": "Some links to topics that came up in the discussion:",
+      "zh": "讨论中出现的一些主题链接："
+    },
+    {
+      "idx": 3,
+      "en": "Learn more about machine learning at Jane Street.",
+      "zh": "在 Jane Street 了解有关机器学习的更多信息。"
+    },
+    {
+      "idx": 4,
+      "en": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech stack\nfrom Jane Street. I’m Ron Minsky. It’s my pleasure to introduce Sylvain Gugger. Sylvain is\na Machine Learning Engineer here at Jane Street, and he’s done a bunch of interesting\nstuff in the outside world as well. He was a core maintainer of Hugging Face’s\nTransformers library. He wrote Hugging Face Accelerate, which is a nice library from them\nthat helps you run your models performantly on a lot of different kinds of hardware. And\nhe also wrote a lovely book along with Jeremy Howard called, Deep Learning For Coders with\nfastai and PyTorch. So he’s done a bunch of interesting stuff in the outside world, he’s\nalso doing a lot of interesting machine learning work here at Jane Street, so thanks for\njoining me.",
+      "zh": "欢迎来到信号和线程，深入讨论技术堆栈的每一层\n从简街。我是罗恩·明斯基。我很高兴向大家介绍西尔万·古格尔。西尔万是\nJane Street 的机器学习工程师，他做了很多有趣的事情\n还有外面世界的东西。他是 Hugging Face 的核心维护者\n变形金刚库。他写了 Hugging Face Accelerate，这是他们提供的一个很好的库\n这可以帮助您在许多不同类型的硬件上高效地运行模型。并且\n他还与 Jeremy Howard 一起写了一本可爱的书，名为《程序员的深度学习》\nfastai 和 PyTorch。所以他在外面的世界做了很多有趣的事情，他\n在 Jane Street 也做了很多有趣的机器学习工作，所以感谢\n加入我。"
+    },
+    {
+      "idx": 5,
+      "en": "Thanks, I’m very honored to be here.",
+      "zh": "谢谢，我很荣幸来到这里。"
+    },
+    {
+      "idx": 6,
+      "en": "And just to kick things off, I’d love to hear a little bit more about your background, and\nin particular, how did you get to work on machine learning in the first place?",
+      "zh": "首先，我很想听听更多关于你的背景的信息，以及\n特别是，您最初是如何开始从事机器学习工作的？"
+    },
+    {
+      "idx": 7,
+      "en": "So that’s a good question. I was originally a math teacher, like 10 years ago in France\nteaching at a first year university level. And yeah, I moved to the U.S. in 2015, I had\nkids, so I took some small projects at home to mostly take care of my kids. In 2017, AI\nwas kind of becoming more mainstream. I actually read an article in the New York Times\nabout it. It was going to steal like everyone’s jobs in the next two or three years and\nthat–",
+      "zh": "这是一个好问题。我原本是一名数学老师，就像十年前在法国一样\n大学一年级教学。是的，我在 2015 年搬到了美国，我\n孩子们，所以我在家里做了一些小项目来主要照顾我的孩子。 2017年，人工智能\n有点变得更加主流。我实际上在《纽约时报》上读过一篇文章\n关于它。在接下来的两三年里，它将像每个人的工作一样被抢走\n那——"
+    },
+    {
+      "idx": 8,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 9,
+      "en": "–didn’t happen, but it’s still something that became more mainstream. And at the end of\nthe article, they were mentioning a couple of online courses for people interested in\ndiving in more, and I was interested, so I dived into it. So one of the courses mentioned\nwas a fast.ai course by Jeremy Howard, which I followed. It was very interesting and yeah,\nI started commenting a little bit more and more on the forums, and making a couple of\ncontributions to the fast.ai library, which is used throughout the course to make training\nmodels a little bit faster, a little bit easier. And then towards the end of the course,\nJeremy led a fast.ai team to this competition called the DAWNBench Competition, which is\nthe ancestor of the MLPerf benchmark. It was organized by Stanford and the goal was to\ntrain a computer vision model as fast as possible to a given accuracy.  And so, yeah, we\nentered the competition, I helped to be the team, and we were like positioned first for\nthe longest time, and yeah, at the very end, Google kind of trolled us by–",
+      "zh": "——虽然没有发生，但它仍然变得更加主流。并在最后\n这篇文章中，他们提到了一些为感兴趣的人提供的在线课程\n潜入更多，我很感兴趣，所以我潜入其中。所以提到的一门课程\n我跟随了 Jeremy Howard 的 fast.ai 课程。这非常有趣，是的，\n我开始在论坛上发表越来越多的评论，并制作了一些\n对 fast.ai 库的贡献，该库在整个课程中用于进行培训\n模型更快一点，更容易一点。然后在课程即将结束时，\nJeremy 带领 fast.ai 团队参加了这项名为 DAWNBench 竞赛的比赛，该比赛是\nMLPerf 基准测试的祖先。它是由斯坦福大学组织的，目标是\n尽可能快地训练计算机视觉模型达到给定的精度。  所以，是的，我们\n参加比赛，我帮助成为了团队，我们就像是第一名\n最长的时间，是的，最后，谷歌有点欺骗我们——"
+    },
+    {
+      "idx": 10,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 11,
+      "en": "–publicly releasing TPUs for the first time, and yeah, those massive computers that no one\nelse had access to trashed our best entry and our best time.",
+      "zh": "– 第一次公开发布 TPU，是的，那些无人知晓的大型计算机\n其他人有机会破坏我们最好的参赛作品和最好的时光。"
+    },
+    {
+      "idx": 12,
+      "en": "So I want to hear more about the competition, but before that, can you tell me a little\nabout, like, what is fast.ai? What’s the basic program there? What’s the mission behind\nthat organization?",
+      "zh": "所以我想了解更多有关比赛的信息，但在此之前，你能告诉我一些吗？\n关于什么是 fast.ai？那里的基本程序是什么？背后的使命是什么\n那个组织？"
+    },
+    {
+      "idx": 13,
+      "en": "So fast.ai is a non-profit whose goal is to educate people about deep learning, especially\nin those early years. It was starting to become more mainstream, but not necessarily as\nmainstream as it is today. And the idea behind it – that Jeremy Howard and I believe – is\nthat to get the best model, you need good machine learning engineers, but you also need\npeople who really understand the data that those models are gonna consume. So if you want\ngood modeling for radiology, you need a very good radiologist to kind of understand how\nmachine learning works, so that they’re gonna be able to help you build those best models.\nThe fast.ai course are aimed both at coders who want to like, really dive deep into\nmachine learning, but also like, beginning as more of an introduction that anyone who is\ninterested can take it to learn more about, “What is machine learning? What are those deep\nlearning models and what can they do?”",
+      "zh": "So fast.ai 是一个非营利组织，其目标是教育人们了解深度学习，尤其是\n在那些早年。它开始变得更加主流，但不一定是\n正如今天的主流。杰里米·霍华德和我相信其背后的想法是\n为了获得最好的模型，你需要优秀的机器学习工程师，但你也需要\n真正了解这些模型将消耗的数据的人。所以如果你想要\n放射学的良好建模，您需要一位非常优秀的放射科医生来了解如何\n机器学习是有效的，因此他们将能够帮助您构建那些最好的模型。\nfast.ai 课程针对的是想要真正深入了解的程序员\n机器学习，但也像，一开始更多的是任何人的介绍\n有兴趣的可以带着它去详细了解一下，《什么是机器学习？那些深度学习是什么？\n学习模型以及它们能做什么？”"
+    },
+    {
+      "idx": 14,
+      "en": "So the basic idea is to democratize machine learning, so all sorts of domain experts can\nactually know enough about it to really leverage it in a meaningful way.",
+      "zh": "所以基本思想是使机器学习民主化，这样各种领域专家都可以\n实际上对它有足够的了解，能够以有意义的方式真正利用它。"
+    },
+    {
+      "idx": 15,
+      "en": "Exactly. You said it way better than I did. (laughs)",
+      "zh": "确切地。你说的比我说的好多了（笑）"
+    },
+    {
+      "idx": 16,
+      "en": "(laughs) Let’s get back to the competition. So the end of the competition is a great\ndramatic story of, “Google gorilla stomps on everything by dropping TPUs at the last\nmoment.” But what were you actually doing in order to get into first place before Google\nkind of jumped in there?",
+      "zh": "（笑）让我们回到比赛。所以比赛的结局是美好的\n一个戏剧性的故事，“谷歌大猩猩最后扔下了 TPU，踩碎了一切”\n时刻。”但你实际上做了什么才能在谷歌之前获得第一名\n有点跳进去了？"
+    },
+    {
+      "idx": 17,
+      "en": "Yeah, so a couple of things. The main thing is related to the way we were training the\nmodel and in particular, the learning rate schedule. So to take a little step back, when\nyou train with machine learning models, initially, your model is random, so it’s\noutputting crappy predictions. But then you compute loss, and from that loss, some\ngradients that are going to make your model a little bit better if you adjust the weight\nfollowing those gradients. This whole process is called stochastic gradient descent.",
+      "zh": "是的，有几件事。主要是和我们训练的方式有关\n模型，特别是学习率表。所以退一步讲，当\n你用机器学习模型进行训练，最初，你的模型是随机的，所以它是\n输出蹩脚的预测。但是然后你计算损失，并从该损失中得出一些\n如果您调整权重，梯度将使您的模型变得更好一点\n遵循这些梯度。整个过程称为随机梯度下降。"
+    },
+    {
+      "idx": 18,
+      "en": "Right, and just to say a higher level thing about all of this. This is just an example of\na more general thing called function optimization, right? You have some function that you\nwant to optimize, in this case, the function is given the set of model weights and the\ninput you want to run on. You want to find the set of model weights that give you the best\nand most accurate answer. And we just approach this like we do in some sense, almost any\nother kind of optimization problem with techniques that actually like go back 50 years or\nsomething of, we’re just going to compute a derivative and we’re gonna walk the model\nweights in the direction of the derivative, and just do that over and over until we get to\na more optimal result.",
+      "zh": "是的，只是对这一切说一个更高层次的事情。这只是一个例子\n一个更通用的东西叫做函数优化，对吗？你有一些功能，你\n想要优化，在这种情况下，函数被赋予一组模型权重和\n您想要运行的输入。您想要找到最适合您的模型权重集\n和最准确的答案。我们只是像在某种意义上所做的那样对待这个问题，几乎任何\n其他类型的优化问题，其技术实际上可以追溯到 50 年前或\n某种程度上，我们只是要计算导数，然后我们要遍历模型\n权重沿导数方向，一遍又一遍地这样做，直到我们得到\n更优化的结果。"
+    },
+    {
+      "idx": 19,
+      "en": "Yes, exactly. Like the whole process and the whole math behind it existed for like 50, 60\nyears. It’s just that with GPU becoming more and more powerful, we actually had the\ncompute to apply that process to complex problems, like deep learning. So that very\nimportant type of parameter, the learning rate, is kind of the size of the step we take,\nfollowing those gradients.  At the time of the competition, the most popular learning rate\nschedules were, like, very inefficient, just training at a low learning rate for a very\nlong time. And then we divide that low learning rate by 10, and we train for even a longer\ntime. That did converge to a good accuracy, but it was very inefficient. And one of the\nthings we had in our competition entry was to follow a learning rate schedule that is more\nlike a warm-up from a low learning rate to a high learning rate, so not start at a high\nlearning rate because otherwise your model immediately explodes. But by warming up,\nstarting from something low and gradually increasing it to the maximum, we can have the\nmodel learn a little bit of something for those and then have a high learning rate for a\nlittle bit of time, so that we can explore the loss landscape efficiently, and then\ndecrease it towards the end. And this kind of schedule made it possible to train the model\nto the same accuracy, but way faster.",
+      "zh": "是的，完全正确。就像整个过程和其背后的整个数学存在了大约 50、60 年\n年。只是随着GPU越来越强大，我们其实有了\n计算将该过程应用于复杂问题，例如深度学习。所以说非常\n重要的参数类型，学习率，是我们采取的步骤的大小，\n遵循这些梯度。  比赛时最流行的学习率\n时间表的效率非常低，只是以低学习率进行训练\n很长一段时间。然后我们将这个低学习率除以 10，然后训练更长时间\n时间。这确实收敛到了很好的精度，但效率非常低。而其中之一\n我们在比赛中的做法是遵循一个学习率计划，该计划更重要\n就像从低学习率到高学习率的热身一样，所以不要从高学习率开始\n学习率，否则你的模型会立即爆炸。但通过热身，\n从较低的值开始，逐渐增加到最大值，我们可以得到\n模型为这些学习一点东西，然后为\n一点点时间，这样我们就可以有效地探索损失情况，然后\n到最后减少它。这种时间表使得训练模型成为可能\n达到相同的精度，但速度更快。"
+    },
+    {
+      "idx": 20,
+      "en": "Why is that a better schedule? If you kind of just think about this without knowing all of\nthe details. The idea that when you’re very far from the answer, you want to take large\nsteps, and when you get closer to the answer, you want to take smaller steps, seems\nintuitive. But here, you’re saying instead that you start with small steps, and then go up\nto big steps, and then go down to small steps. So what about the structure of the problem\nmakes that the right approach?",
+      "zh": "为什么这是一个更好的时间表？如果你只是在不了解所有情况的情况下思考这个问题\n细节。当你离答案很远时，你想要采取更大的想法\n步，当你接近答案时，你想采取更小的步骤，似乎\n直观。但在这里，你是说从小步骤开始，然后向上走\n上大台阶，然后下小台阶。那么问题的结构呢\n这是正确的方法吗？"
+    },
+    {
+      "idx": 21,
+      "en": "I mean at the beginning of the problem, like, since your model is randomly initialized, in\nthe landscape of your loss function, you are very, very high, and you actually have very\nsteep canyons. So if you take large steps at the beginning, you can at least begin to\ndescend into one of those canyons of the loss function, and then increase that learning\nrate to dive through there fast. And you will skip over a lot of local minimas because\nyour learning rate is large. So towards the end, you need that decrease, to step down\nfurther into one of those smaller parts of the landscape of the loss that have these local\nminimas.",
+      "zh": "我的意思是在问题开始时，就像，因为你的模型是随机初始化的，\n你的损失函数的景观，你非常非常高，而且你实际上有非常\n陡峭的峡谷。因此，如果你一开始就采取大步骤，你至少可以开始\n下降到损失函数的峡谷之一，然后增加学习\n率快速潜入那里。你会跳过很多局部最小值，因为\n你的学习率很大。所以到最后，你需要减少，下台\n进一步深入到损失景观的较小部分之一，这些地方有这些地方\n最小值。"
+    },
+    {
+      "idx": 22,
+      "en": "So, is the intuition here that when you start at a randomly initialized point, the terrain\naround which you’re trying to optimize is just more wild. And if you take big steps, your\nderivatives are very high, and you’re kind of jumping all over the place. But even with a\nlittle bit of optimization away from that initial randomness, you end up in something that\nfeels like a more regular space, and now you can go back to what makes more intuitive\nsense.",
+      "zh": "所以，这里的直觉是，当你从随机初始化的点开始时，地形\n你试图优化的地方更加疯狂。如果你迈出大步，你的\n衍生品非常高，你有点跳来跳去。但即使有\n远离最初的随机性进行一点优化，你最终会得到这样的结果\n感觉像是一个更规则的空间，现在您可以回到更直观的地方\n感觉。"
+    },
+    {
+      "idx": 23,
+      "en": "Yes. It depends also, like, we are talking about just a 3D problem. But we have millions\nof dimensions because your model has millions of parameters. So it’s the idea that, yeah,\non some of those dimensions the landscape is very, very spiky. So at least taking care of\nthat at the beginning with a low learning rate is gonna make the whole optimization\nproblem easier, and then you can have larger steps.",
+      "zh": "是的。这也取决于，比如，我们谈论的只是一个 3D 问题。但我们有数百万\n维度，因为您的模型有数百万个参数。所以这个想法是，是的，\n在某些维度上，景观非常非常尖刻。所以至少要照顾好\n一开始以较低的学习率进行整体优化\n问题变得更容易，然后你可以有更大的步骤。"
+    },
+    {
+      "idx": 24,
+      "en": "Yeah I do think there’s this, kind of, terrible intuition one has when one thinks about a\nproblem like this, of like, “I’ll try and visualize it in two or three–",
+      "zh": "是的，我确实认为，当一个人思考一个问题时，会有一种可怕的直觉\n像这样的问题，“我会尝试用两到三个时间来想象它——"
+    },
+    {
+      "idx": 25,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 26,
+      "en": "–dimensions.” And you’re like, “You have just lost all of the important structure and you\nreally need to think about this high-dimensional problem to really know what’s going on.”",
+      "zh": "-方面。”你就像，“你刚刚失去了所有重要的结构，你\n确实需要思考这个高维问题才能真正知道发生了什么。”"
+    },
+    {
+      "idx": 27,
+      "en": "That was one of the optimizations. The other optimization we did was a computer vision\nproblem. And so the kind of models we applied to them – which are called CNNs, for\nconvolutional neural networks – can work on any size of images because it’s just some kind\nof filter that you apply over all of your image. And so the idea is at the beginning of\nthe model, like when you train, the model is random, it’s crappy, so it doesn’t really\nneed to see the whole picture. We kind of gave it a more blurry version of the picture,\nlike just 128x128, and then gradually as training goes on, we increase the size of those\nimages to make them more of the standard size. People are doing that problem we’re\nusing. And you have that gradual resizing as well, because if at the beginning, your image\nis smaller and you have your filter to like, put all around the place of that image, it’s\ngoing to be more efficient if you have less pixels, compared to doing the training with\nalways, like, the high-resolution images.",
+      "zh": "这是优化之一。我们做的另一个优化是计算机视觉\n问题。因此，我们应用于它们的模型——称为 CNN，用于\n卷积神经网络——可以处理任何大小的图像，因为它只是某种类型\n应用于整个图像的滤镜。所以这个想法是在一开始的\n模型，就像你训练时一样，模型是随机的，很糟糕，所以它实际上并不\n需要看到全貌。我们给了它一个更模糊的图片版本，\n就像 128x128 一样，然后随着训练的进行，我们逐渐增加这些尺寸\n图像，使它们更接近标准尺寸。人们正在做我们正在做的问题\n使用。而且你也可以逐渐调整大小，因为如果一开始，你的图像\n更小，你有你喜欢的过滤器，把所有的东西放在该图像的地方，它是\n与使用以下命令进行训练相比，如果像素较少，效率会更高\n总是像高分辨率图像一样。"
+    },
+    {
+      "idx": 28,
+      "en": "Right, so there’s two neat properties of convolutional neural networks that are coming\ninto play here. Convolutional networks are, in general, a dimensionality reduction\ntrick. You can imagine a big network that’s applying to all of the different inputs, and\nall the different parts of the image, and then you could just have weights that are\nindividual to all the neurons that are associated with all the different parts of the\nimage. But that’s enormously wasteful because in the early parts of the network, you\nactually want, sort of, the same regular structure over and over.  And so the basic idea\nof a CNN is you kind of lock those weights together, so you in some sense just have one\ncopy of this neuron which is activated multiple times in multiple places. But then once\nyou’ve done that trick, you also have this resolution independence where you can write it\nat multiple different resolutions and you’re saying, “Well, we’re just gonna train this\nthing at low resolution, and then, again, after it gets into the ballpark and we need to\nmore precisely fine tune it, then we’ll increase the resolution and do the rest of it.”",
+      "zh": "是的，卷积神经网络有两个简洁的特性即将到来\n到这里来玩。一般来说，卷积网络是降维\n伎俩。您可以想象一个适用于所有不同输入的大型网络，并且\n图像的所有不同部分，然后你就可以得到如下的权重\n个体到与所有不同部分相关的所有神经元\n图像。但这是极大的浪费，因为在网络的早期部分，你\n实际上想要一遍又一遍地使用相同的规则结构。  基本思想是这样的\nCNN 的一个特点是你将这些权重锁定在一起，所以在某种意义上你只有一个\n该神经元的副本在多个位置被多次激活。但后来有一次\n你已经完成了这个技巧，你也有这个分辨率独立性，你可以在其中编写它\n在多个不同的分辨率下，你会说，“好吧，我们只是要训练这个\n低分辨率的东西，然后，再一次，当它进入球场后，我们需要\n更精确地对其进行微调，然后我们将提高分辨率并完成其余的工作。”"
+    },
+    {
+      "idx": 29,
+      "en": "Yeah.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 30,
+      "en": "And were these essentially new techniques at the time of this puzzle?",
+      "zh": "在解决这个难题时，这些本质上是新技术吗？"
+    },
+    {
+      "idx": 31,
+      "en": "Yeah, both of them were new techniques. Like, the gradual resizing is still not that\nwidely used. The new, kind of, learning rate schedule is like, now everyone uses that,\nlike all transformers models like GPT-3.5. I think we are GPT-5 now, not for sure, because\nOpenAI does not publish its research, but like–",
+      "zh": "是的，它们都是新技术。就像，逐渐调整大小仍然不是那样\n广泛使用。新的学习率计划就像现在每个人都使用它，\n与 GPT-3.5 等所有变形金刚型号一样。我认为我们现在是 GPT-5，但不确定，因为\nOpenAI 没有发表其研究成果，但就像——"
+    },
+    {
+      "idx": 32,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 33,
+      "en": "–the open source versions of that are trained using that kind of schedule. And since\nbirth, we have seen that kind of learning rate schedule all the time.",
+      "zh": "– 其开源版本是使用这种时间表进行训练的。自从\n从一出生起，我们就一直看到这种学习率表。"
+    },
+    {
+      "idx": 34,
+      "en": "So that’s how you got into fast.ai and you got into this competition space. How did you\nend up being co-author of this book?",
+      "zh": "这就是你进入 fast.ai 并进入这个竞争领域的方式。你怎么样\n最终成为这本书的合著者？"
+    },
+    {
+      "idx": 35,
+      "en": "So after collaborating on the fast.ai library and yeah, participating on the forum, that\ncompetition, Jeremy Howard kindly offered me a job at fast.ai, which I accepted. So I\nworked there for two years, built a couple versions of the fast.ai library, and two\niterations of the online course. And it was very natural going from, like, the course to\npublish a reference book with kind of the same content, just in a different format for\npeople who prefer to learn from books, instead of YouTube videos.",
+      "zh": "因此，在 fast.ai 库上进行合作并参与论坛之后，\n竞争期间，Jeremy Howard 好心地为我提供了一份 fast.ai 的工作，我接受了。所以我\n在那里工作了两年，构建了 fast.ai 库的几个版本，以及两个\n在线课程的迭代。从课程到\n出版一本内容相同但格式不同的参考书\n喜欢从书本而不是 YouTube 视频中学习的人。"
+    },
+    {
+      "idx": 36,
+      "en": "Got it. And then what brought you to Hugging Face? And what is Hugging Face?",
+      "zh": "知道了。那么是什么让你选择了拥抱脸呢？什么是抱脸？"
+    },
+    {
+      "idx": 37,
+      "en": "So, Hugging Face is kind of the GitHub of machine learning. The idea is that we have a\nwebsite that looks kind of like GitHub – except instead of having repos with code, you\nhave repos with model weights. So like lemma one, lemma two, lemma three, and 3.2, that\nwas released a couple of days ago, are all on Hugging Face, along with I think now is a\nmillion public model from all kind of applications of machine learning, like computer\nvision, text, speech, et cetera, et cetera. And yes, the idea is that they are kind of at\nthe forefront of the open source AI by allowing people to share those models. And what’s\nhappened, a couple of libraries, because model weights are very good, but if you don’t\nhave the code to actually instantiate those models, they are kind of useless. To\ncomplement that, they have libraries like there’s a transformers library, which actually\ncontains the code of those models.",
+      "zh": "所以，Hugging Face 有点像机器学习的 GitHub。我们的想法是，我们有一个\n看起来有点像 GitHub 的网站——只不过你没有包含代码的存储库，\n有带有模型权重的存储库。就像引理一、引理二、引理三和 3.2 一样，\n前几天发布了，都是在Hugging Face上，加上我觉得现在是\n来自各种机器学习应用（例如计算机）的百万个公共模型\n视觉、文本、语音等等。是的，他们的想法是\n通过允许人们共享这些模型，走在开源人工智能的最前沿。什么是\n发生了，有几个库，因为模型权重非常好，但如果你不这样做\n拥有实际实例化这些模型的代码，它们有点无用。至\n补充一下，他们有像变压器库一样的库，实际上\n包含这些模型的代码。"
+    },
+    {
+      "idx": 38,
+      "en": "And how did you end up at Hugging Face?",
+      "zh": "你是怎么最终加入 Hugging Face 的？"
+    },
+    {
+      "idx": 39,
+      "en": "In 2020, there was this thing that happened worldwide.",
+      "zh": "2020年，全世界都发生了这样的事情。"
+    },
+    {
+      "idx": 40,
+      "en": "Oh, yeah. I vaguely remember that.",
+      "zh": "哦，是的。我依稀记得那件事。"
+    },
+    {
+      "idx": 41,
+      "en": "(laughs) Yeah. And so, that kind of disrupted some plans at fast.ai. So I looked for\nanother job, and there was this start-up from French people, which was based in New York\nCity. And so, I knew them from, like, the French community in New York City, and I met\nthem a couple of times before. They were looking to expand. So I applied to Hugging Face\nand I joined them randomly in June of 2020 as a continuation of my work in open source\nfrom fast.ai to democratize machine learning and help people use the transformers library\nor their website with all the public weights on it.",
+      "zh": "（笑）是的。因此，这打乱了 fast.ai 的一些计划。所以我寻找\n另一份工作，还有一家来自法国人的初创公司，总部位于纽约\n城市。所以，我从纽约市的法国社区认识了他们，并且我遇到了\n他们之前有过几次。他们正在寻求扩张。所以我申请了拥抱脸\n我于 2020 年 6 月随机加入了他们，作为我在开源领域工作的延续\n来自 fast.ai 的机器学习民主化并帮助人们使用 Transformers 库\n或者他们的网站上有所有的公共权重。"
+    },
+    {
+      "idx": 42,
+      "en": "So what kind of technical work did you end up doing at Hugging Face?",
+      "zh": "那么你最终在 Hugging Face 做了什么样的技术工作呢？"
+    },
+    {
+      "idx": 43,
+      "en": "Couple of things. There was the maintenance of the open source libraries, because there\nare people doing pull requests, having issues kind of all the time. So that is already a\nhuge amount of work. Then I developed new tutorials and new examples to help people use\nthose libraries, and that kind of ended with an online course that was meant to be taken\nafter the fast.ai course, like for more – for people who wanted to specialize a little bit\nmore into transformers. So there were those two aspects, and then yeah, at some point,\nlike all the researchers at Hugging Face were kind of annoyed by our big black box\ntrainer, which contained all the stuff for the training loop. And it becomes with time,\nlike, this huge amount of spaghetti code, because you have new flags that appear to kind\nof control everything that people want to do with our trainings. And so I created a new\nopen source library to make it much more lightweight to help people with our trainings, so\nthat they can have more flexibility.  Yeah, the idea is that usually those APIs are\ntrained models. You have a trainer API and you give it some things, like your model and\nyour data, and you click “train,” and it trains, and it’s marvelous for people who just\nwant that. But yeah, researchers who wanted to change, like tweak a training loop a little\nbit, were struggling a bit more. So there are various techniques that have applied for\nthat in the past. Like in fast.ai, we had some callback-based systems. So we had callbacks\nthat the researcher could implement to change a little bit the behavior of the training\nloop at this particular point or another. The Hugging Face trainer was less\nextensible. But for that library called Accelerate, I went back to, like yeah, if the\nresearcher is just going to write their training loop, and there’s not going to be like a\nblack box trainer, and they just need to change like a couple of lines here and there to\nmake it run on any kind of systems. At first, it was like six lines, then five lines, and\nwe tried to reduce that number of lines to the absolute minimum so that there was as\nlittle intrusion as possible. That kind of gave that API from Accelerate.",
+      "zh": "有几件事。有开源库的维护，因为有\n人们在做拉取请求时总是遇到问题。所以这已经是一个\n工作量巨大。然后我开发了新的教程和新的示例来帮助人们使用\n那些图书馆，最后以在线课程结束\n学习完 fast.ai 课程后，希望了解更多内容——适合那些想要专业化一点的人\n更多的是变压器。所以有这两个方面，然后是的，在某个时候，\n就像 Hugging Face 的所有研究人员都对我们的大黑匣子感到有点恼火\ntrainer，其中包含训练循环的所有内容。而且随着时间的推移会变得，\n就像，大量的意大利面条代码，因为你有新的标志，看起来很亲切\n控制人们想要通过我们的培训做的一切。所以我创建了一个新的\n开源库，使其更加轻量级，可以帮助人们进行培训，所以\n他们可以有更多的灵活性。  是的，我们的想法是，通常这些 API 是\n训练有素的模型。你有一个训练器 API，你给它一些东西，比如你的模型和\n你的数据，然后你点击“训练”，它就会训练，这对于那些只是\n想要那个。但是，是的，研究人员想要改变，比如稍微调整一下训练循环\n有点，我们更加挣扎了一点。于是就有了各种各样的技术被应用\n过去的事。就像在 fast.ai 中一样，我们有一些基于回调的系统。所以我们有回调\n研究人员可以通过实施来稍微改变训练的行为\n在这个特定点或另一个点循环。抱脸训练器较少\n可扩展的。但是对于那个名为 Accelerate 的库，我回到了，是的，如果\n研究人员只是要编写他们的训练循环，并且不会像\n黑匣子训练器，他们只需要在这里那里改变几行就可以了\n使其在任何类型的系统上运行。一开始是六行，然后是五行，然后\n我们试图将行数减少到绝对最小值，以便\n尽可能少的侵入。 Accelerate 提供了 API。"
+    },
+    {
+      "idx": 44,
+      "en": "And when you say you want to make it possible for people to do their training on multiple\ndifferent kinds of systems, what is the diversity of systems underneath that you’re\nthinking about? What are the kinds of systems and different variations on the training\nthat you were trying to enable with Accelerate?",
+      "zh": "当你说你想让人们能够在多个方面进行培训时\n不同类型的系统，您所在系统的多样性是什么\n在想什么？培训系统有哪些类型以及不同的变化\n您试图通过 Accelerate 启用该功能吗？"
+    },
+    {
+      "idx": 45,
+      "en": "Training requires a lot of data. Usually when you train with large language models or like\neven other kind of models. And to make it more efficient, usually you kind of divide and\nconquer. And if you have multiple GPUs, you give a slice of the dataset to each of your\nGPUs. And so let’s say you have n GPUs then your training time should be reduced by n at\nthe end of the day because they fully parallelize the things that you cared about, just by\nsplitting your data this way. So this is called data parallelism, and it’s kind of the\nfirst level of parallelism we can use when we have multiple GPUs and we want to run a\ntraining on them.  And so you can do that in PyTorch, except it requires some kind of\nboilerplate code that is a bit annoying. So the idea of Accelerate was to remove that\nboilerplate code by just having to change a couple of lines in your training loop, and\npoof! Your model can now run training on multiple GPUs, also on TPUs – but of course the\ncode to run them with the same kind of distributed data parallelism on TPUs is different\nfrom the one on GPUs. That would be too simple otherwise.",
+      "zh": "训练需要大量数据。通常当您使用大型语言模型或类似模型进行训练时\n甚至其他类型的模型。为了提高效率，通常你会进行划分和\n征服。如果您有多个 GPU，则可以将数据集的一部分分配给每个 GPU\nGPU。假设您有 n 个 GPU，那么您的训练时间应减少 n\n一天结束时，因为它们完全并行化了您关心的事情，只需\n以这种方式分割你的数据。所以这就是所谓的数据并行性，它是一种\n当我们有多个 GPU 并且我们想要运行一个程序时，我们可以使用第一级并行性\n对他们进行培训。  所以你可以在 PyTorch 中做到这一点，只不过它需要某种\n样板代码有点烦人。所以加速的想法是消除这个\n只需更改训练循环中的几行即可生成样板代码，并且\n噗！您的模型现在可以在多个 GPU 上运行训练，也可以在 TPU 上运行训练 – 当然\n在 TPU 上以相同类型的分布式数据并行性运行它们的代码是不同的\n来自 GPU 上的一个。否则就太简单了。"
+    },
+    {
+      "idx": 46,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 47,
+      "en": "And then if you have done the modification, nothing runs on CPU again. So the idea is that\nit kind of deals with all of that crap for you of detecting which kind of an environment\nyou are on, and then adding the boilerplate code that is needed for your training to run\nsuccessfully for all of those kinds of systems. And then it also adds like, if you want to\ntrain in a mixed precision setting because you want to use lower precision types, we can\ntalk about that later. It also dealt with the additional lines of codes that were required\nto properly do that, kind of automatically.",
+      "zh": "然后，如果您完成了修改，CPU 上将不再运行任何内容。所以我们的想法是\n它可以为你处理所有那些检测哪种环境的废话\n您正在运行，然后添加训练运行所需的样板代码\n成功用于所有这些类型的系统。然后它还添加了类似的内容，如果你想的话\n在混合精度设置中进行训练，因为您想使用较低精度的类型，我们可以\n稍后再谈。它还处理了所需的额外代码行\n正确地做到这一点，有点自动。"
+    },
+    {
+      "idx": 48,
+      "en": "Yeah, I mean I think this whole discussion kind of underlines just the diversity of\ndifferent hardware and setups that you can do when you’re doing training. There’s the,\nkind of, in some sense, simplest thing of like, you can run your training on a CPU, which\nis a thing that people did for a long time. And then there are multiple different parallel\narchitectures: GPUs, which are like, literally descendants of graphic programming chips,\nand TPUs, which is this tensor processor that Google came up with. And the main game here,\ngoing from the CPUs to the GPUs and TPUs, is about parallelism. It turns out, CPUs are\nthese kind of funny machines that have lots of parallel circuits, but they’re interpreters\nfor a brutally sequential programming language, right?  And so they’re not that good at\ndoing lots of things in parallel, and in fact, there’s all the complexities of like,\nmulti-core architectures and stuff on that side, which is how you try and take advantage\nof parallelism there. But then GPUs and TPUs are machines that are much more directly\nparallel in their structure, and built for large-scale, highly regular parallel\ncomputations. And then at some point, those things aren’t enough either, and now you start\ngetting to various forms of distributed. You want so much parallelism, you want multiple\nGPUs. And then the first thing that you were talking about was this data parallel\ntraining, where what we’re doing is we’re running this, like, stochastic gradient descent,\nwhere we’re picking random subsets of data, breaking it up into batches, and then training\non individual GPUs and computing, like, a net gradient which we then use for updating the\nmodel.  And then there’s also pipeline style parallelism, which you might need when your\nmodel itself is too big to fit. In fact, not just pipeline parallelism, but various kinds\nof model-level parallelism, where you actually take the model and break it up and split it\namong multiple GPUs, because even the model weights themselves are too big to fit\nthere. And then Accelerate is trying to help you write your model once, and you’re\ntraining once, and do a modest amount of modifications to be able to access this whole\nsweep of different ways of doing the training.",
+      "zh": "是的，我的意思是我认为整个讨论都强调了多样性\n您在训练时可以使用不同的硬件和设置。有，\n从某种意义上说，最简单的事情是，你可以在 CPU 上运行你的训练，这\n这是人们长期以来所做的事情。然后有多个不同的并行\n架构：GPU，实际上是图形编程芯片的后代，\nTPU，这是谷歌推出的张量处理器。而这里的主要游戏，\n从 CPU 到 GPU 和 TPU，都是关于并行性。事实证明，CPU\n这些有趣的机器有很多并行电路，但它们是解释器\n对于一种残酷的顺序编程语言来说，对吗？  所以他们不太擅长\n并行做很多事情，事实上，有很多复杂的事情，\n多核架构和那边的东西，这就是你尝试和利用的方式\n那里的并行性。但 GPU 和 TPU 是更直接的机器\n结构上并行，专为大规模、高度规则的并行而设计\n计算。然后在某个时候，这些东西也还不够，现在你开始\n获得各种形式的分布式。你想要如此多的并行性，你想要多个\nGPU。然后你谈论的第一件事就是数据并行\n训练，我们正在做的就是运行这个，比如随机梯度下降，\n我们随机选择数据子集，将其分成批次，然后进行训练\n在单个 GPU 和计算上，例如，我们然后使用净梯度来更新\n模型。  然后还有管道式并行性，当您的\n模型本身太大，无法容纳。事实上，不仅仅是管道并行，还有各种并行\n模型级并行性，您实际上采用模型并将其分解和分割\n在多个 GPU 之间，因为甚至模型权重本身也太大而无法容纳\n那里。然后 Accelerate 试图帮助你编写一次模型，然后你就可以了\n训练一次，并进行少量修改即可访问整个内容\n扫清进行培训的不同方式。"
+    },
+    {
+      "idx": 49,
+      "en": "Yeah, exactly. If your model does not fit anymore on one GPU, you can split it different\nways. You can split the layer. You can say, if it’s a deep learning model, like usually\nthose come by, they are bigger because you have stacked more layer. You have layer one on\nGPU one, layer two on GPU two, layer three on GPU three, et cetera, et cetera, which is a\ngood idea because then your model fits, but then there’s this inefficiency in the sense\nof, GPU two has to wait for GPU one to be finished to be able to process as a result and\npass it along to GPU three. And so that’s where pipeline parallelism comes into play,\nwhere you’re trying to pipeline things efficiently.  So like, give a little bit of your\ndata to GPU one, which is gonna send it to GPU two, and then GPU one will process the\nsecond little bit of data, while GPU two is busy computing the first part. And there is\nthis ping pong between the forward, when you run through your model and the backward pass,\nwhere you compute all of your gradients. So you can also efficiently interlace, like, some\npart of the forward and some part of the backward computation in that pipeline\nparallelism.  And then there is tensor parallelism where instead of splitting your model\nby layers, you actually split the weights of your model into chunks. And like, each GPU\nonly sees, like, one part of the weights. And so like when the GPU need to come together\nand agree on the results of all the matrix multiplies that you compute. So this kind of\nparallelism requires way more – I mean, a very efficient way to communicate between GPUs\nto be accessible.",
+      "zh": "是的，完全正确。如果您的模型不再适合一个 GPU，您可以将其拆分为不同的 GPU\n方式。您可以分割图层。你可以说，如果它是一个深度学习模型，就像通常那样\n那些来了，它们更大，因为你堆了更多层。您已打开第一层\nGPU 1、GPU 2 上的第二层、GPU 3 上的第三层等等，这是一个\n好主意，因为这样你的模型就适合，但从某种意义上来说，效率低下\n其中，GPU 2 必须等待 GPU 1 完成才能处理结果，并且\n将其传递给 GPU 3。这就是管道并行性发挥作用的地方，\n当你试图有效地通过管道处理事情时。  所以，献出一点你的\n数据到GPU 1，GPU 1会将其发送到GPU 2，然后GPU 1将处理\n第二部分数据，而 GPU 2 正忙于计算第一部分。并且有\n当你运行你的模型时，向前传递和向后传递之间的乒乓球，\n计算所有梯度的地方。所以你也可以有效地交错，比如，一些\n该管道中的部分前向计算和部分后向计算\n并行性。  然后是张量并行，而不是分割模型\n通过层，您实际上将模型的权重分成了多个块。就像每个 GPU\n只能看到重量的一部分。就像当 GPU 需要聚集在一起时一样\n并就您计算的所有矩阵乘法的结果达成一致。所以这种\n并行性需要更多——我的意思是，一种在 GPU 之间进行通信的非常有效的方式\n易于访问。"
+    },
+    {
+      "idx": 50,
+      "en": "That’s right. Maybe the other interesting thing about the hardware around this kind of\nstuff is the criticality of the network. You need these very fast network transfers to do\nthe tensor exchanges. And yeah, there are some contexts where it can be a little less\ncritical because you can overlap compute and data, and some things like this tensor\nparallelism, the GPUs are just gonna be sitting idle while you’re waiting. So, we nowadays\nhave these, kind of, wild new networks which have much, much higher capacity and are very\nfocused on these very low latency and high determinism data transfers.  One of the things\nI think is interesting about this is the way in which the networking stack has changed,\nright? I think when I started learning about, “How do you do high-performance trading\nsystems?” I learned about, “Well, the operating system kernel is obviously too slow. So if\nyou want it to be reasonably fast, you have to do kernel bypass. You have to have a user\nlevel networking stack that’s doing the communication.” And these systems use a technology\ncalled RDMA, remote direct memory access, which I think an easier way of understanding\nwhat’s going on here is, it’s CPU bypass, right?  Basically network comes in on the NIC,\nand then without going through any CPU at all, just gets copied directly to the place in\nmemory that it needs to go, maybe directly into the GPU memory. So you’re really cutting\naway all of the fat from the bones that you can to make this stuff go as fast as possible.",
+      "zh": "这是正确的。也许有关此类硬件的其他有趣的事情\n东西是网络的关键。您需要这些非常快的网络传输才能完成\n张量交换。是的，在某些情况下可以少一点\n至关重要，因为您可以重叠计算和数据，以及像张量这样的东西\n并行性，在您等待时 GPU 将处于闲置状态。那么，当今的我们\n拥有这些疯狂的新网络，它们的容量要高得多，而且非常\n专注于这些非常低的延迟和高确定性的数据传输。  其中一件事\n我认为有趣的是网络堆栈的变化方式，\n对吗？我想当我开始学习“如何进行高性能交易”时\n系统？”我了解到，“嗯，操作系统内核显然太慢了。所以如果\n如果您希望它相当快，则必须进行内核旁路。你必须有一个用户\n进行通信的级别网络堆栈。”这些系统使用了一种技术\n称为RDMA，远程直接内存访问，我认为这是更容易理解的方式\n这是 CPU 旁路，对吧？  基本上网络来自网卡，\n然后根本不经过任何CPU，直接复制到\n它需要进入的内存，可能直接进入 GPU 内存。所以你真的在削减\n尽可能地去除骨头上的所有脂肪，以使这些东西尽可能快地消失。"
+    },
+    {
+      "idx": 51,
+      "en": "Yes. And even in the more recent hardware that NVIDIA has announced, at the last GTC, like\nyou kind of stack your GPUs as close as possible, and you try to put as many as possible\nyou can in a single cab. So, like there are 72 GPUs in the same cab, very close to each\nother, so that you can have even faster network between those because you have a V. They\nstack some, the network is in the middle, some GPUs above, some GPUs below and they have\nthis big NVLink in the back that links everything together very fast, just because they\nsit very close together.",
+      "zh": "是的。即使在 NVIDIA 在上一届 GTC 上宣布的最新硬件中，例如\n你可以将 GPU 尽可能紧密地堆叠在一起，并且尝试放置尽可能多的 GPU\n你可以在一辆出租车里。所以，就像同一个驾驶室内有 72 个 GPU，每个 GPU 都非常接近\n其他，这样你就可以在这些之间拥有更快的网络，因为你有一个V。他们\n堆叠一些，网络在中间，一些 GPU 在上面，一些 GPU 在下面，它们有\n后面的这个大 NVLink 可以非常快地将所有东西连接在一起，只是因为它们\n坐得很近。"
+    },
+    {
+      "idx": 52,
+      "en": "Yeah, you start caring an enormous amount about the physical layer at this point. Today we\ncan get these NVLink setups where inside of a single box with, say, 8 GPUs in it, you get\nthis fast network. And yeah, what you’re describing is doing this at the cabinet level.",
+      "zh": "是的，此时您开始非常关心物理层。今天我们\n可以在一个盒子内获得这些 NVLink 设置，比如说，里面有 8 个 GPU，你可以得到\n这快速的网络。是的，你所描述的是在内阁层面这样做。"
+    },
+    {
+      "idx": 53,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 54,
+      "en": "Which is funny. Yeah, I mean, I remember hearing people talk about, like, earlier hacks,\nnot for machine learning but for other purposes, where people would, like, you know,\nbasically try and make little supercomputers where you unroll your PCI Express network and\nbasically spread it over an entire cabinet. And in some sense, InfiniBand sort of grew out\nof the similar supercomputer networking fabric. And indeed, InfiniBand plays a real role\nin how these GPU networks work as well. Okay. That was the stuff you did at Hugging\nFace. So more recently you’ve joined Jane Street, tell me a little bit about what your\nrole here entails.",
+      "zh": "这很有趣。是的，我的意思是，我记得听到人们谈论早期的黑客行为，\n不是为了机器学习，而是为了其他目的，人们会喜欢，你知道，\n基本上尝试制作小型超级计算机，在其中展开 PCI Express 网络并\n基本上将其分布在整个柜子上。从某种意义上说，InfiniBand 是在某种程度上发展起来的\n类似的超级计算机网络结构。事实上，InfiniBand 发挥着真正的作用\n这些 GPU 网络的工作方式也是如此。好的。这就是你在拥抱时所做的事情\n脸。最近您加入了 Jane Street，请告诉我一些您的情况\n这里的角色需要。"
+    },
+    {
+      "idx": 55,
+      "en": "Sure. So Jane Street, I mostly work here on the engineering performance, around machine\nlearning. So day-to-day life is, a researcher will come to me with a model they’ve\ntrained, and they’re like, “Oh, my training is going really slowly. Could you help me with\nthat?” And we’ll profile it together, try to identify the bottlenecks, and make it\nfaster. To take a step back, most of the researchers here at Jane Street use PyTorch,\nwhich is the software to write neural nets and train models, which has the particularity\nof being really accessible because it’s eager.  The counterparts from Google, TensorFlow,\nand JAX are more like compiled languages. So it’s kind of harder to get started, because\nyou write your model but then it does not compile, and so you need to fix some of the\noperations that seem like valid Python operations, but you need to kind of modify them so\nthat TensorFlow or JAX recognize them and see, “Oh, this is what you are trying to do.”\nWhereas in PyTorch, you can do anything you want, but then your code can be inefficient in\nsurprising ways, because that particular operation, for instance, has no implementation in\nthe GPU.  And so, like, the computer only needs to transfer data back to the CPU just to\nbe able to execute it, and then send it back the other way. And in general, especially on\nmodern GPUs, and the way PyTorch works is that when you want to execute a model, the CPU\ndispatches the operation on the GPU async, so that, like, the CPU immediately runs to the\nnext instruction. And you’re getting your hardware in a good state, and if your CPU is\nalways ahead of your GPU, and then the GPU has lots of stuff to process, but as soon as\nyour code requires some synchronization because you need some data back from the GPU to\nthe CPU, it can become pretty inefficient. Just because you’re kind of stalling the GPU as\nthe CPU will wait to get the data back. And then it will take time for the CPU to send\nback some new operations to execute to the GPU.",
+      "zh": "当然。所以 Jane Street，我在这里主要从事工程性能方面的工作，围绕着机器\n学习。日常生活就是这样，研究人员会带着他们的模型来找我\n他们会说，“哦，我的训练进展得很慢。你能帮我吗？”\n那个？我们将一起分析它，尝试找出瓶颈，并使其成为可能\n更快。退一步来说，Jane Street 的大多数研究人员都使用 PyTorch，\n这是编写神经网络和训练模型的软件，它有特殊性\n因为渴望而真正容易接近。  来自 Google、TensorFlow 的同行，\n和JAX更像是编译语言。所以开始比较困难，因为\n您编写了模型，但它无法编译，因此您需要修复一些问题\n看似有效的 Python 操作，但您需要对它们进行修改，以便\nTensorFlow 或 JAX 能够识别它们并看到，“哦，这就是你想要做的事情。”\n而在 PyTorch 中，您可以做任何您想做的事情，但是您的代码可能效率低下\n令人惊讶的方式，因为例如，该特定操作在\nGPU。  因此，计算机只需要将数据传输回 CPU 即可\n能够执行它，然后以其他方式将其发送回来。总的来说，特别是在\n现代 GPU，PyTorch 的工作方式是，当您想要执行模型时，CPU\n异步调度 GPU 上的操作，这样 CPU 就会立即运行到\n下一条指令。并且您的硬件处于良好状态，如果您的 CPU 正常\n总是领先于你的 GPU，然后 GPU 有很多东西要处理，但一旦\n您的代码需要一些同步，因为您需要从 GPU 返回一些数据\nCPU，它的效率可能会变得相当低下。只是因为你有点让 GPU 停顿\nCPU将等待取回数据。然后CPU需要时间来发送\n返回一些新操作以执行到 GPU。"
+    },
+    {
+      "idx": 56,
+      "en": "Right, and it’s that waiting, where the GPU’s waiting on the CPU, it’s slow for a lot of\nreasons. It’s slow because the memory transfers are slow. It’s slow because CPUs are\ninherently slow. And then, oh my god, it’s slow because the code that’s running is written\nin Python. Which is maybe like 60 times slower than what the corresponding thing written\nin C might have looked like.",
+      "zh": "对，就是那个等待，GPU 等待 CPU，对于很多人来说它很慢\n原因。它很慢，因为内存传输很慢。它很慢，因为CPU\n本质上很慢。然后，天哪，速度很慢，因为运行的代码是写的\n在Python中。这可能比相应的内容慢 60 倍\n在 C 中可能看起来像。"
+    },
+    {
+      "idx": 57,
+      "en": "Exactly. Like, even if you don’t care about GPU, most of your Python code, you will always\ntry to have it vectorized. We’re trying to write as few for loops in Python as possible,\nbecause those will be very slow. Whereas if you can execute an operation from, like,\nNumPy, which will be backed by C or C++, it will be much faster. And it’s kind of the same\nidea for the GPU, except on top of that, you have that complexity of, to avoid\nsynchronization point between the CPU and the GPU as much as possible.",
+      "zh": "确切地。就像，即使你不关心 GPU，你的大部分 Python 代码也总是会\n尝试将其矢量化。我们尝试在 Python 中编写尽可能少的 for 循环，\n因为那些会非常慢。而如果你可以执行一个操作，比如，\nNumPy，将由 C 或 C++ 支持，它会快得多。这有点相同\nGPU 的想法，除此之外，你还有这样的复杂性，要避免\nCPU和GPU之间尽可能多的同步点。"
+    },
+    {
+      "idx": 58,
+      "en": "And notably, when a C programmer says, “Oh, I wanna make sure this is vectorized.” What\nthey mean is, “I wanna make sure I’m using, like, the SSE, AVX,” whatever instructions\nyou’re vectorizing, that are, like, using fundamental parallelism technologies baked into\nthe CPU to be able to do, like, four or eight or whatever, computations in parallel. And\nwhen a Python programmer says “vectorize,” what they mean is the inner loop is in C. And\nmaybe it’s also vectorized with AVX or whatever at the bottom. But the fundamental thing\nis getting away from the Python interactive loop.",
+      "zh": "值得注意的是，当 C 程序员说：“哦，我想确保这是矢量化的。”什么\n他们的意思是，“我想确保我正在使用 SSE、AVX”等任何指令\n你正在矢量化，也就是说，使用内置的基本并行技术\nCPU 能够并行执行四个或八个或其他计算。并且\n当 Python 程序员说“向量化”时，他们的意思是内部循环是用 C 语言编写的。并且\n也许它也用 AVX 或其他底层的东西进行矢量化。但最根本的事情\n正在摆脱 Python 交互循环。"
+    },
+    {
+      "idx": 59,
+      "en": "Exactly. Sometimes you can have code that looks very innocuous, but you’re actually\nexecuting a for loop which is going to, at every iteration, trigger asynchronization\nbetween the CPU and the GPU, which is extremely bad, because you’ll, like, launch a tiny\noperation on the GPU, and then have to wait for the GPU to finish it and get back the\nresult to the CPU, and then launch a new tiny operation on the GPU, et cetera, et\ncetera. And this is also really bad, because one thing we forgot to mention is, starting\nsomething on the GPU is also very slow.  It takes some time for the CPU to send the code\nof the kernel, all the input and the outputs. That takes a couple of mics, or even\nsometimes a millisecond to get started and actually having your GPU starting to do the\nwork.",
+      "zh": "确切地。有时你的代码看起来很无害，但实际上\n执行 for 循环，该循环将在每次迭代时触发异步\n在 CPU 和 GPU 之间，这是非常糟糕的，因为你会启动一个很小的\n对GPU进行操作，然后必须等待GPU完成并返回\n结果到CPU，然后在GPU上启动一个新的微小操作，等等\n等等。这也很糟糕，因为我们忘记提到的一件事是，开始\nGPU 上的某些东西也非常慢。  CPU发送代码需要一些时间\n内核的所有输入和输出。这需要几个麦克风，甚至\n有时需要一毫秒的时间才能开始并实际让您的 GPU 开始执行任务\n工作。"
+    },
+    {
+      "idx": 60,
+      "en": "It’s maybe worth saying, we’re throwing this word around, kernel, a lot, which is kind of\na funny, GPU-specific word. And basically the kernel is the small computational program\nthat you are typically running on the GPU. And writing these GPU kernels is actually\nreally hard because they’re highly parallel and they’re hard to reason about. And so the\nprograms, in fact, tend to be numerically very intense, but in terms of lines of code,\npretty small. You’re not creating, like, million-line code bases that are running on the\nGPU. They’re a lot tighter than that.",
+      "zh": "也许值得一提的是，我们经常使用“内核”这个词，这有点像\n一个有趣的、GPU 特有的词。基本上内核是小型计算程序\n通常在 GPU 上运行。而编写这些GPU内核实际上是\n真的很难，因为它们高度并行并且很难推理。所以\n事实上，程序在数字上往往非常密集，但就代码行数而言，\n相当小。您不是在创建运行在计算机上的百万行代码库\n图形处理器。它们比那要紧得多。"
+    },
+    {
+      "idx": 61,
+      "en": "Yeah. You call those individual small kernels. A kernel to do matmul, and then a kernel to\ndo some activation function in neural net. Yeah this is just one Python line which is then\ndispatched on the GPU to be executed in parallel.",
+      "zh": "是的。您将这些单独的小内核称为“小内核”。一个内核执行 matmul，然后一个内核执行\n在神经网络中做一些激活函数。是的，这只是一行 Python 代码\n调度到 GPU 上并行执行。"
+    },
+    {
+      "idx": 62,
+      "en": "So the thing that always kills me about this whole PyTorch story, is that if you asked me\nto design something, I would definitely design something like TensorFlow or JAX. Just to\nsay, like, the basic idea of TensorFlow and JAX is that you’re more or less hijacking\nPython as a metaprogramming system. You kind of write what looks like Python, but what\nyou’re really doing is you’re writing in some domain-specific language for expressing the\ncomputational graph that represents the program that you’re gonna run on the GPU.  And the\nreason I would’ve wanted to do it that way is because it seems just dramatically easier to\nmake sure that thing is gonna run fast. You can’t take every arbitrary Python thing and\nmake it run fast on the GPU. So you restrict yourself to some DSL where you can guarantee\nthat things are running fast, and it just seems like the whole thing is gonna be much\neasier to reason about whether I’m staying inside of the envelope of reasonable fast\nprograms, and all of that. PyTorch is kind of clearly one, JAX is new and exciting and\nmaybe that will get more mindshare over time, but TensorFlow was the big thing and then\nPyTorch has been much more successful.  And it just kind of frustrates my intuitions as a\nperson who designs APIs. Do you have a view as to, like, why is it that PyTorch kind of\nwon, and things like TensorFlow and JAX are more niche?",
+      "zh": "所以，关于整个 PyTorch 故事，最让我心痛的是，如果你问我\n要设计一些东西，我肯定会设计像 TensorFlow 或 JAX 这样的东西。只是为了\n比如说，TensorFlow 和 JAX 的基本思想是，你或多或少是在劫持\nPython 作为元编程系统。你写的东西看起来像Python，但是什么\n你真正做的是用某种特定领域的语言来表达\n代表您将在 GPU 上运行的程序的计算图。  还有\n我想这样做的原因是因为它似乎更容易\n确保那东西跑得快。你不能把任意的 Python 东西都拿来\n使其在 GPU 上快速运行。所以你将自己限制在一些 DSL 上，这样你就可以保证\n事情进展得很快，而且看起来整个事情会变得很多\n更容易判断我是否处于合理快速的范围内\n程序，以及所有这些。 PyTorch 显然是其中之一，JAX 是新的、令人兴奋的，\n也许随着时间的推移，这会得到更多的关注，但 TensorFlow 是一件大事，然后\nPyTorch 更加成功。  这有点挫败我作为一个人的直觉\n设计 API 的人。您是否认为 PyTorch 是这样的？\n赢了，像 TensorFlow 和 JAX 这样的东西更小众？"
+    },
+    {
+      "idx": 63,
+      "en": "So, yeah, PyTorch won for the flexibility. Like we saw ML researchers want to easily fool\naround with various ideas. And maybe at first it will be very inefficient, but they want\nto be able to iterate really fast through their ideas and test quickly if they’re going to\nbe worth it or not. And even if the first training round is inefficient, if the idea turns\nout to be a good idea, then we can spend some time optimizing it and making it as fast as\npossible.  PyTorch kind of represents that model well. You can fool around very easily and\nyeah. Also, like, with that model of execution that is asynchronous, you still get the\nperformance. Unless your code triggers some of the hidden CPU, GPU, synchronization, your\ncode is still performant when you run it from PyTorch. There is this flexibility, this\nidea you can easily fool around. And they did come around having a compiled thing like\nPyTorch 2.2 introduced torch.compile, which was kind of what people didn’t like about\nTensorFlow, but they kind of had to implement it at the end.  Modern GPUs are really,\nreally fast, and that programming model of, “I’m just going to dispatch the operation\nasynchronously from Python” was starting to lose, just because the GPU was so fast that by\nthe time your CPU has scheduled the kernel, the GPU was already finished, basically. And\neven if you kept telling the CPU, like, “Schedule this kernel, this kernel, this kernel,”\nin a row, it would just not be fast enough for the GPU. And this idea behind torch.compile\nis, again, to get the whole computational graph from your model, and then try to identify\nin that graph, maybe there are places where you’re doing something that’s very inefficient\nand we can simplify the instructions. But more importantly, try to take two consecutive\ninstructions and fuse them together on the GPU so that instead of launching a lot of small\nkernels on the GPU, you launch one big kernel which does a lot of work.  And this is very\nefficient for – first, you don’t pay the overhead. And the second thing that’s very\nefficient is that very often, like, kernels that are in a row, they read the data that the\nprevious kernel has already written. So you have this inefficiency, “I’m gonna write\nsomething in GPU memory,” and then immediately in the next kernel, “Oh, I’m gonna read\nthat GPU memory I just wrote.” And there are some cache systems in the GPU but still, you\nhave some bit of overhead by doing that. Whereas in a fused kernel you can just keep that\ndata in registers in the GPU, and you don’t have to move it around if it wasn’t necessary.",
+      "zh": "所以，是的，PyTorch 因其灵活性而获胜。就像我们看到的 ML 研究人员想要轻松愚弄\n周围有各种各样的想法。也许一开始效率会非常低，但他们想要\n能够快速迭代他们的想法并快速测试他们是否想要\n值得与否。即使第一轮训练效率低下，如果想法转变\n是一个好主意，那么我们可以花一些时间优化它并使其尽可能快\n可能的。  PyTorch 很好地代表了该模型。你可以很容易地闲逛\n是的。另外，就像使用异步执行模型一样，您仍然可以获得\n性能。除非你的代码触发了一些隐藏的CPU、GPU、同步，否则你的\n当您从 PyTorch 运行代码时，代码仍然具有高性能。有这样的灵活性，这样的\n你可以很容易地愚弄你的想法。他们确实有一个编译的东西，比如\nPyTorch 2.2 引入了 torch.compile，这是人们不喜欢的\nTensorFlow，但他们最后不得不实现它。  现代 GPU 确实是，\n非常快，并且编程模型是“我只是要调度操作\n“从 Python 异步”开始失败，只是因为 GPU 太快了\n当你的CPU调度内核的时候，GPU基本上已经完成了。并且\n即使你一直告诉 CPU，比如“调度这个内核，这个内核，这个内核”\n对于 GPU 来说，它的速度不够快。 torch.compile 背后的这个想法\n再次，从模型中获取整个计算图，然后尝试识别\n在那张图中，也许有些地方你正在做一些效率非常低的事情\n我们可以简化说明。但更重要的是，尝试连续两次\n指令并将它们在 GPU 上融合在一起，这样就不会启动大量小指令\nGPU 上的内核，您启动一个大内核来完成大量工作。  这是非常\n高效——首先，您无需支付管理费用。第二件事非常\n高效的是，很多时候，就像连续的内核一样，它们读取数据\n之前的内核已经写好了。所以你效率很低，“我要写\nGPU 内存中的某些内容”，然后立即在下一个内核中，“哦，我要读取\n我刚刚写的 GPU 内存。” GPU 中有一些缓存系统，但您仍然可以\n这样做会产生一些开销。而在融合内核中你可以保留它\n数据存储在 GPU 的寄存器中，如果没有必要，您不必移动它。"
+    },
+    {
+      "idx": 64,
+      "en": "Right, so you get to skip both the memory transfers and the kernel launch time?",
+      "zh": "是的，所以您可以跳过内存传输和内核启动时间？"
+    },
+    {
+      "idx": 65,
+      "en": "Yeah, kernel launch overhead. And so we do this, which is kind of a crazy hack, by using\nanother Python DSL, which is called Triton, which is kind of a subset of Python where you\ncan directly write efficient CUDA kernels, which works well. Like, if you want to write a\nfast matrix multiplication in Triton, it’s relatively easy and we have some crazy\ntemplates, basically for all of the operations you can do in a PyTorch mode. And we fuse\nthese templates from the graph that they extracted during torch.compile to create big\nTriton kernels that can execute big chunks of the model on the GPU at once.",
+      "zh": "是的，内核启动开销。所以我们这样做，这是一种疯狂的黑客，通过使用\n另一种 Python DSL，称为 Triton，它是 Python 的一个子集，您可以在其中使用\n可以直接编写高效的CUDA内核，效果很好。就像，如果你想写一个\nTriton 中的快速矩阵乘法，它相对容易，而且我们有一些疯狂的\n模板，基本上适用于您可以在 PyTorch 模式下执行的所有操作。我们融合了\n这些模板来自他们在 torch.compile 期间提取的图表，以创建大的\nTriton 内核可以在 GPU 上同时执行大块模型。"
+    },
+    {
+      "idx": 66,
+      "en": "Right. So yeah, maybe we should talk for a second about the programming language ecosystem\naround GPUs. GPUs have a really interesting underlying computational model. And then\nthere’s a big collection of programming tools for it. Maybe you can walk us through what\nsome of the major pieces of this ecosystem are.",
+      "zh": "正确的。所以，是的，也许我们应该谈谈编程语言生态系统\n围绕 GPU。 GPU 有一个非常有趣的底层计算模型。然后\n有大量的编程工具。也许你可以引导我们了解什么\n这个生态系统的一些主要部分是。"
+    },
+    {
+      "idx": 67,
+      "en": "Yeah, so if we start at the bottom level, like the equivalent of C for GPU is CUDA, which\nis a proprietary language from NVIDIA that they developed to program their GPUs. AMD\nsupports most of CUDA as well because they kind of have to. They are a bit late in the\ngame and if they want people to adopt their product, they kind of need to make sure the\nsoftware is what people are used to. It’s basically C except you have those kernels that\nyou write, which are executed in parallel on the GPU. And it comes with everything that’s\nkind of a pain in C, like you have to do lots of pointer arithmetic to make sure that you\nare looking at the right data, you have undefined behaviors every time you are not super\ncareful, and it’s pretty hard to debug.",
+      "zh": "是的，所以如果我们从底层开始，就像 GPU 的 C 语言相当于 CUDA，它\n是 NVIDIA 开发的一种专有语言，用于对 GPU 进行编程。 AMD\n也支持大多数 CUDA，因为它们必须这样做。他们来得有点晚了\n游戏，如果他们希望人们采用他们的产品，他们需要确保\n软件是人们所习惯的。它基本上是 C 语言，除了你有那些内核\n您编写的内容在 GPU 上并行执行。它配备了一切\n在 C 中有点痛苦，就像你必须做大量的指针算术来确保你\n正在查看正确的数据，每次你不是超级的时候，你都会有未定义的行为\n小心，而且很难调试。"
+    },
+    {
+      "idx": 68,
+      "en": "So it’s a very low-level system, and it also exposes you directly to the performance\ncharacteristics of the GPU. Or like, not exactly directly, because it gives you some layer\nof abstraction, but you get to see a lot of the underlying details. And I guess one of the\nthings that struck me, as someone who’s mostly used to thinking about performance in the\nCPU context, is how different the concept of threads is on a GPU versus a CPU. I wonder if\nyou can say a little bit on, “How should someone who’s coming to GPUs for the first time\nthink about threads?”",
+      "zh": "所以这是一个非常底层的系统，而且它也让你直接接触到性能\nGPU 的特性。或者就像，不完全直接，因为它给了你一些层次\n抽象，但你可以看到很多底层细节。我猜其中之一\n作为一个习惯于思考绩效的人，令我印象深刻的事情\nCPU 上下文，是指 GPU 上的线程概念与 CPU 上的线程概念有何不同。我想知道是否\n你可以说一点：“第一次接触 GPU 的人应该怎样做？\n考虑一下线程吗？”"
+    },
+    {
+      "idx": 69,
+      "en": "Oh. (laughs) You will have lots and lots of them, for one. The GPU can launch a million\nthreads pretty easily, and all execute them in parallel. The idea is that you have those\nblocks that correspond to physical blocks on the hardware, where, like, a bunch of thread\nis executed. And even those threads are executed in a group which is called a warp. When\nyou write a kernel, it’s actually each instruction is going to be seen exactly at the same\ntime by 42 threads, which together form a warp. And one block has a number of warps. I\nmean, any number of warps that you want that’s not too, too large.  Like, one block can\naccommodate, like, 1,024 threads maximum, and then you can launch several of those blocks\nin parallel. Yeah, so the idea of that block layer is that it’s physically on the GPU chip\nat one location, so you can have, like, some memory that is shared between those threads,\nwhich is useful, for instance, if you’re doing matrix multiply, you are gonna load some of\nthe weights into that shared memory, and then use it with those threads to compute\nsomething repeatedly, instead of, like, accessing the same region in global memory several\ntimes.",
+      "zh": "哦。 （笑）其中之一，你会有很多很多。 GPU可以发射一百万\n线程非常容易，并且所有线程都是并行执行的。这个想法是你有那些\n与硬件上的物理块相对应的块，例如一堆线程\n被执行。甚至这些线程也是在称为扭曲的组中执行的。当\n当你编写一个内核时，实际上每条指令都会被完全相同地看到\n时间由 42 个线程组成，这些线程一起形成一个经纱。并且一个块有多个扭曲。我\n意思是，您想要的任意数量的扭曲都不会太大。  就像，一个块可以\n最多可容纳 1,024 个线程，然后您可以启动其中几个块\n并行。是的，所以块层的想法是它物理上位于 GPU 芯片上\n在一个位置，这样你就可以拥有在这些线程之间共享的一些内存，\n这很有用，例如，如果你正在进行矩阵乘法，你将加载一些\n将权重放入共享内存中，然后将其与这些线程一起使用来计算\n重复进行某些操作，而不是多次访问全局内存中的同一区域\n次。"
+    },
+    {
+      "idx": 70,
+      "en": "Right. So there’s some more expensive, smaller, closer-to-the-thread memory that sits\nthere to be shared among these threads that are on the same SM, right?",
+      "zh": "正确的。因此，有一些更昂贵、更小、更接近线程的内存\n在同一个 SM 上的这些线程之间共享，对吗？"
+    },
+    {
+      "idx": 71,
+      "en": "Streaming multiprocessor.",
+      "zh": "流式多处理器。"
+    },
+    {
+      "idx": 72,
+      "en": "Right. And then maybe the other thing that’s perhaps not obvious to someone who hasn’t\nthought much about GPUs is, you also have dedicated registers.",
+      "zh": "正确的。然后也许还有另一件事对于没有经历过的人来说可能并不明显\n对 GPU 的深思熟虑是，你也有专用的寄存器。"
+    },
+    {
+      "idx": 73,
+      "en": "Yeah. Up to, like, a certain amount of registers. Like it’s 65K for the whole SM. You can\nhave a program with lots of threads that use few registers or maybe a program that has\nless threads but each thread can use more registers.",
+      "zh": "是的。直到一定数量的寄存器。好像整个 SM 都是 65K。你可以\n有一个包含大量线程但使用很少寄存器的程序，或者可能有一个程序\n线程较少，但每个线程可以使用更多寄存器。"
+    },
+    {
+      "idx": 74,
+      "en": "Right. And the critical difference here between CPUs and GPUs, is on a CPU you have a\nreally small number of registers, and then when there’s a thread, there’s just like one\nthread running on the CPU and using all of those registers. And then, when you want a\ndifferent thread to run, you have to swap it out in all of the registers, and swap the new\nthread in. And so you have this fairly large context switch time, and context switch times\non GPUs are incredibly small. And so this is part of what enables you to do this, kind of,\nmassive multi-threading.  You have all of these different threads, and the threads are\nboth able to execute in these warp groups so they can do stuff in parallel, in groups\nof 32. But also, they often end up being blocked. Not typically blocked on I/O, because\nthe GPU’s not doing I/O, but just blocked on memory, right? They need to do a thing, they\nneed to wait for memory to be shuffled in. And so you can immediately grab some other\ngroup of threads that’s running and get them started, and you can hide a lot of the memory\nlatency by having all of these threads that are consuming different pieces of memory\nconcurrently.",
+      "zh": "正确的。 CPU 和 GPU 之间的关键区别在于 CPU 上有一个\n寄存器的数量非常少，然后当有一个线程时，就只有一个\n线程在 CPU 上运行并使用所有这些寄存器。然后，当你想要一个\n要运行不同的线程，您必须在所有寄存器中交换它，然后交换新的\n线程进入。所以你有相当大的上下文切换时间，以及上下文切换时间\nGPU 上的数据非常小。所以这是让你能够做到这一点的一部分，\n大规模多线程。  您拥有所有这些不同的线程，并且这些线程是\n两者都能够在这些扭曲组中执行，因此它们可以并行地、分组地执行任务\n32。但同时，它们也常常会被屏蔽。通常不会在 I/O 上阻塞，因为\nGPU 不执行 I/O，而只是阻塞在内存上，对吗？他们需要做一件事，他们\n需要等待内存被洗牌。这样你就可以立即获取其他一些\n一组正在运行的线程并启动它们，您可以隐藏大量内存\n通过让所有这些线程消耗不同的内存来减少延迟\n同时。"
+    },
+    {
+      "idx": 75,
+      "en": "Yeah, that’s the job of the SM. So the warp controller is gonna schedule warp on a unit\nthat’s gonna do some float arithmetic however you need, specifically dedicated to matrix\nmultiply, which can do like a small 16x16 matrix multiply for those 32 threads that we\njust mentioned. And whatever units that are going to load something from global memory or\nfrom shared memory instruction is dispatched on one of those calls. And then immediately\nafter it’s finished, like another warp is gonna take its place. And this way most of the\nlatency is hidden from the user as long as you can express your program in a way that you\nalways have a warp computing something.",
+      "zh": "是的，这就是SM的工作。所以扭曲控制器将在一个单元上安排扭曲\n这将根据您的需要进行一些浮点运算，专门用于矩阵\n乘法，它可以像我们的 32 个线程的小型 16x16 矩阵乘法一样\n刚才提到的。无论什么单元将从全局内存或\n来自共享内存的指令在这些调用之一上调度。然后立即\n当它完成后，就像另一个扭曲将取代它。而这种方式大部分\n只要您能够以您喜欢的方式表达您的程序，延迟就对用户隐藏了\n总是有扭曲计算的东西。"
+    },
+    {
+      "idx": 76,
+      "en": "And CUDA gives you direct, explicit, low-level access to more or less this computation\nmodel in an unsafe programming model, which is not especially clearly documented, and can\nbe, like, hard to figure out and hard to understand. And when you get it wrong, you just\nget weird, undefined behavior and your program breaks in hard to understand ways. Okay, so\nthat’s CUDA. It’s great and terrible. What else is there in the programming language\nspace?",
+      "zh": "CUDA 使您能够直接、显式、低级地访问或多或少的这种计算\n不安全编程模型中的模型，没有特别明确的记录，并且可以\n很难弄清楚，也很难理解。当你犯错时，你只需\n如果出现奇怪的、未定义的行为，你的程序就会以难以理解的方式崩溃。好吧，那么\n这就是 CUDA。这既伟大又可怕。编程语言还有什么\n空间？"
+    },
+    {
+      "idx": 77,
+      "en": "So we mentioned PyTorch, TensorFlow, and JAX, which are kind of the exact other hand. So\nit’s something that’s in Python, with all the good and the bad of Python, that then is\ngonna express, either compile the computational graph onto side of JAX and TensorFlow or,\nlike, directly send instruction to the GPU on the side of PyTorch, which yeah, we’re gonna\ndispatch with CUDA kernels that we just talked about. And in the middle there is a flurry\nof new languages, because as it turns out, researchers love to hack and test new ideas,\nbut they also don’t love to code in CUDA, for some reason.",
+      "zh": "所以我们提到了 PyTorch、TensorFlow 和 JAX，它们正好相反。所以\n这是 Python 中的东西，Python 的优点和缺点都有，那就是\n要表达的是，要么将计算图编译到 JAX 和 TensorFlow 上，要么，\n就像，直接向 PyTorch 一侧的 GPU 发送指令，是的，我们要\n使用我们刚才讨论的 CUDA 内核进行调度。中间有一阵混乱\n新语言，因为事实证明，研究人员喜欢破解和测试新想法，\n但出于某种原因，他们也不喜欢在 CUDA 中编写代码。"
+    },
+    {
+      "idx": 78,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 79,
+      "en": "And in the middle, there are several languages, like Triton, which kind of sit in Python\nland in the sense that it’s a syntax that looks like Python and you have, like, some\nsubset of Python operations that are supported, but are actually just DSLs to generate\nefficient CUDA kernels. So we mentioned Triton is one of them.",
+      "zh": "中间有几种语言，比如 Triton，它位于 Python 中\n从某种意义上说，它是一种看起来像 Python 的语法，并且你有一些\n支持的 Python 操作子集，但实际上只是要生成的 DSL\n高效的 CUDA 内核。所以我们提到 Triton 就是其中之一。"
+    },
+    {
+      "idx": 80,
+      "en": "And I guess one thing about Triton is, it’s in some ways not quite as general purpose,\nit’s really good for doing things that kinda vaguely look like matrix multiplies.",
+      "zh": "我想 Triton 的一件事是，它在某些方面并不那么通用，\n它非常适合做一些看起来有点像矩阵乘法的事情。"
+    },
+    {
+      "idx": 81,
+      "en": "Yeah, I mean, in general, modern GPUs are really, really good at matrix multiplies. They\nhave special cores on them called TensorCores, which are really efficient. And any way you\ncan make your program look like a matrix multiplier, you’re gonna get way more flops than\nif it’s just regular floating point operations. Triton is really good at programming those\nstyles of arrays and matrix multiplying them, or like then reducing them if you want. If\nyour model computation is slightly different than that, sadly, very often Triton will not\ncompile your code and won’t necessarily tell you why, as your message is not always super\nclear. And the debugging experience is also not always super nice because you’re not in\nPython anymore. Like, it’s generating CUDA kernel and so, you can’t really in the middle\nof it inspect the states of everything or like, you can try to print a bit of the stuff,\nbut it kinda stops like that.",
+      "zh": "是的，我的意思是，一般来说，现代 GPU 非常非常擅长矩阵乘法。他们\n它们有称为 TensorCores 的特殊核心，非常高效。无论如何你\n可以让你的程序看起来像一个矩阵乘法器，你会得到比\n如果只是常规的浮点运算。 Triton 真的很擅长编程\n数组和矩阵的样式将它们相乘，或者如果需要的话，然后减少它们。如果\n你的模型计算与此略有不同，遗憾的是，Triton 通常不会\n编译你的代码并且不一定会告诉你原因，因为你的消息并不总是超级好的\n清楚。而且调试体验也不总是那么好，因为你不在\n不再是Python了。就像，它正在生成 CUDA 内核，所以，你不能真正处于中间\n它检查一切的状态或类似的东西，你可以尝试打印一些东西，\n但它就这样停止了。"
+    },
+    {
+      "idx": 82,
+      "en": "There’s also this weird decision that the whole machine learning world has made, that we\ncan have all the innovation we want on the programming language side, but the syntax\nalways has to be Python.",
+      "zh": "整个机器学习世界还做出了这个奇怪的决定，我们\n可以在编程语言方面拥有我们想要的所有创新，但是语法\n始终必须是Python。"
+    },
+    {
+      "idx": 83,
+      "en": "(laughs). Yeah, most people are used to Python. So, you can try to move them all to\nanother language. There are some times, like Google tried Swift for TensorFlow to try to\nget Swift programmers into machine learning or to move away a Python programmer to another\nlanguage that is more efficient, but that didn’t go so well. It’s also like, there’s a\nwhole ecosystem in Python with all the rest of the libraries you need to process your data\nor inspect your results and stuff like that. You can try moving researchers away from\nwhere they like, but very usually they don’t really follow you. (laughs).",
+      "zh": "（笑）。是的，大多数人都习惯Python。所以，你可以尝试将它们全部移动到\n另一种语言。有时，比如 Google 尝试使用 Swift for TensorFlow 来尝试\n让 Swift 程序员进入机器学习领域，或者将 Python 程序员转移到另一位程序员\n一种更高效的语言，但进展并不顺利。也好像有一个\nPython 中的整个生态系统以及处理数据所需的所有其他库\n或检查你的结果和类似的东西。您可以尝试让研究人员远离\n他们喜欢去哪里，但通常他们并没有真正关注你。 （笑）。"
+    },
+    {
+      "idx": 84,
+      "en": "So another interesting language in the space, which I actually don’t know a ton about is\nMojo. I’m kinda curious what your thoughts on that are.",
+      "zh": "所以这个领域中另一种有趣的语言，我实际上不太了解是\n魔力。我有点好奇你对此有何想法。"
+    },
+    {
+      "idx": 85,
+      "en": "So Mojo, I think I don’t know a lot about it, so I hope people will excuse me if I say\nmany mistakes, but it’s kind of the same as Triton, except instead of wanting to be a new\nDSL in Python, it’s kind of its own new language which looks a bit like Python but still\nis its own language. The support for GPU in Mojo is going to be released in a couple of\nmonths from what I heard but it’s not there yet. But the idea is that you will be able to\nwrite those efficient CUDA kernels like you do in Tritan in that language Mojo. But since\nyou are not trying to do it a DSL in Python, there is going to be support for like,\ndebugging or like, maybe better handling just because you are writing in a language that\nwas specifically designed for that, instead of trying to add that functionality in Python.",
+      "zh": "所以Mojo，我想我对此了解不多，所以如果我说的话，希望人们原谅我\n很多错误，但它有点像 Triton，除了不想成为一个新的\nPython 中的 DSL，它是一种自己的新语言，看起来有点像 Python，但仍然\n是它自己的语言。 Mojo 中对 GPU 的支持将在几个小时内发布\n距离我听到的消息已经过去了几个月，但它还没有出现。但我们的想法是你将能够\n像在 Tritan 中那样用 Mojo 语言编写那些高效的 CUDA 内核。但自从\n你不会尝试用 Python 来实现 DSL，将会支持类似的功能，\n调试或类似的，也许更好的处理只是因为你正在用一种语言编写\n是专门为此设计的，而不是尝试在 Python 中添加该功能。"
+    },
+    {
+      "idx": 86,
+      "en": "Right. And I think unlike writing stuff directly in CUDA, it’s a safe language, right? I\nthink it’s got enough type system support that if you do something crazy, it will actually\ntry and catch it for you. The way I understand it is that it’s, like, a little bit\nRust-inspired. I think it has some of the same Rust-like mechanisms, lifetimes, things\nlike that. And so, if it’s following that kind of approach I would expect them to try and\nmake it actually safe.",
+      "zh": "正确的。我认为与直接在 CUDA 中编写内容不同，它是一种安全的语言，对吧？我\n认为它有足够的类型系统支持，如果你做了一些疯狂的事情，它实际上会\n尝试为你抓住它。我的理解是，有点\n受铁锈启发。我认为它有一些与 Rust 相同的机制、生命周期等\n像那样。因此，如果遵循这种方法，我希望他们尝试并\n使其真正安全。"
+    },
+    {
+      "idx": 87,
+      "en": "Yeah and then you have other projects in the same space, so Mosaic GPU and Mosaic TPU are\nsome Google projects that kind of do the same thing of giving you some Python interface to\ncreate efficient CUDA kernels. And if you want to write CUDA kernels but in Python,\nbecause you really love Python, there are some languages like Numba. You’re doing exactly\nthe same thing as you would do in CUDA, just the syntax is Python.",
+      "zh": "是的，然后你在同一空间还有其他项目，所以 Mosaic GPU 和 Mosaic TPU 是\n一些 Google 项目也做了同样的事情，为你提供一些 Python 接口\n创建高效的 CUDA 内核。如果你想用 Python 编写 CUDA 内核，\n因为你真的很喜欢 Python，所以有一些语言，比如 Numba。你正在做的正是\n与在 CUDA 中执行的操作相同，只是语法是 Python。"
+    },
+    {
+      "idx": 88,
+      "en": "Got it. Stepping away from all this panoply of languages out there, how does this all play\ninto the work you do here? You know, researchers working on a model, they’ve put together\ntheir model in PyTorch, it’s not running as fast as they think it should, or they hoped it\nwould. What do you do? How do you approach these performance questions?",
+      "zh": "知道了。远离所有这些繁杂的语言，这一切是如何发挥作用的\n融入你在这里所做的工作吗？你知道，研究人员正在研究一个模型，他们已经将\n他们在 PyTorch 中的模型，它的运行速度没有他们想象的那么快，或者他们希望的那么快\n会的。你做什么工作？您如何处理这些性能问题？"
+    },
+    {
+      "idx": 89,
+      "en": "First things first, is profiling multiple times to identify – we talked about CPU and GPU\nsynchronization points, which are inefficient, so a profile will show you that very\neasily. And you can like track, “Oh, this instruction created a choke point by\nsynchronizing GPU and CPU so let’s remove that or let’s try to find a way to remove\nit. Like some of them are easy to remove because you can express them in different\nways. Although, that can be a bit trickier, like for instance if you want your training to\nstop because your loss is none. So if you have a final loss after computing your loss from\nyour data on your random initialized weights, that is very large or none, all your\ngradients are going to be none and then all your model weights are going to be none, so\nbasically your training is finished and completely borked.  So you might as well want to\nstop and stop wasting GPU hours on it. So like, even that tiny thing is kind of difficult\nbecause when you have a GPU loss that is none in Python to be able to know which branch of\nthat, which statement the CPU should execute, it needs to know like if the loss is none or\nnot, so it needs to wait on the GPU to have finished computing to be able to inspect the\nvalue.  You have kind of a synchronization point here that looks difficult to remove. One\nof the solutions is to do that check but in another thread. Like launch another thread\nthat’s gonna do that check, where the CPU is gonna be blocked, but that’s okay because the\nmain thread will continue executing the model. And maybe you will do a couple of\niterations wrong on the CPU and your weight is bad. It will ultimately be nones but that’s\nokay, because your program will be stopped by that thread. This is one example of\nsomething that’s a bit trickier to remove.  The idea is that once you remove all those\nGPU, CPU synchronizations, your GPU is fed up as fast as possible and then the next step\nis you can try to compile your model to access this world of kernel fusion, we talked\nabout just before, to make it even faster. In the process you might also want to use\ndifferent type for your floating point operations. Most of the models have been trained\nfor a long time in float32s, but we discovered that for deep neural networks, float16 is\nactually kind of enough for the precision in the layers in the middle as long as you do\nyour sum. For instance, like when you do a matrix multiply you can have the weights of\nboth matrices be in float16s and still have the results that are kind of correct as long\nas you do that accumulation of others float32s. And that has led to NVIDIA introducing on\nthese GPUs like very efficient matrix multiplies for like, float16s. Now it’s even like\nfloat8, or even like FP4 for the new generation of Blackwell GPUs that are going to be\nreleased soon.",
+      "zh": "首先，进行多次分析以识别 – 我们讨论了 CPU 和 GPU\n同步点，效率低下，因此配置文件会向您显示非常\n很容易。你可以喜欢跟踪，“哦，这条指令通过\n同步 GPU 和 CPU，所以让我们删除它，或者尝试找到一种方法来删除它\n它。就像其中一些很容易删除，因为你可以用不同的方式表达它们\n方式。不过，这可能有点棘手，例如，如果您希望训练\n停下来，因为你没有损失。因此，如果您在计算损失后有最终损失\n您的随机初始化权重数据，非常大或没有，您所有的\n梯度将为零，然后所有模型权重将为零，所以\n基本上你的训练已经结束并且完全无聊了。  所以你不妨\n停止并停止在其上浪费 GPU 时间。所以就像，即使是那件小事也有点困难\n因为当你有 Python 中没有的 GPU 损失时，能够知道哪个分支\nCPU 应该执行哪个语句，它需要知道损失是无还是\n不是，所以需要等待 GPU 完成计算才能检查\n值。  这里有一个看起来很难删除的同步点。一\n解决方案之一是在另一个线程中进行该检查。就像启动另一个线程一样\n这将进行检查，CPU 将被阻塞，但这没关系，因为\n主线程将继续执行模型。也许你会做一些\nCPU 上的迭代错误，你的权重也很糟糕。最终将是无，但那就是\n好的，因为你的程序将被该线程停止。这是一个例子\n删除起来有点棘手。  这个想法是，一旦你删除所有这些\nGPU、CPU同步，你的GPU尽快厌倦然后下一步\n你可以尝试编译你的模型来访问这个内核融合的世界，我们讨论过\n大约就在之前，以使其更快。在此过程中您可能还想使用\n浮点运算的不同类型。大部分模型已经训练完成\n很长一段时间都在 float32 中，但我们发现对于深度神经网络来说，float16 是\n实际上只要你这样做，中间层的精度就足够了\n你的总和。例如，当你进行矩阵乘法时，你可以得到的权重为\n两个矩阵都是 float16，并且只要结果仍然是正确的\n当你对其他 float32 进行积累时。这导致 NVIDIA 推出\n这些 GPU 喜欢非常高效的矩阵乘法，例如 float16。现在甚至就像\nfloat8，甚至像新一代 Blackwell GPU 的 FP4 一样\n很快就释放了。"
+    },
+    {
+      "idx": 90,
+      "en": "Is the float4 a real thing, or is that just a joke? (laughs)",
+      "zh": "float4 是真的吗，还是只是个玩笑？ （笑）"
+    },
+    {
+      "idx": 91,
+      "en": "I have no idea. It’s on the slides, so. I don’t know. (laughs)",
+      "zh": "我不知道。它在幻灯片上，所以。我不知道。 （笑）"
+    },
+    {
+      "idx": 92,
+      "en": "I’m looking forward to float1.",
+      "zh": "我很期待float1。"
+    },
+    {
+      "idx": 93,
+      "en": "(laughs) That sounds interesting.",
+      "zh": "（笑）听起来很有趣。"
+    },
+    {
+      "idx": 94,
+      "en": "(laughs) It’s either zero or one, or something, I don’t even know.",
+      "zh": "（笑）要么是零，要么是一，或者是什么，我什至不知道。"
+    },
+    {
+      "idx": 95,
+      "en": "But yeah, without going as deep as that, like float16s are really great because you can\ntrain as much as 2X or 4X faster depending on the shapes of your problem for free by doing\nthese mixed precision things, where like some operations are computing in float16, some of\nthose are computing in float32. Just because you access functions or calls that are like\npretty specialized matrix multiply units and they do it really fast if the two matrices\nare in float16 or like this variant called bfloat16 that was invented at Google, as in “b”\nstanding for “brain.”",
+      "zh": "但是，是的，无需深入探讨，float16 确实很棒，因为您可以\n根据问题的形状，免费训练速度可提高 2 倍或 4 倍\n这些混合精度的东西，就像一些操作在 float16 中计算一样，一些\n这些是在 float32 中计算的。只是因为您访问类似的函数或调用\n非常专业的矩阵乘法单元，如果两个矩阵相乘，它们的速度会非常快\n是 float16 或类似于 Google 发明的名为 bfloat16 的变体，如“b”\n代表“大脑”。"
+    },
+    {
+      "idx": 96,
+      "en": "So how do you think about the programming language setup influencing the problem that you\nhave of helping people build fast models? Like one thing you might imagine wanting is\nhaving this split between, “I am doing the inefficient thing, or, I am doing the efficient\nthing” be really explicit – so that instead of having to come to someone who knows a lot\nabout performance, they could just look at their code and be like, “Huh, let me press the\n‘is it fast’ button” …",
+      "zh": "那么，您如何看待编程语言设置影响您所解决的问题？\n有帮助人们建立快速模型的吗？就像你可能想象想要的一件事是\n有这样的划分，“我正在做低效的事情，或者，我正在做高效的事情”\n事情”要非常明确——这样就不必去找知道很多的人\n关于性能，他们只需查看代码并说：“嗯，让我按一下\n‘快吗’按钮”..."
+    },
+    {
+      "idx": 97,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 98,
+      "en": "And be like, “Oh yeah, it’s not fast here and it’s not fast here,” and then they could\nmove things around until it was fast. But it sounds like that’s kind of not what’s going\non. What’s going on is, everything kinda looks okay and you can run it and stuff, but it’s\na little harder to figure out whether or not you’re doing the bad thing. So is there\nsomething to improve there to make it easier for the end users of the system to understand\nwhen they are doing the slow thing?",
+      "zh": "就像，“哦，是的，这里不快，这里也不快，”然后他们就可以\n移动物体直到速度变快。但听起来事情并非如此\n上。发生的事情是，一切看起来都不错，你可以运行它之类的东西，但它是\n有点难以弄清楚你是否在做坏事。那么有吗\n需要改进的地方以使系统的最终用户更容易理解\n当他们做缓慢的事情时？"
+    },
+    {
+      "idx": 99,
+      "en": "It’s kind of hard. And in that regard, PyTorch is actually better than TensorFlow for\ninstance because it lets you explicitly manage what data is on the GPU and what data is on\nthe CPU. You choose when you do the transfers. Unless like, there is an instruction if\nloss then is none, like we talked about, which creates a transfer that is\nhidden. TensorFlow for instance does not even let you handle what is on the GPU and what’s\non the CPU, it’s gonna take care of everything for you because it is compiling everything\nand it decides for you like, where is your data and how it moves. And so sometimes it can\nalso result in efficient code, just because the compiler decided that this line should be\nexecuted in CPU and this line should be executed in GPU, but that day, the compiler was\nwrong. So at least in PyTorch you can fix things because you get more fine-grained control\ninto stuff like that. And yeah, an employee who was, like, in love with Keras, for\ninstance, would generate something and be like, “Huh. This thing in PyTorch is really\ngreat. I can choose where my data is, and on which device, and like, move it to where I\nwant it to move, and it’s not going to move back unless I ask for it.”",
+      "zh": "这有点难。在这方面，PyTorch 实际上比 TensorFlow 更好\n实例，因为它可以让您显式管理 GPU 上的数据以及 GPU 上的数据\nCPU。您可以选择何时进行转账。除非像这样，否则有一条指令\n那么损失就没有了，就像我们谈到的那样，这会创建一个转移\n隐藏的。例如，TensorFlow 甚至不允许您处理 GPU 上的内容以及\n在CPU上，它会为你处理一切，因为它正在编译一切\n它会为您决定您的数据在哪里以及如何移动。所以有时它可以\n也会产生高效的代码，只是因为编译器决定这一行应该是\n在CPU中执行，这行应该在GPU中执行，但是那天，编译器是\n错了。所以至少在 PyTorch 中你可以修复问题，因为你可以获得更细粒度的控制\n成这样的东西。是的，一位员工喜欢 Keras，因为\n例如，会生成一些东西，就像，“哈。PyTorch 中的这个东西真的是\n太棒了。我可以选择我的数据所在的位置以及在哪个设备上，以及将其移动到我想要的位置\n我想让它移动，除非我要求它，否则它不会移动回来。”"
+    },
+    {
+      "idx": 100,
+      "en": "So there’s like, two different dimensions along which you might want explicit control. One\nis about, “Am I doing a thing that can be put on the GPU or not?” And the other is, “Even\nif I am doing a thing that could be put on the GPU or could be put on the CPU, I can\nexplicitly control where it goes.” And it sounds like it’s more explicit on one side and\nthat it actually just forces everything into the completely understood domain-specific\nlanguage. But then the actual execution of that language has a bunch of compiler magic\nthat you don’t get control over in an explicit way. And this echoes actually a bunch of\nstuff that we’re doing on the OCaml compiler side, where we are trying to do a lot of\nstuff to try and make OCaml faster, mostly by giving end users more explicit control, as\nopposed to making the compiler magically faster. Exactly for this reason of – when you’re\ntrying to enable performance engineering, the key to the realm is control.",
+      "zh": "因此，您可能需要在两个不同的维度上进行显式控制。一\n是关于“我做的事情是否可以放在 GPU 上？”另一个是，“即使\n如果我正在做一件可以放在 GPU 上或可以放在 CPU 上的事情，我可以\n明确控制它的去向。”听起来一方面更明确\n它实际上只是迫使一切进入完全理解的特定领域\n语言。但是该语言的实际执行有很多编译器的魔力\n您无法以明确的方式进行控制。这实际上呼应了一堆\n我们在 OCaml 编译器方面正在做的事情，我们正在尝试做很多事情\n尝试让 OCaml 更快的东西，主要是通过为最终用户提供更明确的控制，例如\n反对让编译器神奇地更快。正是因为这个原因——当你\n试图实现性能工程，领域的关键是控制。"
+    },
+    {
+      "idx": 101,
+      "en": "Which was also the idea behind Accelerate in some way. Like the key that’s to give back to\nresearchers more control over a training loop because they wanted to mess around with\nit. There is this idea of making sure our synchronization, is it good, is it bad, we only\nsee it by profiling it.  We are trying to do a better job here at Jane Street to at least\nto ultimately keep profiling all the jobs to identify and let researchers know, “Oh by the\nway, like this particular model, took very very long to do this particular step. Are you\nsure that it’s implemented efficiently? Maybe you should profile it.” And we’re trying to\nget everyone an easy way to profile and look at traces to kind of identify the\nbottlenecks. When we have done all of that, like sometimes researchers have some ideas\nthat cannot be expressed into the building blocks that we have. And if they want to do\nsomething that doesn’t have a fast CUDA implementation already in the package in Pytorch,\nwe need to dive deeper into the stacks.  So like we mentioned Triton and writing into CUDA\ndirectly. So yeah, sometimes this is needed just because there is a specific layer a\nresearcher invented and they want to either try it or put it into production and we need\nto make it as fast as possible.",
+      "zh": "在某种程度上，这也是“加速”背后的想法。就像要回馈的钥匙一样\n研究人员可以更好地控制训练循环，因为他们想搞乱\n它。有这样的想法，确保我们的同步，是好是坏，我们只\n通过分析它来查看它。  我们正在努力在简街做得更好，至少\n最终继续对所有工作进行分析，以确定并让研究人员知道，“哦，\n就像这个特定的模型一样，需要很长时间才能完成这个特定的步骤。你是吗\n确定其实施有效吗？也许你应该分析一下它。”我们正在努力\n为每个人提供一种简单的方法来分析并查看痕迹以识别\n瓶颈。当我们完成所有这些后，就像有时研究人员有一些想法\n这无法用我们现有的构建模块来表达。如果他们想做\nPytorch 中的包中没有快速 CUDA 实现的东西，\n我们需要更深入地研究堆栈。  就像我们提到的 Triton 和写入 CUDA\n直接。所以是的，有时这只是因为有一个特定的层而需要\n研究人员发明了，他们想尝试一下或将其投入生产，我们需要\n使其尽可能快。"
+    },
+    {
+      "idx": 102,
+      "en": "Right and then there’s a couple of other interesting features from CUDA that I’ve heard\nyou guys talk about a bunch. One of them is CUDA graphs and the other is CUDA streams.",
+      "zh": "是的，我听说 CUDA 还有其他一些有趣的功能\n你们谈论了一堆。其中之一是 CUDA 图，另一个是 CUDA 流。"
+    },
+    {
+      "idx": 103,
+      "en": "Oh yeah.",
+      "zh": "哦，是的。"
+    },
+    {
+      "idx": 104,
+      "en": "How do those fit in?",
+      "zh": "这些如何融入？"
+    },
+    {
+      "idx": 105,
+      "en": "So CUDA graphs is something that CUDA redid and that was used by PyTorch before\ntorch.compile. It’s been designed explicitly to remove that kernel launch overhead we\ntalked about earlier, like when you’re trying to launch a lot of small kernels and you pay\nthat overhead for each of the small launches. And so CUDA graph is technology that allows\nyou to play that graph of kernels once, inefficiently, but it’s going to record all of\nthose kernel launches and the next time you replay that graph, it’s going to remove all of\nthat overhead because it already knows what it has to dispatch.  It can do that more\nefficiently. So that technology is really useful to remove the overhead of launching a\nseries of small kernels.",
+      "zh": "所以 CUDA 图是 CUDA 重新编写的东西，之前被 PyTorch 使用过\n火炬.编译。它的设计明确是为了消除我们的内核启动开销\n之前谈到过，就像当你尝试启动很多小内核并且你付费时\n每次小型发布的开销。因此 CUDA 图技术允许\n你只播放一次内核图，效率低下，但它会记录所有\n这些内核启动，下次您重播该图表时，它将删除所有\n开销是因为它已经知道要分派什么。  它可以做更多\n高效。因此，这项技术对于消除启动应用程序的开销确实非常有用。\n系列小颗粒。"
+    },
+    {
+      "idx": 106,
+      "en": "So it gives you like a lightweight form of fusion, where you’re not really changing any of\nthe operations, you’re just taking all of the scheduling work and putting that on the\nhardware so you never have to go back to the CPU to do it, and you don’t do unnecessary\ncopying of memory back and forth.",
+      "zh": "因此，它为您提供了一种轻量级的融合形式，您无需真正更改任何内容\n操作时，您只需承担所有的调度工作并将其放在\n硬件，因此您永远不必返回 CPU 来执行此操作，并且不会执行不必要的操作\n来回复制记忆。"
+    },
+    {
+      "idx": 107,
+      "en": "Exactly. And you don’t get the kernel fusion, which would give you the additional benefit\nof avoiding the memory transfers. You’re still doing those memory transfers. If kernel 2\nrequires something in memory from kernel 1, you still have, like, kernel 1 is going to\nwrite it and then kernel 2 is going to read it.  This is still valid, the only way to\nremove that memory in efficiency is to fuse the two kernels either by hand or using\nsomething like torch.compile. But, you remove the overhead which is really nice.",
+      "zh": "确切地。而且你不会获得内核融合，这会给你带来额外的好处\n避免内存传输。你仍在进行那些记忆传输。如果内核2\n需要内核 1 内存中的某些内容，你仍然有，比如，内核 1 将要\n写入它，然后内核 2 将读取它。  这仍然有效，唯一的方法\n删除内存的效率是手动或使用融合两个内核\n类似于 torch.compile 的东西。但是，你消除了开销，这真的很好。"
+    },
+    {
+      "idx": 108,
+      "en": "When you think about fusion in lots of programming languages, you can get rid of memory\noperations, but you can also sometimes get rid of other operations, right? You can do\nother, kind of, optimizations across the two kernels, where like if I know I’m going to do\nthis set of things, maybe there’s some things that can be merged together. So are you also\ngetting that computational benefit?",
+      "zh": "当你考虑多种编程语言的融合时，你可以摆脱记忆\n操作，但有时您也可以摆脱其他操作，对吧？你可以做\n其他，跨两个内核的优化，就像我知道我要做什么\n这一系列的东西，或许还有一些可以融合在一起的东西。你也是吗\n获得计算效益？"
+    },
+    {
+      "idx": 109,
+      "en": "Sometimes, yeah. If your two kernels add some inefficiency in the middle with something\nyou didn’t really need, you can remove that when you fuse them together. Usually the\nbenefits come more from avoiding memory transfers. In some instances you can remove maybe\nsome intermediate set that wasn’t really needed and we can avoid computing it.",
+      "zh": "有时，是的。如果你的两个内核在中间增加了一些低效率的东西\n你并不真正需要，当你将它们融合在一起时你可以将其删除。通常情况下\n避免内存传输的好处更多。在某些情况下，您可以删除\n一些并不真正需要的中间集，我们可以避免计算它。"
+    },
+    {
+      "idx": 110,
+      "en": "Got it. Okay so that’s CUDA graphs. What are CUDA streams?",
+      "zh": "知道了。好的，这就是 CUDA 图表。什么是 CUDA 流？"
+    },
+    {
+      "idx": 111,
+      "en": "It’s a way of parallelizing stuff with CUDA. When you build those CUDA kernels and when\nyou take CUDA to execute them, it’s going to execute them sequentially. So like, kernel 2\nis only going to be executed when kernel 1 is fully finished on the GPU.  And CUDA stream\nis a way to parallelize that. If you have two kernels and you know they can be run\ninparallel because they don’t touch the same data, you can use two of them in different\nstreams and they will be executed in parallel. At least, up until a certain limit. You\nshouldn’t use CUDA streams if you want to run 100 things in parallel. And NVIDIA told us\nit’s not a good idea, and it’s true that CUDA streams do not really perform well. This API\nis exposed all the way up to PyTorch. So for instance if you want to do some stuff like\nI’m running my data and I’m gonna put it on the GPU, and in parallel, I would also like to\ncompute some prediction in my previous batch of data which is already on the GPU, I would\nlike to do those two things in parallel and you can use CUDA streams for that. Like you\nhave one stream that does the compute and one stream where you transfer the data from the\nCPU to the GPU. If your model is written well with no synchronization point, your GPU is\nfully utilized all the time, without any break.",
+      "zh": "这是一种与 CUDA 并行化的方法。当你构建这些 CUDA 内核时\n你用 CUDA 来执行它们，它会按顺序执行它们。就像内核 2\n仅当内核 1 在 GPU 上完全完成时才会执行。  和 CUDA 流\n是一种并行化的方法。如果您有两个内核并且您知道它们可以运行\n并行，因为它们不接触相同的数据，您可以在不同的地方使用它们\n流，它们将并行执行。至少，直到一定限度。你\n如果你想并行运行 100 个东西，就不应该使用 CUDA 流。 NVIDIA 告诉我们\n这不是一个好主意，而且 CUDA 流确实性能不佳。这个API\n一直暴露到 PyTorch。例如，如果你想做一些类似的事情\n我正在运行我的数据，并将其放在 GPU 上，同时，我还想\n在 GPU 上已经存在的上一批数据中计算一些预测，我会\n喜欢并行执行这两件事，您可以使用 CUDA 流来实现。像你一样\n有一个执行计算的流和一个用于传输数据的流\nCPU 到 GPU。如果你的模型写得很好，没有同步点，那么你的 GPU 就是\n始终充分利用，没有任何中断。"
+    },
+    {
+      "idx": 112,
+      "en": "So can I just think of CUDA streams as a coarse-grained threading protocol, where each of\nthe threads themselves has lots of little mini threads on the inside?",
+      "zh": "那么我是否可以将 CUDA 流视为粗粒度线程协议，其中每个\n线程本身内部有很多小迷你线程？"
+    },
+    {
+      "idx": 113,
+      "en": "Yeah, kind of. It’s more like a hint than a hard requirement. Like it’s hinting to the GPU\nyou can run those two things in parallel and it’s safe. The GPU might choose not to do it,\nsometimes.",
+      "zh": "是的，有点。这更像是一个暗示，而不是一个硬性要求。就像它在向 GPU 暗示一样\n你可以并行运行这两件事并且它是安全的。 GPU 可能会选择不这样做，\n有时。"
+    },
+    {
+      "idx": 114,
+      "en": "Okay so a lot of the different optimizations you’ve talked about here have been very\nfocused on the GPU programming itself and the, kind of, connection between the CPU and GPU\npieces. What other parts of the process end up needing to be thought about when you’re\ntrying to get the maximum performance out of a training run?",
+      "zh": "好的，您在这里讨论的许多不同的优化都非常有效\n重点关注 GPU 编程本身以及 CPU 和 GPU 之间的连接\n件。当你\n试图从训练中获得最大表现？"
+    },
+    {
+      "idx": 115,
+      "en": "We talked about CPU GPU transfer, GPU programming. Networking, we talked a little bit\nabout that as well, like that is another part that is really important if you’re training\non multiple GPUs, they need to communicate efficiently. If you don’t want to be\nbottlenecked by that.",
+      "zh": "我们讨论了CPU GPU 传输、GPU 编程。网络，我们聊了一点\n关于这一点，如果你正在训练，这也是非常重要的另一部分\n在多个 GPU 上，它们需要高效地通信。如果你不想成为\n从而陷入瓶颈。"
+    },
+    {
+      "idx": 116,
+      "en": "I think that I’ve seen us spend a bunch of time on this, thinking about – not just about\nmaking the fabric of the network efficient but also organizing the data loading in a way\nthat you’re not going to stall out. I mean, there’s this, kind of, general problem, the\nGPUs are these kind of incredibly productive compute machines. And so they’re very hungry,\nright? They want data as fast as possible. What do you need to do to make sure you can\nkeep them fed?",
+      "zh": "我想我已经看到我们在这上面花了很多时间，思考——而不仅仅是思考\n使网络结构高效，同时以某种方式组织数据加载\n你不会拖延。我的意思是，有一个普遍的问题，\nGPU 是一种极其高效的计算机器。所以他们非常饿，\n对吗？他们希望尽快获得数据。您需要做什么来确保您可以\n让他们吃饱吗？"
+    },
+    {
+      "idx": 117,
+      "en": "Yeah, yeah. Data loading is definitely an important subject. Especially when you have some\ndata that is asymmetrical. You have examples in your training set that are really really\nlong, and examples in your training set that are really really short, and you kind of need\nto patch them together to do like one iteration of that stochastic gradient descent that\nwe talked about before.  There are lots of ways you can do that. Like for instance you can\njust decide like, “I’m going to take the long and the short together and I’m going to pad\neverything so that I have a bunch of zero in my tensors, after the short sequence has\nfinished and until the end of the very long sequence, which consumes a lot of memory so\nthat is not super efficient.  You can have some kind of representation of tensors where\nyou concatenate everything together but you see the offsets at which each thing is, which\nis a bit of a more efficient memory layout. But even then, like when you do distributed\ntraining, where you’re kind of sad because if you have one GPU that has to load a very\nvery long sample, and the other GPUs have like shorter samples, since they need to\ncommunicate together to agree on which gradient is the right gradient, the GPUs with the\nvery short samples are going to wait for the GPUs with the long samples for a long time.\nYou kind of need to organize your data and everything in a way where you think about your\ndistributed training so that each GPU has kind of a balanced load of data, so it all takes\nthe same time to load the samples. And so at least like when you have the long samples,\neveryone has a long sample to load, otherwise it is pretty inefficient.  But then it might\nimpact your training accuracy because you’re not shuffling for your data set, you’re kind\nof doing a pseudo-shuffle where you still group things by size. So it’s kind of a\ntrade-off between performance and accuracy, by removing some degrees of randomness in your\nshuffle of the data.",
+      "zh": "是啊是啊。数据加载绝对是一个重要的主题。尤其是当你有一些\n数据不对称。你的训练集中有一些非常真实的例子\n很长，而你的训练集中的例子非常非常短，你需要\n将它们拼凑在一起，就像随机梯度下降的一次迭代一样\n我们之前谈过。  有很多方法可以做到这一点。比如你可以\n只是决定，“我要把多头和空头放在一起，然后我要填充\n一切都这样，在短序列之后，我的张量中有一堆零\n完成并直到很长的序列结束，这会消耗大量内存，所以\n这不是超级高效。  你可以有某种张量的表示，其中\n您将所有内容连接在一起，但您会看到每个内容的偏移量，即\n是一种更有效的内存布局。但即便如此，就像你做分布式时一样\n训练，你会有点难过，因为如果你有一个 GPU 必须加载非常多的数据\n非常长的样本，而其他 GPU 则有较短的样本，因为它们需要\nGPU 之间进行通信以就哪个梯度是正确的梯度达成一致\n非常短的样本将等待具有长样本的 GPU 很长时间。\n您需要以一种您认为自己的方式来组织您的数据和一切\n分布式训练，使每个 GPU 都有一种均衡的数据负载，所以这一切都需要\n同时加载样品。所以至少就像当你有长样本时，\n每个人都有很长的样本需要加载，否则效率很低。  但接下来可能\n影响你的训练准确性，因为你没有对数据集进行洗牌，你很友善\n进行伪洗牌，仍然按大小对事物进行分组。所以这是一种\n通过消除某些程度的随机性，在性能和准确性之间进行权衡\n数据的洗牌。"
+    },
+    {
+      "idx": 118,
+      "en": "Yeah, one thing that’s maybe not obvious is that a lot of these algorithms are essentially\nstructured around barrier synchronizations. “I’m gonna do a bunch of stuff, and then\nyou’re gonna wait until everyone’s done, and then you’re gonna do a bunch of stuff and\nwait until everyone’s done.” Barrier synchronizations are super terrible if you have a lot\nof nondeterminism or just non-uniformity in the different pieces that are going into\nmeeting that barrier. Because some people are going to get to the barrier first, and then\nyou’re gonna wait on the others, and while you’re waiting you’re just not doing anything.\nHappily, GPUs are mostly pretty deterministic in terms of the amount of time it takes to\ndo a given computation. But you have to feed it a computation of the same shape everywhere\nin order to get it to really neatly line up.",
+      "zh": "是的，可能不明显的一件事是，许多算法本质上都是\n围绕屏障同步构建。 “我要做很多事情，然后\n你要等到每个人都完成了，然后你要做一堆事情\n等大家都忙完了。”如果你有很多的话，屏障同步会非常糟糕\n不确定性或只是正在进入的不同部分的不一致性\n遇到那个障碍。因为有些人会先到达障碍物，然后\n你要等待其他人，而当你等待时，你什么也没做。\n令人高兴的是，GPU 在执行任务所需的时间方面大多具有相当的确定性。\n进行给定的计算。但是你必须向它提供到处相同形状的计算\n为了让它真正整齐地排列起来。"
+    },
+    {
+      "idx": 119,
+      "en": "And we were also talking before, when you were asking me why PyTorch was a winner – I\nthink one thing that we really want in the set of PyTorch is the way when you have like\nasymmetrical data and like different sizes and different batches, it’s way easier to code\nthat in PyTorch, which is more flexible because compiling that kind of thing is really\nreally hard. In TensorFlow or JAX, you kind of need to go to some extreme lengths in your\ncode to make your data the same shape again and then send it to your model.  Whereas in\nPyTorch it’s really easy. Like you can just batch together small things, and then the next\nbatch is going to be a very long thing, and PyTorch is still happy because it is eager and\nnot compiled.",
+      "zh": "我们之前也谈过，当你问我为什么 PyTorch 是赢家时 – 我\n认为 PyTorch 中我们真正想要的一件事是当你有类似的情况时的方式\n不对称数据以及不同大小和不同批次的数据，编码更容易\n在 PyTorch 中，它更灵活，因为编译这种东西确实是\n真的很难。在 TensorFlow 或 JAX 中，您需要在您的工作中竭尽全力\n代码使您的数据再次具有相同的形状，然后将其发送到您的模型。  而在\nPyTorch 真的很简单。就像你可以将小事情批处理在一起，然后进行下一个\n批处理将是一个很长的事情，PyTorch 仍然很高兴，因为它渴望并且\n未编译。"
+    },
+    {
+      "idx": 120,
+      "en": "Right. I mean, I guess this is always the problem when you go to some simpler, more highly\nstructured, domain-specific language, is like – there are some things it’s good at\nexpressing and there’s some things it’s bad at expressing. When you want to do the thing\nthat it’s bad at expressing, you can just be in a world of hurt.",
+      "zh": "正确的。我的意思是，我想当你尝试一些更简单、更高级的东西时，这总是问题\n结构化的、特定领域的语言，就像——它擅长某些事情\n表达，但有些东西不善于表达。当你想做某件事时\n如果你不善于表达，你可能会陷入一个受伤的世界。"
+    },
+    {
+      "idx": 121,
+      "en": "Yeah. Exactly.",
+      "zh": "是的。确切地。"
+    },
+    {
+      "idx": 122,
+      "en": "You know, you’ve spent a bunch of time in your career working on various, kind of, open\nsource training, machine learning ecosystems, and you now spend a lot of time internally\nworking in our world. I think it’s fair to say we are in various ways more immature than\nlots of other organizations. I think at the time where Google was already designing their\nown custom hardware for efficiently evaluating neural net models, we weren’t really using\nneural net models at all. Like, I think all of this effort on our side has really spun up\nin the last few years. We’ve been doing various kinds of statistically driven inference of\ntrading strategies for as long as I’ve been at Jane Street. Like, that’s the first job I\nhad like 21 years ago, was doing various kinds of optimizations and model fitting stuff –\nbut very different models and didn’t have any of the same performance shape, and so all of\nour tooling around this is relatively new. And I’m kind of curious, for you, as someone\nwho’s seen stuff in the outside world and seen our ecosystem here, what are the things\nthat you see as the big gaps?  What are the kind of things that don’t work as well here as\nthey should, and that you want to see us improve and that you want to work on?",
+      "zh": "你知道，在你的职业生涯中，你花了很多时间致力于各种开放的领域\n源培训、机器学习生态系统，而您现在在内部花费了大量时间\n在我们的世界中工作。我认为可以公平地说，我们在各个方面都比其他人更不成熟。\n许多其他组织。我认为当时谷歌已经在设计他们的\n自己的定制硬件用于有效评估神经网络模型，我们并没有真正使用\n神经网络模型。就像，我认为我们这边所有的努力都已经开始了\n在过去的几年里。我们一直在进行各种统计驱动的推断\n自从我在简街工作以来，我一直在研究交易策略。就像，这是我的第一份工作\n就像 21 年前一样，正在做各种优化和模型拟合的事情 –\n但型号非常不同，并且没有任何相同的性能形状，因此所有\n我们的工具相对较新。作为一个人，我对你有点好奇\n谁见过外面世界的东西，也见过我们这里的生态系统，这些东西是什么\n您认为存在巨大差距吗？  哪些事情在这里效果不如\n他们应该这样做，并且您希望看到我们进步并且您想继续努力？"
+    },
+    {
+      "idx": 123,
+      "en": "One nice aspect of the fact that we’re newer to this machine learning stuff is that people\nare not necessarily aware of the things that are not performant and making a lot of\nmistakes when writing the code. So it’s really easy for me to come in and, like, spend a\ncouple of hours on a project and be like, “Oh yeah, no, it’s gonna train four times\nfaster, and you just have to transpose five lines of code.” So it makes my job very easy\nin that regard. (laughs)",
+      "zh": "我们对机器学习这个东西比较陌生，这一事实的一个很好的方面是人们\n不一定意识到那些没有表现的事情并且做了很多\n编写代码时的错误。所以对我来说，进来真的很容易，比如，花一段时间\n在一个项目上花了几个小时，然后说，“哦，是的，不，它要训练四次\n更快，而且你只需要转置五行代码。”所以这让我的工作变得非常轻松\n在这方面。 （笑）"
+    },
+    {
+      "idx": 124,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 125,
+      "en": "Sometimes it’s a little bit more difficult than that. But yeah, there have been a couple\nof instances where, like, optimizing a given training was really, really easy, just by\nprofiling it once because of this. We should improve our infrastructure around training\nloops in general, like making the training infrastructure work better for researchers\nbecause we’re kind of making the same mistakes as other people already did in the open\nsource world. Like these giant training loops with lots of spaghetti code that researchers\nend up not willing to use because they can’t modify what’s inside of them. It feels like\nsometimes we have that same problem internally as well.",
+      "zh": "有时比这更困难一些。但是，是的，有几个\n例如，优化给定的训练非常非常容易，只需\n因此对其进行一次分析。我们应该改善培训基础设施\n一般来说，循环，比如让培训基础设施更好地为研究人员服务\n因为我们犯了与其他人已经在公开场合犯过的错误相同的错误\n源世界。就像这些巨大的训练循环，其中有大量意大利面条代码，研究人员\n最终不愿意使用，因为他们无法修改其中的内容。感觉就像\n有时我们内部也有同样的问题。"
+    },
+    {
+      "idx": 126,
+      "en": "So do you think we need to, sort of, do morally the same thing that Accelerate did of\ntrying to build a set of libraries that are highly configurable and modular, instead of\nhaving, like, one training loop that everyone uses – make it easy for people to build\ntheir own training loops for different use cases?",
+      "zh": "那么你认为我们需要在道德上做加速项目所做的同样的事情吗？\n尝试构建一组高度可配置和模块化的库，而不是\n拥有每个人都使用的一个训练循环——让人们可以轻松构建\n针对不同用例的自己的训练循环？"
+    },
+    {
+      "idx": 127,
+      "en": "Yeah, especially since people here are very smart and really like to hack things\ntogether. It feels like a better solution for them. The magic training loop where you\npress play and your model trains has its appeal, which I can understand for people who are\nless familiar with machine learning. But at least for people who are deeply familiar with\nall the internals of machine learning and want to deep research into, like, every part of\na training loop, they need something that’s akin to Accelerate where you just add, like,\nsmall composable building blocks that are very easy to use and not like this giant black\nbox with, like, 150 arguments that you have to pass in the correct order.",
+      "zh": "是的，特别是因为这里的人非常聪明并且非常喜欢破解东西\n在一起。这对他们来说是一个更好的解决方案。神奇的训练循环，让你\n按播放键，你的模型火车有它的吸引力，对于那些喜欢的人来说我可以理解\n对机器学习不太熟悉。但至少对于熟悉的人来说\n机器学习的所有内部结构，并希望深入研究机器学习的每个部分\n训练循环，他们需要类似于加速的东西，你只需添加，比如，\n小型可组合积木非常易于使用，而不是像这个巨大的黑色\n包含 150 个参数的框，您必须按正确的顺序传递这些参数。"
+    },
+    {
+      "idx": 128,
+      "en": "Yeah, that’s terrible. (laughs)",
+      "zh": "是的，那太糟糕了。 （笑）"
+    },
+    {
+      "idx": 129,
+      "en": "I’m talking about overtraining APIs, like not giving any bad time to any engineers\nhere. (laughs) That does not exist internally.",
+      "zh": "我说的是 API 的过度训练，比如不要让任何工程师陷入困境\n在这里。 （笑）内部不存在这种情况。"
+    },
+    {
+      "idx": 130,
+      "en": "Right. Certainly, there are pieces of code that we have, you know, some of which I’ve\nwritten, that have the property of, “You have hard-coded a bunch of concrete behaviors\ninto it, and it has become ossified and hard to change. And it’s certainly a problem that\nshows up. Maybe it’s worth just saying, like, a few words about the way in which the\nproblems we solve here are different than problems solved in the outside world. And maybe\njust to talk about, like, what role machine learning actually has here. So just say, like,\nsome very high-level things.  We use machine learning for a bunch of stuff. We use it for\nsome, kind of, general purposes in the way that any organization might. We have a whole AI\nAssitants team whose job is to try and leverage various AI techniques for building various\nkinds of automations, a lot of it focused around LLMs and coding assistance, but not just\nthat. So, that’s, like, one kind of use case.  And then we have a bunch of use cases that\nare very focused on trading. Even inside of the trading world, I think there’s, kind of,\ntwo major streams of applications. There’s, “We are going off and trying to extract data\nfrom the outside world in order to inform our trading.” But we’re using the same kind of\ndata that has already been shown to be a good target for standard machine learning\ntechniques. So maybe we wanna get data out of images, or geospatial data, or text data.\nThere are all sorts of published models out there and published architectures that you can\ndo for this. And we are, like, happy to leverage, and fine tune, and exploit those\nexisting things. And there, the work that we end up doing looks a lot like the work that\npeople do on machine learning in the outside world. And then, in some sense, the magic is\nmore about, “How do we pick the data that we’re going to apply it to? And how do we\nintegrate that into the decisions we’re making on the trading side?”  And then there are\nplaces where we are applying machine learning techniques to trading data itself, like the\ndata that you get from exchanges, various alternative sources of data that can inform that\n– and I’m kind of curious, like, how do you think of that set of data as being different\nfrom the kind of data that you typically see in the larger world of machine learning?",
+      "zh": "正确的。当然，我们有一些代码，你知道，其中一些我已经\n书面的，具有以下属性：“你硬编码了一堆具体行为\n陷入其中，就变得僵化，难以改变。这肯定是一个问题\n出现。也许值得简单说几句，比如，关于如何\n我们在这里解决的问题与外面世界解决的问题不同。也许\n只是想谈谈机器学习在这里到底扮演什么角色。所以就说，比如，\n一些非常高级的东西。  我们将机器学习用于很多事情。我们用它来\n以任何组织可能的方式实现某些、某种通用目的。我们有完整的人工智能\n助理团队的工作是尝试并利用各种人工智能技术来构建各种\n各种自动化，其中很多都集中在法学硕士和编码协助上，但不仅仅是\n那个。所以，这就是一种用例。  然后我们有很多用例\n非常专注于交易。即使在交易世界内部，我认为也存在，\n两个主要的应用领域。有，“我们正在尝试提取数据\n来自外界的信息，以便为我们的交易提供信息。”但我们用的是同一种\n已被证明是标准机器学习的良好目标的数据\n技术。所以也许我们想从图像、地理空间数据或文本数据中获取数据。\n您可以使用各种已发布的模型和已发布的架构\n为此做。我们很乐意利用、微调和利用这些\n现有的事物。在那里，我们最终所做的工作看起来很像\n人们在外部世界对机器学习所做的事情。然后，从某种意义上说，神奇之处在于\n更多关于“我们如何选择要应用它的数据？而我们如何\n将其纳入我们在交易方面做出的决策中？”  然后还有\n我们将机器学习技术应用于交易数据本身的地方，例如\n您从交易所获得的数据，可以告知您的各种替代数据源\n– 我有点好奇，比如，你如何看待这组数据的不同\n来自您通常在更大的机器学习世界中看到的数据类型？"
+    },
+    {
+      "idx": 131,
+      "en": "The data is much noisier. So it’s way harder to train good models on it, just because the\nsignal you can extract from it is actually way weaker than in something very structured\nlike text or images. Very often, you will never get the same kind of accuracy as what you\nget on computer vision and on text. But even extracting a very small amount of signal can\nstill lead to good training strategies. So you can still get valuable feedback from that\nkind of data.",
+      "zh": "数据噪音更大。因此，在其上训练好的模型要困难得多，因为\n您可以从中提取的信号实际上比非常结构化的信号弱得多\n如文本或图像。很多时候，你永远不会获得与你所得到的结果相同的准确性。\n学习计算机视觉和文本。但即使提取非常少量的信号也可以\n仍然会带来良好的培训策略。所以你仍然可以从中获得有价值的反馈\n种数据。"
+    },
+    {
+      "idx": 132,
+      "en": "It’s maybe worth saying there are fundamental reasons why trading data sets are noisy,\nbecause the fundamental process of trading is one where, when there’s a signal, people\ntrade that signal, and that signal kind of gets removed from the data essentially. And so,\nto the first order of approximation, the time series of the prices of a security look kind\nof like a random walk. And there’s a little bit of signal in there, but it really is\nmostly noise. And so whatever your training technique is, it has to be able to deal with\nthe fact that there’s a ton of noise in the labels, essentially.",
+      "zh": "也许值得一提的是，交易数据集存在噪音有根本原因，\n因为交易的基本过程是，当出现信号时，人们\n交易该信号，该信号基本上会从数据中删除。所以，\n对于一阶近似，证券价格的时间序列看起来很相似\n就像随机游走一样。里面有一点信号，但确实是\n主要是噪音。因此，无论您的训练技术是什么，它都必须能够处理\n事实上，标签中本质上存在大量噪音。"
+    },
+    {
+      "idx": 133,
+      "en": "And so, yes, so that’s one aspect of it, very noisy. And as you said, it also changes and\nreacts to the way you use it. So, like, in difference with text, for instance, Huud BERT\nwas released in 2018. You use it right now, it’s still as good as it was in 2018. The same\nis definitely not true for a model that you train on market data. The kind of strategies\nthat you could run a couple of years ago won’t necessarily work right now just because the\nmarket has reacted to them and adapted to them. So you kind of need to come up with new\nmodeling strategies all the time and reinvent yourself.  Another aspect of that data that\nis different from the rest of the outside world is that it’s huge. We have massive amounts\nof market data. I think it’s a couple of terabytes per day. So you multiply that by the\nnumber of days or like a couple of years, and yeah, you have a massive amount of data to\nfeed your model. So that brings its own challenges in terms of data loading and making\nsure it’s efficient and that the GPU gets saturated.",
+      "zh": "所以，是的，这是它的一方面，非常吵闹。正如你所说，它也会改变\n对您的使用方式做出反应。因此，与文本不同，例如 Huud BERT\n2018年发布的，你现在用，还是和2018年一样好。\n对于您根据市场数据训练的模型来说绝对不正确。策略的种类\n几年前就可以运行的方法现在不一定能运行，因为\n市场已经对它们做出反应并适应它们。所以你需要想出新的\n始终塑造策略并重塑自己。  该数据的另一个方面是\n与外界不同的是，它很大。我们有大量的\n的市场数据。我认为每天有几 TB。所以你将其乘以\n天数或几年，是的，你有大量的数据可以处理\n喂养你的模型。因此，这在数据加载和制作方面带来了自己的挑战\n确保它高效且 GPU 饱和。"
+    },
+    {
+      "idx": 134,
+      "en": "Right. And in practice, the model sizes that we tend to do are – tend to be smaller than,\nlike, the sizes of the very largest language models. And so, the overall, like, ratios of\nflops per byte are just very, very different. And so the things that people are optimizing\nfor in the designs of the GPUs and the designs of the network are often not exactly the\nthing that we’re seeing.",
+      "zh": "正确的。在实践中，我们倾向于做的模型尺寸往往小于，\n就像最大的语言模型的大小。因此，总体比率\n每字节的浮点运算次数非常非常不同。所以人们正在优化的事情\n因为 GPU 的设计和网络的设计通常并不完全一致\n我们正在看到的事情。"
+    },
+    {
+      "idx": 135,
+      "en": "We have to do a whole bunch of research, basically. We can’t just rely on what’s been done\nfor other kinds of modalities like text or images. We need to reinvent new models that are\nadapted to market data, and new ways of loading that data and keeping the GPU fed as much\nas possible. And yeah, sometimes we care about algorithms that are, like, completely\ndifferent from the one NVIDIA or PyTorch care about because they’re not necessarily used\nin LLMs and everyone is all about LLMs these days. It is a good amount of, like,\nprogramming (laughs) to do in terms of GPU performance, so.",
+      "zh": "基本上，我们必须做大量的研究。我们不能仅仅依赖已经完成的事情\n对于其他类型的形式，如文本或图像。我们需要重新发明新的模式\n适应市场数据，以及加载数据并保持 GPU 尽可能充足的新方法\n尽可能。是的，有时我们关心的算法完全是\n与 NVIDIA 或 PyTorch 关心的不同，因为它们不一定被使用\n现在每个人都在关注法学硕士。这是一个很好的数量，比如，\n编程（笑）是根据 GPU 性能来做的，所以。"
+    },
+    {
+      "idx": 136,
+      "en": "Yeah, and I think it’s actually an exciting part of the machine learning world here in\ngeneral, that there’s a wide variety of coming up with and experimenting with new\narchitectures and new models and new ways of applying it to datasets, where it’s like –\nthere just aren’t a lot of papers telling you how to, like, analyze financial time series,\nbecause the people who are good at that mostly don’t publish papers.",
+      "zh": "是的，我认为这实际上是机器学习世界中令人兴奋的一部分\n一般来说，有各种各样的新想法的提出和尝试\n架构和新模型以及将其应用于数据集的新方法，就像 –\n只是没有很多论文告诉你如何分析金融时间序列，\n因为擅长这方面的人大多不会发表论文。"
+    },
+    {
+      "idx": 137,
+      "en": "I wonder why. (laughs)",
+      "zh": "我想知道为什么。 （笑）"
+    },
+    {
+      "idx": 138,
+      "en": "(laughs) Another thing that I think comes up, which is interesting, is just inference\ntimes, right? So we care about using these things in the context of trading, and that, in\ngeneral, the level of speed at which we care about responsiveness to some input is\nsometimes very, very small. It can vary by orders of magnitude depending on the\napplication.  Like sometimes we care about turning around a packet in literally 100 nanos,\nand sometimes a few microseconds, and sometimes a few hundred microseconds is slow enough,\nsometimes milliseconds. There are some kinds of machine learning problems where, like,\n“Oh, getting an inference once an hour would be great. That’s, like, all we need, and\nsometimes even less than that.” So you just have a very wide variety of inference times\nyou need, and at the very low end of the scale, it’s nothing anyone else cares about.",
+      "zh": "（笑）我认为出现的另一件事很有趣，就是推理\n次，对吗？因此，我们关心在交易环境中使用这些东西，并且，\n一般来说，我们关心对某些输入的响应速度水平是\n有时非常非常小。它可以根据不同的数量级而变化\n应用程序。  就像有时我们关心的是在 100 纳秒内周转一个数据包，\n有时几微秒，有时几百微秒就足够慢了，\n有时是毫秒。有一些类型的机器学习问题，例如，\n“哦，每小时进行一次推论就太好了。这就是我们所需要的，而且\n有时甚至比这个还要少。”所以你有各种各样的推理时间\n你需要，而在规模的最低端，其他人都不关心。"
+    },
+    {
+      "idx": 139,
+      "en": "Yeah, that’s why also you were mentioning before, our models have various sizes. Some are\nvery small because we want them to run very, very fast. But even if they are small, there\nare some challenges to make sure that they can run in the timeframe we need to make sure\nwe are as low latency as possible.",
+      "zh": "是的，这就是为什么你之前也提到过，我们的型号有各种尺寸。有些是\n非常小，因为我们希望它们跑得非常非常快。但即使它们很小，也有\n确保它们能够在我们需要确保的时间范围内运行有一些挑战\n我们尽可能降低延迟。"
+    },
+    {
+      "idx": 140,
+      "en": "Right, and just to keep up with the data rate.",
+      "zh": "是的，只是为了跟上数据速率。"
+    },
+    {
+      "idx": 141,
+      "en": "Yeah, because, like, there can be a million events in a single stock in one day. So if\nyou’re not fast enough to, like, just process them, it might not be the case that we need\nthe prediction very fast. But sometimes if you want to keep up and not, like, get behind\ntoo much, you just need to be a couple of mics per event and not much more than that.",
+      "zh": "是的，因为，比如，一只股票一天内可能会发生一百万个事件。所以如果\n你的速度不够快，无法处理它们，这可能不是我们需要的情况\n预测速度非常快。但有时如果你想跟上而不是落后\n太多了，您只需要在每个活动中使用几个麦克风即可，仅此而已。"
+    },
+    {
+      "idx": 142,
+      "en": "So those are a whole bunch of differences between the kinds of problems we look at, and\nwhat you’ve seen in other places. How do you think that influences the tooling we build?\nAre there ways in which we need to build different kinds of machine learning tools in\nresponse to the ways in which the shape of the problems are different?",
+      "zh": "所以这些是我们所关注的问题类型之间的一大堆差异，并且\n你在其他地方看到的。您认为这如何影响我们构建的工具？\n我们需要通过哪些方式来构建不同类型的机器学习工具？\n应对问题形式不同的方式？"
+    },
+    {
+      "idx": 143,
+      "en": "Yeah, we talked about data loading, for instance, that comes with its own challenges. So\nlike, obviously we have developed a ton of custom data loading utilities that we can use\nto make this faster. We also talked about models that are not necessarily the same ones as\neveryone else cares about for other, kind of, well-studied modalities like text or\nimage. So we have a lot of custom models written internally that we have found work well\nthat we keep trying to optimize for training and inference. So this is a bunch of exciting\nwork. Like, the rest of the training is mostly the same as in any other machine learning\njob. Like, stochastic gradient descent has not changed. (laughing)",
+      "zh": "是的，例如，我们讨论了数据加载，这也带来了其自身的挑战。所以\n就像，显然我们已经开发了大量可以使用的自定义数据加载实用程序\n使这更快。我们还讨论了不一定与以下模型相同的模型\n其他人都关心其他经过充分研究的形式，例如文本或\n图像。因此，我们有很多内部编写的自定义模型，我们发现这些模型运行良好\n我们不断尝试优化训练和推理。所以这是一系列令人兴奋的事情\n工作。就像，其余的训练与任何其他机器学习基本相同\n工作。就像，随机梯度下降没有改变。 （笑）"
+    },
+    {
+      "idx": 144,
+      "en": "Yeah.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 145,
+      "en": "It’s the same algorithm.",
+      "zh": "这是相同的算法。"
+    },
+    {
+      "idx": 146,
+      "en": "And the same algorithm it was 40 years ago.",
+      "zh": "和 40 年前的算法是一样的。"
+    },
+    {
+      "idx": 147,
+      "en": "Yeah. (laughing)",
+      "zh": "是的。 （笑）"
+    },
+    {
+      "idx": 148,
+      "en": "So, another thing that you’ve done a lot of in your career is education, right? You were a\nmath teacher for a bunch of years, and then you did a lot of education work, both at\nfast.ai and at Hugging Face. So you’re also involved some in the education story here. Can\nyou tell us a little bit more about what that looks like?",
+      "zh": "那么，您在职业生涯中做了大量工作的另一件事就是教育，对吗？你是一个\n当了很多年数学老师，然后你做了很多教育工作，无论是在\nfast.ai 和 Hugging Face。所以你也参与了这里的一些教育故事。可以\n你能告诉我们更多关于它是什么样子的吗？"
+    },
+    {
+      "idx": 149,
+      "en": "Yeah. Jane Street is trying to up its machine learning game, both by hiring more people\nwho do machine learning, but also by educating the existing people on machine\nlearning. And we talked a little bit before about fast.ai and how it was important to,\nlike, make radiologists, for instance, competent at machine learning so that they can do\nradiology better with machine learning. It’s the same here. Like we need to educate\ntraders about machine learning, so that they can do better trading using machine learning,\nand can inform the choice of models that then machine learning researchers can pick\nbecause they know the data very well and they are kind of domain experts. So we have a\nboot camp that we run, like, every couple of months, with either traders or researchers\nthat are not super familiar with machine learning. And we try to make them up to speed\nwith the latest technique, both from the outside world and from inside Jane Street.",
+      "zh": "是的。 Jane Street 正试图通过雇佣更多员工来提升其机器学习水平\n进行机器学习的人，也通过对现有的人进行机器学习\n学习。我们之前讨论过 fast.ai 以及它的重要性，\n例如，让放射科医生具备机器学习能力，这样他们就可以做\n通过机器学习更好地进行放射学。这里也是一样。就像我们需要教育一样\n交易者了解机器学习，以便他们可以利用机器学习进行更好的交易，\n并可以告知机器学习研究人员可以选择的模型选择\n因为他们非常了解数据并且是领域专家。所以我们有一个\n我们每隔几个月与交易员或研究人员举办一次训练营\n对机器学习不太熟悉的人。我们努力让他们跟上进度\n采用来自外界和简街内部的最新技术。"
+    },
+    {
+      "idx": 150,
+      "en": "You mentioned this point of, in part you wanna teach people – so, people who are not\nprimarily going to be machine learning modelers as like, their primary job (but still have\nthem better understand)… people who are experts in other aspects of the trading problem\nand have them understand more about machine learning. That’s one goal. I think it’s also\nthe case that you can teach people the machine learning stuff in some ways – like, it\ncan’t be that hard to learn modern machine learning because in some ways, modern machine\nlearning is 10 years old.",
+      "zh": "你提到了这一点，部分你想教导人们——所以，那些不是的人\n主要是机器学习建模者，他们的主要工作（但仍然有\n他们更好地理解）……在交易问题的其他方面是专家的人\n并让他们更多地了解机器学习。这是一个目标。我觉得也是\n你可以通过某种方式教人们机器学习的东西——比如，\n学习现代机器学习并不难，因为在某些方面，现代机器\n学习已经10岁了。"
+    },
+    {
+      "idx": 151,
+      "en": "I was saying like, make them into domain experts so they can help better, but they – some\nof them, like, actually end up training models, doing a lot of machine learning\nthemselves. It depends on whether they like it or not. Because machine learning is a bit\nlike cooking. Like you throw a bunch of stuff and then you let your model training stir\nfor a while and you see if it was good or not. It’s not the same kind of like, just\nprogramming some training system. So, some people like it, some people really (laughs)\ndislike it.",
+      "zh": "我的意思是，让他们成为领域专家，这样他们就能更好地提供帮助，但他们——一些人\n其中，实际上最终训练了模型，进行了大量的机器学习\n他们自己。这取决于他们是否喜欢。因为机器学习有点\n比如做饭。就像你扔了一堆东西然后让你的模型训练搅拌起来\n等一段时间你就知道好不好了。这不是同一种类型，只是\n编写一些培训系统。所以，有些人喜欢，有些人真的（笑）\n不喜欢它。"
+    },
+    {
+      "idx": 152,
+      "en": "Yeah, that makes total sense. So there’s a lot of things you’re trying to convey to people\nwhen you are running these classes and these courses. What are things that you find hard\nto get across?",
+      "zh": "是的，这完全有道理。所以你想向人们传达很多东西\n当你运行这些课程和这些课程时。有哪些事情是你觉得很难的\n跨越？"
+    },
+    {
+      "idx": 153,
+      "en": "The point that’s most difficult to get across to people is that, yeah, no one knows\nanything about machine learning.",
+      "zh": "最难让人们明白的一点是，是的，没有人知道\n关于机器学习的任何事情。"
+    },
+    {
+      "idx": 154,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 155,
+      "en": "Like, it’s really just a cooking sense. We still don’t know why neural nets generalize so\nwell. We have a little bit of theory explaining why they are able to train on the training\ndata. But why are they any good out of training samples? We still don’t know, like, why\nthey are so good at generalizing. And in general, like, you can try to get a little bit of\nintuition into, like, trying to do this to fix this kind of problem, like, “I’m\noverfitting, so I’m gonna try this regularization technique. Maybe that will help.” But\nyeah, there’s always that maybe, like it’s not until you’ve tried that you can know for\nsure that the thing is gonna work.  So, this is really hard to convey. And then I try to\nget people very disciplined about reproducibility. Like one mistake that beginners in\nmachine learning do all the time is they train a model and then we forget what they did to\ntrain that model. And so like two months later, like, “Oh, I did train that model. It was\ngood. I should try to retrain it and maybe use it.” And they never managed to reproduce\ntheir initial results just because they didn’t write down all of the stuff that was needed\nto train that model. Those two points are really difficult to make, because of course, I\nguess you can’t fully understand them until you have gone through the pain (laughs) of two\nof them.",
+      "zh": "就像，这实际上只是一种烹饪感。我们仍然不知道为什么神经网络如此泛化\n好吧。我们有一些理论可以解释为什么他们能够在训练中进行训练\n数据。但为什么它们的训练样本有好处呢？我们仍然不知道为什么\n他们非常善于概括。一般来说，你可以尝试获得一点\n直觉，比如，尝试这样做来解决这类问题，比如，“我\n过度拟合，所以我要尝试这种正则化技术。也许这会有帮助。”但是\n是的，总是有可能，就像直到你尝试过你才能知道\n确保这件事会成功。  所以，这确实很难传达。然后我尝试\n让人们对可重复性非常严格。就像初学者犯的一个错误一样\n机器学习一直在做的就是他们训练一个模型，然后我们忘记他们做了什么\n训练该模型。两个月后，就像，“哦，我确实训练了那个模型。它是\n好。我应该尝试重新训练它，也许还能使用它。”他们从未成功繁殖\n他们最初的结果只是因为他们没有写下所有需要的东西\n训练该模型。这两点确实很难说，因为当然，我\n我猜你只有经历过两个人的痛苦才能完全理解他们（笑）\n其中。"
+    },
+    {
+      "idx": 156,
+      "en": "You don’t understand the importance of reproducibility until you’ve gone through your\nfirst reproducibility crisis.",
+      "zh": "在您完成之前，您不会理解可重复性的重要性\n第一个可重复性危机。"
+    },
+    {
+      "idx": 157,
+      "en": "Yeah, exactly. (laughing) Then you fully understand why it’s so important to save\nabsolutely everything down to the revision of the code so that you can run the exact same\nthing at another time.",
+      "zh": "是的，完全正确。 （笑）然后你就完全明白为什么储蓄如此重要了\n绝对一切都需要修改代码，以便您可以运行完全相同的代码\n别的时间的事情。"
+    },
+    {
+      "idx": 158,
+      "en": "Yeah, and I think some of the reproducibility stuff is about getting people on board with\nthe discipline required. We’ve talked a lot about technology that meets the researchers\nwhere they are and makes it easy for them to express what they want. But there’s some part\nof it, if you wanna be a good researcher, you actually just need an enormous amount of\ndiscipline, because the tools are somewhat imperfect and you just have to be really\ncareful to get that reproducibility story right.  And at the same time, I think there’s\nalso a lot of work we can do on the tool side to make reproducibility easier, right? I\nthink it’s complicated in part because the overall ecosystem is complicated. Just managing\nPython packages is shockingly complicated.",
+      "zh": "是的，我认为一些可重复性的东西是为了让人们参与进来\n所需的纪律。我们讨论了很多适合研究人员的技术\n他们在哪里，让他们更容易表达自己的想法。但有一部分\n其中，如果你想成为一名优秀的研究员，你实际上只需要大量的\n纪律，因为工具有些不完美，你只需要真正做到\n小心地确保再现性正确。  同时，我认为有\n我们还可以在工具方面做很多工作来使再现性更容易，对吧？我\n我认为这很复杂，部分原因是整个生态系统很复杂。只是管理\nPython 包极其复杂。"
+    },
+    {
+      "idx": 159,
+      "en": "And making sure you didn’t have an upgrade of a random package that broke\neverything. Yeah, that’s all really difficult. And then making sure, your code is checked\nout and that you know the revision of the code that you are using. That’s another thing\nbecause you can change a small line of code in your model and think, “Oh, this is totally\nharmless,” but then it actually destroys the performance of your model because it was a\nkey ingredient in your cooking recipe and you hadn’t realized that.  So yeah, making sure\nthat your code is still there. And the last thing is, training involves a certain number\nof hyperparameters. Usually people write all of that in some kind of config. So make sure\nthat you save that config somewhere so that when you want to reproduce your training, you\nactually know that you had used this learning rate, this batch size, et cetera, et cetera.",
+      "zh": "并确保您没有升级损坏的随机包\n一切。是的，这一切真的很难。然后确保您的代码已被检查\n并且您知道您正在使用的代码的修订版本。那是另一回事了\n因为你可以更改模型中的一小行代码，然后想，“哦，这完全是\n无害”，但实际上它会破坏模型的性能，因为它是一个\n你的烹饪食谱中的关键成分，而你却没有意识到这一点。  所以是的，确保\n你的代码仍然在那里。最后一点是，训练涉及一定数量的\n的超参数。通常人们将所有这些都写在某种配置中。所以请确保\n您将该配置保存在某处，以便当您想要重现您的训练时，您\n实际上知道你已经使用了这个学习率、这个批量大小等等。"
+    },
+    {
+      "idx": 160,
+      "en": "I guess another fun source of nondeterminism is to the degree that you’re doing your\nresearch in Python notebooks. The fact that you can run Python cells in Python notebooks\nin arbitrary orders, and if you do this in the wrong way, you can end up computing a\nresult that you just, like, have no record of exactly where that result came from.",
+      "zh": "我想非决定论的另一个有趣来源是你所做的事情的程度\nPython 笔记本的研究。事实上，您可以在 Python 笔记本中运行 Python 单元\n以任意顺序，如果你以错误的方式这样做，你最终可能会计算出\n结果你只是没有记录该结果的确切来源。"
+    },
+    {
+      "idx": 161,
+      "en": "Yeah, (laughs) that’s another kind of fun. Fortunately, notebooks are still a bit\ndifficult to check into any kind of repo, so, usually people move away from notebooks by\nthe time it’s time to check the code in some kind of infrastructure. So like this issue\nkind of disappears. But it’s true while you are experimenting, this is another fun source\nof reproducibility.  And then you have, like, GPU being non-deterministic at a fundamental\nlevel because we are heavily parallel. So that’s always so fun. Like, when you’re trying\nto debug exactly why my floating-point result at the end is not the same thing as what I\nwas expecting, just because floating-point arithmetic is not associative, and GPUs have\nmany threads which may end in any kind of random order.",
+      "zh": "是的，（笑）这又是另一种乐趣。还好笔记本还是有点\n很难检查任何类型的存储库，因此，通常人们通过以下方式远离笔记本\n是时候检查某种基础设施中的代码了。所以喜欢这个问题\n有点消失了。但在你进行实验时确实如此，这是另一个有趣的来源\n的再现性。  然后你会发现，GPU 从根本上来说是不确定的\n水平，因为我们是高度并行的。所以这总是很有趣。就像，当你尝试时\n准确调试为什么我最后的浮点结果与我的不一样\n是预料之中的，只是因为浮点运算不具有关联性，而 GPU 有\n许多线程可能以任何类型的随机顺序结束。"
+    },
+    {
+      "idx": 162,
+      "en": "GPU training is, in some sense, non-deterministic because it’s in parallel. But it’s also,\nin some sense, non-deterministic just because we can tolerate it. You could do things\nhighly in parallel and make sure that you’re always doing things in the same order and do\nstuff to conserve the determinism–",
+      "zh": "从某种意义上说，GPU 训练是不确定的，因为它是并行的。但这也是，\n从某种意义上说，它是非确定性的，只是因为我们可以容忍它。你可以做事\n高度并行并确保您始终按照相同的顺序做事\n保存决定论的东西——"
+    },
+    {
+      "idx": 163,
+      "en": "It’s usually at a huge cost in performance, but yeah.",
+      "zh": "这通常会以巨大的性能成本为代价，但是是的。"
+    },
+    {
+      "idx": 164,
+      "en": "– but it’s at a huge cost in performance. And it doesn’t totally matter, right? That’s\nactually one of the interesting things about machine learning is, because you’re doing\nthis, kind of, soft numerical optimization process, you can just take some error. And\nactually, a lot of the early research in various places is called, kind of, hogwild\nconcurrency, where you just had shared model weights and things checking out and producing\nnew gradients and updating them. And were they data races? Yes, they were. They were.",
+      "zh": "– 但这是以巨大的性能代价为代价的。这并不完全重要，对吧？那是\n实际上机器学习的有趣之处之一是，因为你正在做\n这种软数值优化过程，您可以接受一些错误。并且\n事实上，很多地方的早期研究都被称为“hogwild”\n并发性，您只需共享模型权重以及检查和生成的内容\n新的渐变并更新它们。他们是数据竞赛吗？是的，他们是。他们是。"
+    },
+    {
+      "idx": 165,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 166,
+      "en": "And like, it was kind of okay. But I think over time, that’s fallen somewhat into\ndisfavor, because it’s just even harder to predict what’s going on.",
+      "zh": "就像，这还不错。但我认为随着时间的推移，这在某种程度上陷入了困境\n不受欢迎，因为更难预测正在发生的事情。"
+    },
+    {
+      "idx": 167,
+      "en": "Yes. It’s completely unreproducible. So you can end up with a model that’s really good,\nbut you have no idea why, and you were never able to reproduce it anymore. So, that’s a\nbit annoying. (laughs)",
+      "zh": "是的。这是完全不可复制的。所以你最终可以得到一个非常好的模型，\n但你不知道为什么，你再也无法重现它了。所以，这是一个\n有点烦人。 （笑）"
+    },
+    {
+      "idx": 168,
+      "en": "Anyway, this was a lot of fun. Thanks for joining me.",
+      "zh": "不管怎样，这很有趣。感谢您加入我。"
+    },
+    {
+      "idx": 169,
+      "en": "Thanks a lot for having me.",
+      "zh": "非常感谢你邀请我。"
+    },
+    {
+      "idx": 170,
+      "en": "You’ll find a complete transcript of the episode, along with links to some of the things\nthat we discussed, at signalsandthreads.com. Thanks for joining us, and see you next time.",
+      "zh": "您会找到该集的完整记录，以及一些内容的链接\n我们在 signalsandthreads.com 上讨论过。感谢您加入我们，我们下次再见。"
+    }
+  ]
+}

@@ -1,0 +1,1847 @@
+{
+  "slug": "a-poets-guide-to-product-management",
+  "title": "A Poet's Guide to Product Management with Peter Bogart-Johnson",
+  "mp3_rel": "audio/a-poets-guide-to-product-management.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Peter Bogart-Johnson was one of Jane Street’s first program managers,\nand helped bring the art of PMing—where that “P” variously stands for\n“project,” “product,” or some blend of the two—to the company at\nlarge. He’s also a poet and the former editor of a literary\nmagazine. In this episode, Peter and Ron discuss the challenge of\ngaining trust as an outsider: how do you teach teams a new way of\ndoing things while preserving what’s already working? The key, Peter\nsays, is you listen; a good PM is an anthropologist. They also discuss\nhow paying down technical debt isn’t something you do instead of\nserving customers; what Jane Street looks for in PM candidates; and\nhow to help teams coordinate in times of great change."
+    },
+    {
+      "type": "p",
+      "text": "Peter Bogart-Johnson was one of Jane Street’s first program managers,\nand helped bring the art of PMing—where that “P” variously stands for\n“project,” “product,” or some blend of the two—to the company at\nlarge. He’s also a poet and the former editor of a literary\nmagazine. In this episode, Peter and Ron discuss the challenge of\ngaining trust as an outsider: how do you teach teams a new way of\ndoing things while preserving what’s already working? The key, Peter\nsays, is you listen; a good PM is an anthropologist. They also discuss\nhow paying down technical debt isn’t something you do instead of\nserving customers; what Jane Street looks for in PM candidates; and\nhow to help teams coordinate in times of great change."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky."
+    },
+    {
+      "type": "p",
+      "text": "It’s my great pleasure to introduce Peter Bogart-Johnson. Peter is a\nprogram manager here at Jane Street, and has been here for about three\nyears, where he’s been involved in a ton of different projects that\nwe’ve done. Lots of different things across many different groups at\nall sorts of levels of complexity. Thanks for joining me, Peter."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Thanks for having me. Very glad to be here."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You have a pretty interesting background. You were not always a\nprogram manager. Maybe to start, you could tell us a little bit about\nwhat you did before you got to Jane Street. And in fact, before you\ngot to being a program manager at all."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, happy to. I’ll preface this by just saying I’ve worked in\ntechnology for about 12 years. My route here was a bit circuitous,\nmaybe a bit non-traditional."
+    },
+    {
+      "type": "p",
+      "text": "So what I studied in school at any rate was theater and English lit. I\nwas a double major in both of those. And then I went on to graduate\nschool for both as well, in California and then here in New York."
+    },
+    {
+      "type": "p",
+      "text": "Moving to New York to study creative writing, specifically poetry, I\nwent to school at The New School. All their graduate programs are in\nthe evening, so I was able to have a full-time job while I was also in\nschool, which was a very busy time."
+    },
+    {
+      "type": "p",
+      "text": "But the area that I worked in at the time was the nonprofit field here\nin New York. So I worked for a couple of charities, specifically\ncharities that were involved in providing services to low-income\nfamilies in Upper Manhattan and the South Bronx, doing advocacy work,\nfundraising, program development, things like that."
+    },
+    {
+      "type": "p",
+      "text": "At the same time since I was involved in writing, I had also started\nediting a literary journal called LIT that is a New York-based\njournal. While I was doing that, one of the editors that I worked\nwith, interestingly enough, worked for a company that perhaps many\npeople have heard of called D. E. Shaw & Co. and had joined as a\ngeneralist, which was just somebody who did a lot of non-technical\nwork and did so by virtue of the fact that he had this other agenda,\nbeing a writer and being interested in other things. And that was\nsomething that D. E. Shaw and all the companies associated with\nD. E. Shaw, including DESRES where I eventually worked, was also very\ninterested in doing in terms of their hiring."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Where DESRES is short for D. E. Shaw Research?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "D. E. Shaw Research. That’s right. For those of you who don’t know,\nD. E. Shaw Research mainly focuses on biomolecular simulations for a\nparticular thing called molecular dynamics and building supercomputers\nto support that."
+    },
+    {
+      "type": "p",
+      "text": "So through him, I was introduced to D. E. Shaw, and interviewed there,\nand joined a team that included many other people like me who were in\ngraduate school, or had just finished graduate school, or were writers\nor painters or musicians or something like that, doing all the\nstrictly non-deep technical work, although we started moving more and\nmore in that direction over time."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So did Shaw make an explicit point of hiring people with MFAs and\npoetry to work on managing and organizing projects for them?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Well, I don’t think they were advertising in MFA journals or anything\nlike that, but they definitely had an approach of, “Well, there’s this\nclass of job that is not specifically technical, maybe it’s\ntechnical-adjacent. And we could fill it with smart, talented,\ncreative people who might bring a slightly different perspective to\nthe role, maybe more familiarity and comfort in abstract thinking and\nholistic thinking.” And the notion was we’d hire these people, they\nwould do this job, then they would go off and become famous writers\nand musicians, and they wouldn’t be here anymore. But a lot of us sort\nof got to like it, and stayed in this work over time."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this is totally different from any hiring process I’ve been\ninvolved in. I feel like every time I think about hiring, I always\nthink, “Well, what’s the subject matter? And let’s try and find people\nwho know the subject matter.” So it’s super different, which makes it\nreally interesting to me. I’m just curious, how do you think it works?"
+    },
+    {
+      "type": "ts",
+      "text": "00:03:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I think it works well. In a way that you can see a parallel, we can\ntalk about this later probably, in the types of people who come to\nJane Street as well to fill roles that are not specifically technical,\nbut might be technically adjacent. But yeah, I think that at\nD. E. Shaw, in particular at DESRES, it worked very well because it\ndid this thing that I thought was very important, which was instead of\nengineers doing all the technical work and then also switching context\nand doing things like technical operations, or project management, or\nproduct management, or any of these things that surround the technical\nwork, moving that to a set of people who are just focusing on that and\nhaving more of a multidisciplinary approach to your team, it made the\ntechnical contributors much more effective and focused on the problems\nthey were trying to solve. It seemed to work very well. A number of us\nwho started in those roles ended up staying in this field."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I totally get the idea of focus being important. And as an\norganization grows and people get more specialized, being able to get\npeople who really take over and own various, kind of, sub-parts of the\noverall thing that you’re trying to achieve."
+    },
+    {
+      "type": "p",
+      "text": "I’m curious, when you think about why people with these kinds of\nessentially creative backgrounds were good fits for the kind of work,\nto what degree was it about the things that they learned in those\nother areas applying in a surprising way, to what degree is it from\nthem just being from a different context? Which in some ways, not too\ntied up with the subject matter, or is it something else?"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I think it’s probably a combination of a lot of those things. I did\nthis exercise once where I actually talked about how a poem and a\nproject have a lot in common in the sense that they both might have\nrestrictions. They both might have a particular audience that they’re\ntrying to reach out to. They have a beginning, middle, and end, you\nwould hope. And there are these things about them that are kind of\ncommon."
+    },
+    {
+      "type": "p",
+      "text": "Part of that was a joke, but part of it was an interesting\nexercise. And I think there’s a little bit of that in the sense that\nyou are also a person who makes things and is interested in creating\nthings. And I think engineers are incredibly creative, and you just do\nit in a very different context. So you sort of get the thing that is\nbeing done, but you’re looking at it through a different lens."
+    },
+    {
+      "type": "p",
+      "text": "And I think that is just helpful because it brings an outsider\nperspective, and I think that’s something that is very\nvaluable. Something that I’ve tried to think about a lot over time is\nhow to do this work and maintain a little bit of that going into it so\nyou’re not so enmeshed in the context that you forget."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Because part of the problem of doing this work for a long time\nis, like it or not, you end up learning things."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "You do. Yeah, you do. You learn things. There’s a whole language that\nyou learn. There’s a way of interacting with people, and I think all\nthose things are really valuable. But I do think that there’s some\nvalue, a lot of value, in fact, in trying to maintain that separation\nof views and the things that you care about, and being able to move\nbetween them and that there’s a value in that."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So do you still write?"
+    },
+    {
+      "type": "ts",
+      "text": "00:06:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I do. I try to write every day. Sometimes I fail in writing\nevery day, but I certainly do try. It’s a big part of my life. The\nthing that I do outside of work is, being in New York, there is a very\nrobust writing community here. And in fact, there are multiple writing\ncommunities here. Maybe it’s one of the only places in the world where\nyou can really have that. Over time of living in New York and being a\nwriter, I’ve become pretty enmeshed in a few of those communities. I\nran a reading series for a long time in Brooklyn. Obviously, I edited\na literary journal for a long time, and I still write and I send my\nwork out for publication, and try to get published, and do readings\nmyself, and read at them, and just maintain contacts with other\nwriters here, and share work, and edit, and critique. Yeah, it’s a big\npart of my life, and I try to do as much of it as I can."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Not that we should go into a slam poetry session or anything, but what\nkind of things do you write?"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, poetry specifically. The type of poetry would be like… There’s\na school of poetry that was particular to New York called The New York\nSchool, which was the poetry version of abstract expressionism. So\nthis is a mid 20th century poetry school that originated here in New\nYork, obviously The New York School, and centered around parts of\nLower Manhattan like the East Village and Lower East Side, and has\ngrown over time to have multiple generations past that."
+    },
+    {
+      "type": "p",
+      "text": "In particular, there are institutions here in New York that I’ve tried\nto stay as close to as possible. One of them being The Poetry Project\nin the East Village on Second Avenue, St. Mark’s Church. It is a\ncenter of poetry culture in New York."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So there’s a whole different podcast we could do now where we dive all\ninto the writing, but I’m going to resist the temptation, although\nit’s a pretty serious one. Let’s talk a little bit more about being a\nPM at Jane Street. And maybe I should provide a little bit of\nbackground, and then I want to hear a little bit more from you about\nwhat your process coming here was like."
+    },
+    {
+      "type": "p",
+      "text": "But maybe a thing to say about Jane Street is we’ve spent most of our\nexistence as if this whole discipline of being a program or a product\nmanager just kind of didn’t exist. The place, when I started a little\nmore than 20 years ago, there were about 30, 40 people in the\norganization. And the process of building technology was very kind of\nintegrated. We kind of thought end to end about the process that\npeople who were writing the software were sitting next to and working\nclosely with the people who were the users of that software. And\nthings weren’t in some sense just big enough and complicated enough to\nhave organization of that be its own separate discipline."
+    },
+    {
+      "type": "p",
+      "text": "And the organization has grown a lot since then. We were 30\npeople. We’re now over 2,000 people. And in that time, the complexity\nof building software projects has grown dramatically. And it’s at the\npoint where when you want to build a complicated thing, you often need\nto involve lots of different people across lots of different\nteams. It’s a lot more work to even figure out what’s the right thing\nto build, because there are so many more people who are on the\nconsuming end of any given project you build."
+    },
+    {
+      "type": "p",
+      "text": "And I guess one thing that I kind of saw over multiple years, and I\nthink lots of us saw, is that we were in some ways getting worse at\nit. It was more and more obvious that as we tried to do bigger and\nmore complicated things, that we weren’t that good at getting\norganized and making sure that we really understood what the problems\nwere, that we shared priorities effectively across different teams. It\nwould be really easy … I think that we ran into a lot, say on the\nTools and Compilers team, is, there’d be something that someone was\nbuilding, say, some new language feature, and you had to deliver that."
+    },
+    {
+      "type": "p",
+      "text": "But just delivering the language feature wasn’t enough. It turns out\nyou also had to make changes to the editor integration to support that\nlanguage feature, and to libraries, and refactoring tools, and lots\nand lots of different places. And we’d find ourselves dropping the\nball several times along the path and things would take forever to\nland."
+    },
+    {
+      "type": "p",
+      "text": "And that’s a relatively small version of the problem. Even bigger, you\ndo a big effort that’s not just inside of the developer tools world,\nbut that crosses the people who are managing servers, and developing\ntrading software, and people who are building custom software and\ntrading desks, and getting all of that stuff to work together. Just\ngot really, really complicated. And so we started getting more serious\nabout treating the organizational pieces of this as a first class\nthing."
+    },
+    {
+      "type": "p",
+      "text": "But I think that left us in a somewhat hard spot in the sense that we\nstarted bringing people in who were experts in this area into an\norganization that just kind of didn’t really know how to engage,\nright? We’d never had PMs before. And so just getting used to that I\nthink was complicated. Complicated for us and complicated for the\npeople coming in. So all that background said, I’m curious what your\nexperience was like coming here. And actually, how did you find us in\nthe first place?"
+    },
+    {
+      "type": "ts",
+      "text": "00:10:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "So I came to Jane Street in the early days of the process of figuring\nout how to work with PMs as you described it. I had a colleague who I\nhad worked with at DESRES who we both left DESRES and went off and\nworked in other places. We both worked at startups, and she came and\nwas one of the first PM hires here at Jane Street."
+    },
+    {
+      "type": "p",
+      "text": "And then around that time, the startup where I was working was\nreaching the point where we were trying to get acquired basically. And\nit was a good time to start thinking about what next steps would\nbe. I’d been with that company since roughly early on in its life\ncycle. And it seemed like a really interesting opportunity to come to\na place that just did not have this kind of role and to really think\nabout it as a new discipline here and try to grow the practice. And it\nseemed like an interesting, challenging, maybe fun thing to do, to\ntry. Yeah, so that was how I was introduced to Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And to make it all the more challenging, this was in the middle of the\ncoronavirus pandemic?"
+    },
+    {
+      "type": "ts",
+      "text": "00:11:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yes. My first call with somebody from Jane Street was in May\nof 2020. So very early on. I think we were all still trying to get\nused to even how to have these kinds of conversations not in an\noffice, not in a place where you’re meeting somebody face to face."
+    },
+    {
+      "type": "p",
+      "text": "And obviously a naive person that I was at the time about anything\nabout Jane Street just assumed, “Well, maybe this role is new, but\nthey’ll know how to talk to me and know how to work with me, because\nwho doesn’t know how to work with somebody like this?”"
+    },
+    {
+      "type": "p",
+      "text": "So when I first joined Jane Street, I worked on our Networking\nteam. So this is a very also interesting time and an interesting part\nof the firm to join. This is a part of the firm obviously that is\nfundamental for anything to happen here. But I would say in terms of\ntechnology, is a few layers removed from the business operations of\nthe firm, the actual business activity of the firm. And so gaining\ncontext to the firm itself is very interesting from that vantage\npoint."
+    },
+    {
+      "type": "p",
+      "text": "So when I joined that team, there were a couple things that were\nreally needing to happen. One, there was just a set of projects that\nthey were in the midst of trying to push through that all had this\nlevel of complexity that you just kind of talked about. These are\nmultidisciplinary projects that touch many, many teams and had deep\nimplications for the growth of the firm. In this case, there were two\ndata center builds that we were in the midst of. And there was a very\nlarge compute cluster that our Research team uses that needed to move\nfrom one of those data centers that was still being built, to the\nother one that had just kind of finished being built."
+    },
+    {
+      "type": "p",
+      "text": "I mean, all this was happening at once. One team that was really\npushing on it, in this case, the Networking team with a lot of\nancillary teams involved as well, and a lot of moving parts. So that\nwas one thing. There was a very clear mandate. We need somebody who’s\ngoing to corral this work, who’s going to care about pushing it\nforward, making sure the requirements are known, making sure everybody\nhas the same end state in mind when they’re actually doing this\nwork. And at the same time, trying to create a world where projects\nlike this could happen in a more sustainable way. So not just ‘do the\nprojects,’ but create some system whereby projects like this could be\nexecuted effectively in the future."
+    },
+    {
+      "type": "p",
+      "text": "So it was pretty interesting. It was a little bit of sailing on the\nship as you’re building it, if you will, or in this case, in a data\ncenter as it’s being built. For me, the challenge was doing all this\nand then trying to gain context on the firm at the same time."
+    },
+    {
+      "type": "p",
+      "text": "And then also as you said, most of these teams had never worked with a\nPM before, and there was a bit of educating the teams how to work with\nme, and the teams educating me how to work at Jane Street. It was a\nvery interesting time."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What are the things that strike you as things that were missing at the\ntime when you started?"
+    },
+    {
+      "type": "ts",
+      "text": "00:14:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "So a concrete thing is one system where everything is being\ntracked. No matter where you go, you’re going to find people using\ndifferent tools to organize themselves and try to figure things\nout. But when you are working on a very complex project that touches a\nlot of teams and has a lot of moving parts to it, like a data center\nbuild or a huge compute cluster migration, having bits of that live in\nmany, many different places and not having any real connection between\nthem makes that so much harder."
+    },
+    {
+      "type": "p",
+      "text": "So one of the first things that we really focused on, and this is a\nfundamental thing that I think most PMs here do when they first join a\nteam, is let’s establish a single point of entry for information. So\nyou don’t need to switch contacts. You don’t need to go to your Google\nsheet, back to your PM tool, back to an email thread, back to some\nsort of chat thread of some sort, to get all the pieces of that\ninformation. Let’s have them all live in one place."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing that’s tricky, I think, about driving this kind of\nchange, where you come in and people aren’t quite using the right kind\nof tools and workflows that you think would make the most sense to\nhelp them kind of scale up. I guess two things. One is, convincing\nthem that it’s worth their time to go through and change how they\noperate. And the other is understanding well enough how they operate\nto make good suggestions about changes."
+    },
+    {
+      "type": "p",
+      "text": "People have built lots of workflows here over time, in an ad hoc\nway. Some of them are good, some of them are not so good. In many\ncases, it’s reactive to the situation they’ve been in. It’s kind of\nbuilt up over time in a way that reflects things about the\norganization and the people who work here."
+    },
+    {
+      "type": "p",
+      "text": "So how do you think about that process of understanding enough that\nyou can effectively work with people, and really bring them along, and\nconvince them that where there are changes to be made, that they\nshould make those changes?"
+    },
+    {
+      "type": "ts",
+      "text": "00:15:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I think part of it is building trust takes time, and you need to do a\ncouple things. One, you need to meet a team where they are and not\ncome in with too strong of a point of view. And you can imagine\nsomebody helicoptering into a team and looking at a world that has\nbeen created, as you say, reactively, and kind of grown over time. And\nthat person might say, “Okay, we are going to go full agile in every\npart of our work. We’re going to cultivate a nice slim backlog of\nthings. We’re going to do sprints for everything, and we’re going to\ndo story points.” A lot of these terms that people throw around in\nproduct and program management, not taking the time to actually get to\nknow how the team works."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And it’s maybe worth saying, those words are basically foreign jargon\nhere at Jane Street. I have never thought about a story point for\nalmost anything I’ve ever thought about. I’m curious, what do you\nthink about-"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Probably saved you years on your life."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) What do you think about all of this ornately developed set of\nmethodologies that are out there?"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I think what you want to do is you want to try to take from that\nbasket of those frameworks and find the things that work best for your\nteam. And maybe it’s not from those frameworks at all. Maybe there are\nsome things that you bring in. Maybe the thing that you bring in is,\n“Okay, let’s think about the bare minimum version of the thing that\nyou’re trying to build before you do the fully baked thing, and try to\nget it out into the world and get feedback on it before you do the\nfully baked thing.” How about start there?"
+    },
+    {
+      "type": "p",
+      "text": "That’s a very small borrowed ideal from a couple of these frameworks\nwhere it’s like, “Cool, in order for me to get a reaction from my user\nbase, I need to get something in their hands quickly so they can react\nto it, and not build every single feature I think that they\nwant. Because very, very likely they’re not going to use everything.”\nAnd I think when you do that and if you do it well, you’re not\ndropping a bureaucratic thing on top of a team. You are showing them\nslowly over time and incrementally that things can get better. Those\nsorts of changes are ultimately what builds trust and shows your value\nas a PM to the team."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I guess I’m much more comfortable with the idea of narratives\nrather than methodologies. Learning how people approach things,\nfiguring out what ideas apply to what you’re doing, rather than trying\nto take as a whole, “We are just going to follow this process, and\nthat’s the end of it.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:17:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "And it’s much more interesting too. You can actually do the\nanthropological work of getting to know the team. Understand them,\nunderstand their practices, the way they behave, the interpersonal\nrelationships of that team. There’s so many small little facets of how\na team works together, that it takes months before you really\nunderstand it fully. And in some cases, you’re constantly evolving\nthat because people move in and out. If you’re doing your job\neffectively, you’re bringing small amounts of change in there. And so\nthat will affect culture as well. Change reverberates slowly, but it’s\nsomething that we should just be aware of and watchful of. For me, I\nthink that’s where the joy comes in for the work."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So your onboarding was, as you said, during the pandemic, and the\ncoronavirus is still around, but it’s a very different world at this\npoint, and among other things we’re largely back in the office."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’m curious what it was like getting to know Jane Street in this\nenvironment where you were not within 100 feet of anybody else."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I was in my dining room in Brooklyn, New York. That’s where I was. And\nfrequently running out of the dining room, which I shared with my\nwife, it was our shared workspace to take calls and not be loud and to\nannoy her while she was doing her job."
+    },
+    {
+      "type": "p",
+      "text": "It was very interesting. I mean, Jane Street at the time when I joined\nwas just north of 1,000 people. For me, that was quite large coming\nfrom a small startup here in New York. So there was this sense of a\nglobal community of people who are all working for this one company\nand working very, very hard. And I knew 25 of them. And that was who I\ninteracted with for the first—call it close to a year– that I worked\nhere. Maybe that 25 people kind of shifted a little bit and changed\nhere and there, but it was trying to understand this broader web of\nprojects, and interactions, and nodes of connectivity from this very,\nvery, very interesting context of doing all this remotely, only\ntalking to people on the computer screen or on some sort of video\nconferencing device. And trying to learn the culture of the team made\nit even more challenging from that vantage point."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Did it feel really different? How did your feeling about the\norganization and the people you work with change when you got back\ninto the office?"
+    },
+    {
+      "type": "ts",
+      "text": "00:19:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "It changed dramatically. The first nine to 10 months when I worked\nhere when interacting with those 25 people, the sense of culture as a\ncompany didn’t really exist to me. You just couldn’t discern it very\nwell from such a small sample size."
+    },
+    {
+      "type": "p",
+      "text": "I still remember very well coming in my very, very first day. It was\ntwo days before Memorial Day weekend in 2021. I had just finished my\nsecond round of Pfizer vaccine. I had just gotten to four weeks so I\ncould actually come into the office."
+    },
+    {
+      "type": "p",
+      "text": "And I remember walking in, being led to my desk by someone from Front\nof House, and looking down the row and seeing people. There weren’t a\nton of people because we were still figuring out how to get everybody\nback to the office at that point. But actually seeing people that I\ndidn’t know and didn’t recognize at all, that worked for some\ndifferent part of the firm. And I had no idea what they were working\non or what department they worked on at all."
+    },
+    {
+      "type": "p",
+      "text": "And I remember being somewhat sheepish and asking one of them to help\nme lift my desk up so I could turn it into a standing desk, because I\njust didn’t know how to. And then knowing that I could go, and sit\nwith people, and talk to them at lunch, I hadn’t done that for over a\nyear. It was relearning all this at once."
+    },
+    {
+      "type": "p",
+      "text": "The way that people were very welcoming of me when I came into the\noffice was just this really interesting insight into this culture that\nI’d kind of heard about a lot over the previous year, but I’d yet to\nexperience."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the things I really like about how Jane Street operates is\npeople are generally really friendly and helpful."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Very."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You come by and you ask for something, and people’s default is to want\nto be there to help. But without those incidental encounters, it’s\nhard to see a lot of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "It is. It is. And it’s those incidental encounters that I think people\nmiss the most when they weren’t working from the office. And\nultimately as a PM, a lot of this work is surprisingly or\nunsurprisingly very relationship driven. For me, the missing\ningredient from when I was working at home was the ability to\nspontaneously interact with people and have conversations with them at\ntheir desk, to try to dig into a problem and understand what was\nhappening and try to help them solve it."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you talked some about your early work on networking. You actually\nalso spent a lot of time working on our technology for remote and\nhybrid work, which unsurprisingly all of a sudden got really important\nin 2020."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "It did."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can you say a little bit more about what that looked like when you\narrived and what part of that you contributed to?"
+    },
+    {
+      "type": "ts",
+      "text": "00:21:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Yeah, happy to. In fact, the reason why I was in the office two\ndays before Memorial Day that year was we were planning our first big\ncontingent of people returning to the office, and I had been there\nhelping set up some of those communication tools that week to try to\nmake that go as smoothly as possible."
+    },
+    {
+      "type": "p",
+      "text": "At the time, the firm had two tools that we were using for\ncommunication. One of them was your kind of standard video\nconferencing software that we used. We just used Jabber for that. We\nhad also in the early days of the pandemic, really figured out that\nthat was not the most optimal method of communication for people who\nwere used to just talking to each other on a row very, very quickly in\na sort of real time way. So from there, we had found a low latency\naudio tool. It was mainly used for computer gaming, and we decided to\nadopt that."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which by the way is both hilarious and makes a lot of sense. The idea\nthat you pick up tools from the gaming world to get that kind of low\nlatency audio, and not just low latency, but also you have some game\nwhere you’re coordinating, “We all have to do a siege, take the\ncastle,” and stuff. It’s like there’s lots of different patterns, we\nneed to communicate to each other, and need to be able to flexibly\nmove around between virtual spaces. And this is not what corporate\nvideo conferencing tools were designed for."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Definitely not."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But gaming tools were right there."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Indeed. And if you look at our headsets, you would see that we have\nadopted many things from the gaming world, in fact. So we had these\ntwo forms of communication. Both were really effective, but were\neffective in very different ways. And some people were using one, some\nwere using another. But ultimately, we needed everybody to talk to\neach other."
+    },
+    {
+      "type": "p",
+      "text": "And so when I joined, it was right around the time that we were\nbuilding these interesting tools that were sort of bringing them\ntogether, these two different systems and ways of talking."
+    },
+    {
+      "type": "p",
+      "text": "So for example, this low latency tool that we use did not have video,\nand we needed a way to enable video but still have the low latency\naudio. So we created a tool that we use internally to basically bridge\nthese two systems together so you could actually use one for audio,\nand use the other one for video and then mute the audio in the video\none."
+    },
+    {
+      "type": "p",
+      "text": "And it was very, very smart. And we had figured out a way that you\ncould just click a button in your calendar, and the right things would\nhappen. You’d be able to talk to people the way you wanted to, see\nthem the way you wanted to. And then if you needed to move to the\nother tool to speak to somebody, maybe because you didn’t care about\nthe low latency for whatever reason, you could do that easily too."
+    },
+    {
+      "type": "p",
+      "text": "And that was the world of tools that we had just decided to\nmake. Because as you say, emergent problems require these bespoke\nsolutions. And we decided that it required some investment and we\nwanted to do that. And so we built that."
+    },
+    {
+      "type": "p",
+      "text": "Going back to the office, you can imagine a world where, okay, we’re\ngoing back, maybe we don’t need these tools anymore. But we’re also\nentering a world that everybody is in right now where some people are\nworking from home some days a week, some people are back in the\noffice. And we wanted to bring the best of what we had developed\nworking from home back to the office."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And one of the things that we realized during the pandemic, which is,\nwhile it was, I think, clearly the case that separating everyone made\na bunch of things worse, there were some things it made better. And in\nparticular, we’ve always needed good cross-office\ncommunication. There’s trading around the world. We have offices in\nLondon, and New York, and Hong Kong. And having those tools, a way of\nbridging across the offices was really valuable. And so figuring out\nhow to preserve that seemed important too."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it was like a new superpower. It’s all of a sudden you can use\nit in whatever ways you wanted, both in the office and working from\nhome. And we wanted to enable that in a way that was very seamless and\nalso maybe a little bit more mobile, so you could just walk around and\nkind of use these tools wherever you were."
+    },
+    {
+      "type": "p",
+      "text": "So around the time that I came back to the office, we were building\nout those more lightweight versions of these communication tools. We\nhired an outside application developer to create an iOS app for us to\nuse, and we bought a whole bunch of devices to put in people’s hands\nso they could actually use these apps to talk to each other. And we\nput them on everybody’s desks, and we got a bunch of desk mics and\ngood video cameras and everything like that. Just to make sure that\nwhen you came back, you had everything that you had developed while\nyou were working from home, and you could switch between them with\nease. And so there was no difference in the environments that you\nhad. It was really interesting."
+    },
+    {
+      "type": "p",
+      "text": "And one of these projects that developed from the ground up, this was\ndefinitely an example of the people who were developing the tool and\nthe people using the tool were sitting in the same room together\ntalking to each other, and really trying to understand the best way to\ndo it, and the best way to give it to as many people as possible. And\nthat’s something that probably wouldn’t happen in a different\nenvironment where you might make the decision based on some other\nthing. Like, “Okay, we’re going back to the office. I know that I can\nget a discount on this huge package of licenses to use this standard\ncommunication tool.” And then that’s it. You’re done. You figured out\nyour solution. It just may not be what everybody really wants. But\nthis is much more of a, “We are building something that is\nemergent. We know that people are going to use it, and we know it’s\ngoing to enable them to work better in a more satisfying way.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:26:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing that strikes me about this story is the way in which it\nsteps away from the kinds of things that we’ve traditionally built at\nJane Street. Jane Street is not a product company. We’re not building\ncollaboration software for the outside world. We’re not a customer\nservice company of any kind. We’re mostly building our own trading\nsystems, and we provide services to the outside trading world, but\nmostly mediated through the world’s anonymous electronic markets. So\nyou don’t need a lot of good customer service for most of that."
+    },
+    {
+      "type": "p",
+      "text": "But that’s changed over time. In a lot of ways, we actually have a lot\nmore customer-facing work than we used to. But this thing in\nparticular feels in some ways much more like building a traditional\nconsumer product in that you have not tens of thousands of users, not\nmillions of users, but hundreds of users."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "At least over 1,000 potential users."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And you’re doing it in a context where there aren’t a\nlot of people used to building that kind of technology, and getting\nthe kind of feedback that you need to build that technology well. And\nI’m curious, what was the experience of helping the organization learn\nhow to do that kind of work?"
+    },
+    {
+      "type": "ts",
+      "text": "00:27:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Part of it was really, really helped by the time constraint. Having a\ndeadline is quite amazing."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s nothing like an emergency."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Nothing like an emergency. And knowing that hundreds of people are\nabout to come back to the office and this thing needs to be available\nfor them at that point was a really, really good forcing function."
+    },
+    {
+      "type": "p",
+      "text": "One of the things that we really needed to focus on was finding that\nminimum viable product of that tool that we can put in people’s hands\nto use, and make sure it’s as usable as possible in that form. And in\nsome cases, we needed to give something that was less optimal than\nwhat we ultimately wanted."
+    },
+    {
+      "type": "p",
+      "text": "The design, the UX was not ultimately the thing that we arrived at,\nbut it was something that could be used, and we decided to focus on\nthe things that mattered most, which was the performance of the\napplication, rather than the look and feel of it. And we had to make\nthose trade-offs."
+    },
+    {
+      "type": "p",
+      "text": "Part of that came from finding a set of users here that we could test\nthis out with too. The two months previous to coming back, we had\nlocated a series of users from multiple parts of the firm in tech, in\ntrading, and in other parts of the firm that could use it, and give us\nfeedback, and make sure that we were on the right track. And we did a\nlot of that. We would share designs with people. And we would find the\nright proxies as well whenever possible, because going out and talking\nto 1,000 people is still hard. But if you can talk to between 10 and\n50 people on a regular basis who have their finger on the pulse of\ntheir particular part of the firm, that feels pretty good. And we\ntried to do that."
+    },
+    {
+      "type": "p",
+      "text": "Again, this is something that I think is very much in line with how a\nlot of startups operate. They try to be as scrappy as possible, infer\nas much as they can from the data that they have. Maybe they just\ncan’t get access to anything more than that, and try to put early,\nsmall, simple things in people’s hands to use and get feedback and\niterate from there. And that’s something that we did, and it’s\nsomething that we worked on for the next year and a half afterwards to\ntry to get it right."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And keep on working today."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, in fact."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In fact, a new version of the Android app that dropped recently, that\ngot a ton better, I’m very excited about."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, we were really happy about that too. That was one of the main\nthings that we thought about as well was different sets of users,\ndifferent devices, making sure that there’s feature parity across all\nof that. And sometimes for the Android version, launching a version\nthat didn’t work as well as we wanted to, but we knew people would\nuse. These are all things that you kind of have to do if you’re trying\nto be scrappy, and work fast, and get things in people’s hands as\nquickly as you can."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This reminds me of one of the things I really love about the work here\nat Jane Street, is that it’s a mix of different modes of\noperation. Sometimes, we are operating in kind of ‘ordinary mode’ of\nsoftware that we’re building, technology we’re developing, where it\nneeds to be super reliable, and it has to work all the time, and\nmaking iterative changes on things. And sometimes, there are\nemergencies. And in the middle of those emergencies, the field is much\nmore like that of a startup. And there are sometimes big firmwide\nemergencies where everyone has to point in a new direction, because\nmaybe there’s a pandemic, or there was a flood, or there’s a brand new\nmarket opportunity that kind of drives the whole organization to one\ndirection. And sometimes the emergencies are sort of more focused of,\nthere’s a place where it’s like, “We need to do this thing.”"
+    },
+    {
+      "type": "p",
+      "text": "But the ability to shift gears and for the organization to stop and\nlook and say, “Right, we need to operate in this other way, and we\nhave to break out of our usual structures to move fast and make more\ncompromises.” I love both of those modes of operation. One of them\ngives you a certain kind of depth and technical excellence, and one of\nthem lets you just get new things done quickly. And it’s important to\nbe able to do both if you want the kind of technology in the\norganization to remain vibrant."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, very much so. And you would think maybe as an outsider, that a\nfirm of our size, that would be difficult to do. But it’s actually\nquite the opposite."
+    },
+    {
+      "type": "p",
+      "text": "I would say that there’s these two interesting currents that happen\nhere. On one hand, a lot of our decision making is consensus driven,\nand it’s finding the right conversations to have around a thing before\nyou move forward on something like that. And that can feel maybe a\nlittle slow at times. And not unnecessarily. Just, you need to make\nsure that all points of view are accounted for."
+    },
+    {
+      "type": "p",
+      "text": "Now you can add in the same environment very, very, very quickly,\ncoalesce around a particular problem or emergent opportunity, and move\nvery, very fast. And the fact that we can do both in our size is\nsomething that is not anything I’ve experienced elsewhere."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s maybe one marker of things that look different here. I’m\nkind of curious, a little more generally, what are the kinds of things\nthat you’ve noticed about Jane Street that seem different? And I’m\ninterested both in valuable things that seem worth preserving, and\nalso things that seem like maybe problems where we could be better,\nthings we’d like to fix."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Going back to the example that I just gave around\nconsensus-driven decision making, I think that there’s more of that\nhere than even… I was at a firm that had a total headcount of 25,\nand I think that we were much more structured and bureaucratic than\nJane Street at 2,000, essentially, people. The fact that that has been\npreserved in some way and continues is very unique and makes it very,\nvery different."
+    },
+    {
+      "type": "p",
+      "text": "The culture things that we talked about before where culture is built\nslowly but intentionally here, and that any new thing that’s brought\nin is thought about from a lot of different angles in terms of how\nwill it impact our culture, and how do we introduce things\nincrementally over time to take the best of those things, but still\npreserve what we have."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you have a concrete example in mind of that?"
+    },
+    {
+      "type": "ts",
+      "text": "00:32:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "As a PM, when I first joined, I was really thought of as an “other” in\nsome ways. There was a team of engineers, and then here I was the PM\nwho was a resource for that team of engineers. But I don’t know if\nthey necessarily viewed me as part of the team. I mean, technically I\nwas of course. But that has changed a lot to the point where I think\nmost PMs here are part of multidisciplinary teams that include\nengineering, include a PM, and in some cases are starting to include\nother roles like designers for example."
+    },
+    {
+      "type": "p",
+      "text": "And I think a good example, going back to those communication tools\nthat we built, there were developers internally who were working on\nand improving those applications. We had a third-party firm that was\nworking on part of it. I was helping to PM it. I was also writing\nrelease notes for it. And these are all different parts of the same\nthing that ultimately affect how people use something, how quickly\nit’s adopted."
+    },
+    {
+      "type": "p",
+      "text": "And that has grown a lot over time, this notion that the final product\nis the result of many people working on it from a lot of different\nvantage points. But that hasn’t happened overnight. Three years on,\nthis is where we are."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I do think adding PMs to an organization is a good example of a thing\nthat’s culturally a little complicated. Part of the reason is I think\nyou have all sorts of people who’ve been in other organizations where\nthey’ve encountered PMs and they thought, “Oh wow, the way that PMs\nwork in this organization is kind of terrible and I don’t like it.”\nAnd so people worry about bad things from other places getting imposed\non them."
+    },
+    {
+      "type": "p",
+      "text": "And also, the fact that it’s a place where when you’re working on\nsoftware, you’re not alienated from the users, you’re connected to the\nusers, and part of your job is to think about and understand the\nproblem in an end-to-end way. One of the things that people worried\nabout is us building a structure that disintermediates the developers\nand has PMs kind of sitting as a wall between one side and the other."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Oh, absolutely. I mean, the thing that you don’t want to have happen\nis somebody who comes in and basically adds multiple layers between\nyou and either the product that you’re working on, or the end result\nof that thing, or the user themselves. What you really want is\nsomebody who cares enough about this to optimize it so you are\nactually more focused on the thing that you’re building. You have more\ninsight into the user."
+    },
+    {
+      "type": "p",
+      "text": "And ultimately, if that person were to step away, all those things\nwould sort of remain. It’s lightweight enough that you are building\nthat process into the team’s culture. So we all buy into it. We all\nwant this, because it makes our lives better and our jobs easier."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And for the whole thing to work, you both have to not\ndisintermediate and cut out the people who are doing the software\ndevelopment."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But also, I think the people on the development side need to\nunderstand the thing that the PM brings to the process. And there’s a\nlot of insight and understanding that really matters both around\nforming an understanding of ‘what are the things that we should\nbuild,’ and also around how to organize that process and make sure\nthat things happen."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "And how to work together, ultimately. It’s funny, I just read an\narticle called How To Be A PM That Doesn’t Annoy Engineers. And then\nit linked out to another article that was How To Be An Engineer That\nDoesn’t Annoy PMs. And it was this flip point of view. And the funny\nthing is that in both cases, there was a paragraph that said, “Treat\neach other nicely.” That was kind of the point of the thing. And I\nthink ultimately, it’s about respect and learning how to work\ntogether, is a big part of it."
+    },
+    {
+      "type": "p",
+      "text": "Going back to the earlier question, just to get back to that narrative\nof some of the things that you think we don’t do maybe exceptionally\nwell, and I think one of them stems from something that I think is\nreally good here, but as we’ve grown gets harder to do, which is to\nsay ‘yes.’ We say yes a lot. We say yes to new opportunities. As\nyou’ve said many times, there could be a new strategy that is very,\nvery exciting that we want to move on very, very quickly. But it\ndoesn’t mean that we don’t have other things we’re also working on."
+    },
+    {
+      "type": "p",
+      "text": "And this is a thing that happens at Jane Street quite often, where you\nfind teams of people who are very, very willing to say yes to any\nrequest that comes to them because they want to help, because they\nwant to enable their colleagues to do a better job. And that’s good,\nbut it still comes at the expense of focus."
+    },
+    {
+      "type": "p",
+      "text": "So especially when that new big emergent thing comes up, for example,\nbuilding a new piece of software that’s going to enable communication\nbetween teams during a pandemic, if you are dropping 20 things on the\nground in order to do that, it’s going to be a lot harder to pick\nthose things up and know whether or not any of those are actually\nstill important than maybe five or six of those things that you are\nactually just really, really focused on and going a little deeper on."
+    },
+    {
+      "type": "p",
+      "text": "And sometimes it’s okay to say to somebody, “I understand. I want to\nhelp you. I’ll be able to help you in two weeks, a month. As long as\nthat is not going to be too disruptive to you, I will make that time\navailable. I just can’t right now.” I think that’s okay, because what\nyou’re really doing is you’re saying, “I want to devote as much of my\ntime as I can to the things I know are important right now.” And to do\nanything beyond that would be to dilute that. And so that’s something\nthat I think we’re learning, and we’re evolving, and we’re getting\nbetter at, but we still have a ways to go there. But it comes from a\ngood place."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I definitely agree there’s an anti-pattern that we sometimes get\ninto, in some sense, the organization is very ambitious. There’s a lot\nof things that we want to get done, and it’s very easy to almost\nreduce your anxiety by saying, “There’s a new thing to do. Great. We\nwill take that thing on and we will assign it to someone.” And you end\nup with people being assigned to work on many, many different things,\nand the amount of actual progress you get on any one of those things\ncan be really small."
+    },
+    {
+      "type": "p",
+      "text": "So this whole thing is almost like a scheduling problem. The worst\nthing you want to do, if you want to get the maximum value out of your\nwork, is timeshare between a million different projects. Because you\ndon’t get any value out of anything until it actually works, and is\nusable, and is in people’s hands. And if you do a lot of slice of\nthis, slice of that, then the timeline until anything gets done gets\npushed out."
+    },
+    {
+      "type": "p",
+      "text": "And I’ve seen lots of places where we’ve been able to improve things\nand make things better. We’ve been able to improve our workflows and\ndeliver things more efficiently by reorganizing the work such that\ninstead of having three people, each of them working on six things,\nhaving three people working together on one thing or two things, and\ntrying to get the focus to get things done."
+    },
+    {
+      "type": "p",
+      "text": "And you’re totally right that we’re an organization that wants to say\n‘yes.’ You got to also be able to say ‘no,’ because in the end, you\ngot to make choices. This is a trading organization. You got to make\ndecisions. You got to distinguish between the expected value of the\ndifferent choices, and pick the ones that maximize the value to the\norganization. Being nice is not a plan."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "It’s true. Being nice is not a plan. It’s a good baseline, but it’s\nnot a plan. Just trying to think about how to organize your day when\nyou have 20 things going on, it’s just like you leave for lunch, you\ncome back. What do you focus on? That’s a challenge."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So Jane Street’s a pretty different organization than lots of other\nplaces. The PM role is pretty different from what shows up in other\nplaces."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How do you think about the process of hiring people into this role?\nWe’ve done a lot of it. We have a lot more to do. To start with, what\ndo you look for in people who you think are going to be a good fit for\nJane Street?"
+    },
+    {
+      "type": "ts",
+      "text": "00:38:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think the thing that I said before is absolutely critical,\nwhich is somebody who’s willing to meet the team that they’re about to\njoin, where that team is, and is empathetic to them and their\nprocess. That I think probably trumps any other attribute for a PM\nthat we hire."
+    },
+    {
+      "type": "p",
+      "text": "I mean, we look for particular traits. Obviously, having done this\nwork in some manner before is important. Having domain knowledge is\nreally, really helpful, though not necessarily the determining\nfactor. Having a technical background sometimes helps. Not always, but\nsometimes it does."
+    },
+    {
+      "type": "p",
+      "text": "But really the thing that we look for more than anything is this\nkernel in somebody where they are able to really listen, really see\nhow a team operates, be able to fold into their process as much as\nthey can before they actually become an agent of change, and then\nfigure out how to be an agent of change in a way that is going to make\nthat team better rather than alienating them or feeling like something\ndisruptive is happening. These are intangible qualities and are\nsometimes hard to evaluate, but we really try in our process to find\npeople who have that."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, the evaluation story in general in interviewing is really\nhard. A lot of the interviewing that I’ve been involved with on the\nengineering side has been organized around trying to build little\nsimulations of what it’s like to work together. Let’s work through a\nproblem. Let’s talk through some of the designs on things you’ve built\nin the past. But generally, let’s try and do something that feels like\nsimulating work. And I don’t know really how to simulate work in a way\nthat pulls out how empathic are you, how much are you willing to dive\nin and do the anthropological work? How do we find the right kind of\nanthropologists?"
+    },
+    {
+      "type": "ts",
+      "text": "00:40:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "This is an excellent question, and something we’re refining a lot over\ntime. I mean, obviously when we’re evaluating candidates, we have to\ndo the baseline skill set discussion. “Have you done this before? Do\nyou know how to do this? Do you know what these words mean?” Things\nlike that."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And what are those baseline skills? What do you think of the core\ntechnical skills for this kind of work?"
+    },
+    {
+      "type": "ts",
+      "text": "00:40:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "The baseline skills are, have you been able to sit with a team, break\ndown their work in such a way that you know can give it visibility,\nyou can effectively track it over time, you can evaluate risk, you can\nfocus on delivery, you can take the lessons that you learn from that\nproject and apply it to new ones over time, you can think holistically\nabout a product, and that you know how to work with people with\ntotally different skill sets as you? I think those are the things that\nwe try to measure in somebody, in the basic skill set conversations."
+    },
+    {
+      "type": "p",
+      "text": "To get to your question about empathy, the other thing that we’re\ntrying to really understand is, how well do they listen? We do a lot\nof interviews where we will pose a problem to somebody, and we’re not\nnecessarily looking for a solution. We’re looking for, how do they dig\ninto that problem and find out how we as a team really want to work\ntogether, and figure out working towards a solution, not just coming\nup with a solution. So we do a lot of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That echoes a lot how we think about engineering interviews, because\nwe’re very much not playing algorithm bingo with people. We don’t want\nto know whether, “Do you know this particular technique?” We’re\nlooking for things like, how quickly can they understand the things\nthat we’re saying? How well can they explain back to us? How well do\nthey model their own sense of confidence? Do they know when they’re\nmaking mistakes and when they’re not making mistakes? How comfortable\nare they being wrong? I mean, there’s core technical skills you want\nto evaluate at the same time, but there’s a lot of human stuff that’s\nreally critical that we’re looking for in the context of these\ntechnical interviews."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I imagine that in both your technical interviews with engineers as\nwell as our interviews with PMs, one of the things we’re looking for\nis how quickly somebody updates when they get some new bit of\ninformation and pull it into their worldview in the way that they’re\ntalking about something. And that’s something we really look for. If\nwe put a spin on a problem and we see that somebody is sort of banging\ntheir head against the same wall that they have, that’s sort of a\nsignal to us that maybe they haven’t been listening as well."
+    },
+    {
+      "type": "p",
+      "text": "And that’s something that we really want. We want somebody who’s going\nto come here and really be able to listen, really be able to show\nempathy to the people that they work for, and dig into a problem in a\nway that feels collaborative and not prescriptive."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you think about writing as an important part of the skillset?"
+    },
+    {
+      "type": "ts",
+      "text": "00:42:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I do, from a few different perspectives. I think on one hand, this is\na generic answer, but good communication skills are critical for this\nwork. Being able to write effectively and to summarize the problem\nspace that you’re working in is really, really important."
+    },
+    {
+      "type": "p",
+      "text": "But I also think of writing as a way to figure out how you’re going to\nsolve a problem. And I think that somebody who is a good writer is\nsomebody who, as they are writing, they’re thinking about the way\nthey’re solving a particular problem. And somebody who at least can\nthink like that in the process of building a narrative around whatever\nproject they’re working on or the product they’re trying to build,\nthey are finding ways of refining that and making that better, and\nscoping it correctly. Having that be part of your process for actually\ndigging into the work that you’re doing I think is incredibly\nimportant. So yeah, I think writing is an important skill."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you and I have talked a bunch over time about this question of how\nmuch technical background is required for this kind of work, and how\nmuch it’s helpful and where it’s helpful."
+    },
+    {
+      "type": "p",
+      "text": "I’ve thought about this a lot from the perspective of the developer\ntools work, where from my perspective, it feels like having a\ntechnical understanding of the tools of software development seems to\nme relatively important in terms of building empathy for the\nusers. It’s much, much easier to engage with the products that are\nbeing made if you can directly go in and use them. If you have some\ndirect intuition for what it’s like to build software, one of the\nproblems that you run into when building software. For that particular\nrole, at least it nudges in the direction of someone whose background\nis more technical."
+    },
+    {
+      "type": "p",
+      "text": "But we have a lot of great PMs here who have very non-technical\nbackgrounds. We have some whose backgrounds veer more in the technical\ndirection. And I’m kind of curious how you think about that all, and\nhow do you think about finding the balance of D. E. Shaw getting a\nbunch of creative people with all sorts of interesting creative\nbackgrounds to think about problems in different ways and approach it\nfrom other directions, versus getting people who have the domain\nknowledge that helps them navigate the space?"
+    },
+    {
+      "type": "ts",
+      "text": "00:44:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s a very good question. One thing I will say is that Jane\nStreet is methodical in the way we onboard people in order to build\ndomain knowledge as much as we can. Even engineers who join Jane\nStreet sometimes arrive and require some period of time before they\nactually are comfortable in the particular code base that they’re\nworking in, for example, or on the particular product that they’re\nworking with."
+    },
+    {
+      "type": "p",
+      "text": "I think that’s true of PMs as well. Whether we have a technical\nbackground or not, that slow, methodical onboarding of learning\ncontext, and understanding the tools that people are using, and why\nthey’re building them, and what they’re for, and really digging into\nthat is important. You’re not expected to come in and know your\nproducts, and build something out on the second week of joining. That\ngoes a long way whether you have a technical background or not. Even\nif you don’t have a technical background, there are opportunities to\nlearn more and to get more technically proficient here."
+    },
+    {
+      "type": "p",
+      "text": "So for example, we have an OCaml bootcamp that every developer, every\nengineer goes through when they join. But anybody who works at Jane\nStreet can go through that bootcamp. I even went through it and I did\na self-guided version of the bootcamp, and that was an incredible\nopportunity for me to understand this very, very important part of our\nworld, and be able to work with engineers, and understand their\nworkflow more."
+    },
+    {
+      "type": "p",
+      "text": "Now, you’re right. I am not sitting in the code every day. I’m not\ncoding at all. But I can review somebody’s feature very, very easily,\nand I know the entire release cycle that they go through every single\ntime they put something out into the world. And that goes a long way\nwith – what I hope – is my existing well of empathy to be able to work\neffectively with people."
+    },
+    {
+      "type": "p",
+      "text": "Regardless of your background, I think empathy is a good core skill\nset. If you don’t have that, you could have the most technical\nbackground, and still be a PM, and not be as effective as somebody who\ndoes not have that background and is willing to do the work to try to\nunderstand how people build things and why, and really partner with\nthem."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely. Empathy’s a pretty important skill for software engineers\ntoo, I think."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "I think so."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I want to jump back to a different thing we were talking about\nbefore. So we were talking about various problems with how Jane Street\noperates, things that we want to improve on. One thing that has struck\nme as a real challenge for lots of teams is figuring out how to handle\ntechnical debt. It ties again back to your point about people really\nwanting to say ‘yes,’ and get things done, and accomplish new\nthings. But it can be really hard to balance the endless stream of\nrequests that come in. There’s a growing stack of work, and there’s\nkind of a tyranny of that stack where it can be hard to look away and\ndo anything else."
+    },
+    {
+      "type": "p",
+      "text": "And at the same time, if you are not thinking about what’s imperfect\nabout your platform, retiring technical debt, cleaning things up, just\nfiguring out fundamentally better abstractions and platforms that you\ncan build things on, then you’re just going to find more and more grit\nin the wheels, and things are going to slow down, and you’re not going\nto be able to achieve as much."
+    },
+    {
+      "type": "p",
+      "text": "So how can a PM help in balancing that and giving people the space to\nretire technical debt where it makes sense, and to make fundamental\nimprovements where it makes sense? And at the same time, not lose\nsight of the importance of delivering new functionality for the\nbusiness."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, this is a very good question. What you’re talking about is a few\nthings. One, there’s just a pure quality of life issue that you’re\ntalking about, which is if you’re ignoring tech debt just so you can\nfocus on future development, it’s going to be incrementally harder and\nharder to do that future development, and you’re going to get bogged\ndown more and more. The other part of it is, I think most PMs here are\nvery much champions of their teams and don’t want their teams to have\nthose quality of life issues. So one very concrete thing that we do is\nwe try to take the long view of what the team is working on and find\nareas where we can actually just focus on tech debt."
+    },
+    {
+      "type": "p",
+      "text": "So a good example is I work very closely with our Storage team. And\nevery six months or so, we do what’s called a toil reduction sprint\nwhere we take two weeks, and we just focus on ways to automate\noperational toil. And the team curates a backlog of small automations\nthat they can do. Maybe it’s creating a directory for your application\nin a way that is a lot more automated. It takes that away from the\nengineer who wants to go off and actually build new clusters, and\nthink about tooling, and things like that."
+    },
+    {
+      "type": "p",
+      "text": "So that’s something that we do. And in fact, we’ve done that on a\ngroup-wide level. In my group, Core Services, we’ve done a toil\nreduction sprint that dozens of people have contributed to."
+    },
+    {
+      "type": "p",
+      "text": "And in fact, the interesting thing is some of our most important tools\nhave come from those sprints, that people across the firm use now in\norder to build out applications, or request resources, or any of these\nthings that we thought of as taking a lot of time from our day, and\nbogging us down, and contributing to our tech debt, but actually are\nthings that are used across the firm."
+    },
+    {
+      "type": "p",
+      "text": "And it’s also really a great way to build camaraderie across your\nteam. You feel like you are accomplishing something for your\nteam. This is something that you complain about every day and you can\nget rid of it. And I think that that’s really, really important to\nbear in mind."
+    },
+    {
+      "type": "p",
+      "text": "And that’s something that I think a PM can be helpful with is knowing\nthat, “It’s been a while since we focused on this.” And maybe in this\nlittle break that we have between projects, we can just do that for a\nlittle while instead of spinning up a new feature."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I struggle a little bit with this framing of, there’s the things that\nyou’re delivering for the end customers, and then you want to reduce\ntech debt for the team? Because all the things you’re talking about\nreducing the manual labor that people need to do and the frustrating\nsteps that they have to do every time some new thing happens, some of\nit’s about making the team happier. And I should say, happiness is\nlike a first order concern. Right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:49:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You want the people here to be excited and happy to come in. People do\nbetter work, and do more work, and just stay at the organization for\nlonger if the work is fun. But I think a lot of those things are also\nvaluable for delivering to the rest of the organization. If it takes\nyou less time, if you’re doing less toil, there’s more work that\ndirectly serves other people’s needs, that you can then get done."
+    },
+    {
+      "type": "p",
+      "text": "One of the things I struggle with is, how do you convince people to\nthink about these kind of toil reduction steps as not just a thing\nwhere they’re taking care of themselves, but a thing where they are\noptimizing the machine of their own work, which is an important\nmachine. Their time’s really valuable, the ability to deliver\nthings. It’s not like, “You have some extra time so you can knock off\nan hour early and go get a beer.” You’re making things faster so you\ncan get more done."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Right, yeah. Just like anything else, it’s curation. You could for\nexample, spend those two weeks just doing a handful of issues that you\nlogged that you thought were particularly toilsome, and maybe you feel\ngood about it, and you accomplish something and a few things get wiped\noff your list."
+    },
+    {
+      "type": "p",
+      "text": "But ideally, if you’re doing it right, these are recurring themes that\nyou’re coming back to. You’re seeing patterns in the way that you work\nthat you know are particularly toilsome, or are taking additional\ntime, or are causing frustration for your end users. And that sort of\ncultivation of those themes over time ultimately result in something\nthat is very, very valuable you can get done. You could do 20 small\nlittle things that get rid of toil and in multiple places, but it’s\nprobably more effective if you’re focusing on two or three things that\nare really, really deep. You’re going in, you are providing some value\nto yourself, you’re providing some value to the people who use your\nproduct in some way. And you know that you’ve made the world more\nholistically better. You’ve also made your time more effective in the\nprocess. You think about things the same way, but it’s just the lens\nis slightly different."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So let me switch gears for a bit. There’s another project that you and\nI have worked together actually a bunch on recently. So let me give a\nlittle bit of background."
+    },
+    {
+      "type": "p",
+      "text": "So Jane Street has been doing machine learning of one form or another\nfor a long time. I started more than 20 years ago doing research into\nstatistical development of new trading strategies using all sorts of\ntechniques that are totally out of fashion now. And in that 20 years,\nwe’ve built out a whole Research team and lots of people doing\nresearch on individual trading desks."
+    },
+    {
+      "type": "p",
+      "text": "But in the last few years, there’s been a shift in the set of\ntechniques that we’re using, focusing much more on deep neural\nnets. And as a result, requiring us to really build out our\ninfrastructure around training and executing those neural nets. And so\nin particular, we’ve done a lot of work on GPUs."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You got involved in that because a lot of the work that enables that\ncomes out of Core Services, which is the team that you’re working\non. And I’ve been thinking about this from the point of view of a team\ncalled Research and Trading Tools, which is responsible for building\nthe kind of direct tools that support people in doing machine\nlearning. And really in the last six months, there’s been a real shift\nin our focus there where you said, “Actually, you know what? This is a\nreally big deal and we need to move a lot faster, and move in a lot of\ndifferent directions at once.”"
+    },
+    {
+      "type": "p",
+      "text": "So there’s doing more in terms of our on-prem footprint of buying a\nton more GPUs and figuring out the right kind of machines and setups\nfor installing them, using them efficiently internally. Figuring out\nhow to effectively leverage the large amount of cloud resources that\nare out there. Learning a lot about the details of how to do this all\nefficiently, and well, and at scale."
+    },
+    {
+      "type": "p",
+      "text": "You talked before about storage. Storage is actually a big\ndeal. Getting data into GPUs is really critical. GPUs are super data\nhungry. And so how do you set that all up effectively, is an important\nthing, and a thing that we didn’t know that much about. The scale of\nour GPU utilization was a lot smaller. And so we had a ton to learn,\nand we shifted the whole organization to have a lot of focus on\nit. It’s one of these emergencies where we really shifted gears and\nfocused in a different way on this one thing, and tried to get lots of\ndifferent parts of the organization at the same time to support this\none buildout of technical infrastructure. And I’m curious how you\nthink about enabling a shift like that from your role of a PM. What’s\nthe role of a PM in making that kind of change happen effectively?"
+    },
+    {
+      "type": "ts",
+      "text": "00:53:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s a great example. Coming from my vantage point, my team\nfirst encountered this by just knowing that there was somebody in the\nfirm who was just buying more GPUs, and we needed to put them in our\ndata centers. And that was maybe the first hint that this was a big\neffort."
+    },
+    {
+      "type": "p",
+      "text": "I even remember I had a conversation with a colleague, and at the end\nof our meeting he said, “Last thing, I think we’re going to need to\nthink a little bit more about GPUs.” And then he hung up the phone and\nthat was kind of that. And then literally the next week was deep dive\ninto thinking about GPUs and the infrastructure we needed to build\nthem. So part of that is trying to get better at doing that thing,\nwhich is instead of just being reactive and knowing that there’s\nsomebody at the firm who wants to buy a bunch of GPUs, and stick them\nin our data centers, think about why. And think about ultimately, what\nthey’re trying to accomplish."
+    },
+    {
+      "type": "p",
+      "text": "There were a number of conversations I remember you and I having with\nanother colleague, Liz, who sits on Core Services as well, where we’d\nsit in the room, and you would map things out on a whiteboard. And it\ncould have gone any number of ways in terms of what we focused on, in\nterms of whether we’re going to focus on on-premises resources, or in\nthe cloud, how we’re going to schedule jobs to run on these GPUs."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which concrete networking hardware we wanted to support it."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And this was multiple narratives happening all at once. And I\nthink the thing that we always left the room with was, we don’t want\nto be just at the receiving end of these requests. We want to be in\nthe room when the decisions are being made."
+    },
+    {
+      "type": "p",
+      "text": "One thing that PMs can do is to be an enabler of those conversations,\nand ideally to be a part of them. Because (a) it makes our job a lot\nmore clear in terms of what we’re trying to accomplish, (b) it makes\nthis kind of interaction more of a partnership, as opposed to a\ncustomer, and we’re at the store that is getting you the thing that\nyou want. We can scope it a lot better, we can help guide that. And so\nthat the teams that we are supporting don’t feel overwhelmed. They\nknow what’s coming. They know the full timeline of things as much as\nwe know them. They understand why they’re working on it."
+    },
+    {
+      "type": "p",
+      "text": "Knowing that there is a set of teams that are working on many, many\ndifferent things for the firm at the same time, and that this was an\nemergent problem that they could potentially look around and say no to\na few things in order to focus on that, that has a huge impact on\nmorale. It has a huge impact on knowing what you’re doing and why\nyou’re doing it. And I think it’s just ultimately helpful for getting\nthat project done completely, rather than many people feeling like\nmaybe their time is being taken advantage of or you have somebody\nwho’s asking many things of them all at once."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s really important when you ask people to say yes to\nsomething that you understand that it means they’re going to have to\nsay no to some other things."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, absolutely."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "To make that happen."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think from my perspective, I think one thing I saw you guys do from\nthe PM side is get people to explain themselves. And you were kind of\nmentioning before about how some of this is about making people feel\nlike they’re on the same page. It’s just enormously helpful to getting\nto a good answer."
+    },
+    {
+      "type": "p",
+      "text": "I think a common problem you run into is somebody wants something and\nthey say, “Here’s what I want, and I want to buy the following\nthing. I want to build the following software, the following precise\nfeature. Please go do this.” Nine times out of 10 when someone says,\n“I want precisely X,” and you try and build X for them and you give\nthem X, it’s like “Ah, they didn’t really want exactly X. They wanted\nsomething else.”"
+    },
+    {
+      "type": "p",
+      "text": "And getting people to explain not just what they think they want but\nwhat they’re trying to accomplish, and a kind of more fulsome\nunderstanding of, what are they actually confident, and not confident\nabout? What are the pieces that they know? What are the places where\nthey’re just guessing?—makes it way easier for a larger set of people\nto understand the request and to be able to suggest alternatives like,\n“You think you want the following thing, but that thing turns out to\nhave 98-week lead times. Should we really order it, or should we\nunderstand why you wanted that and see what else is possible to obtain\ninstead?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:56:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "If we’re being honest here, maybe you want a thing, but maybe you’ve\nnever used that thing before. And maybe you want to experiment with a\nsmaller version of that thing before you buy the big shiny version of\nit, so you can actually understand whether or not it’s the right\nthing. What you want today might not actually be what you want six\nmonths from now, and we can help you get there a little bit slower and\nincrementally, without making decisions that we have to ultimately\nunravel at some point down the road."
+    },
+    {
+      "type": "p",
+      "text": "A good example of this is, as you mentioned, the storage aspect of\nthis. We could go out and buy a big, very, very powerful, very\nperformance storage cluster specifically for GPU workloads. Or, we\ncould use the storage we have here on a smaller networked set of GPUs,\njust to make sure that you actually are getting the thing that you\nneed, and we’re not buying the thing that you think you want."
+    },
+    {
+      "type": "p",
+      "text": "So that’s an example of small experimentation, asking the right\nquestions in those meetings when you’re actually trying to make those\ndecisions to understand what of the many things we’re trying to do\nreally is the most important at any given moment, so that we’re not\nthinking that everything should be dialed up at 100%, and that we are\nbuilding slowly and smartly so we can ultimately get the thing that we\nwant."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I guess part of the point here is you’re not just\noptimizing for the end result, because you don’t know what the right\nend result is. You’re optimizing for the learning rate. And in part,\nwe don’t know what the end result is because ‘Oh, maybe we’re not\nfamiliar with this hardware platform. We need to experiment with it\nsome.’ In part, it’s because we don’t even know what models we’re\nbuilding. The rate at which the approaches we’re using on the machine\nlearning side is changing is super fast. And so there’s a kind of\niterative process where you build some new infrastructure, you try it\nout, you learn some things, you get some new ideas about what you\nneed, and you keep on iterating on that."
+    },
+    {
+      "type": "p",
+      "text": "And one thing that I think has been uncomfortable, but in the end I\nfeel like people have come around to, is understanding that we’re\ndoing this in a way that’s guaranteed to make lots of mistakes. In\nsome sense, I feel like the teams here that are responsible for the\ncore foundation are used to building things and delivering them a\nsteel box with bolts all around, that you could drop off the side of\nthe building, it would keep on working."
+    },
+    {
+      "type": "p",
+      "text": "The Networking team’s a great example. There’s this weird thing of,\nthe network is foundational to everything, and nobody understands\nit. The only time you go to talk to the Networking team is if\nsomething fails and you think, “I don’t know what it is, so it’s\nprobably the network.” I feel like the Networking team constantly has\npeople wandering back saying, “Did something go wrong with the\nnetwork?” And I’m pretty sure it’s you buddy. Most of the time, it’s\nnot the network. I mean sometimes it is, but it’s usually not the\nnetwork."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "They take a lot of pride in it."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. But they’re very used to building the foundations for\nthe organization, and building things at a very high level of\nquality. But there’s a real tension there. If you’re going to build\neverything at a very high level of quality, well, you can’t do it as\nfast. You need to take more time to really get things right and really\nmachine things down until they work just the way you expect them to."
+    },
+    {
+      "type": "p",
+      "text": "And in a project like this where there’s a lot of uncertainty, and\nwe’re moving fast, I feel like part of the thing that we had to do was\nbe explicit about the fact that we were making bets. We’re a trading\nfirm, we should be able to make bets. And simultaneously giving people\nthe freedom to fail, to try things out that they aren’t super\nconfident are going to work, to deliver things that aren’t quite\nready, and understand that the people on the other side aren’t going\nto try them for three minutes, say, “This is great,” and then\nimmediately demand that they be ready. Right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:59:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Right. Or even if when they’re being tried out, that maybe if they\nfail, that doesn’t mean that the Networking team needs to drop\neverything and take care of that problem immediately, because you know\nyou’re in a place of experimentation. And so to your point, it’s okay\nto fail from time to time, and it’s okay for things to not work\nperfectly from time to time."
+    },
+    {
+      "type": "p",
+      "text": "But that requires us to all be in a room and be comfortable with\ndiscomfort to a certain degree. And I think that takes a lot of trust,\nand also like anything takes some amount of curation. Because absent\nof that, I think you would have somebody ask for something, somebody\nwould go off and try to build it in the way that they know how to\nbuild it, with the right kind of monitoring support and everything\nlike that, that they wanted. And maybe that would take a lot longer\nfor them to build, and maybe when you get it, it wasn’t the thing that\nyou actually wanted."
+    },
+    {
+      "type": "p",
+      "text": "Being able to stay in that discomfort to a certain degree, and be\nthere together and cohesively as a group of many people trying to\naccomplish the same thing at the same time, I think that’s something\nthat PMs can be really helpful with."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "A little more concretely, as a PM, how do you help with that? What are\nthe things that you’re thinking about to try and drive us to think\nabout the problems in the right way?"
+    },
+    {
+      "type": "ts",
+      "text": "01:00:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Well, for one thing, we all have different domains that we all care\nabout. So somebody in Networking really, really cares about the\nparticular network design that they’ve implemented in all their data\ncenters. And it is that very, very stable thing. And maybe they’re\nthinking about a project from that perspective, and maybe you as a\nresearcher are just thinking about what models you can actually run on\nthe GPUs that we bought."
+    },
+    {
+      "type": "p",
+      "text": "Now, being in the room and having a shared understanding of what the\nend state is, and that we’re all responsible for it, and that the\ndecisions that we make can’t be absent of each other, is very\nimportant. PMs can help create that framework where everybody\nunderstands that."
+    },
+    {
+      "type": "p",
+      "text": "And I think without that, it’s harder to get there. You have your own\nset of concerns that are all very, very important. But sometimes you\nneed somebody to say, “Okay, we can put those aside for now. We are a\nteam of people who all care about this one thing. We might have\ndifferent concerns. We might have very different disciplines, but\nwe’re all going to the same place. And we need to understand each\nother and not leave the room with any assumptions about what we’re\nactually building and why.” Driving towards that, I think, is very\nimportant. Having somebody who really cares about that, who really\nwants that more than anything, is very important. I think a PM does\nthat."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Awesome. Well, that seems like an excellent place to wrap it\nup. Thanks so much for taking the time."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Peter"
+    },
+    {
+      "type": "p",
+      "text": "Thanks for having me."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right. Cheers."
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with links to\nsome of the things that we discussed at signalsandthreads.com. Thanks\nfor joining us, and see you next time."
+    }
+  ]
+}

@@ -1,0 +1,831 @@
+{
+  "slug": "performance-engineering-on-hard-mode",
+  "source": "google-translate",
+  "paragraphs": [
+    {
+      "idx": 0,
+      "en": "Andrew Hunter likes making code go fast. Before joining Jane Street,\nhe worked for seven years at Google on multithreaded architecture, and\nwas a tech lead for tcmalloc, Google’s world-class scalable malloc\nimplementation. In this episode, Andrew and Ron discuss how,\nparadoxically, in some ways it’s easier to optimize systems at\nhyperscale because of the impact that even miniscule changes can\nhave. Finding performance wins in trading systems, which operate at a\nsmaller scale, but which have bursty, low-latency workloads, is often\ntrickier. Andrew explains how he approaches the problem, including his\nfavorite profiling techniques and visualization tools; the unique\nchallenges of optimizing OCaml versus C++; and when you should and\nshouldn’t care about nanoseconds. They also touch on the joys of\nmusical theater, and how to pass an interview when you’re\nsleep-deprived.",
+      "zh": "Andrew Hunter 喜欢让代码运行得更快。在加入简街之前，\n他在 Google 从事多线程架构工作七年，并且\n是 tcmalloc 的技术主管，tcmalloc 是 Google 的世界级可扩展 malloc\n实施。在这一集中，安德鲁和罗恩讨论如何，\n矛盾的是，在某些方面，优化系统更容易\n超大规模，因为即使是微小的变化也会产生影响\n有。在交易系统中寻找性能优势，该系统的运行速度是\n规模较小，但具有突发性、低延迟的工作负载，通常\n更棘手。安德鲁解释了他如何解决这个问题，包括他的\n最喜欢的分析技术和可视化工具；独特的\n优化 OCaml 与 C++ 的挑战；当你应该和\n不应该关心纳秒。他们也触及到了快乐\n音乐剧，以及如何通过面试\n睡眠不足。"
+    },
+    {
+      "idx": 1,
+      "en": "Andrew Hunter likes making code go fast. Before joining Jane Street,\nhe worked for seven years at Google on multithreaded architecture, and\nwas a tech lead for tcmalloc, Google’s world-class scalable malloc\nimplementation. In this episode, Andrew and Ron discuss how,\nparadoxically, in some ways it’s easier to optimize systems at\nhyperscale because of the impact that even miniscule changes can\nhave. Finding performance wins in trading systems, which operate at a\nsmaller scale, but which have bursty, low-latency workloads, is often\ntrickier. Andrew explains how he approaches the problem, including his\nfavorite profiling techniques and visualization tools; the unique\nchallenges of optimizing OCaml versus C++; and when you should and\nshouldn’t care about nanoseconds. They also touch on the joys of\nmusical theater, and how to pass an interview when you’re\nsleep-deprived.",
+      "zh": "Andrew Hunter 喜欢让代码运行得更快。在加入简街之前，\n他在 Google 从事多线程架构工作七年，并且\n是 tcmalloc 的技术主管，tcmalloc 是 Google 的世界级可扩展 malloc\n实施。在这一集中，安德鲁和罗恩讨论如何，\n矛盾的是，在某些方面，优化系统更容易\n超大规模，因为即使是微小的变化也会产生影响\n有。在交易系统中寻找性能优势，该系统的运行速度是\n规模较小，但具有突发性、低延迟的工作负载，通常\n更棘手。安德鲁解释了他如何解决这个问题，包括他的\n最喜欢的分析技术和可视化工具；独特的\n优化 OCaml 与 C++ 的挑战；当你应该和\n不应该关心纳秒。他们也触及到了快乐\n音乐剧，以及如何通过面试\n睡眠不足。"
+    },
+    {
+      "idx": 2,
+      "en": "Some links to topics that came up in the discussion:",
+      "zh": "讨论中出现的一些主题链接："
+    },
+    {
+      "idx": 3,
+      "en": "Welcome to Signals and Threads in-depth conversations about every\nlayer of the tech stack from Jane Street. I’m Ron Minsky. It’s my\npleasure to introduce Andrew Hunter. Andrew is a software engineer\nwho’s worked here for the last five years and he’s currently working\non our market data team. Andrew is, by inclination and background, an\nexpert performance engineer and performance is really what we’re going\nto talk about today. Andrew, just to start off, can you tell me a\nlittle bit about how you got into performance engineering and a little\nbit more kind of about what your path was to getting into software\nengineering in general?",
+      "zh": "欢迎来到信号和线程关于每个信号和线程的深入对话\nJane Street 的技术堆栈层。我是罗恩·明斯基。这是我的\n很高兴向大家介绍安德鲁·亨特。安德鲁是一名软件工程师\n他过去五年在这里工作，目前正在工作\n我们的市场数据团队。就倾向和背景而言，安德鲁是一位\n专家性能工程师和性能才是我们真正要做的\n今天要讲的。安德鲁，首先，你能告诉我一个吗？\n一些关于你如何进入性能工程的信息\n更详细地说明您进入软件行业的道路是什么\n工程一般？"
+    },
+    {
+      "idx": 4,
+      "en": "I can, but I’m just going to be lying to you because the problem is I\ncan give you all sorts of reasons why I do this, but the real reason\nis just I find it really addictive. It’s just hard for me not to get\nexcited about how systems work. There’s all sorts of reasons why it’s\ncool or complicated or fun, but I just get this electric high when I\nmake something faster. I guess it’s not a path, right?",
+      "zh": "我可以，但我只是要对你撒谎，因为问题是我\n可以给你各种各样的理由为什么我这样做，但真正的原因\n只是我发现它真的很容易上瘾。我很难不得到\n对系统的工作原理感到兴奋。有各种各样的原因\n酷或复杂或有趣，但当我\n使某事更快。我想这不是一条路，对吗？"
+    },
+    {
+      "idx": 5,
+      "en": "Right. So I kind of know why you like it, but I’m curious how you got\nhere. One thing that I think of as characteristic of performance\nengineering and actually lots of different software engineering\ndisciplines is part of how you get really good at them is getting\nreally interested in stuff that’s objectively kind of boring. You get\nsuper psyched about the details of how CPUs work and interconnects and\ncompilers and just all sorts of these little pieces and there’s just a\nlot of knowledge you need to build up over time to be really good at\nit. And I’m always interested of what were people’s paths where they\nbuilt up that kind of knowledge and understanding and background that\nlets them really dive in deeply in the way that’s necessary.",
+      "zh": "正确的。所以我有点知道你为什么喜欢它，但我很好奇你是怎么得到的\n在这里。我认为表现特征的一件事\n工程以及实际上许多不同的软件工程\n纪律是你如何真正擅长它们的一部分\n对客观上有点无聊的东西真的很感兴趣。你得到\n对 CPU 工作和互连的细节非常感兴趣\n编译器和各种这些小部件，只有一个\n你需要随着时间的推移积累很多知识才能真正擅长\n它。我总是对人们的道路感兴趣\n建立了这样的知识、理解和背景\n让他们以必要的方式真正深入研究。"
+    },
+    {
+      "idx": 6,
+      "en": "Well, I think that’s exactly right. I just have to care deeply about\nall the parts of the board. And the way I got there: here was a couple\nof interesting times when in college, for example, I was taking an\noperating systems class and I realized that the best way to study this\nand to learn it well was to just go into the details of the code. And\nit’s like whenever we’re talking about a topic about virtual memory or\nwhatever, I would go look at Linux’s virtual memory implementation,\nI’d see what it looked like and I’d have more questions. And I just\nkept asking these questions and I never said, well, that’s out of\nscope. And I just kept finding these things interesting. And from then\nI just realized that like you say, all of these little details matter\nand if you keep caring about them and you just don’t accept no for an\nanswer, you get pushed towards the places where people really do care\nabout this, which often means performance. And then once you start\ndoing performance to get that little high that I’ve talked about.",
+      "zh": "嗯，我认为这是完全正确的。我只需要深深地关心\n董事会的所有部分。我到达那里的方式：这里有一对\n例如，在大学时，我正在参加一个有趣的时光\n操作系统课，我意识到学习这个的最好方法\n要想学好它，只需深入研究代码的细节即可。并且\n就像每当我们谈论有关虚拟内存或\n不管怎样，我会去看看 Linux 的虚拟内存实现，\n我会看看它是什么样子，并且会有更多问题。而我只是\n一直问这些问题，但我从来没有说过，好吧，那是出于\n范围。我一直觉得这些事情很有趣。并且从那时起\n我刚刚意识到就像你说的，所有这些小细节都很重要\n如果你继续关心他们并且你只是不接受拒绝\n回答，你会被推向人们真正关心的地方\n关于这一点，这通常意味着性能。然后一旦你开始\n做表演是为了达到我所说的那种小高潮。"
+    },
+    {
+      "idx": 7,
+      "en": "So in what context did you first experience working in a kind of\nserious way on performance sensitive systems?",
+      "zh": "那么您是在什么背景下第一次体验到在某种类型的工作中工作的呢？\n对性能敏感的系统采取严肃的方式？"
+    },
+    {
+      "idx": 8,
+      "en": "Grad school at the very least, where one of the projects I worked on\nwas this big graph traversal system that was trying to replicate some\nreally weird complicated hardware and do it in software but maintain\nreasonable levels of performance. And we just had to think really\ncarefully about, okay, how wide is this memory controller? How many\naccesses can it do in parallel? What happens when one of them stalls?\nWait, what does this even mean to have parallel memory accesses? How\nmany cycles do these things take? Because we were roughly trying to\nreplicate this really complicated chip in software, which meant you\nhad to know exactly how would the original hardware have worked and\nhow did all the parts of it that you can replicate in software work\nand you end up looking up all these bizarre details and you learn so\nmuch about it.",
+      "zh": "至少是研究生院，我在那里做过一个项目\n这个大图遍历系统试图复制一些\n非常奇怪的复杂硬件并用软件完成但维护\n合理的绩效水平。我们只需要认真思考\n仔细想想，好吧，这个内存控制器有多宽？有多少\n它可以并行访问吗？当其中一个停转时会发生什么？\n等等，这意味着并行内存访问是什么意思？如何\n这些东西需要多少个周期？因为我们粗略地试图\n在软件中复制这个非常复杂的芯片，这意味着你\n必须确切地知道原始硬件是如何工作的并且\n您可以在软件中复制的所有部分是如何工作的\n你最终查找了所有这些奇怪的细节并且你了解到\n关于它的很多。"
+    },
+    {
+      "idx": 9,
+      "en": "Is that work that you went in thinking you would spend your time\nthinking about fancy math-y graph algorithms and ended up spending\nmost of your time thinking about gritty operating system and hardware\ndetails?",
+      "zh": "是你以为你会花时间去做的工作吗\n考虑花哨的数学图形算法并最终花费\n你大部分时间都在思考操作系统和硬件\n详细信息？"
+    },
+    {
+      "idx": 10,
+      "en": "A little bit. I definitely thought there was going to be a little bit\nmore algorithmic content, but I really rapidly realized that the hard\nand interesting part here was in fact just, oh God, how do you keep\nthis much stuff in flight? And the hardware has actually gotten way\nbetter or more aggressive about these sort of things over time. So I’m\nglad I learned that.",
+      "zh": "一点点。我确实认为会有一点\n更多的算法内容，但我很快意识到很难\n这里有趣的部分实际上只是，哦上帝，你如何保持\n这么多东西在飞行？硬件实际上已经取得了进展\n随着时间的推移，对这类事情会变得更好或更积极。所以我是\n很高兴我了解到这一点。"
+    },
+    {
+      "idx": 11,
+      "en": "So how did that work in grad school end up leading to you working\nprofessionally in this area?",
+      "zh": "那么，在研究生院的工作最终是如何导致你工作的呢？\n在这个领域专业吗？"
+    },
+    {
+      "idx": 12,
+      "en": "Well, I was interning at Google at the time for the summers and I kind\nof realized that I could do the same large-scale systems research that\nI was doing in grad school in a place that just had a lot more scale\nand a lot more usage of it. A lot of grad school research is done for\nthe point of doing the research, whereas the proper industrial\nresearch, the coolest part is it just shows up in production and\nsuddenly people care about it.",
+      "zh": "嗯，当时我正在谷歌暑期实习，我很高兴\n意识到我可以做同样的大规模系统研究\n我在一个规模更大的地方读研究生\n以及它的更多用途。很多研究生院的研究都是为了\n进行研究的目的，而适当的工业\n研究，最酷的部分是它刚刚出现在生产中\n突然间人们开始关心它了。"
+    },
+    {
+      "idx": 13,
+      "en": "And this is a challenge for lots of different kinds of academic work\nwhere there’s some part of it that really only connects and makes\nsense at certain scales and a lot of those scales are just only\navailable inside of these very large organizations that are building\nenormous systems.",
+      "zh": "这对许多不同类型的学术工作来说都是一个挑战\n它的某些部分实际上只是连接并使得\n在某些尺度上是有意义的，而其中很多尺度只是\n在这些正在建设的非常大的组织内部可用\n庞大的系统。"
+    },
+    {
+      "idx": 14,
+      "en": "Well, that’s true, but I think even more than just the scale issue,\nit’s the issue of what happens when this actually meets real data. And\nI think this isn’t just true about performance. One thing I will tell,\nfor example, the most common question I get towards the end of an\ninternship is like what’s going to be different when I come back as a\nfull-timer? And what I tell them is that I was shocked the first time\nthat I had a professional project in my first real job and I finished\nit and we submitted it to the code base and it rolled into production\nand everyone was using it. And then a couple weeks later I got an IM\nfrom somebody in some other group saying, Hey, we’re using your system\nand it’s behaving weirdly in this way. What do you think about it? And\nmy mental reaction to this was like, “What do you mean? I turned it\nin, I got an A!” You have to actually keep this going until you can\nhand it off to someone else or quit, right? Which sounds depressing,\nbut at the same time means you actually see what it does in reality\nand under fire and then you learn how to make it even better and you\nget to do something even more complicated and just this virtuous cycle\nof optimizations that you get, or features, depending what you’re\nworking on. Right?",
+      "zh": "嗯，确实如此，但我认为不仅仅是规模问题，\n问题是当它实际遇到真实数据时会发生什么。并且\n我认为这不仅仅适用于性能。我要告诉你一件事，\n例如，我在课程结束时遇到的最常见问题\n实习就像当我回来时会有什么不同\n全职？我告诉他们的是我第一次感到震惊\n我在第一份真正的工作中有一个专业项目并且我完成了\n我们将其提交到代码库并投入生产\n每个人都在使用它。几周后我收到了一条即时消息\n来自其他群组中的某个人说，嘿，我们正在使用您的系统\n它的行为很奇怪。你对此有何看法？并且\n我对此的心理反应就像是，“你是什么意思？我把它\n，我得了A！”你必须真正坚持下去，直到你可以\n把它交给别人或者退出，对吗？听起来令人沮丧，\n但同时意味着你真正看到了它在现实中的作用\n在火力之下，然后你学会如何让它变得更好，然后你\n去做一些更复杂的事情，就是这个良性循环\n您获得的优化或功能，取决于您的身份\n正在努力。正确的？"
+    },
+    {
+      "idx": 15,
+      "en": "Yeah. This always strikes me when I go off and give lectures at\nvarious universities of, it’s really hard to teach software\nengineering in an academic context because there is a weird thing that\nall of the work writing software in a university context, this weird\nkind of performance art where you’re like, you create this piece of\nsoftware and then it gets created and poof, it vanishes like a puff of\nsmoke and this is just not what the real world is like. Alright, so\nlet’s get back to performance engineering. One thing I’m curious about\nis you have a bunch of experience at Google thinking about the kind of\nperformance engineering problems you ran into there and also thinking\nabout it here in a number of different spots, and I’m curious how\nthose two different problems feel different to you.",
+      "zh": "是的。当我去演讲时，这总是让我印象深刻。\n各个大学，教软件真的很难\n在学术背景下进行工程，因为有一件奇怪的事情\n所有在大学环境下编写软件的工作，这很奇怪\n一种你喜欢的表演艺术，你创造了这件作品\n软件然后它被创建然后噗的一声，它像一股烟一样消失了\n烟雾，这并不是现实世界的样子。好吧，那么\n让我们回到性能工程。我很好奇的一件事\n你在谷歌有丰富的经验吗？\n您在那里遇到的性能工程问题以及思考\n在很多不同的地方都有关于它的内容，我很好奇如何\n这两个不同的问题对你来说感觉不同。"
+    },
+    {
+      "idx": 16,
+      "en": "The difference between performance engineering at Google and\nperformance engineering at Jane Street to me is fundamentally one of\nleverage. The easy thing about performance engineering at a place like\nGoogle or any of the other hyperscalers is that they operate with so\nmany machines consuming so many cycles, doing so many things that any\noptimization that moves the needle on how much CPU you consume is\nreally valuable, which means that it’s very easy to find good targets,\nit’s very easy to find things that are worth doing and it may be very\ndifficult to fix those problems. You have to think really carefully\nand you have to understand these systems, but the return on that\ninvestment means you can really support a lot of people who just sit\nthere doing nothing else other than how do I make memory allocation\nfaster? How do I make serialization faster? What can I do in my\ncompiler to just optimize code generation and compression and all\nthese things?",
+      "zh": "Google 和 Google 的性能工程之间的区别\n对我来说，简街的性能工程从根本上来说是\n杠杆。在像这样的地方，性能工程很容易\n谷歌或任何其他超大规模企业的运作方式是这样的\n许多机器消耗如此多的周期，做如此多的事情，任何人都无法做到这一点\n优化您消耗的 CPU 数量\n非常有价值，这意味着很容易找到好的目标，\n找到值得做的事情很容易，而且可能非常\n很难解决这些问题。你必须认真思考\n你必须了解这些系统，但其回报\n投资意味着你可以真正支持很多坐着的人\n除了如何分配内存之外什么也不做\n更快？如何使序列化更快？我可以在我的\n编译器仅优化代码生成和压缩等\n这些东西？"
+    },
+    {
+      "idx": 17,
+      "en": "There’s actually a really interesting paper. It’s called Profiling a\nWarehouse Scale Computer, which looked at, okay, if you just look at\nall the things that a data center does for one of these hyperscalers,\nthe business logic is really, really, really diverse. Some things are\nserving videos of cats and some things are doing searches or social\nnetworking or whatever. And all of this does different stuff, but it\nall uses the same infrastructure. And it turns out that the\ninfrastructure is a huge percentage. They coined the term that I like\na lot, the data center tax and the 10, 15, 20% of your cycles that you\nspend on low level infrastructure that everything uses. And it’s not\neven that that infrastructure is bad or slow, it’s just that’s the\ncommon link that scales. Whereas fixing business logic kind of\ndoesn’t.",
+      "zh": "实际上有一篇非常有趣的论文。这就是所谓的分析\n仓库秤计算机，看看，好吧，如果你看看\n数据中心为这些超大规模企业之一所做的所有事情，\n业务逻辑真的非常非常多样化。有些事情是\n提供猫的视频，有些东西正在进行搜索或社交\n网络或其他什么。所有这些都做了不同的事情，但它\n全部使用相同的基础设施。事实证明\n基础设施占很大比例。他们创造了我喜欢的术语\n很多，数据中心税和您的周期的 10%、15%、20%\n花在一切都使用的低级基础设施上。事实并非如此\n即使基础设施很糟糕或很慢，但这就是\n可扩展的通用链接。而修复业务逻辑\n没有。"
+    },
+    {
+      "idx": 18,
+      "en": "Right? It takes individual engineer effort on each individual piece of\nbusiness logic, but everyone’s using the same compiler or one of a\nsmall set of compilers. Everyone’s using just a small set of operating\nsystems. And so you grab those lower levels of the infrastructure and\nyou optimize them and you can just improve everyone.",
+      "zh": "正确的？每个单独的部分都需要单独的工程师努力\n业务逻辑，但每个人都使用相同的编译器或其中之一\n一小组编译器。每个人都只使用一小部分操作\n系统。所以你抓住那些较低级别的基础设施\n你优化它们，你就可以提高每个人。"
+    },
+    {
+      "idx": 19,
+      "en": "Yeah, that’s exactly right. And you can improve it enough by just\nmoving things by half percent. Making logging cheaper just pays for\nitself way, way more easily than it does if you’re not operating at\nthat level of scale, which means that you get this nice cycle where\nyou hit one hotspot and you point another profile profiler at the\nsystem as a whole, you see the next hotspot and you just get better\nand better at this just by doing the really obvious thing that sits in\nfront of your face. So I like to think of this as easy mode, not\nbecause the optimizations are easy or because the work is easy or\nbecause it doesn’t take skill, but just because it’s really clear what\nto do.",
+      "zh": "是的，完全正确。你可以通过以下方式改进它：\n将东西移动一半。让伐木变得更便宜只是付出代价\n本身的方式，比你不操作时更容易\n那种规模水平，这意味着你会得到这个很好的循环\n您点击一个热点，然后将另一个配置文件分析器指向\n系统作为一个整体，你会看到下一个热点，然后你就会变得更好\n并通过做其中真正明显的事情来更好地做到这一点\n在你的面前。所以我喜欢将其视为简单模式，而不是\n因为优化很容易或者因为工作很容易或者\n因为它不需要技巧，但只是因为它真的很清楚\n去做。"
+    },
+    {
+      "idx": 20,
+      "en": "It is a target rich environment.",
+      "zh": "这是一个目标丰富的环境。"
+    },
+    {
+      "idx": 21,
+      "en": "It’s a really target rich environment. There’s money falling from the\nsky if you make something faster.",
+      "zh": "这是一个真正目标丰富的环境。有钱从上面掉下来\n如果你做得更快的话，天空。"
+    },
+    {
+      "idx": 22,
+      "en": "Right? In some sense, this has to do with cost structure. This works\nbest in an organization where a large amount of the costs are going to\nthe actual physical hardware that you’re deploying.",
+      "zh": "正确的？从某种意义上说，这与成本结构有关。这有效\n最适合需要承担大量成本的组织\n您正在部署的实际物理硬件。"
+    },
+    {
+      "idx": 23,
+      "en": "Right. When we say that the business logic doesn’t matter, what it\nreally means is we just don’t really care what you’re working on. You\ncan be serving videos of cats, you can be doing mail, you can do\nwhatever you want. We don’t really have to care. As long as you make\nsomething that everyone uses a little bit faster, it’ll pay for itself\nbecause the only thing you care about is the number of CPUs you buy,\nthe amount of power you buy and the amount of user queries you\nservice. That’s the only three things that matter.",
+      "zh": "正确的。当我们说业务逻辑不重要时，它是什么\n真正的意思是我们并不真正关心你在做什么。你\n可以提供猫的视频，你可以做邮件，你可以做\n无论你想要什么。我们真的不必关心。只要你做到\n每个人都使用得更快一点的东西，它会收回成本\n因为你唯一关心的是你购买的CPU数量，\n您购买的电量以及您查询的用户数量\n服务。这是唯一重要的三件事。"
+    },
+    {
+      "idx": 24,
+      "en": "It’s not that the business logic doesn’t matter, and in fact,\noptimizing the business logic might be the single most impactful thing\nyou can do to improve a given application.",
+      "zh": "这并不是说业务逻辑不重要，事实上，\n优化业务逻辑可能是最有影响力的事情\n您可以改进给定的应用程序。"
+    },
+    {
+      "idx": 25,
+      "en": "But it’s harder.",
+      "zh": "但这更难。"
+    },
+    {
+      "idx": 26,
+      "en": "But the business logic doesn’t matter to you because you are working\nin the bowels of the ship fixing the things that affect everyone, and\nit’s kind of impossible for you to at scale improve the business\nlogic. So you are focused on improving the things you can improve.",
+      "zh": "但业务逻辑对你来说并不重要，因为你正在工作\n在船的内部修复影响每个人的事情，以及\n你不可能大规模地改善业务\n逻辑。所以你专注于改进你可以改进的事情。"
+    },
+    {
+      "idx": 27,
+      "en": "That’s exactly right.",
+      "zh": "完全正确。"
+    },
+    {
+      "idx": 28,
+      "en": "Great. So how’s it different here?",
+      "zh": "伟大的。那么这里有什么不同呢？"
+    },
+    {
+      "idx": 29,
+      "en": "We don’t have that scale. The amount of total compute that we spend is\na fair bit of money, but it’s not enough that making things 1% faster\nmatters, which means that the average CPU cycle we spend is just not\nvery important. It’s kind of worthless. If you make logging faster,\neveryone’s kind of gonna shrug and say like, okay, but that doesn’t\nchange the dial. In fact, a surprising thing is that most of our\nsystems spend most of their CPU time intentionally doing nothing. It\nis just table stakes in a trading environment that you do user space\npolling IO, you just sit there spinning in a hard loop on the CPU\nwaiting for a packet to arrive, and most of the time there’s nothing\nthere. So if you point a profiler at a trading system, it’s going to\ntell you it’s been 95, 99% of its time doing nothing.",
+      "zh": "我们没有那个规模。我们花费的总计算量是\n相当多的钱，但仅仅让速度提高 1% 还不够\n很重要，这意味着我们花费的平均 CPU 周期并不是\n非常重要。这有点毫无价值。如果你让日志记录更快，\n每个人都会耸耸肩说，好吧，但事实并非如此\n改变表盘。事实上，令人惊讶的是，我们大多数人\n系统将大部分 CPU 时间用于无事可做。它\n只是您在用户空间的交易环境中的赌注\n轮询 IO，你只需坐在 CPU 上的硬循环中旋转\n等待数据包到达，但大多数时候什么也没有\n那里。因此，如果您将分析器指向交易系统，它将\n告诉你，95%、99%的时间里，它什么也没做。"
+    },
+    {
+      "idx": 30,
+      "en": "And actually at this point, I want to push back a little bit on this\nnarrative because when you say most of the systems are doing nothing,\nit’s not actually most of our systems, we actually have a really\ndiverse set of different programs doing all sorts of different\npieces. But a lot of the work that you’re doing thinking about\nperformance optimization is focused on specifically trading\nsystems. And trading systems have exactly the character of what you’re\ndescribing, which is they’re sitting there consuming market data. The\nwhole idea, which you hear about a lot in large scale, traditional web\nand tech companies of trying to build systems that have high\nutilization is totally crazy from our perspective. We’re trying to get\nsystems that have low latencies, they need to be able to quickly\nrespond to things and also to be able to perform well when there are\nbursts of activity. So that means that most of the time when things\nare quiet, they need to be mostly idle.",
+      "zh": "实际上在这一点上，我想稍微反驳一下这个问题\n叙述是因为当你说大多数系统什么都不做时，\n它实际上不是我们的大多数系统，我们实际上有一个真正的\n不同的程序集执行各种不同的操作\n件。但你正在做的很多工作都在思考\n性能优化专注于特定交易\n系统。交易系统完全符合您的性格\n描述的是，他们坐在那里消费市场数据。的\n整个想法，您在大规模传统网络中经常听到\n和科技公司试图构建具有高\n从我们的角度来看，利用率是完全疯狂的。我们正在努力获得\n具有低延迟的系统，他们需要能够快速\n对事物做出反应，并且能够在出现问题时表现良好\n爆发性的活动。所以这意味着大多数时候当事情\n很安静，他们需要大部分时间闲着。"
+    },
+    {
+      "idx": 31,
+      "en": "Yeah, it’s definitely true that we have easy-mode targets that we care\na lot about at Jane Street. A really good example is historical\nresearch. If you are trying to run simulations of what some strategy\nmight’ve done over the last 10 years, turns out that’s just a question\nof throughput. You can pile as much input data as you can on the\nhopper and you see how many trades fall out the other side in the next\n10 seconds, and the faster that gets the happier we are. You can just\ndo the same easy-mode tactics that you would on hyperscalers.",
+      "zh": "是的，我们确实有我们关心的简单模式目标\n关于简街的很多事情。一个非常好的例子是历史上的\n研究。如果您尝试运行某些策略的模拟\n过去10年可能做过的事情，结果证明这只是一个问题\n吞吐量。您可以在上面堆积尽可能多的输入数据\n漏斗，你会看到接下来有多少笔交易从另一边掉下来\n10秒，速度越快我们就越快乐。你可以只\n执行与超大规模服务器相同的简单模式策略。"
+    },
+    {
+      "idx": 32,
+      "en": "But even there, the size of changes we chase there is considerably\nlarger.",
+      "zh": "但即便如此，我们所追求的变革规模也相当大\n更大。"
+    },
+    {
+      "idx": 33,
+      "en": "Yeah, you don’t care about 1% because it’s not the CPU you care about\nhere, it’s the user latency in some sense, it’s whether or not the\nuser gets a result in an hour or a day or a week.",
+      "zh": "是的，你不在乎 1%，因为它不是你关心的 CPU\n这里，它是某种意义上的用户延迟，是是否\n用户在一小时、一天或一周内得到结果。"
+    },
+    {
+      "idx": 34,
+      "en": "Just to speak on the compilers team. We totally care about a 1%\nimprovement in code generation, but you don’t care about it on its\nown. You care about it in combination with a bunch of other changes\nbecause you want to build up bigger changes out of smaller ones. And\nif you look at a much larger organization, people are looking for\ncompiler-level improvements that are in order of magnitude smaller\nthan that.",
+      "zh": "只是谈谈编译器团队。我们完全关心那1%\n代码生成方面的改进，但你并不关心它的本质\n拥有。你关心它与一堆其他变化的结合\n因为你想从小的改变中建立更大的改变。并且\n如果你观察一个更大的组织，人们正在寻找\n编译器级别的改进数量级较小\n比那个。"
+    },
+    {
+      "idx": 35,
+      "en": "I sometimes have to push people about this. In fact, I sometimes have\nto say, oh, no, no, no. It’s not that this optimization matters on its\nown. It’s not that this thing that I did that removes a cache line\nfrom each data structure is going to make our trading exponentially\nfaster. It’s that I’m in a long process of pulling out the slack from\na system and every time I do this, it gets a little bit better and\neverything is going to slowly converge to a good state. But it’s hard\nto get the statistical power to say any of these small changes\nmatter. Sometimes I get pushback from people saying, well, did you\nmeasure this? I’m like, no, I didn’t bother. I know it’s below the\nnoise floor, but I also know it’s right. That sort of small change\nincrementally applied over time is really good. But the hard part\nabout it is you just have to have faith that you’re going to get there\nand you have to have faith that you know that this is making an\nimprovement or find ways you can test it in isolation. Whereas if you\noperate at the huge scale that some other people do, you can just look\nat a change. It can be five bips and you can know like, oh no, that’s\nreally real and it’s actually worth a lot of money on its own.",
+      "zh": "有时我不得不推动人们解决这个问题。事实上，我有时也有\n说，哦，不，不，不。并不是说这种优化对其有影响\n拥有。并不是我所做的这件事删除了缓存行\n每个数据结构都会使我们的交易呈指数级增长\n更快。我正处于一个漫长的过程中，以摆脱困境\n一个系统，每次我这样做，它都会变得更好一点\n一切都会慢慢收敛到一个好的状态。但这很难\n获得统计能力来说明这些微小的变化\n很重要。有时我会遭到人们的拒绝，他们说，好吧，你是吗？\n测量这个？我想，不，我没有打扰。我知道它在下面\n本底噪声，但我也知道这是对的。那种小小的改变\n随着时间的推移逐渐应用确实很好。但困难的部分\n重要的是你只需要相信你会到达那里\n你必须相信你知道这正在创造一个\n改进或找到可以单独测试它的方法。而如果你\n像其他人那样规模庞大，你可以看看\n在一个改变。它可以是五个双峰，你可以知道，哦不，那是\n非常真实，而且它本身就值很多钱。"
+    },
+    {
+      "idx": 36,
+      "en": "I think, yeah, this is a problem that hits people who are thinking\nabout performance almost everywhere.",
+      "zh": "我想，是的，这是一个困扰那些正在思考的人的问题\n关于性能几乎无处不在。"
+    },
+    {
+      "idx": 37,
+      "en": "It’s kind of funny to me in that a common line of pushback I get from\npeople who are not performance-focused people is like, well, I\nremember in undergrad when my professor said, well, you should never\nmake a performance change without profiling it, and knowing that it\nmatters. And like, no, no, I actually think that’s wrong. If you know\nyou are working on systems where this is important you to have a\ncertain amount of self-discipline and, you know, not where it’s too\ncostly, it’s going to make the system more dangerous or riskier or\nmake your life worse, but make efficient choices as a matter of\ndefaults in your brain.",
+      "zh": "这对我来说很有趣，因为我收到的常见阻力是\n不注重绩效的人就像，嗯，我\n记得本科时我的教授说，好吧，你永远不应该\n在不进行性能分析的情况下进行性能更改，并且知道它\n很重要。就像，不，不，我实际上认为这是错误的。如果你知道\n您正在开发的系统非常重要，您必须拥有\n一定程度的自律，而且你知道，但不是太自律\n成本高昂，这将使系统变得更加危险或风险更大，或者\n让你的生活变得更糟，但要做出有效的选择\n你大脑中的默认值。"
+    },
+    {
+      "idx": 38,
+      "en": "And this is one of the reasons why I think performance engineering\ndepends a lot on intuition and background and experience.",
+      "zh": "这就是我认为性能工程的原因之一\n很大程度上取决于直觉、背景和经验。"
+    },
+    {
+      "idx": 39,
+      "en": "And mechanical sympathy. Knowing that you know deep down what the CPU\nis actually doing when you compile the code that you’ve got.",
+      "zh": "还有机械的同情心。了解您内心深处了解 CPU 的含义\n当你编译你得到的代码时实际上是在做。"
+    },
+    {
+      "idx": 40,
+      "en": "So actually stop for a second on that word, mechanical sympathy, which\nis a phrase I really like. Tell me what that phrase means to you.",
+      "zh": "所以实际上在这个词上停一下，机械同情，\n这是我非常喜欢的一句话。告诉我这句话对你意味着什么。"
+    },
+    {
+      "idx": 41,
+      "en": "What that phrase means to me—I think a race car driver invented it\nactually— is just having an innate knowledge",
+      "zh": "这句话对我意味着什么——我认为是赛车手发明了它\n实际上——只是拥有一种与生俱来的知识"
+    },
+    {
+      "idx": 42,
+      "en": "Or maybe not innate, you probably weren’t born with it.",
+      "zh": "或者也许不是天生的，你可能不是生来就有的。"
+    },
+    {
+      "idx": 43,
+      "en": "Some people seem to come out of infancy just knowing these things. Did\nyou not read books about CPU architecture to your children?",
+      "zh": "有些人似乎从婴儿期就知道这些事情了。有吗\n你没有给你的孩子读过有关CPU架构的书籍吗？"
+    },
+    {
+      "idx": 44,
+      "en": "I did not.",
+      "zh": "我没有。"
+    },
+    {
+      "idx": 45,
+      "en": "Whatcha are even doing",
+      "zh": "到底在做什么"
+    },
+    {
+      "idx": 46,
+      "en": "Lambda calculus?",
+      "zh": "拉姆达演算？"
+    },
+    {
+      "idx": 47,
+      "en": "Oh, that tracks. I think that it’s not innate, but this really\nunconscious knowledge of just when you look at code that this is how\nit structures on real systems because different languages have very\ndifferent models of how reality works, but reality only has one\nmodel. As much as I love Lisp, the world and computers are not made of\ncons cells, they’re made of big arrays—one big array—and some integer\narithmetic that loads things from arrays. That’s all a computer\nactually does, right? And you have to understand what is the model by\nwhich we get from that low level thing to my high level types with\nstructure in them. And you have to understand what layouts mean and\nhow this branching structure gets compiled into something that a CPU\nactually knows how to operate. And you can’t just construct this from\nscratch every time you do it. You have to develop an intuition towards\nlooking at something and knowing what that’s going to be.",
+      "zh": "哦，那是轨迹。我认为这不是与生俱来的，但这确实是\n当你查看代码时无意识地知道这就是如何\n它是在真实系统上构建的，因为不同的语言有很大的差异\n现实如何运作的不同模型，但现实只有一种\n模型。尽管我很喜欢 Lisp，但世界和计算机并不是由什么构成的\ncons 单元，它们由大数组（一个大数组）和一些整数组成\n从数组加载内容的算术。这都是电脑\n事实上确实如此，对吧？你必须了解模型是什么\n我们从低级别的东西到我的高级别类型\n其中的结构。你必须了解布局的含义以及\n这个分支结构是如何被编译成CPU可以使用的东西的\n其实知道怎么操作。你不能仅仅从以下内容构建这个\n每次做的时候都会刮伤。你必须培养一种直觉\n看着某件事并知道那会是什么。"
+    },
+    {
+      "idx": 48,
+      "en": "So I asked you what the difference was between the easy-mode\nperformance optimization that you experienced at Google and this kind\nof harder-to-figure-out version of the story where you don’t have the\nsame kind of scale. I’d love to hear a little bit more about what is\nthe texture of these problems? What kind of problems do you run into?\nWhat is interesting and hard about the version of the performance\noptimization problem you see here.",
+      "zh": "所以我问你简单模式和简单模式有什么区别\n您在 Google 经历过的性能优化等\n故事的更难理解的版本，你没有\n同一种规模。我很想听听更多关于什么是\n这些问题的本质是什么？您遇到什么样的问题？\n演出版本有什么有趣和难点\n您在这里看到的优化问题。"
+    },
+    {
+      "idx": 49,
+      "en": "Hard mode performance optimization typically, but not always is a\nquestion of latency. And latency is a question of what is something\ndoing at a really important time. Not what is something doing in\ngeneral, not what it does usually, but what it does when you care\nabout it, which means it’s fundamentally a measurement problem because\nto measure general performance, what your system is doing, you point a\nprofiler at it, you get an idea of it’s spending 20% of its time here\nand 10% of its time here and 5% of its time here. I don’t care about\nany of those percents. I care about what was it doing for the\nnanosecond, the millisecond, the microsecond sometimes (or some of our\nworst systems, the second) that something interesting was happening. I\ncare about what happens when it was sending an order or analyzing\nmarket data. I care only about that and I don’t care about anything\nelse. So how do I even know what it’s doing at that point in time? How\ndo I measure this is really the key question.",
+      "zh": "困难模式通常会进行性能优化，但并非总是如此\n延迟问题。延迟是一个关于什么东西的问题\n在非常重要的时刻做事。不是正在做什么\n一般，不是它通常做什么，而是当你关心时它会做什么\n关于它，这意味着它从根本上来说是一个测量问题，因为\n要衡量总体性能，您的系统正在做什么，您可以指向一个\n通过分析器查看它，您会发现它花费了 20% 的时间在这里\n10%的时间在这里，5%的时间在这里。我不关心\n这些百分比中的任何一个。我关心它是为了什么\n纳秒，毫秒，有时微秒（或者我们的一些\n最糟糕的系统，第二个）发生了一些有趣的事情。我\n关心发送订单或分析时发生的情况\n市场数据。我只关心这个，什么都不关心\n否则。那么我怎么知道它当时在做什么呢？如何\n我该如何衡量这确实是关键问题。"
+    },
+    {
+      "idx": 50,
+      "en": "Got it. And maybe somewhat inherently, that puts you in the opposite\nsituation that you’re in when you’re looking at a very big\norganization where you’re thinking about the low levels of the\ninfrastructure and how to make them as fast as possible. Because if\nyou want to know what’s happening at a given point in time, you’re\nsomewhat unavoidably tied up in the business logic. You care about\nwhat is the thing that happens when the important decision is made and\nwhat are the latencies that occur and what are the code paths that\ndrive that latency? Is that a fair description?",
+      "zh": "知道了。也许从本质上来说，这会让你处于相反的境地\n当你看着一个很大的东西时你所处的情况\n您正在考虑低水平的组织\n基础设施以及如何使其尽可能快。因为如果\n你想知道在给定的时间点发生了什么，你\n在某种程度上不可避免地与业务逻辑联系在一起。你关心的\n当做出重要决定时会发生什么？\n发生的延迟是什么以及代码路径是什么\n驱动延迟？这是一个公平的描述吗？"
+    },
+    {
+      "idx": 51,
+      "en": "Yeah, it’s not universally true. There’s some really interesting cases\nwhere the infrastructure rears its ugly head in the middle of stuff\nyou want to be doing otherwise, right? But it is generally a large\npart of it is in fact just the business logic of how is this trading\nsystem making a decision? And you have to look at that and that’s\nwhat’s happening at the interesting point of time, sort of by\ndefinition.",
+      "zh": "是的，这并不普遍正确。有一些非常有趣的案例\n基础设施在东西中间抬起丑陋的头\n你想做别的事，对吗？但一般都是大\n事实上，其中一部分只是交易的业务逻辑\n系统做出决定？你必须看看那个\n在有趣的时间点发生了什么\n定义。"
+    },
+    {
+      "idx": 52,
+      "en": "So you talked about sampling profilers as one common tool. Can you\nactually just go in a little more detail of what is a sampling\nprofiler and how does it actually work at a low level?",
+      "zh": "因此，您谈到采样分析器是一种常用工具。你可以吗\n实际上只是更详细地介绍一下什么是抽样\nProfiler 以及它在底层是如何实际工作的？"
+    },
+    {
+      "idx": 53,
+      "en": "So there’s a lot of different implementations of this, but the general\nshape of it is you take a system and you point a tool at it that stops\nthe world every so often. Let’s say every hundred microseconds\nmaybe. And it stops the world and asks, where are you right now? And\nit looks at where the instruction pointer is, what are we currently\nexecuting? And it generally looks at the stack trace, how did you get\nhere? And then it writes this down and it lets the program keep\ngoing. And profilers only really differ on how do they stop the world\nand how do they write this down. My favorite is the Linux kernel\nprofiler. It’s called perf, and it just uses a bunch of hardware\nfeatures to get an interrupt at exactly the right moment in time. And\nthen it just very quickly writes down the stack trace in this\ncompressed format. It’s very optimized. And then you take all these\nstack traces. The profile is really just a list of stack traces and\nsometimes a little bit of augmented information, but that’s\nfundamentally the core idea. And then you present it to the user in\nsome way that adds them up. And like I say, the key thing is it tells\nyou, okay, 30% of the stack traces ended in the function foo. That’s a\nhotspot. You’re spending 30% of your time there.",
+      "zh": "所以有很多不同的实现，但一般来说\n它的形状是你采用一个系统，然后将一个工具指向它，它就会停止\n世界时不时地。假设每一百微秒\n也许吧。它让世界停下来问，你现在在哪里？并且\n它查看指令指针在哪里，我们当前是什么\n执行？它通常会查看堆栈跟踪，你是如何得到的\n在这里？然后它把这个写下来并让程序保留\n去。分析器的真正不同之处在于他们如何阻止世界\n以及他们如何写下来。我最喜欢的是 Linux 内核\n分析器。它被称为 perf，它只使用一堆硬件\n具有在正确的时间获得中断的功能。并且\n然后它很快就会写下堆栈跟踪\n压缩格式。这是非常优化的。然后你把所有这些\n堆栈跟踪。配置文件实际上只是堆栈跟踪的列表，\n有时会有一点增强信息，但那就是\n从根本上来说是核心思想。然后将其呈现给用户\n以某种方式将它们加起来。就像我说的，关键是它讲述了\n你，好吧，30% 的堆栈跟踪以函数 foo 结束。那是一个\n热点。你有 30% 的时间都花在那里。"
+    },
+    {
+      "idx": 54,
+      "en": "But there’s all these different kernel counters that you can use for\ndriving when you’re doing the sampling. How does the choice of kernel\ncounter affect the nature of the information you’re getting out of the\nprofiler?",
+      "zh": "但是您可以使用所有这些不同的内核计数器\n进行采样时正在开车。内核如何选择\n计数器会影响您从中获得的信息的性质\n分析器？"
+    },
+    {
+      "idx": 55,
+      "en": "Yeah, people tend to think about people sampling profiles in time,\nwhere the counter is just the number of cycles that’s elapsed. But one\nof the cool things about it is it lets you cycle on L2 cache misses or\nbranch prediction misses or any of these weird architectural\nevents. And so you get a profile of when did these interesting things\nhappen? You know each of them is costly and they probably have some\ncost in cycles. You can get much more precise measurements. And in\nparticular, the nice thing about it is that 10% let’s say of your\nprogram is slowed down by branch prediction misses. But if you just\nlook at the cycles, you’re just going to see like, well, it’s\nsomewhere in this function. If you profile on branch misses, you will\nsee the branch that is hard to predict and you can actually do\nsomething about that branch.",
+      "zh": "是的，人们倾向于考虑及时采样个人资料，\n其中计数器只是经过的周期数。但有一个\n它最酷的地方之一是它可以让您在 L2 缓存未命中时循环或\n分支预测未命中或任何这些奇怪的架构\n事件。这样您就可以了解这些有趣的事情何时发生\n发生？你知道他们每个人都很昂贵，而且他们可能有一些\n周期成本。您可以获得更精确的测量结果。并且在\n特别是，它的好处是 10% 比方说你的\n程序因分支预测未命中而减慢。但如果你只是\n看看周期，你会发现，嗯，这是\n在这个函数的某个地方。如果您对分支未命中进行分析，您将\n看到难以预测的分支，但你实际上可以做到\n关于那个分支的一些事情。"
+    },
+    {
+      "idx": 56,
+      "en": "Got it. So branch missed predictions is one. What’s the next most\ninteresting counter that you might use?",
+      "zh": "知道了。所以分支错过的预测就是其中之一。接下来最重要的是什么\n您可能会使用的有趣计数器？"
+    },
+    {
+      "idx": 57,
+      "en": "Actually the most interesting thing isn’t even branch prediction or it\nisn’t even a hardware counter. The next most interesting thing to\nprofile on is the unit of memory allocation. A lot of allocators, in\nfact the one we have in OCaml, but also various C++ ones, will let you\nget a profile – not out of perf but kind of done in software – that\ntells you where you were allocating memory the most. Cause that’s just\na common thing that’s very costly and reducing that it can really\nimprove the performance of a system.",
+      "zh": "实际上最有趣的事情甚至不是分支预测或者它\n甚至不是硬件计数器。接下来最有趣的事情是\nprofile on 是内存分配的单位。很多分配器，在\n事实上，我们在 OCaml 中有一个，还有各种 C++ 的，可以让您\n获取一个配置文件——不是出于性能，而是通过软件完成——\n告诉您在哪里分配内存最多。因为那只是\n一个常见的事情，成本非常高，并且可以真正减少\n提高系统的性能。"
+    },
+    {
+      "idx": 58,
+      "en": "And this comes down to something that we see in OCaml a lot, which is\nwhen we write really, really high performance systems, we often try to\nbring the amount of heap allocation we do all the way down to zero.",
+      "zh": "这归结为我们在 OCaml 中经常看到的一些东西，即\n当我们编写真正非常高性能的系统时，我们经常尝试\n将我们所做的堆分配量一直降低到零。"
+    },
+    {
+      "idx": 59,
+      "en": "We try.",
+      "zh": "我们尝试。"
+    },
+    {
+      "idx": 60,
+      "en": "Right, it’s hard to get it all the way down to zero. Something’s\nmisbehaving in a system performance=wise. A relatively common problem\nis there’s a thing that shouldn’t be allocating that is, in the hot\npath.",
+      "zh": "是的，很难让它一直降到零。某事的\n系统性能上的不当行为=明智的。一个比较常见的问题\n有什么东西是不应该分配的，那就是，在炎热的天气里\n路径。"
+    },
+    {
+      "idx": 61,
+      "en": "Yeah, that’s right. And then a good optimized C++ system, it should be\nspending 5-10% of its time memory allocating and sometimes you just\nhave to do this, it’s necessary, but maybe you’re allocating twice as\nmuch as you really need to be and you can look at a memory profile and\ntake a look at it. It’s important to remember that profiles aren’t\njust about time. They’re about measuring the overall consumption of or\nuse of resources.",
+      "zh": "是的，没错。然后一个优化好的C++系统，应该是\n花费 5-10% 的时间进行内存分配，有时您只是\n必须这样做，这是必要的，但也许你分配的是两倍\n正如您真正需要的那样，您可以查看内存配置文件并\n看看它。重要的是要记住，个人资料不是\n时间刚刚好。它们是关于测量或的总体消耗\n资源的利用。"
+    },
+    {
+      "idx": 62,
+      "en": "So that’s how perf essentially works to get you the information that\nyou need. But there’s a fundamental trade-off in a tool like perf\nwhere it’s sampling information and that itself is essentially a\nperformance optimization. Part of the reason that you sample rather\nthan capturing all of the information is you want to make it fast. You\nwant to not distort the performance behavior of the program by\ngrabbing information out of it. But in some sense there’s a real\ntension there because you’re saying I don’t want some broad\nstatistical sampling of the overall behavior of my program. I want to\nknow in detail how it’s behaving at the times that matter most.",
+      "zh": "这就是 perf 本质上如何为您提供信息的\n你需要。但像 perf 这样的工具存在一个基本的权衡\n它是对信息进行采样，其本身本质上是\n性能优化。您更喜欢采样的部分原因是\n与捕获所有信息相比，您希望速度更快。你\n不想扭曲程序的性能行为\n从中获取信息。但从某种意义上来说，确实存在\n那里很紧张，因为你说我不想要一些广泛的\n我的程序的整体行为的统计抽样。我想要\n详细了解它在最重要的时刻的表现。"
+    },
+    {
+      "idx": 63,
+      "en": "I think a really instructive example of that was an optimization that\nI hit on last year where we had a system, it was trying to send some\norders and it was doing it in a totally reasonable way and it was\ndoing it in a really cheap way. The thinking about whether or not I\nwant to send an order was really cheap. It happened really fast. The\nphysical sending of the order really cheap, happened really fast.",
+      "zh": "我认为一个真正有启发性的例子是一个优化\n我去年偶然发现我们有一个系统，它试图发送一些\n订单并且它以完全合理的方式进行，而且它是\n以非常便宜的方式做到这一点。关于我是否\n想要发送订单真的很便宜。事情发生得真快。的\n订单的物理发送非常便宜，发生得非常快。"
+    },
+    {
+      "idx": 64,
+      "en": "The thinking, what do you mean by the thinking?",
+      "zh": "思考，思考是什么意思？"
+    },
+    {
+      "idx": 65,
+      "en": "The business logic to decide the looking at the markets and saying, oh\nyeah, I want to buy or and then do the physical act of sending the\nmessage, right? Both these were really cheap. If you pointed a\nprofiler at them, even a profiler that was magically restricted to the\ntimes of interest, it would tell you, yep, 5% of your time was doing\nthis. It’s all good. That’s not a hotspot. Here’s the problem:the\norder sending was happening 200 microseconds after the thinking was,\nand the reason was it was being put on a low priority queue of work to\ndo later. It was a misconfiguration of the system. It was using this\nkind of older API that it needed for complicated reasons that did\nreasonable things under most circumstances. But it assumed that\nnetwork traffic you wanted to send couldn’t be that latency\nsensitive. So it just waited to do it in an idle moment and this was\nnot a good thing to wait about. But the profiler tells you nothing\nabout this because I didn’t care about the overall cost, I didn’t care\nabout the overall time. I cared that it happened promptly. And so\nfixing this again was really easy. I just switched to an eager API\nthat didn’t wait. But a profiler tells you nothing about this.",
+      "zh": "商业逻辑决定了观察市场并说，哦\n是的，我想购买或然后进行发送的实际操作\n消息，对吗？这两个都非常便宜。如果你指出一个\n他们的分析器，甚至是一个被神奇地限制在\n感兴趣的时间，它会告诉你，是的，你 5% 的时间都在做\n这个。一切都很好。那不是热点。问题是这样的：\n订单发送发生在思考之后 200 微秒，\n原因是它被放入低优先级工作队列中\n稍后再做。这是系统配置错误。原来是用这个\n出于复杂的原因，它需要一种旧的 API\n大多数情况下合理的事情。但它假设\n您想要发送的网络流量不可能是这样的延迟\n敏感。所以它只是等待空闲的时候去做这件事，这就是\n等待不是一件好事。但分析器什么也没告诉你\n关于这个，因为我不关心总体成本，我不关心\n关于整体时间。我关心的是它很快就发生了。等等\n再次修复这个问题非常容易。我刚刚切换到急切的 API\n那没有等到。但分析器对此一无所知。"
+    },
+    {
+      "idx": 66,
+      "en": "So what kind of tools do you use to uncover things like that?",
+      "zh": "那么你使用什么样的工具来发现这样的事情呢？"
+    },
+    {
+      "idx": 67,
+      "en": "Magic Trace.",
+      "zh": "魔法痕迹。"
+    },
+    {
+      "idx": 68,
+      "en": "So what’s Magic Trace?",
+      "zh": "那么什么是魔迹呢？"
+    },
+    {
+      "idx": 69,
+      "en": "Magic Trace is a tool we wrote that gives you a view into what a\nsystem was doing over a short window of the past. It’s retrospective\nin some sense. And what I mean is that any point in time you can just\nyell, stop, tell me what you were doing for the last two milliseconds,\nthree milliseconds maybe. And you write it down. And exactly like you\nsaid earlier, this is not a profile, this is not some statistical\naverage of what you’re doing at various times. This is the exact\nsequence of where your code went. It went from this function to this\nfunction to this function, and you get a different visualization of it\nthat just shows you what things was happening over time. And in fact,\nexactly like you say, there’s more overhead for using this, but it\ngives you this really direct view into what happened at an interesting\ntime that a profiler fundamentally can’t give. Traces are in some\nsense really better. In fact, traces aren’t restricted to Magic\nTrace. I said there’s memory profiles that are really useful. Memory\nallocation traces are another thing that we care about a lot. We have\na really good one, in fact, that gives you the literal trace of–",
+      "zh": "Magic Trace 是我们编写的一个工具，可让您了解\n系统在过去的一小段时间里一直在做。这是回顾性的\n从某种意义上说。我的意思是，任何时间点你都可以\n喊叫，停下来，告诉我你在最后两毫秒里做了什么，\n也许三毫秒。然后你把它写下来。和你一模一样\n前面说过，这不是一个概况，这不是一些统计数据\n你在不同时间所做的事情的平均值。这是确切的\n您的代码所在的顺序。它从这个功能变成了这个\n函数到这个函数，你会得到它的不同可视化\n这只是向您展示一段时间内发生的事情。而事实上，\n就像你说的那样，使用它会产生更多的开销，但是它\n让您可以真正直接地了解有趣的事件中发生的事情\n分析器根本无法提供的时间。有的地方有痕迹\n感觉真的好多了。事实上，痕迹并不局限于万智牌\n追踪。我说过有些内存配置文件非常有用。内存\n分配跟踪是我们非常关心的另一件事。我们有\n事实上，这是一个非常好的一个，它给你的字面痕迹是——"
+    },
+    {
+      "idx": 70,
+      "en": "Although a memory profiler is actually statistical also, right? That’s\na sample profile.",
+      "zh": "虽然内存分析器实际上也是统计性的，对吧？那是\n样本配置文件。"
+    },
+    {
+      "idx": 71,
+      "en": "Memory tracing is in fact, it’s not a profiler, it’s a tracer, right?",
+      "zh": "内存追踪实际上不是一个分析器，而是一个追踪器，对吗？"
+    },
+    {
+      "idx": 72,
+      "en": "Maybe it’s misnamed actually there’s a lot of annoying sort of\nterminological fuzz around this. I think people",
+      "zh": "也许它的名字是错误的，实际上有很多烦人的事情\n围绕此的术语模糊。我认为人们"
+    },
+    {
+      "idx": 73,
+      "en": "We are not unique in this, I’ll say",
+      "zh": "我想说，我们在这方面并不是独一无二的"
+    },
+    {
+      "idx": 74,
+      "en": "Right, at least the terms I’ve come to the most are people use\n“profilers” for what you might call statistical profilers. And then\npeople use “tracing” when they’re talking about capturing all of the\ndata. So a common form of tracing that shows up all over the place is\nthere’s all these nice systems for doing RPC tracing where you write\ndown the details of every message that goes by. And this is sort of a\ncommon thing to do if you want to debug, why was that web query slow?\nAnd some query came in and it kicked off a bunch of RPCs, it kicked\noff another bunch of RPCs and you can pull up an API that lets you see\nthe whole cascade of messages that were sent. So that’s like a nice\nexample of tracing. And then we also, as you mentioned, we have a\nthing called memtrace, which sadly I think is actually a profiler in\nthat it is a statistical sample and does not actually capture\neverything,",
+      "zh": "是的，至少我接触到最多的术语是人们使用的\n“分析器”，您可以称之为统计分析器。然后\n当人们谈论捕获所有的信息时，他们会使用“追踪”\n数据。因此，到处出现的一种常见的追踪形式是\n在你编写的地方有所有这些很好的系统来进行 RPC 跟踪\n记下每条消息的详细信息。这有点像\n如果你想调试，这是常见的事情，为什么网络查询很慢？\n一些查询进来了，它启动了一堆 RPC，它启动了\n关闭另一组 RPC，您可以提取一个 API，让您看到\n发送的整个级联消息。所以这就像一个美好的\n追踪的例子。然后，正如您提到的，我们还有一个\n名为 memtrace 的东西，遗憾的是我认为它实际上是一个分析器\n它是一个统计样本，并没有实际捕获\n一切，"
+    },
+    {
+      "idx": 75,
+      "en": "But it does give you a time series of events, which is a key thing\nthat a profiler can’t.",
+      "zh": "但它确实为您提供了事件的时间序列，这是关键的事情\n这是探查器无法做到的。"
+    },
+    {
+      "idx": 76,
+      "en": "That’s interesting. I guess in some sense, all of these systems start\nby giving you a time series of events and then it’s how you process\nthem. Perf is sampling at some rate and grabbing data, and then you\nturn that into an overall statistical summary. But you could look at\nthat information temporarily. You just don’t. And in any case, the\ninformation is sampled. I think what I just said is also true about\nmemtrace. You get this information just like perf, sampled randomly\nfrom the memory allocations. Then you can interpret it statistically\nas being about the overall state of the heap.",
+      "zh": "那很有意思。我想从某种意义上说，所有这些系统都开始\n给你一系列事件的时间，然后你就可以处理\n他们。 Perf 是以某种速率采样并抓取数据，然后你\n将其转化为总体统计摘要。但你可以看看\n该信息暂时。你只是不知道。并且无论如何，\n信息被采样。我想我刚才说的也是对的\n内存跟踪。您可以像 perf 一样获得此信息，随机采样\n来自内存分配。然后你可以统计地解释它\n关于堆的整体状态。"
+    },
+    {
+      "idx": 77,
+      "en": "A key difference here is that memtrace gives you all of the\ninformation about a statistical sample of some of the allocations. It\ntells you when this guy was allocated and then freed.",
+      "zh": "这里的一个关键区别是 memtrace 为您提供了所有\n有关某些分配的统计样本的信息。它\n告诉你这个人什么时候被分配然后被释放的。"
+    },
+    {
+      "idx": 78,
+      "en": "That’s true",
+      "zh": "这是真的"
+    },
+    {
+      "idx": 79,
+      "en": "Whereas you might get a set of stacks out of perf that here’s some\nallocations and here’s some frees, but you have no guarantee it’s the\nsame thing. This lifecycle example, it’s exactly like the RPCs. A\nthing people frequently do is just capture traces for 1% of their\nRPCs. And giving the whole lifecycle of individual one is way more\ninteresting than 1% of the individual moments.",
+      "zh": "虽然你可能会从性能中得到一组堆栈，但这里有一些\n分配和这里有一些免费，但你不能保证它是\n同样的事情。这个生命周期示例与 RPC 完全相同。一个\n人们经常做的事情只是捕捉 1% 的痕迹\nRPC。给予个体的整个生命周期就更重要了\n比 1% 的个人时刻更有趣。"
+    },
+    {
+      "idx": 80,
+      "en": "I mean, maybe this just highlights this is a total terminological car\ncrash. It’s a little hard to separate it out.",
+      "zh": "我的意思是，也许这只是凸显了这是一辆完全术语车\n崩溃。要把它分开有点困难。"
+    },
+    {
+      "idx": 81,
+      "en": "All of these tools are way too hard to use and very inexact and all of\nthem use the same terminology in different ways.",
+      "zh": "所有这些工具都太难使用并且非常不精确，并且所有\n他们以不同的方式使用相同的术语。"
+    },
+    {
+      "idx": 82,
+      "en": "Okay, so we’ve talked about the trace part of the name Magic Trace,\nand the key thing there is it’s not just sampling, it’s giving you the\ncomplete summary of the behavior. It’s maybe worth talking a little\nbit about the magic, which is how do you do this thing? You just said,\noh, something interesting happened and then you retrospectively look\nat what happened before and grab it. How can that be done in an\nefficient way? What’s mechanically happening here?",
+      "zh": "好的，我们已经讨论了 Magic Trace 这个名字的跟踪部分，\n关键是它不仅仅是采样，它还为您提供\n行为的完整总结。也许值得谈谈\n关于魔法，你是如何做到这一点的？你刚才说，\n哦，发生了一些有趣的事情，然后你回顾一下\n看看之前发生的事情并抓住它。这怎么能在一个\n有效的方法？这里机械地发生了什么？"
+    },
+    {
+      "idx": 83,
+      "en": "Magic. No, there’s two parts to this, right? First is how do you get\nthe data? And the second part is how do you decide when to take the\nsample? Let’s take those in order. So how do you get the data? Well,\nthere’s this, I’m really just going to call it magic. I don’t know how\nthey managed to do this efficiently, but Intel has this technology,\nit’s called Processor Trace, that just keeps a ring buffer of\neverything the CPU does in a really compressed format, like it uses\none bit per branch or something along those lines. And it just\ncontinually writes this down and the ring buffer is the size that it\nis and it contains some amount of history—in practice, it’s a couple\nmilliseconds—and at any point in time you just snap your fingers and\nsay, give me that ring buffer.",
+      "zh": "魔法。不，这有两个部分，对吧？首先是你如何获得\n数据？第二部分是你如何决定何时采取\n样品？让我们按顺序排列。那么如何获取数据呢？嗯，\n就是这样，我真的要把它称为魔法。我不知道怎么办\n他们成功地做到了这一点，但英特尔拥有这项技术，\n它被称为处理器跟踪，它只保留一个环形缓冲区\nCPU 所做的一切都以真正压缩的格式进行，就像它使用的那样\n每个分支一位或类似的东西。而它只是\n不断地写下来，环形缓冲区的大小就是它的大小\n是并且它包含了一些历史——实际上，它是一对\n毫秒——在任何时间点，你只需打响指，\n比如说，给我那个环形缓冲区。"
+    },
+    {
+      "idx": 84,
+      "en": "And the critical thing is this is a feature integrated into the\nhardware.",
+      "zh": "关键是这是集成到\n硬件。"
+    },
+    {
+      "idx": 85,
+      "en": "Yeah, we couldn’t possibly implement this. The kernel couldn’t\npossibly implement this. This is in the silicon and it’s a huge\nadvantage for Intel processors.",
+      "zh": "是的，我们不可能实现这个。内核不能\n可能会实现这个。这是在硅片中，它是一个巨大的\n英特尔处理器的优势。"
+    },
+    {
+      "idx": 86,
+      "en": "Yeah, although I really do not understand Intel’s business strategy\naround this, which is to say they built this amazing facility in their\nCPUs, but they never released an open source toolkit that makes it\nreally easy to use. They did a lot of great work at the perf level. So\nperf has integrated support for Processor Trace. In fact, we relied\nheavily on that. But I think Magic Trace is the first thing that’s\nactually a nice usable toolkit built around this. There’s various\ncompanies that have built internal versions of this, but it seems like\nsuch a great competitive advantage. I’m surprised that Intel hasn’t\ninvested more in building nice, easy to use tools for it, because it’s\na real differentiator compared to say AMD chips.",
+      "zh": "是啊，虽然我实在不明白Intel的商业策略\n围绕这一点，也就是说，他们在自己的地方建造了这个令人惊叹的设施\nCPU，但他们从未发布过使其成为可能的开源工具包\n真的很容易使用。他们在性能水平上做了很多出色的工作。所以\nperf 集成了对处理器跟踪的支持。事实上，我们依靠的是\n对此非常重视。但我认为 Magic Trace 是第一件事\n实际上是围绕此构建的一个很好用的工具包。有各种\n已经构建了内部版本的公司，但似乎\n如此巨大的竞争优势。我很惊讶英特尔没有\n投入更多资金来构建漂亮、易于使用的工具，因为它\n与 AMD 芯片相比，这是一个真正的差异化因素。"
+    },
+    {
+      "idx": 87,
+      "en": "There are a lot of performance analysis tools in the world, and\nthere’s very limited hours of the day. I really don’t feel like I know\nwhat everything the world does, but I generally agree with you that a\nreally underinvested thing is good, easy to use, obvious, idiot proof\nAPIs, right? And tools that just work in the obvious way you want them\nto.",
+      "zh": "世界上有很多性能分析工具，并且\n一天中的时间非常有限。我真的不觉得我知道\n世界上所做的一切，但我总体上同意你的观点\n真正投资不足的东西是好的，易于使用，明显，白痴证明\nAPI，对吗？以及能够以您想要的明显方式工作的工具\n到。"
+    },
+    {
+      "idx": 88,
+      "en": "I was mentioning before how part of being a good performance engineer\nis building up a lot of experience and knowledge and\nintuition. Another part of it is just building encyclopedic knowledge\nof all the bizarre ins and outs of the somewhat awkward tooling for\ndoing performance analysis. Perf is a great tool, in many ways it’s\nbeautifully engineered, but the user experience is designed for\nexperts and the command lines kind of work the way they do. And\nsometimes their meanings have evolved over time and the flag still\nsays the old thing but you have to know that it has the new\nmeaning. And there’s really, I think a lot of space for building tools\nthat you just turn on and hit the button and it just does the obvious\nthing for you and gives you the result.",
+      "zh": "我之前提到过成为一名优秀的性能工程师的一部分\n正在积累大量的经验和知识\n直觉。另一部分只是构建百科全书式的知识\n有点尴尬的工具的所有奇怪的来龙去脉\n进行性能分析。 Perf 是一个很棒的工具，在很多方面它\n设计精美，但用户体验是专为\n专家和命令行按照他们的方式工作。并且\n有时它们的含义随着时间的推移而演变，但旗帜仍然存在\n说的是旧事，但你必须知道它有新的\n意义。我认为确实有很多构建工具的空间\n你只需打开并按下按钮，它就会完成显而易见的事情\n为你做事并给你结果。"
+    },
+    {
+      "idx": 89,
+      "en": "So it’s a user interface built by experts for experts, and I think\nit’s easy for them to forget that most of the people have not used it,\njust like you say, a lot of random esoteric knowledge about what CPUs\ndo. And I also just have a lot of memorized little command lines that\nI happen to know will point at certain problems. And it’s just an\nissue of having done this a lot. And I don’t know a good way of\nteaching this other than getting people to do the reps and a better\nway would be to give them tools that just give them obvious\ndefaults. But I haven’t figured out how to do this universally.",
+      "zh": "所以这是一个由专家为专家构建的用户界面，我认为\n他们很容易忘记大多数人没有使用过它，\n就像你说的，很多关于什么CPU的随机深奥知识\n做。我也只是记住了很多小命令行\n我碰巧知道会指出某些问题。这只是一个\n已经做了很多次的问题。而且我不知道有什么好的方法\n除了让人们做重复动作和更好的训练之外，还要教授这一点\n方法是给他们工具，让他们显而易见\n默认值。但我还没有弄清楚如何普遍做到这一点。"
+    },
+    {
+      "idx": 90,
+      "en": "But Magic Trace is one good example of a tool like that, where the\ndefaults have been pretty carefully worked out. The UX is really nice\nand you can just use it. It’s not perfect. It doesn’t work in all the\ncontexts, but it usually gives you something usable without a lot of\nthinking.",
+      "zh": "但 Magic Trace 就是此类工具的一个很好的例子，其中\n默认值已经经过非常仔细的制定。用户体验真的很好\n你就可以使用它。这并不完美。它并不适用于所有情况\n上下文，但它通常会给你一些有用的东西，而不需要太多\n思考。"
+    },
+    {
+      "idx": 91,
+      "en": "It is exactly like all the best tools I know in that I’m frequently\nfurious at it for not doing quite the right thing, and that’s a sign\nof how much I want to use it. I would just, oh, can it also do this?\nCan it also do this? Can it also do this? But yeah, I mostly just use\nit in the obvious way with the one obvious flag, which gives me what I\nwant to know.",
+      "zh": "它就像我所知道的所有最好的工具一样，我经常使用\n因为没有做正确的事情而感到愤怒，这是一个迹象\n我有多想使用它。我只是想，哦，它也能做到这一点吗？\n这也能做到吗？这也能做到吗？但是，是的，我大多只是使用\n它以一种明显的方式，带有一个明显的标志，这给了我我想要的东西\n想知道。"
+    },
+    {
+      "idx": 92,
+      "en": "One of the interesting things about a tool like Magic Trace is you’ve\ntold a whole narrative of when doing easy mode optimization, you care\nabout these broad-based things. Sampling profilers are mostly the\nright tools. When you care about focused latency oriented performance,\nthen you want this kind of narrowed in time analysis tools and Magic\nTrace is the right thing for that. But a thing that’s actually struck\nme by seeing people using Magic Trace inside of the organization is\nit’s often a better tool for doing easy mode style optimization than\nperf is because just the fact that you get all of the data, every\nsingle event in order and when it happened, with precision of just\nlike a handful of nanoseconds makes the results just a lot easier to\ninterpret. I feel like when you get results from perf, there’s a\ncertain amount of thinking and interpretation and how do I infer from\nthis kind of statistical sample of what’s going on what was my program\nactually probably doing and where really is the hotspot? But with\nMagic Trace, you can often just see in bright colors exactly what’s\nhappening. I’ve seen people just pick a magic trace at a totally\nrandom point in the day and use that and be able to learn more from\nthat than they’re able to learn from looking at perf data.",
+      "zh": "像 Magic Trace 这样的工具的有趣之处之一是，您可以\n讲述了在进行简单模式优化时，你关心的整个故事\n关于这些广泛的事情。采样分析器主要是\n正确的工具。当您关心以延迟为导向的性能时，\n那么你想要这种缩小时间的分析工具和Magic\nTrace 是正确的选择。但实际发生的一件事\n我看到人们在组织内部使用 Magic Trace 是\n它通常是比简单模式风格优化更好的工具\nperf 是因为您获得了所有数据，每个数据\n按顺序排列单个事件及其发生时间，精确度为\n就像几纳秒让结果变得更容易\n解释。我觉得当你从 perf 得到结果时，有一个\n一定的思考和解释以及我如何从中推断\n这种关于我的程序正在发生的事情的统计样本\n实际上可能在做什么，热点到底在哪里？但与\nMagic Trace，您通常可以通过明亮的颜色准确地看到什么\n正在发生。我见过人们完全选择了一条神奇的痕迹\n一天中的随机点并使用它，并且能够从中学到更多\n他们能够通过查看性能数据来学习。"
+    },
+    {
+      "idx": 93,
+      "en": "Yeah, this is not universally true, but it’s very frequent that you\ncan get a bunch of extra information. I think one of the really good\nexamples is that a profiler tells you’re spending 40% of your time in\nthe hotspot of the send order function. But here’s an interesting\nquestion. Is that one call to send order that’s taking forever or is\nthat a thousand calls each of which was cheap, but why are you doing\nthis in a tight loop? And it turns out it’s really easy to make the\nmistake we were calling some function in a tight loop you didn’t\nintend to. And in a profiler these two things look pretty\nidentical. There are really esoteric tricks you can use to tease this\nout, but in Magic Trace, you just see, oh God, that’s really\nobvious. There’s a tight loop where it has a thousand function calls\nright in front of one another. That’s embarrassing. We should fix it,\nright? You actually develop this weird intuition for looking at the\nshape of the trace that you get the physical shape on your screen and\nthe visualization and like, oh, that weird tower. I’m clearly calling\na recursive function a thousand deep. That doesn’t seem right. You get\nto see a lot of these things.",
+      "zh": "是的，这并不普遍正确，但你经常这样做\n可以获得一堆额外的信息。我认为真正好的之一\n例如，分析器告诉您花费了 40% 的时间\n发送订单功能的热点。但这里有一个有趣的\n问题。发送订单的一个电话是永远需要的还是\n一千个电话，每个电话都很便宜，但你为什么这么做\n这是一个紧密循环吗？事实证明，制作起来真的很容易\n错误的是我们在一个紧密的循环中调用了一些你没有调用的函数\n打算。在分析器中这两件事看起来很漂亮\n相同。你可以用一些深奥的技巧来逗弄这个\n出来了，但是在 Magic Trace 中，你就会看到，天哪，这真的是\n显而易见。有一个紧密的循环，其中有一千个函数调用\n就在彼此面前。这很尴尬。我们应该修复它\n对吗？实际上，你在观察事物时产生了这种奇怪的直觉\n您在屏幕上获得物理形状的痕迹的形状以及\n可视化，就像，哦，那个奇怪的塔。我明明在呼唤\n一千层深度的递归函数。这似乎不对。你得到\n看到很多这样的东西。"
+    },
+    {
+      "idx": 94,
+      "en": "Yeah, it makes me wonder whether or not there’s more space in the set\nof tools that we use for turning the dial back and forth between stuff\nthat’s more about getting broad statistical samples and stuff that\ngives you this more detailed analysis and just more in the way of\nvisualizations, more ways of taking the data and throwing it up in a\ngraph or a picture that gives you more intuition about what’s going\non.",
+      "zh": "是的，这让我想知道布景中是否还有更多空间\n我们用来在东西之间来回转动表盘的工具\n这更多的是关于获取广泛的统计样本和其他东西\n为您提供更详细的分析以及更多的方式\n可视化，更多获取数据并将其呈现在一个\n图表或图片可以让您更直观地了解正在发生的事情\n上。"
+    },
+    {
+      "idx": 95,
+      "en": "A huge fraction of what I do in my day-to-day is visualization work,\nrather looking at them or trying to build better ones. It’s really\nimportant and we have barely scratched the surface of how to visualize\neven the simplest profiles.",
+      "zh": "我日常工作的很大一部分是可视化工作，\n而不是看着它们或尝试构建更好的。真的是\n重要的是我们仅仅触及了如何可视化的表面\n即使是最简单的配置文件。"
+    },
+    {
+      "idx": 96,
+      "en": "Yeah. One thing I’ve heard you rant a lot over time is that probably\nthe most common visualization that people use for analyzing\nperformance is flame graphs. And flame graphs are great. They’re easy\nto understand, they’re pretty easy to use, but they also drop some\nimportant information. And you’re a big advocate of pprof, which is a\ntool that has a totally different way of visualizing performance\ndata. Can you give a quick testimonial for why you think people should\nuse pprof more?",
+      "zh": "是的。随着时间的推移，我听到你经常咆哮的一件事是，可能\n人们用于分析的最常见的可视化\n性能是火焰图。火焰图很棒。它们很简单\n要理解，它们非常容易使用，但它们也放弃了一些\n重要信息。你是 pprof 的大力倡导者，这是一个\n具有完全不同的性能可视化方式的工具\n数据。您能否简要说明为什么您认为人们应该这样做\n更多地使用 pprof 吗？"
+    },
+    {
+      "idx": 97,
+      "en": "Yeah. Flamegraphs were way better than anything that came before\nit. By the way. They were a revelation when they were invented, I\nthink. And so this is one of those things we have to be really careful\nnot to say something is bad. I just think something better has been\ninvented. So it’s called a flame graph because it’s a linear line that\nhas a bunch of things going up out of it that look like flames. And\nwhat this is is that—",
+      "zh": "是的。火焰图比以前的任何东西都要好得多\n它。顺便一提。当它们被发明时，它们是一个启示，我\n想想。所以这是我们必须非常小心的事情之一\n并不是说某件事不好。我只是觉得有更好的事情\n发明的。所以它被称为火焰图，因为它是一条线性线\n有一堆东西从里面升起，看起来像火焰。并且\n这是什么——"
+    },
+    {
+      "idx": 98,
+      "en": "And people often use orange and red as the color, so it really looks\nlike flames.",
+      "zh": "而且人们经常使用橙色和红色作为颜色，所以看起来真的\n像火焰一样。"
+    },
+    {
+      "idx": 99,
+      "en": "Exactly right wouldn’t look as cool if it was green. And so the first\nlevel of this is broken down 40%, 60% and that 40% of your stack\ntraces start this way and 60% start this way. And then the next level\nis just each of those gets refined up. And so every stack trace\ncorresponds to an individual peak on this mountain range. And then the\nwidth of that peak is how many stack traces looked like that. So this\nis good. It tells you where is your time going?",
+      "zh": "完全正确，如果它是绿色的，看起来就不那么酷了。所以第一个\n这个级别被分解为你堆栈的 40%、60% 和那个 40%\n痕迹是这样开始的，60% 都是这样开始的。然后是下一个级别\n只是每一个都得到了完善。所以每个堆栈跟踪\n对应于这座山脉上的一座单独的山峰。然后是\n该峰值的宽度是有多少堆栈跟踪看起来像这样。所以这个\n很好。它告诉你你的时间都去哪儿了？"
+    },
+    {
+      "idx": 100,
+      "en": "And one nice property is that at a glance, it makes it really easy to\nintuitively see the percentages, right? Because the width of the lines\nas compared to the width of the overall plot gives you the percentage\nthat part of the flame graph is responsible for.",
+      "zh": "一个很好的特性是，一目了然，它使得很容易\n直观地看到百分比，对吗？因为线条的宽度\n与整个图的宽度相比，您可以得到百分比\n火焰图的那部分负责。"
+    },
+    {
+      "idx": 101,
+      "en": "If there’s one really fat mountain that’s 60% wide, you know what\nyou’re doing. It’s that. Here’s the problem with it. It misses a thing\nI like to call join points, which are points where stack traces start\ndifferently and then reach the same important thing. Because what\nhappens is suppose you’ve got 15 or 16 little peaks, none of which is\nthat big, and then right at the tippy top of each of them in tiny,\ntiny narrow things. It’s all calling the same function. It’d be really\neasy to dismiss that you don’t even notice the thing at the top, but\nit turns out if you add them all together, that’s 40% of your\ntime. And different visualizations can really show you everything\ncomes together here.",
+      "zh": "如果有一座真正的肥山有 60% 宽，你知道吗\n你正在做。就是这样。这就是它的问题所在。它错过了一件事\n我喜欢称为连接点，这是堆栈跟踪开始的点\n以不同的方式，然后达到同样重要的事情。因为什么\n假设你有 15 或 16 个小峰，其中没有一个是\n那么大，然后就在每个微小的尖端，\n微小狭窄的东西。都是调用同一个函数。真的会是\n很容易忽视你甚至没有注意到顶部的东西，但是\n事实证明，如果你把它们全部加在一起，那就是你的 40%\n时间。不同的可视化效果可以真正向您展示一切\n汇聚于此。"
+    },
+    {
+      "idx": 102,
+      "en": "So how does pprof try and deal with this?",
+      "zh": "那么 pprof 如何尝试处理这个问题呢？"
+    },
+    {
+      "idx": 103,
+      "en": "So we’re now going to try to proceed to describe a representation of a\ndirected acyclict graph over a podcast. Which of all the dumb ways\npeople have visualized directed acyclic graphs might be the worst. But\nwhat it does is it draws a little DAG on your screen where each node\nis a function you end up calling and each arrow is a path. You can\nimagine that you have one node for every function you’re ever in. And\nthen for each stack trace, you just draw a line through each node in\norder and they go towards the things that were called. And then you\nhighlight each node with the total percentage of time you spent there\nand you put some colors on it like you say, and you make the arrows\nthicker, thinner for bigger or smaller weights. And that’s the basic\nidea. If you close your eyes, and imagine with me for a second, I\nclaim that what will happen in the scenario I described is that you’ll\nsee a bunch of bushy random small paths at the top of your screen and\nthen a bunch of arrows all converge on one function. And that function\nnow is really obviously the problem.",
+      "zh": "所以我们现在要尝试继续描述一个\n播客上的有向无环图。所有愚蠢的方法中哪一个\n人们已经想象有向无环图可能是最糟糕的。但是\n它的作用是在屏幕上绘制一个小 DAG，其中每个节点\n是您最终调用的函数，每个箭头都是一条路径。你可以\n想象一下，您所参与的每一项功能都有一个节点。并且\n然后对于每个堆栈跟踪，您只需在其中的每个节点上画一条线\n秩序，他们走向被称为的事物。然后你\n突出显示每个节点以及您在该节点花费的总时间百分比\n然后你像你说的那样在上面涂上一些颜色，然后制作箭头\n对于更大或更小的重量，更厚、更薄。这就是基本的\n想法。如果你闭上眼睛，和我一起想象一下，我\n声称在我描述的场景中会发生什么，你会\n在屏幕顶部看到一堆茂密的随机小路径，\n那么一堆箭头都汇聚到一个函数上。还有那个功能\n现在确实是明显的问题了。"
+    },
+    {
+      "idx": 104,
+      "en": "And then underneath it’ll also branch out to lots of different things.",
+      "zh": "然后在下面它还会分支到许多不同的东西。"
+    },
+    {
+      "idx": 105,
+      "en": "Yeah, that’s actually a really good point. It tells you in fact that\nmaybe it’s not that function that is the time, it’s the things it\ncalls, but now you at least know where all this is coming from. And\nthere’s a single example of this that is the most common thing, at\nleast if you’re working in say C++, that function’s always malloc.",
+      "zh": "是的，这确实是一个很好的观点。它实际上告诉你\n也许时间不是那个功能，而是它的东西\n电话，但现在你至少知道这一切是从哪里来的。并且\n有一个最常见的例子，在\n至少如果你使用 C++，该函数总是 malloc。"
+    },
+    {
+      "idx": 106,
+      "en": "Oh, interesting.",
+      "zh": "哦，有趣。"
+    },
+    {
+      "idx": 107,
+      "en": "Like I said, with the business, logic may be very diverse, but\neverything allocates memory because it’s really easy to realize, oh,\nit’s doing a little bit of malloc here. It’s doing a little bit of\nmalloc here. It’s doing a little bit of malloc here.",
+      "zh": "就像我说的，对于业务来说，逻辑可能非常多样化，但是\n一切都会分配内存，因为它很容易实现，哦，\n它在这里做了一点malloc。它正在做一点点\nmalloc 在这里。它在这里做了一点 malloc。"
+    },
+    {
+      "idx": 108,
+      "en": "And I guess this ties a little bit into what you were talking about of\nthat style of trying to look at the foundations and get the common\nthings that everyone sees. It becomes really important to see those\ncommon things. Although I would’ve thought one of the ways you could\ndeal with this just with flame graphs is there’s just two different\norientations. You can take your flame graph and turn it upside down,\nand so you can decide which do you want to prioritize? Thinking about\nthe top of the stack or the bottom of the stack.",
+      "zh": "我想这与你所说的有点联系\n尝试着眼于基础并获得共同点的风格\n每个人都看到的事情。看到这些变得非常重要\n常见的事情。虽然我会想到你可以采用的方法之一\n仅用火焰图来处理这个问题，只有两种不同的\n方向。你可以把你的火焰图倒过来，\n这样你就可以决定优先考虑哪一个？思考\n堆栈顶部或堆栈底部。"
+    },
+    {
+      "idx": 109,
+      "en": "It’s the bush below malloc that screws you over there. It’s when the\nthing’s in the middle that you get problematic. It’s when the really\nkey function is in the middle where everything converges through one\nparticular, it’s not a bottleneck, but you can think about it as a\nbottleneck in the graph, that the flame graphs really fail. And to\ntheir credit, people have built flame graph libraries where you can\nsay, give me a flame graph that goes up and down for malloc, but you\nneed to know to focus on that function.",
+      "zh": "是 malloc 下面的灌木丛把你搞砸了。正是当\n事情在中间你就会遇到问题。真正到的时候就是\n关键功能位于中间，一切都通过一个汇聚\n特别是，它不是瓶颈，但你可以将其视为\n图中的瓶颈，火焰图确实失败了。并至\n他们的功劳，人们已经建立了火焰图库，您可以在其中\n比如说，给我一个 malloc 上升和下降的火焰图，但是你\n需要知道专注于该功能。"
+    },
+    {
+      "idx": 110,
+      "en": "I see. And so pprof somehow has some way of essentially figuring out\nwhat are the natural join points and presenting them.",
+      "zh": "我懂了。所以 pprof 有某种方法可以本质上弄清楚\n什么是自然连接点并呈现它们。"
+    },
+    {
+      "idx": 111,
+      "en": "I think that it outsources that problem to the graph drawing library\nthat tries to do various heuristics for how people view graphs tends\nto work.",
+      "zh": "我认为它将这个问题外包给图形绘制库\n试图对人们如何看待图表进行各种启发\n去工作。"
+    },
+    {
+      "idx": 112,
+      "en": "I’ve looked at flame graphs and I’ve looked at pprof visualizations. I\ndo think pprof visualizations are a little bit harder to intuitively\ngrok what’s going on. So I feel like there’s probably some space there\nyet to improve the visualization to make it a little more intuitively\nclear.",
+      "zh": "我看过火焰图，也看过 pprof 可视化。我\n确实认为 pprof 可视化有点难以直观地理解\n明白发生了什么事。所以我觉得那里可能还有一些空间\n尚未改进可视化，使其更直观一些\n清楚。"
+    },
+    {
+      "idx": 113,
+      "en": "I definitely agree. I think that just like we were saying earlier with\nthis is one of those things that experts know, new people don’t, you\njust kind of have to get used to staring at these for a couple days\nand then you get used to it. But it’d be nice if we didn’t have\nto. It’d be nice if it was just as obvious as the other things are.",
+      "zh": "我绝对同意。我认为就像我们之前说的\n这是专家知道的事情之一，新人不知道，你\n只是需要习惯盯着这些几天\n然后你就习惯了。但如果我们没有就好了\n到。如果它和其他事情一样明显就好了。"
+    },
+    {
+      "idx": 114,
+      "en": "So we’ve talked a bunch here about performance engineering tools and\nmeasurement tools more than anything else, which I think makes\nsense. I think the core of performance engineering is really\nmeasurement. And we’ve talked about ways in which these focused\ntracing tools like Magic Trace in some ways can kind of outperform\nsampling tools for a lot of the problems that we run into. What are\nthe kinds of cases where you think sampling tools are better?",
+      "zh": "我们在这里讨论了很多关于性能工程工具的内容\n测量工具比其他任何东西都重要，我认为这使得\n感觉。我认为性能工程的核心实际上是\n测量。我们已经讨论了这些重点的方式\n像 Magic Trace 这样的追踪工具在某些方面可以胜过其他人\n针对我们遇到的许多问题的采样工具。什么是\n您认为在哪些情况下抽样工具更好？"
+    },
+    {
+      "idx": 115,
+      "en": "To me, the case I wish I could use sampling the most is once I’ve\nidentified a range of interest. The thing we care about a lot when we\nthink about latency and optimization of trading systems is tails. If\nyour system 99% of the time responds in five microseconds and then 1%\nof the time responds in a millisecond, that’s not great. You don’t\nalways get a choice of which of those is the one you trade on, right?",
+      "zh": "对我来说，我最希望能够使用抽样的情况是一旦我\n确定了一系列的兴趣。当我们\n考虑交易系统的延迟和优化是尾巴。如果\n您的系统 99% 的时间在 5 微秒内响应，然后 1%\n的时间在一毫秒内响应，这不太好。你不\n总是可以选择其中哪一个是您进行交易的，对吗？"
+    },
+    {
+      "idx": 116,
+      "en": "And also there’s the usual correlation of the busiest times are often\nthe times that are best to be fast at.",
+      "zh": "而且最繁忙的时间通常也有相关性\n最好快的时候。"
+    },
+    {
+      "idx": 117,
+      "en": "That’s right.",
+      "zh": "这是正确的。"
+    },
+    {
+      "idx": 118,
+      "en": "And so exactly where it’s bad is the case where you care the most.",
+      "zh": "因此，最糟糕的情况正是您最关心的情况。"
+    },
+    {
+      "idx": 119,
+      "en": "And Magic Trace is pretty good at finding tails because you can just\ndo some interesting tricks and hacks to get magic trace to sample at a\ntime where you’re in a 99-percentile tail. Now sometimes you look at\nthose trails and magic trace and you see, oh, I stopped the world to\ndo a major GC. I should maybe avoid that. I need to allocate less or\nsome other bizarre weird event. Sometimes it’s a strange thing that is\nhappening. But a remarkably common pattern we see is that your tails\naren’t weird, aren’t interesting, they’re just your medians repeated\nover and over. And like you said, you’re having a tail because the\nmarket is very busy because it’s very interesting. You saw a rapid\nburst of messages and each of them takes you a microsecond to process,\nbut that’s not the budget you have. You have 800 nanoseconds and\nyou’re just falling behind.",
+      "zh": "Magic Trace 非常擅长寻找尾巴，因为你可以\n做一些有趣的技巧和技巧来获取魔法痕迹以进行采样\n您处于 99% 尾部的时间。现在有时你会看\n那些痕迹和魔法痕迹，你看，哦，我停止了世界\n进行一次主要的 GC。我也许应该避免这种情况。我需要分配更少或\n其他一些奇怪的事件。有时这是一件奇怪的事情\n正在发生。但我们看到的一个非常常见的模式是你的尾巴\n不奇怪，也不有趣，它们只是你的中位数的重复\n一遍又一遍。就像你说的，你有一条尾巴，因为\n市场很繁忙，因为它很有趣。你看到了急流\n消息突发，每条消息都需要你一微秒来处理，\n但这不是您的预算。你有 800 纳秒并且\n你只是落后了。"
+    },
+    {
+      "idx": 120,
+      "en": "It’s just a classic queuing theory result.",
+      "zh": "这只是一个经典的排队论结果。"
+    },
+    {
+      "idx": 121,
+      "en": "It’s nothing but queuing theory.",
+      "zh": "这只不过是排队论。"
+    },
+    {
+      "idx": 122,
+      "en": "Get lots of data in. You’re going to have large tails when it all\npiles up in time.",
+      "zh": "获取大量数据。当这一切发生时，你将会得到大尾巴\n及时堆积起来。"
+    },
+    {
+      "idx": 123,
+      "en": "So you pull up this magic trace and you say, oh, I processed 10,000\npackets. What do you do now? And sometimes you can think of obvious\nsolutions. Sometimes you realize, oh, I can know I’m in this case and\nwait and process all of these in a batch. That’s a great optimization\nthat we do all the time. But sometimes you’re just, oh wow, I just\nreally need to make each of these packet processes 20% faster. And\nwhat I really wish you could do is take that magic trace and select a\nrange and say, Hey, show that to me in pprof because it’s just like\nthe flame graph. You have all these little tiny chunks in the magic\ntrace and I really want to see them aggregated and you have some\ntrouble doing it.",
+      "zh": "所以你拉起这个神奇的痕迹然后你说，哦，我处理了 10,000\n数据包。你现在做什么？有时你可以想到显而易见的\n解决方案。有时你会意识到，哦，我知道我处于这种情况，\n等待并批量处理所有这些。这是一个很棒的优化\n我们一直在这样做。但有时你只是，哦哇，我只是\n确实需要使每个数据包处理速度加快 20%。并且\n我真正希望你能做的就是利用那条神奇的痕迹并选择一个\n范围并说，嘿，在 pprof 中向我展示它，因为它就像\n火焰图。你拥有所有这些神奇的小块\n跟踪，我真的很想看到它们聚合起来，你有一些\n做起来麻烦。"
+    },
+    {
+      "idx": 124,
+      "en": "So I asked one question and I think you answered a different one.",
+      "zh": "所以我问了一个问题，我认为你回答了另一个问题。"
+    },
+    {
+      "idx": 125,
+      "en": "I do that a lot.",
+      "zh": "我经常这样做。"
+    },
+    {
+      "idx": 126,
+      "en": "I asked the question of when do you want sampling? You answered the\nquestion of when do you want a profile view? And I totally get that,\nand that seems like a super natural thing and maybe a nice feature\nrequest for the Magic Trace folk have a nice way of flipping it into\nthe profile view. But I really wanted to poke at the other question\nwhich is when is sampling itself a better technique versus this kind\nof exhaustive tracing that Magic trace is mostly built around?",
+      "zh": "我问你什么时候想要采样的问题？您回答了\n您什么时候想要查看个人资料的问题？我完全明白，\n这似乎是一个超自然的事情，也许是一个很好的功能\n要求 Magic Trace 人员有一个很好的方法将其翻转为\n个人资料视图。但我真的很想探讨另一个问题\n与这种技术相比，采样本身是一种更好的技术\nMagic道主要是围绕着详尽的追踪而建立的？"
+    },
+    {
+      "idx": 127,
+      "en": "One easy answer is the easy mode problems we have. Things like\nhistorical research, things like training machine learning models,\nthings that are really are throughput problems and we do have\nthroughput problems. And there it’s just easier to look at the\nsampling profile or you can really target it at cache misses or\nwhatever you want. So that’s a case where we definitely want it.",
+      "zh": "一个简单的答案是我们遇到的简单模式问题。诸如此类的事情\n历史研究，比如训练机器学习模型，\n真正的问题是吞吐量问题，我们确实有\n吞吐量问题。在那里更容易查看\n采样配置文件，或者您可以真正将其定位于缓存未命中或\n无论你想要什么。所以这是我们绝对想要的情况。"
+    },
+    {
+      "idx": 128,
+      "en": "And maybe another thing to say about it is it is definitively\ncheaper. The whole point of sampling is you’re not grabbing the data\nall the time. I guess we didn’t talk about this explicitly, but Intel\nprocessor trace, you turn it on and you end up eating 5-15% or\nsomething of the performance of the program. There is a material—",
+      "zh": "也许另一件事要说的是它绝对是\n更便宜。采样的重点是你不是在抓取数据\n一直。我想我们没有明确讨论这一点，但英特尔\n处理器跟踪，你打开它，你最终会吃掉 5-15% 或\n程序的某些性能。有一种材料——"
+    },
+    {
+      "idx": 129,
+      "en": "Don’t say that out loud or they’ll stop letting me use it on our\ntrading systems.",
+      "zh": "不要大声说出来，否则他们将不再让我在我们的网站上使用它\n交易系统。"
+    },
+    {
+      "idx": 130,
+      "en": "I mean, it is the case that we don’t just have it turned on everywhere\nall the time. We turn it on when we want it.",
+      "zh": "我的意思是，我们不只是在所有地方都打开它\n一直。我们在需要时打开它。"
+    },
+    {
+      "idx": 131,
+      "en": "And that’s a thing that the hyperscalers do. They just leave a\nsampling profile on across the fleet just getting 1% of things. And\nthat gives you kind of a great sense of what the overall world is\ndoing. And that is actually a thing I kind of wish we had. It would be\nless valuable for us than it would be for them. But I would love if I\ncould just look at it like a global view of hotspots. I think the best\nthing in the world would be like, can I get a sampled profile of all\nthe things all of our trading systems did when they weren’t spinning\nidly? If I could know that, oh, overall if I could get a little bit\nmore return from optimizing the order sending code versus the market\ndata parsing code, I think that would be a really valuable thing to\nme.",
+      "zh": "这就是超大规模企业所做的事情。他们只是留下一个\n对整个机队的抽样概况只得到 1% 的东西。并且\n这让你对整个世界有一个很好的认识\n做。这实际上是我希望我们拥有的事情。这将是\n对我们来说不如对他们有价值。但我会很高兴如果我\n可以将其视为热点的全球视图。我认为最好的\n世界上的事情会是这样的，我能得到所有的样本资料吗？\n我们所有的交易系统在不运行时所做的事情\n闲着？如果我能知道这一点，哦，总的来说，如果我能得到一点\n与市场相比，优化订单发送代码带来更多回报\n数据解析代码，我认为这对于\n我。"
+    },
+    {
+      "idx": 132,
+      "en": "So another interesting thing about the way in which we approach and\nthink about performance is our choice of programming language. We are\nnot using any of the languages that people typically use for doing\nthis kind of stuff. We’re not programming in C or C++ or Rust. We’re\nwriting all of our systems in OCaml and that changes the structure of\nthe work in some ways. And I’m kind of curious how that feels from\nyour perspective as someone who very much comes from C++ background\nand is dropped in weird functional programming land. what have you\nlearned about how we approach these problems? What do you think about\nthe trade-offs here?",
+      "zh": "关于我们处理问题的方式还有一件有趣的事情\n考虑性能是我们对编程语言的选择。我们是\n不使用人们通常使用的任何语言\n这种东西。我们不是用 C、C++ 或 Rust 编程。我们是\n用 OCaml 编写我们所有的系统，这改变了\n工作在某些方面。我有点好奇这感觉如何\n作为一个具有 C++ 背景的人，您的观点\n并被丢弃在奇怪的函数式编程领域。你有什么\n了解我们如何解决这些问题？你觉得怎么样\n这里的权衡？"
+    },
+    {
+      "idx": 133,
+      "en": "Well, the best thing about it’s employment guarantee, anyone can write\nfast C++, but it takes a real expert to write fast OCaml, right? You\ncan’t fire me.",
+      "zh": "嗯，最好的一点是就业保障，任何人都可以写\n快速的 C++，但需要真正的专家才能编写快速的 OCaml，对吧？你\n不能解雇我。"
+    },
+    {
+      "idx": 134,
+      "en": "Although I think that’s actually totally not true. I didn’t mean the\npart about firing you, but the point about writing fast C++, I\nactually think there’s a kind of naive idea of, oh, anyone can write\nfast C++. It’s like, oh man, there’s a lot of ways of writing really\nslow C++. And actually a lot of the things that you need to get right\nwhen designing high performance systems are picking the right\narchitecture, the right way of distributing the job over multiple\nprocesses, figuring out how to structure the data, structure the\nprocess of pulling things in and out. There are lots of stories of\npeople saying, oh, we’ll make it faster in C or C++. And sometimes you\nimplement it in some other language and it can be made faster still\nbecause often the design and the details of how you build it can\ndominate the language choice.",
+      "zh": "尽管我认为这实际上完全不正确。我的意思不是\n关于解雇你的部分，但关于编写快速 C++ 的问题，我\n实际上认为有一种天真的想法，哦，任何人都可以写\n快速 C++。就像，天哪，写作的方式真的有很多种\n慢 C++。事实上，很多事情你需要做对\n在设计高性能系统时选择正确的\n架构，将工作分配给多个人的正确方法\n流程，弄清楚如何构建数据，构建\n将东西拉进拉出的过程。有很多的故事\n人们说，哦，我们会用 C 或 C++ 让它更快。而有时你\n用其他语言实现它并且可以变得更快\n因为通常设计和构建方式的细节可以\n主导语言选择。"
+    },
+    {
+      "idx": 135,
+      "en": "I think it’s really easy for people who are performance obsessed like\nmyself to just get a little too focused on, oh, I’m going to make this\nfunction faster. And maybe the better answer is, can we avoid that\nfunction being called? Can we not listen to that data source? Can we\noutsource this to a different process that feeds us interesting\ninformation?",
+      "zh": "我认为对于那些痴迷于表现的人来说这真的很容易\n我自己有点太专注于，哦，我要做这个\n功能更快。也许更好的答案是，我们能否避免这种情况\n函数被调用？我们可以不听那个数据源吗？我们可以吗\n将其外包给另一个让我们感兴趣的流程\n信息？"
+    },
+    {
+      "idx": 136,
+      "en": "The single most important thing in performance engineering I think is\nfiguring out what not to do. How do you make the thing that you’re\nactually doing as minimal as possible? That is job one.",
+      "zh": "我认为性能工程中最重要的事情是\n弄清楚什么不该做。你是如何做到这一点的\n实际上是尽可能少地做？这是工作一。"
+    },
+    {
+      "idx": 137,
+      "en": "Honestly, I think one of the reasons that I really like performance\noptimization as a topic to focus on. I don’t like writing code very\nmuch. I’m not very productive. It takes me a long time to do good\nwork. So I want to do the stuff that requires me to write the fewest\nlines of code and have the biggest impact. This is like one of those\nhypotheticals, you make a two line change and everything gets 10%\nfaster. The hard part was the three weeks of investigation proving\nthat it was going to work. Right? And I think this is actually a good\nexample of you really have to think about the whole board. You have to\nthink about how you’re structuring the code and how you’re structuring\nthe system, how many hops this is going to go through, how many\nsystems is it going to go through, how can you get assistance from\nhardware, any of these things? And micro optimizing the fact that\nclang has a better loop optimizer than GCC than the OCaml\ncompiler. It’s really annoying to look at the bad loop. Is that really\nwhat’s killing you? No. What’s killing you is that you’re looping over\nsomething that you shouldn’t be looking at at all.",
+      "zh": "老实说，我认为我真正喜欢表演的原因之一\n优化作为一个需要重点关注的话题。我不太喜欢写代码\n很多。我的工作效率不高。我需要很长时间才能做好事\n工作。所以我想做那些需要我写得最少的事情\n代码行数并产生最大的影响。这就像其中之一\n假设，你做了两行改变，一切都变成了 10%\n更快。最困难的部分是三周的调查证明\n它会起作用。正确的？我认为这实际上是一个很好的\n你确实必须考虑整个董事会的例子。你必须\n考虑如何构建代码以及如何构建\n系统，这将经过多少跳，多少\n它将要经过系统吗？您如何获得帮助\n硬件，这些东西中的任何一个吗？并微观优化这一事实\nclang 比 OCaml 拥有比 GCC 更好的循环优化器\n编译器。看着坏循环真的很烦人。难道真的是这样吗\n是什么杀死了你？不，真正要了你的命的是你在循环\n一些你根本不应该看的东西。"
+    },
+    {
+      "idx": 138,
+      "en": "Right. So there’s a bunch of stuff you just talked about that would\nlove to talk about more about, in fact the hardware stuff in\nparticular. But I don’t want to lose track of the language issue. So I\nbelieve what I said that people often overfocus on the details of the\nlanguage, but the language does matter and I think it matters in\nparticular for performance. And I’m kind of curious, what’s your\nfeeling about how that affects how we approach the work and how your\nown kind of interaction and engagement with it?",
+      "zh": "正确的。所以你刚才谈到了很多东西\n喜欢多讲，其实硬件方面的东西\n特别的。但我不想忘记语言问题。所以我\n相信我所说的，人们常常过于关注细节\n语言，但语言确实很重要，我认为它很重要\n特别是对于性能。我有点好奇，你的是什么\n感受这如何影响我们处理工作的方式以及您的方式\n自己与之互动和参与的方式？"
+    },
+    {
+      "idx": 139,
+      "en": "I break it down into three categories. The first category in which\nOCaml provides us a challenge is, I call it the most annoying, but the\nleast important. And that’s what I was saying earlier about, oh, our\ncode generation isn’t as good. We’re branching too much. We have too\nmany silly register spills. It’s annoying to look at. It’s really not\nwhat’s killing you. I would wish it was better. And really the limit\nisn’t OCaml, the limit is scale. The C compiler people have been\nworking for 30 more years than the OCaml compiler people have, and\nthere’s more people working on optimizing clang right now across the\nworld than we have probably employees at Jane Street. We’re never\ngoing to catch up. That’s okay. It’s not really what’s killing\nyou. The second category is things that are just maybe more of an\nactual problem, but hard to deal with, but not really the key issue.",
+      "zh": "我将其分为三类。第一类，其中\nOCaml 给我们提供的一个挑战是，我称之为最烦人的，但是\n最不重要。这就是我之前所说的，哦，我们的\n代码生成不太好。我们的分支太多了。我们也有\n许多愚蠢的寄存器溢出。看着很烦人。确实不是\n是什么杀死了你。我希望它更好。而且确实是极限\n不是 OCaml，限制是规模。 C 编译器人们已经\n比 OCaml 编译器的工作时间多了 30 年，并且\n现在有更多的人致力于优化 clang\n世界上可能比简街的员工还要多。我们从来都不是\n会赶上的。没关系。这并不是真正的杀人原因\n你。第二类是可能更多的东西\n实际问题，虽然很难处理，但并不是真正的关键问题。"
+    },
+    {
+      "idx": 140,
+      "en": "Our memory model requires us to do slightly more expensive things in\nsome cases. A good example is we’re a garbage collected language, our\ngarbage collector inspects values at runtime. Therefore, uninitialized\ndata can be really problematic. And so we have to do stupid things in\nmy brain like, oh, it’s really important to null out the pointers in\nthis array and not just leave them behind or they’ll leak, or you\ncan’t just have an uninitialized array that I promise I’ll get too\nsoon. Because what happens if you GC in that range? And I do actually\nthink this is meaningfully costly in some scenarios, but I’m willing\nto put up with it. In most cases, there are things you can do about\nit. The thing that I think is most problematic for our use of a\nlanguage like OCaml gets back to mechanical sympathy. And I said that\nthe world is not made out of parentheses that Lisp uses, and it’s also\nnot made out of algebraic data types. OCaml’s fundamental\nrepresentations of the world are very boxy. There’s a lot of\npointers. There’s a lot of this object contains a pointer to something\nelse where in C++ it would just be splatted right there in the\nmiddle. And the reasons we do this, there are reasons that make it\neasy to write good, clean, safe code, but it is fundamentally costly\nand it lacks—the language, if anything, some mechanical sympathy.",
+      "zh": "我们的内存模型要求我们做稍微昂贵的事情\n一些情况。一个很好的例子是我们是一种垃圾收集语言，我们的\n垃圾收集器在运行时检查值。因此，未初始化\n数据可能真的有问题。所以我们必须做一些愚蠢的事情\n我的大脑就像，哦，将指针归零真的很重要\n这个数组，而不是把它们留在后面，否则它们会泄漏，或者你\n不能只是拥有一个我保证我也会得到的未初始化的数组\n很快。因为如果你在这个范围内进行 GC 会发生什么？事实上我确实\n认为这在某些情况下代价高昂，但我愿意\n忍受它。在大多数情况下，您可以采取一些措施\n它。我认为对于我们使用a最大的问题是\n像 OCaml 这样的语言又回到了机械同情心。我说过\n世界并不是由 Lisp 使用的括号组成的，而且它也是\n不是由代数数据类型组成的。 OCaml 的基础\n世界的表征非常四四方方。有很多\n指针。这个对象的很多部分都包含指向某个东西的指针\n否则在 C++ 中它只会被泼在\n中间。我们这样做的原因，是有原因的\n编写优质、干净、安全的代码很容易，但成本高昂\n它缺乏的是——语言，如果有的话，也缺乏一些机械的同情心。"
+    },
+    {
+      "idx": 141,
+      "en": "Right? Or at least it makes it hard to express your mechanical\nsympathy because getting control over the low level details is\nchallenging. And I don’t want to go too much into the, we’re actually\ndoing a lot of work to try and make OCaml better exactly at this. But\na question I’m more interested in talking about with you is how do you\nsee us working around these limitations in the language, in the code\nbase that we have?",
+      "zh": "正确的？或者至少它让你很难表达你的机械\n同情，因为控制低级细节是\n具有挑战性。我不想过多讨论，我们实际上\n我们做了很多工作来尝试让 OCaml 在这方面做得更好。但是\n我更想和你讨论的一个问题是你如何\n看看我们如何解决语言和代码中的这些限制\n我们有什么基础？"
+    },
+    {
+      "idx": 142,
+      "en": "There’s a couple options here. The first is you can kind of write it\nthe hard way because OCaml’s a real language. You can write whatever\nyou want. It’s just a question of difficulty. If nothing else, I can\njust, I could in theory, allocate a 64 gigabyte int array at the\nbeginning of startup and then just write C in OCaml that just\nmanipulates that as memory, right? It would work, it never GC, it\nwould do all the things you wanted it to. It’d just be miserable. And\nclearly I’m not going to do that. But given that we’re a company that\nhas a lot of people who care about programming languages, one thing\nwe’re pretty good at is DSLs. And so we have some DSLs, for example,\nthat let you describe a layout and we’re going to embed this layout\ninto some low level string that doesn’t know a lot, but it’s still, if\nyou glance at it the right way, typesafe, in that the DSL doesn’t let\nyou write out of bounds accesses or anything like this.",
+      "zh": "这里有几个选项。第一个是你可以写它\n这很困难，因为 OCaml 是一种真正的语言。随便写都可以\n你想要的。这只是难度的问题。如果没有别的事我可以\n只是，理论上我可以在\n启动开始，然后在 OCaml 中编写 C 即可\n将其作为记忆来操纵，对吗？它会起作用，它永远不会GC，它\n会做你想做的所有事情。那就太惨了。并且\n显然我不会那样做。但鉴于我们是一家公司\n有很多人关心编程语言，有一件事\n我们非常擅长 DSL。所以我们有一些 DSL，例如，\n让你描述一个布局，我们将嵌入这个布局\n进入一些了解不多的低级字符串，但它仍然是，如果\n你以正确的方式浏览它，类型安全，因为 DSL 不允许\n你写了越界访问或类似的东西。"
+    },
+    {
+      "idx": 143,
+      "en": "Right? And the DSL, you sit down and write down what’s the format of a\npacket that you might get from the NASDAQ exchange. And then it\ngenerates some actually relatively reasonable, easy to understand\ninterfaces that are backed by the low level, horrible manipulation of\nraw memory. And so you write a DSL, you generate some code, and what\nyou surface to the user is a relatively usable thing, but you get the\nphysical behavior that you want with all the flattening and inlining\nand tight representation of data.",
+      "zh": "正确的？对于 DSL，你坐下来写下 DSL 的格式是什么\n您可能从纳斯达克交易所获得的数据包。然后它\n生成一些其实比较合理，容易理解\n由低级、可怕的操作支持的接口\n原始内存。所以你写了一个 DSL，生成了一些代码，然后\n你向用户展示的是一个相对有用的东西，但是你得到的是\n通过所有扁平化和内联实现您想要的物理行为\n和数据的紧密表示。"
+    },
+    {
+      "idx": 144,
+      "en": "You’re hitting on a really good point that a lot of these originated\nfrom our need to parse formats that were given to us. But it turns out\nyou can also just use them for representing your data in memory. I can\nbuild a book representation of the state of the market that’s just\nlaid out flatly and packedor me. It’s much less pleasant to use than\nreal OCaml. It’s difficult, and we only do this in the places that it\nmatters, but you can do it. This is what I like to call a dialect of\nOCaml. We speak in sometimes and sometimes we gently say it’s zero\nalloc OCaml. And the most notable thing about it, it tries to avoid\ntouching the garbage collector, but implied in that zero alloc dialect\nis also a lot of representational things. We have little weird corners\nof the language that are slightly less pleasant to use, but will give\nyou more control over layout and more control over not touching the GC\nand using malloc instead. And it works pretty well. It’s harder, but\nyou can do it. In the same way, another thing we think about a lot is\ninteroperability. Again, sort of out of necessity that our libraries,\nwe have to interact with that only work in C. So we have these little\nC stubs that we can call into and it’s really cheap. It’s not like\nJava. It’s not like one of those languages where there’s this huge\ncostly process for going cross language, just make a function call and\nit just works, right?",
+      "zh": "你说到了一个非常好的观点，其中很多都是起源于\n由于我们需要解析提供给我们的格式。但事实证明\n您也可以使用它们来表示内存中的数据。我可以\n建立一本反映市场状况的书\n平铺在我身上，打包好。使用起来不太愉快\n真正的 OCaml。这很困难，我们只在需要的地方这样做\n很重要，但你可以做到。这就是我所说的方言\n奥卡姆。我们有时会说话，有时我们会温和地说为零\n分配 OCaml。最值得注意的是，它试图避免\n接触垃圾收集器，但隐含在零分配方言中\n还有很多有代表性的东西。我们有一些奇怪的小角落\n使用起来稍微不太愉快的语言，但会给\n您可以更好地控制布局并更好地控制不接触 GC\n并使用 malloc 代替。而且效果很好。比较难，但是\n你可以做到的。同样，我们经常思考的另一件事是\n互操作性。再次强调，我们的图书馆出于某种需要，\n我们必须与只能在 C 中工作的交互。所以我们有这些\n我们可以调用 C 存根，而且它非常便宜。这不像\n爪哇。它不像那些有如此巨大的语言之一\n跨语言的成本高昂的过程，只需进行函数调用即可\n它只是有效，对吧？"
+    },
+    {
+      "idx": 145,
+      "en": "Yeah. The overhead, I think for a function call to C at the least is,\nI dunno, three or four nanos. And I think in Java it’s like three or\n400 nanos because the JNI is a beast for reasons I’ve never\nunderstood.",
+      "zh": "是的。我认为对于 C 函数调用来说，开销至少是：\n我不知道，三或四纳米。我认为在 Java 中它就像三个或\n400 纳秒，因为 JNI 是一个野兽，原因我从来没有\n明白了。"
+    },
+    {
+      "idx": 146,
+      "en": "Option two is cry a little bit and deal with it. Yeah, we fight a\nfundamental disadvantage. We’re working on reducing it. I’m super\nexcited about getting more control over the layout of OCaml\ntypes. This is like the biggest change to me that maybe will ever\nhappen in the compiler. Being able to write down a representation of\nmemory that is what I want it to be in a real OCaml type that is fun\nto play with, but fundamentally we’re kind of at a disadvantage and we\njust have to work hard and we have to think more about, okay, we’re\ngoing to have a higher cache footprint. What does this mean about our\narchitecture? How can we get cache from other places? How can we\nspread out the job across more steps, more processes, pre-process this\none place. It gets back to, you don’t want to focus on over optimizing\nthis one function. You want to make your overall architecture do the\nright things and just informs infrastructural changes.",
+      "zh": "第二个选择是哭一会儿然后处理它。是的，我们打架\n根本劣势。我们正在努力减少它。我超级棒\n很高兴能够更好地控制 OCaml 的布局\n类型。这对我来说可能是最大的改变\n发生在编译器中。能够写出\n这就是我希望它成为真正有趣的 OCaml 类型的内存\n可以玩，但从根本上来说我们处于劣势，我们\n只是需要努力工作，我们必须更多地考虑，好吧，我们\n将具有更高的缓存占用空间。这对我们意味着什么\n建筑？我们如何从其他地方获取缓存呢？我们怎样才能\n将工作分散到更多步骤、更多流程中，对此进行预处理\n一个地方。这又回到了，你不想专注于过度优化\n这一项功能。您想让您的整体架构完成以下任务\n正确的事情，并且只是通知基础设施的变化。"
+    },
+    {
+      "idx": 147,
+      "en": "And I think you make an important point that it’s not that any of the\noptimizations you want to do are impossible, it’s that they’re a\nlittle bit more awkward than you would like them to be and you have to\ndo a little extra work to get them to happen. And that means\nfundamentally that we don’t always do them. And so we really do pay a\ncost in performance in that getting people to do the right thing. The\nharder you make that, the less it happens.",
+      "zh": "我认为你提出了一个重要的观点，那就是这并不是任何\n你想做的优化是不可能的，因为它们是\n比你希望的更尴尬一点，你必须这样做\n做一些额外的工作来让它们发生。这意味着\n从根本上说，我们并不总是这样做。所以我们确实付出了\n绩效成本在于让人们做正确的事情。的\n你越努力，这种情况就越少发生。"
+    },
+    {
+      "idx": 148,
+      "en": "One of the hardest things to learn when you’re doing this sort of work\nis discipline. I have to go through the code base every day and say,\nno, I’m not fixing that. Yes, it’s like offensive to me on a personal\nlevel that it’s slow and it allocates and do these things, but it just\ndoesn’t matter. It’s legitimately hard for me not to stop whatever I’m\ndoing and just fix this optimization that I know is sitting there. If\nthis doesn’t bother you on a fundamental physical level, I just don’t\nunderstand.",
+      "zh": "当你从事此类工作时，最难学的事情之一\n是纪律。我必须每天检查代码库并说，\n不，我不会解决这个问题。是的，这对我个人而言是一种冒犯\n它的速度很慢，它分配并做这些事情，但它只是\n没关系。对我来说，不停止我正在做的事情确实很难\n做并修复我知道就在那里的优化。如果\n这不会在基本的身体层面上困扰你，我只是不介意\n明白。"
+    },
+    {
+      "idx": 149,
+      "en": "But you have to prioritize.",
+      "zh": "但你必须优先考虑。"
+    },
+    {
+      "idx": 150,
+      "en": "You have to prioritize. There’s so much more important things to be\ndoing.",
+      "zh": "你必须优先考虑。还有很多更重要的事情要做\n做。"
+    },
+    {
+      "idx": 151,
+      "en": "So another thing I’m wondering about is how you think about the role\nof hardware in all of this. In some sense, if you’re thinking about\nmaking things as low latency as possible, why do we even bother with a\nCPU? Right? You look at the basic latency of consuming and emitting a\npacket, and on any ordinary computer you’re going to cross twice over\nthe PCI express bus, it’s going to cost you about 400 nanos each\nway. Know that and a little bit of slop between the pieces. It’s kind\nof hard to get under a mic really for anything where you’re like, I’m\ngoing to consume some data off the network, do something and respond\nto it. And on an FPGA attached to a NIC, you can write a hardware\ndesign that can turn around a packet in under a hundred\nnanoseconds. So there’s an order of magnitude improvement that’s just\nphysically impossible to get to with a computer architecture. And so\nin some sense, if all you cared about is, well, I just want the\nabsolute lowest latency thing possible, it’s like, why are we even\nusing CPUs at all? So how do you think about the role of hardware as\nintegrating and how you think about performance in the context of\nbuilding these kinds of systems?",
+      "zh": "所以我想知道的另一件事是你如何看待这个角色\n所有这一切中的硬件。从某种意义上说，如果你正在考虑\n让事情尽可能低延迟，为什么我们还要费心\n中央处理器？正确的？您查看消耗和发出的基本延迟\n数据包，在任何普通计算机上你都会跨越两次\nPCI Express 总线，每个将花费大约 400 纳米\n方式。知道这一点以及各个部分之间的一点点倾斜。很友善\n对于任何你喜欢的事情，我都很难在麦克风下说话，我是\n将消耗一些网络数据，执行某些操作并做出响应\n到它。在连接到 NIC 的 FPGA 上，您可以编写硬件\n可以在不到一百时间内周转一个数据包的设计\n纳秒。所以有一个数量级的改进\n物理上不可能用计算机体系结构来实现。等等\n从某种意义上说，如果你关心的是，好吧，我只是想要\n绝对最低的延迟是可能的，就像，为什么我们甚至\n到底使用CPU吗？那么您如何看待硬件的作用\n整合以及您如何看待绩效\n构建这些类型的系统？"
+    },
+    {
+      "idx": 152,
+      "en": "It informs the architecture you choose. Yeah, nothing’s ever going to\nbe as fast as hardware, but it’s really hard to write hardware. It\ncan’t do complicated things. And even the things it can do are just\nexponentially harder to write. I have never in my life written\nVerilog, which feels like a personal sin. I am reliably informed that\nit is miserable and unpleasant and your compiler takes 24 hours to\nrun. So we have a lot of strategies with really complicated logic, and\nthat logic is important and it’s valuable. And implementing that in\nhardware is, I’m just going to say flatly impossible. You couldn’t do\nit. And so the question becomes what can you outsource to hardware\nthat is easy? How do you architect your system so that you can do the\nreally, really hyper-focused speed things in a simple, simple hardware\nsystem that only does one thing and you feed that hardware the right\nway, but the rest of the software system still has need to be fast. It\nhas to be fast on a different scale, but it turns out there’s\noptimizations that matter on roughly every single timescale you can\nimagine. We have trades at this firm that, like you say, complete in\nless than a hundred nanoseconds or you might not even bother. We also\nhave trades that we send someone an email and the next day you get\nback a fill, right? And every level in between there turns out you can\ndo useful optimization work.",
+      "zh": "它告诉您选择的架构。是啊，什么都不会发生\n和硬件一样快，但是编写硬件确实很难。它\n不能做复杂的事情。甚至它能做的事情也只是\n写起来难度呈指数级增长。我一生中从未写过\nVerilog，感觉像是一种个人罪恶。本人可靠地获悉\n这是痛苦和不愉快的，你的编译器需要 24 小时才能完成\n跑。所以我们有很多逻辑非常复杂的策略，并且\n这个逻辑很重要而且很有价值。并在\n硬件是，我只是想说完全不可能。你做不到\n它。所以问题就变成了你可以将什么外包给硬件\n那容易吗？您如何构建您的系统，以便您可以执行以下操作：\n真的，真的超级专注于在简单的硬件中加速事物\n只做一件事的系统，你可以为硬件提供正确的信息\n方式，但软件系统的其余部分仍然需要快速。它\n必须在不同的规模上快速，但事实证明\n几乎在每个时间尺度上都很重要的优化\n想象一下。我们这家公司的交易，就像你说的，完成于\n不到一百纳秒，否则您可能根本不会打扰。我们也\n进行交易时，我们会向某人发送电子邮件，第二天您就会收到\n回来补一下吧？事实证明，中间的每个级别都可以\n做有用的优化工作。"
+    },
+    {
+      "idx": 153,
+      "en": "And even with stuff that has no humans in the loop, we really do think\nabout nanoseconds, microseconds, and milliseconds. Depending on what\nyou’re doing and how complicated it is, you really do care about many\ndifferent orders of magnitude.",
+      "zh": "即使对于没有人类参与的东西，我们也确实认为\n大约纳秒、微秒和毫秒。取决于什么\n你正在做的事情有多复杂，你确实关心很多\n不同的数量级。"
+    },
+    {
+      "idx": 154,
+      "en": "Yeah. There’s a system that I’ve worked on where our real goal is to\nget it down from having 50 millisecond tails to one millisecond tails,\nand we’ve celebrated when we get there, and it still does a lot of\ngreat trading. We have other systems that are doing simpler, more\nspeed competitive things where your software needs to be 20\nmicroseconds or 10 microseconds or five microseconds. And that’s\nachievable. It’s harder and you have to do simpler things just like\nwith the hardware, but it’s achievable and you care about both of\nthese latencies. And I think another good thing to point out is that\nyou said systems that don’t interact with humans, but it turns out\nsome of the most important latencies of systems we interact with is\nthe systems that do interact with humans. I don’t know about you, Ron,\nbut when my editor freezes up for five seconds while I’m typing, I\njust want to put a keyboard through the window.",
+      "zh": "是的。我曾经开发过一个系统，我们的真正目标是\n将其从 50 毫秒的尾部减少到 1 毫秒的尾部，\n当我们到达那里时我们已经庆祝了，而且它仍然做了很多\n很棒的交易。我们还有其他系统做得更简单、更多\n加速您的软件需要的竞争性事物 20\n微秒或10微秒或5微秒。那就是\n可以实现的。这更难，你必须做更简单的事情，就像\n与硬件，但它是可以实现的，并且你关心两者\n这些延迟。我认为另一件值得指出的好事情是\n你说的是不与人类互动的系统，但事实证明\n我们与之交互的系统的一些最重要的延迟是\n与人类互动的系统。我不了解你，罗恩，\n但是当我打字时我的编辑器冻结了五秒钟时，我\n只是想把键盘穿过窗户。"
+    },
+    {
+      "idx": 155,
+      "en": "It just drives me nuts and putting aside the aggravation. Human\nresponsive systems are just really important too, both on you’re\nactively trading and you want by hand and you want to have a good\nlatency on the thing that’s displaying the prices in front of\nyou. That matters a lot, but also I think it matters a lot for just\nyour ability to adapt and improve your systems over time. I said\nearlier, think about historical research. That’s a throughput problem,\nbut it’s also a latency problem on a human scale. This thing that will\ngive you feedback on whether your trading idea was good in a minute is\nworth so much more than one that’ll gives you an idea if it’s worth\nanything in a day.",
+      "zh": "它只会让我发疯并抛开烦恼。人类\n响应系统也非常重要，无论是对你还是\n积极交易，您想要手工操作，并且想要获得良好的收益\n前面显示价格的东西的延迟\n你。这很重要，但我认为这对于\n随着时间的推移，您适应和改进系统的能力。我说\n早些时候，想想历史研究。这是一个吞吐量问题，\n但这也是一个人类层面的延迟问题。这东西会\n一分钟内向您反馈您的交易想法是否良好是\n比一个更有价值的东西会让你知道它是否值得\n一天之内的任何事情。"
+    },
+    {
+      "idx": 156,
+      "en": "Yeah, that’s absolutely right. I think for lots of different creative\nendeavors, and I think trading and software engineering are both count\nfrom my perspective and also all sorts of different kinds of\nresearch. The kind of speed of that interactive loop of I have an\nidea, I try an idea and I get feedback on how well that idea works\nout. The faster you can make that loop, the more that people can\nexperiment with new things and the more the creative juices can get\nflowing and more ideas you can create and try out and evaluate.",
+      "zh": "是的，完全正确。我认为对于很多不同的创意\n努力，我认为交易和软件工程都很重要\n从我的角度来看，还有各种不同的\n研究。我有一个交互循环的速度\n想法，我尝试一个想法，然后得到有关该想法效果如何的反馈\n出来。你做这个循环的速度越快，人们就能做的越多\n尝试新事物，创意就会越多\n您可以创造、尝试和评估流动的更多想法。"
+    },
+    {
+      "idx": 157,
+      "en": "The thing I’m obsessed with telling people about is this Air Force\ncolonel from the fifties or the sixties, his name was John Boyd, he\ninvented this idea called the UDA loop, OODA, I believe. It’s observe,\norient, decide, act, just like the four stages you go through and\nfiguring out like, oh, I see something. I think about it. I decide how\nI’m going to adjust to that. I implement the adjustment. And the\nfaster this loop happens, the more control you have over the system\nand the better you can iterate. I think a great example of this\noutside software, oddly enough, is whiskey. I like bourbon a lot. And\nit turns out that to make good bourbon takes 5, 7, 10 years. And so\nyou don’t get a lot of opportunity to iterate. And there are some\npeople who are doing a really controversial thing, which is they’re\nusing technology to rapidly age spirits.",
+      "zh": "我痴迷于告诉人们的是这支空军\n五十年代或六十年代的上校，他的名字叫约翰博伊德，他\n我相信发明了这个称为 UDA 循环（OODA）的想法。是观察，\n定位、决定、行动，就像你经历的四个阶段一样\n弄清楚就像，哦，我看到了一些东西。我想了一下。我决定如何\n我会适应这一点。我实施调整。还有\n这个循环发生得越快，您对系统的控制就越多\n并且你可以迭代得越好。我认为这是一个很好的例子\n奇怪的是，外部软件是威士忌。我非常喜欢波本威士忌。并且\n事实证明，酿造优质波本威士忌需要 5 年、7 年、10 年。等等\n你没有太多机会进行迭代。还有一些\n那些正在做一件非常有争议的事情的人，那就是他们\n利用技术快速陈化烈酒。"
+    },
+    {
+      "idx": 158,
+      "en": "And some people call this sacrilege and it’s never going to be quite\nas good as doing it the hard way. But on the other hand, it lets you\ntaste it in a month and be like, I think I’m going to change this and\nthey’re going to get 12 iterations in the time someone else might get\none. And I just think this sort of process turns out to matter a lot\nin software too, of being able to rapidly iterate on what you’re doing\nand get feedback either on the quality of the trading or for that\nmatter on the quality of the performance. One of the things I really\ncare about a lot is building systems that let me really quickly\nevaluate the performance of a system. There’s a huge difference\nbetween, I think this is going to be faster. I did a profile, I know\nthis is a hotspot. I’ve made it better. Okay, I’ll run it in prod for\na couple days and okay, I’ve made this change. I think it’s going to\nbe better. I’m going to run it on this really realistic testbed. I\nknow in 10 minutes if it’s better and I can change it and I can try it\nagain.",
+      "zh": "有些人称之为亵渎，而且永远不会完全如此\n和以困难的方式去做一样好。但另一方面，它可以让你\n一个月后尝尝，我想我要改变这个\n他们将在其他人可能得到的时间内得到 12 次迭代\n一。我只是认为这种过程非常重要\n在软件中也是如此，能够快速迭代你正在做的事情\n并获得有关交易质量或相关方面的反馈\n关系到表演的质量。其中一件事我真的\n最关心的是构建让我真的很快的系统\n评估系统的性能。有很大的不同\n之间，我认为这会更快。我做了个人资料，我知道\n这是一个热点。我已经做得更好了。好的，我将在产品中运行它\n几天后，好吧，我已经做出了改变。我认为这将会\n变得更好。我将在这个非常现实的测试平台上运行它。我\n10 分钟后知道是否更好，我可以更改它，我可以尝试一下\n再次。"
+    },
+    {
+      "idx": 159,
+      "en": "Yeah, iteration speed matters kind of almost everywhere you are. And I\nreally like your point about this kind of performance analysis\nmattering for trading systems and also mattering for systems with\nhuman interaction. And actually I feel like the performance mindset\nisn’t really so different. You look at someone who’s really good at\nthinking hard about and optimizing the performance of stuff in the\nbrowser. There’s a very different instruction set and oh my God, is\nthat a weird and complicated virtual machine. But a lot of the same\nintuitions and habits of mind and that focus on being really\ninterested in details that are really boring. All of that really\nmatters a lot. You really have to care about all the kind of gory\ndetails of the guts of these things to do a really good job of digging\nin.",
+      "zh": "是的，迭代速度几乎在任何地方都很重要。而我\n真的很喜欢你关于这种性能分析的观点\n对于交易系统很重要，对于具有以下功能的系统也很重要\n人类互动。事实上我觉得表现心态\n并没有那么不同。你看到一个真正擅长的人\n认真思考并优化事物的性能\n浏览器。有一个非常不同的指令集，天哪，是\n那是一个奇怪而复杂的虚拟机。但很多都一样\n直觉和思维习惯，注重真实\n对非常无聊的细节感兴趣。这一切真的\n很重要。你真的必须关心所有血腥的事情\n这些东西的底细细节挖得真好\n在。"
+    },
+    {
+      "idx": 160,
+      "en": "And this is why I kind of wonder if there’s just a mindset that can’t\nbe trained. You have to just look at this and go, what the hell are\nyou talking about, Ron, this isn’t boring. I get why you say that, but\nI just look at this stuff and go like, you don’t have to pay me to\nlook at this. Sorry, I take that back. You do have to pay me to look\nat this. I would not do this for free. I promise.",
+      "zh": "这就是为什么我有点想知道是否有一种心态不能\n接受培训。你必须看看这个然后走，到底是什么\n你说的，罗恩，这并不无聊。我明白你为什么这么说，但是\n我只是看着这些东西然后就想，你不必付钱给我\n看看这个。抱歉，我收回那句话。你必须付钱给我看\n在此。我不会免费做这件事。我保证。"
+    },
+    {
+      "idx": 161,
+      "en": "Boring in quotes. I love this stuff too, and totally understand why it\nis, but it is from the outside. It’s a little hard to explain to your\nfriends and family why you like this stuff. They’re like, you can’t\neven explain in words out loud, what are the details that are going\non. People will fall asleep.",
+      "zh": "无聊的引号。我也喜欢这个东西，并且完全理解为什么它\n是的，但它是从外面来的。向你解释有点困难\n朋友和家人为什么你喜欢这个东西。他们就像，你不能\n甚至大声解释，具体细节是什么\n上。人们会睡着。"
+    },
+    {
+      "idx": 162,
+      "en": "Do you know my dad once sat me down in college and said, are you sure\nyou want to do this CSS thing and not go into something where you can\nfind a job? Like being a lawyer? I’m the only person who disappointed\nhis parents by not becoming an English major.",
+      "zh": "你知道吗，我爸爸曾经在大学里坐下来对我说，你确定吗？\n你想做 CSS 的事情而不是去做你能做的事情\n找到工作吗？喜欢当律师吗？我是唯一一个失望的人\n他的父母没有选择英语专业。"
+    },
+    {
+      "idx": 163,
+      "en": "Well, maybe that’s a good point to end it on. Thanks so much for\njoining me. This has been great.",
+      "zh": "好吧，也许这是一个结束它的好点。非常感谢\n加入我。这太棒了。"
+    },
+    {
+      "idx": 164,
+      "en": "Thanks for having me on. This was a really good talk.",
+      "zh": "谢谢你邀请我参加。这是一次非常好的谈话。"
+    }
+  ]
+}

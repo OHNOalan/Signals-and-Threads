@@ -1,0 +1,1237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Building a UI Framework with Ty Overby</title>
+<link rel="stylesheet" href="translate-ui.css">
+<style>
+  body  { font-family: Georgia, serif; max-width: 800px; margin: 40px auto;
+          padding: 0 24px; background: #fafaf8; color: #1a1a1a; line-height: 1.75; }
+  h1   { font-size: 1.55em; margin-bottom: 4px; line-height: 1.3; }
+  .meta { color: #777; font-size: .88em; margin-bottom: 18px; }
+  .meta a { color: #777; }
+  audio { width: 100%; margin-bottom: 28px; }
+  hr   { border: none; border-top: 1px solid #ddd; margin: 28px 0; }
+  .ts  { display: block; color: #aaa; font-size: .78em; font-family: monospace;
+          margin-top: 1.6em; margin-bottom: 3px; }
+  h3.speaker { margin: 0 0 5px 0; font-size: .95em; color: #c05800;
+                text-transform: uppercase; letter-spacing: .06em; }
+  p    { margin: 0 0 .9em 0; }
+</style>
+</head>
+<body>
+<h1>Building a UI Framework with Ty Overby</h1>
+<p class="meta">Signals &amp; Threads &nbsp;&middot;&nbsp; Jane Street &nbsp;&middot;&nbsp;
+<a href="https://signalsandthreads.com/building-a-ui-framework/" target="_blank">signalsandthreads.com</a></p>
+<audio controls preload="none"><source src="audio/building-a-ui-framework.mp3" type="audio/mpeg"></audio>
+<hr>
+<p data-p="0">Ty Overby is a programmer in Jane Street’s web platform group where he
+works on Bonsai, our OCaml library for building interactive
+browser-based UIs. In this episode, Ty and Ron consider the functional
+approach to building user interfaces. They also discuss Ty’s
+programming roots in Neopets, what development features they crave on
+the web, the unfairly maligned CSS, and why Excel is “arguably the
+greatest programming language ever developed.”</p>
+<p data-p="1">Ty Overby is a programmer in Jane Street’s web platform group where he
+works on Bonsai, our OCaml library for building interactive
+browser-based UI. In this episode, Ty and Ron consider the functional
+approach to building user interfaces. They also discuss Ty’s
+programming roots in Neopets, what development features they crave on
+the web, the unfairly maligned CSS, and why Excel is “arguably the
+greatest programming language ever developed.”</p>
+<p data-p="2">Some links to topics that came up in the discussion:</p>
+<span class="ts">00:04</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="3">Welcome to Signals and Threads, in-depth conversations about every
+layer of the tech stack, from Jane Street. I’m Ron Minsky. It’s my
+pleasure to be talking today with Ty Overby. Ty is a software engineer
+who’s been at Jane Street since 2018. And his work here has been
+focused on our tools for building web applications and specifically on
+a library he designed called Bonsai. We’re going to talk a lot about
+the ideas behind Bonsai and about UI development more generally. But
+first Ty, can you tell us a bit more about your background before Jane
+Street?</p>
+<span class="ts">00:35</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="4">Yeah, so I think my first experience with web development was probably
+when I was in middle school writing petpages for my
+Neopets. After that, I’ve
+been doing hobby programming ever since I was a kid, went to the
+University of Washington and worked on compilers for a while at
+Microsoft. I decided at some point to move to New York, so Jane Street
+seemed like a great place to continue my love for programming
+languages and somehow managed to get on a team doing some programming
+languages and web development stuff, which I think is pretty exciting.</p>
+<span class="ts">01:09</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="5">So you got to combine two different loves.</p>
+<span class="ts">01:11</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="6">Yeah.</p>
+<span class="ts">01:12</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="7">You talked a little bit about your hobby programming. I know that
+you’re someone who really spends time and really enjoys digging into
+all sorts of things in your spare time. Can you tell us a little bit
+more about what kind of things you’ve done on the side?</p>
+<span class="ts">01:22</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="8">Yeah, so I guess a running theme of mine is that I wind up taking the
+hammer that is compiler development and bashing everything that I can
+get my hands on with it. I think my biggest, longest-running project
+is probably a computer-aided design library, suite of software, where
+in order to describe the shapes for your object you write programs,
+little functions that go from some point in space to the distance, to
+the outline of your shape. Then there’s all sorts of fun
+combinators that you
+can write on top of this and all sorts of fun optimizations that you
+can do if you somewhat limit the capabilities of the person using it,
+taking compiler optimizations to the computer-aided design workflow.</p>
+<span class="ts">02:06</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="9">So you’re diving right into the abstractions and the math, but to step
+back for a second, the thing you’re talking about as I understand it
+is what’s called programmatic CAD, which is instead of having
+something that’s the moral descendant of
+MacPaint or something, where
+you go in and interactively construct some 3D object that’s going to
+then be printed in the 3D printer or constructed in some other way,
+you write a program to do that. And there’s actually lots of stuff out
+there that lets you do this already. One of them that I’ve played
+around myself and with my kids is called
+OpenSCAD.</p>
+<span class="ts">02:35</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="10">Yeah. So OpenSCAD is programmatic CAD. I believe it operates on a
+boundary
+representation. So
+this is very similar to what you would get in CAD software or Blender
+or any of the other 3D modeling softwares, which is that the
+fundamental primitive is the points or a face. Whereas the style that
+I’m particularly interested in as a functional programmer, is called
+functional representation or
+F-rep. And
+these two different styles of representing shapes lead to some really
+interesting trade-offs. Some things that are really easy in B-reps or
+boundary representation are very hard in F-reps and vice versa.</p>
+<span class="ts">03:15</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="11">Right. And just to see if I have the description right, an F-rep is
+something where instead of describing explicitly through a collection
+of polygons or whatever, the boundary of some surface, you write down
+a function and then the boundary is something like the zeros of that
+function. So implicitly you’re describing the boundary by just writing
+down what the function is.</p>
+<span class="ts">03:33</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="12">They’re also called implicit
+surfaces.</p>
+<span class="ts">03:35</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="13">Why is it better to use implicit surfaces versus a boundary
+representation? You said there are some things that are easier and
+some things that are harder. Can you give me a sense of someone who
+might use this? Why I might prefer the implicit representation?</p>
+<span class="ts">03:46</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="14">Oh, I think a lot of the combinators are trivial to express. So things
+like taking two shapes and finding their union is well, the two
+shapes, they’re two functions, so you apply them both. And then you
+take the maximum of whichever of the two points and the function that
+combines these now describes the shape that is the union of those two
+shapes. These functions return numbers that represent the distance to
+the edge. So zero is on the edge, negative numbers are inside and
+positive numbers are outside. So union would be max, intersection
+would be min, and negation or taking a shape and making the outside
+inside and the inside outside is just literally negation. And you can
+use negation and union to get cuts. And also something that you can’t
+do in boundary representation stuff is just write some code. And I
+really enjoy just being able to think of a function and see what kind
+of shape it would create.</p>
+<span class="ts">04:44</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="15">Right. Although, I mean, you can write code, OpenSCAD lets you write
+code that generates boundary representations and manipulates those
+boundary representations. So can’t you do it programmatically in both
+styles?</p>
+<span class="ts">04:54</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="16">Probably. I think some of the shapes that I’m interested in are things
+like the interference pattern between two sine waves, each of them
+describing distances to the outside of a shape and cutting that off
+via a circle. And the cutting off via a circle OpenSCAD can do just
+fine, but describing a shape implicitly is something that implicit
+surfaces do pretty well. And the type of programming that you do is
+very different.</p>
+<span class="ts">05:20</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="17">And I can immediately see how your functional programming background
+leaks into the way you talk about CAD. I think people who are doing
+CAD don’t normally talk about combinators. They might talk about the
+operations you use for combining shapes. And I guess those two are one
+and the same in the way that you’re describing them.</p>
+<span class="ts">05:35</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="18">Yeah.</p>
+<span class="ts">05:36</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="19">As I understand it, there are other things that are supposed to be
+good about implicit surface-style representations. I’ve used OpenSCAD
+a lot and one thing that’s really annoying about it is you have to
+decide early on when you’re constructing the boundaries how detailed
+the boundary representation is going to be. So there’s essentially
+almost tessellation of the surface or an approximation of the surface
+by a bunch of little tiny polygons. And then when you do things like
+merge things together, you can get all sorts of weird artifacts that
+come from exactly the kind of beats in the frequencies of the
+different polygonalizations of the two shapes and you get all sorts of
+weird things that happen on the boundaries. And I think the implicit
+surface approach gives you something where while you’re doing all of
+your transformations, you have everything in some sense at full
+resolution. And then finally when you render it, you get to decide how
+you want to do the final display and how detailed that needs to be.</p>
+<span class="ts">06:26</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="20">Yeah, that’s exactly right. Sadly, one of the downsides is that doing
+that final transformation from F-rep to B-rep, which is useful if you
+want to 3D print something or pull it into a game engine, that’s
+really hard. As far as I can tell, no one has done it perfectly
+yet. There’s an amazing project by Matt
+Keeter called
+libfive, which I’ve built a ton
+of stuff on top of, and I’ve loved using that. And it’s very good, but
+it still has issues with weird edge cases, in this case, literally
+edge cases. You can imagine interesting things happening to a shape as
+points go to infinity or negative infinity. And unless you’re very
+careful, you can easily create topologies that are hard or impossible
+to render into a regular 3D file.</p>
+<span class="ts">07:16</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="21">Right. And I guess if you have points that go to infinity it’s
+probably hard to find a 3D printer big enough to actually render the
+resulting surface.</p>
+<span class="ts">07:22</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="22">It’s true.</p>
+<span class="ts">07:23</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="23">Okay. So that’s a fun kind of hobby. You said you did a bunch of web
+development on the side as part of your personal work. Have you done
+web development in a professional context as well before your work
+here?</p>
+<span class="ts">07:34</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="24">Yeah, so I helped out on a project at Microsoft building a in-browser
+REPL. I don’t know if any of my code is still
+alive in there, but I think that’s it actually, I think that was the
+only brush that I had with web dev professionally before Jane Street.</p>
+<span class="ts">07:50</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="25">Got it. And then somehow, despite the lack of any professional
+background, nonetheless, you ended up building the library that is now
+Jane Street’s default library for building user interfaces, which is
+called Bonsai. So let’s talk about that a little bit. So when you
+arrived here, we already had some foundation for doing web
+development. There was a library called
+Incr_dom and this was based
+on a compiler component, which we still use, called
+Js_of_ocaml. So Js_of_ocaml
+is a backend that takes OCaml and converts it into JavaScript, doing
+actually a surprisingly good job of respecting OCaml semantics. And we
+had successfully built a number of user interfaces using Incr_dom and
+Js_of_ocaml, and also run into some trouble with it. Maybe you can
+tell us a little bit about what Incr_dom looked like to you when you
+arrived and explain how it works for someone who’s never touched
+before?</p>
+<span class="ts">08:40</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="26">For people that are familiar with the Elm
+architecture, Incr_dom
+would seem quite natural. Let’s back up and talk about the Elm
+architecture for a little bit. Elm is a
+programming language built entirely for developing user interfaces in
+the browser, certainly its standard library is very focused on
+this. And it also comes with a design pattern and that design pattern
+is separating the logic of your application into a view function that
+takes inputs and the model for an application and produces a pure
+functional representation of its view. And then also an apply-action
+function, which can take in an existing model for the application and
+an action that is triggered either by the user interacting with the
+page in some way or by interactions with a web socket connection or
+other IO. And it’ll take this action and the current model and produce
+a new model. And then the render function gets called again with a new
+model and hopefully the changes that you want to see represented on
+the screen make their way there.</p>
+<span class="ts">09:52</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="27">Great. So this is in some sense, just another spin on the classic
+model-view-controller pattern and model is your representation of
+data, view is what you’re going to display, and the controller is
+somehow how you interact with the outside world and do transformations
+to your model, right? And I guess this whole thing will sound very
+familiar to anyone who’s used React, where
+React is also based on a notion of a pure functional representation of
+the DOM. You have some just pure data structure that represents the
+DOM you wish you had, and it gets slammed into the actual messy,
+complicated tree of objects that is the actual DOM in the browser in a
+hopefully efficient way. Can you say maybe a word about how Elm
+architecture differs from what a React programmer might be used to?</p>
+<span class="ts">10:34</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="28">On the surface, they appear to be very similar. The one thing that
+React users typically reach for is a state management library. And
+this is changing over time. I think it’s a bit less common now that
+React has adopted some of this into the library itself, but there were
+some very popular libraries like
+Redux or
+MobX that did the pure functional
+model updating that Elm has kind of built into its framework. Prior to
+this, the way that you did state in React was by putting state in your
+components. And this is handy. It’s private. You don’t need the rest
+of your application to know about this state, but it also has some
+problems like that if a component is removed from the component tree
+and then added back in again, the state is gone. So it’s a bit more
+like having an immutable variable inside of your component tree. So
+people reach for state management solutions that provided the model to
+action to model transformation that Elm has.</p>
+<span class="ts">11:35</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="29">And just to maybe say it in a slightly different way, the Elm approach
+is to some degree, like a good first-order approximation is, your UI
+is a function. And the key function is a function from model to
+view. And it really is just a pure function where the model is just
+simple data and the view is just simple data. And in fact, immutable
+data at that. And then there’s this extra action step where inside of
+the view, there’s some, essentially, description of how actions can be
+used to update the model, say when you click a button and that leads
+to an event which asynchronously will later then cause the model to be
+updated. So you don’t get this whole encapsulation of hiding state
+inside of components. Instead you have this pure, in some sense, more
+totalistic like no, the whole UI is a function. And then we compose
+functions in the ordinary way that we compose functions in the context
+of functional programming.</p>
+<span class="ts">12:26</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="30">Yeah, exactly. And I think a major selling point for libraries like
+this is your application as a function where you take the state and
+you transform it into a view. But really I think that that’s the least
+interesting part. I think the way that you get applications that
+people want to use is by having really well defined and edge-case-free
+interactions. And that means transitioning from one model to the next,
+in a way that makes sense to your users. And I think that modeling
+things as a state machine like Elm does, and like some of these React
+state managers is a great way to do that.</p>
+<span class="ts">13:01</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="31">So that’s like a new piece of jargon, a state machine. When you say
+it’s modeled as a state machine, what does that concretely mean?</p>
+<span class="ts">13:07</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="32">Yeah. So I guess the abstract notion of a state machine is you have
+some state and then you have actions that express a desire to change
+the state, and another function that takes an action and state and
+produces a new state. This separation allows programs to more
+accurately read when interesting things happen as opposed to direct
+mutation. So you might notice a few actions coming in altogether and
+you could debounce them to separate multiple actions into just a
+single one. You can imagine a user accidentally hitting a button twice
+or typing something a bit too fast, and you might want to put some
+guardrails on that and make sure that they aren’t doing anything
+accidentally. This is the type of thing where if in an action handler,
+you are directly mutating some state, it might be a bit harder to do
+this, but if you’re representing everything as transitions between
+states that are described by actions that are raised by events, then
+this kind of intentional transition becomes a lot more possible.</p>
+<span class="ts">14:07</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="33">Which is to say, you might think about something like this as being
+primarily about two different types of data, the model that represents
+the state of your application and the view, which is how you present
+it to the user, but really there’s three, there’s the model and
+there’s the view and there’s also the action, which is the thing that
+represents transitions, ways in which you change your model. And you
+have some kind of explicit way of talking about the way in which
+transitions cause the state to update. And it’s that structure that
+you’re referring to as a state machine.</p>
+<span class="ts">14:35</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="34">Yeah, exactly.</p>
+<span class="ts">14:37</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="35">Great. So how does this Elm model that you described, how does that
+relate to what Incr_dom was like?</p>
+<span class="ts">14:43</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="36">Incr_dom took the pattern that Elm popularized and left it relatively
+unchanged with the exception of a single addition, which was combining
+it with a library that we have developed here internally called
+Incremental. And the
+Incremental library is effectively a smart
+memoization technique
+where if you write a function using the Incremental library and you
+run it multiple times where the inputs are changing only slightly
+between runs, then you could expect some better performance if the
+output that you’re producing is changing slightly in response to
+inputs changing slightly.</p>
+<span class="ts">15:23</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="37">Right. And this goes back to a general fact I’ve long noted about UI
+frameworks, which is that hidden inside of every UI framework is some
+kind of incrementalization framework as well, because you basically
+need this incrementalization for performance reasons everywhere. UIs
+in general, what are they doing? They are computing something to
+display to the user and those things need to change quickly. And one
+of the things that can help them change quickly is they don’t change
+all at once, little bits of them change. You go and click somewhere
+and some small part of what you’re seeing changes, it’s not everything
+in the entire view being transformed all at once.</p>
+<span class="ts">15:59</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="38">So you need some way of computationally taking advantage of
+this. Maybe we should mostly leave off those gory details here as
+well. In some sense, the difference between Elm and Incr_dom is that
+Elm has a way of doing incrementalization and Incr_dom has
+Incremental, which is a more powerful way of incrementalizing meaning
+you can express more complicated algorithms incrementally, but I think
+that’s kind of mostly not the thing that’s interesting about the gap
+between Incr_dom and Bonsai. So maybe we shouldn’t talk too much about
+Incremental, but I’m curious what you felt was problematic about
+Incremental. The story you’ve told so far is Elm is this nice way of
+describing things, and then Incr_dom takes the Elm model and adds this
+more powerful incrementalization framework. That sounds great. What
+doesn’t work that well about the model?</p>
+<span class="ts">16:41</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="39">One of the things that I think Incremental does differently than your
+average React application is that it also incrementally computes the
+state machine transition functions, these apply action. And this is
+really nice. It means that you can thread values throughout your
+application and make use of them in the state machine transition
+functions just as you would threading values through your view
+function. But it does mean that combining components becomes a lot
+harder because you’ve not only got to take the views from multiple
+components and stitch them together into one parent view, but also you
+need to compose the apply actions for child components into this super
+component. And the way that this is done with Incremental is very
+boilerplate heavy. The downside of having this library that expresses
+a lot more of the power of incremental computing means that these
+compositions were quite verbose.</p>
+<span class="ts">17:43</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="40">So this whole point about the action application function itself being
+computed incrementally, on the face of it seems very abstract. Can you
+give an example of where that gives you something useful?</p>
+<span class="ts">17:52</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="41">We have this library that implements a UI component for very large
+tables. And one of the things about this table that’s quite unique is
+that it can sort and filter and display an absolutely enormous amount
+of data, hundreds of thousands of rows. And really a lot of the magic
+there is in the view where we only actually show a very small subset
+to the DOM. But during that sorting and filtering, we produce a lot of
+intermediate data structures that could be very useful in downstream
+components. You might imagine that these sorted and filtered tables
+might expose internal structures that allow you to very efficiently
+implement row selection, where you want to be able to navigate through
+the table using a keyboard. In a naive implementation, they might have
+to sort and filter all of that data again, but because we’ve done it
+incrementally and because the apply-action function is also computed
+incrementally, we can share that data a lot easier.</p>
+<span class="ts">18:53</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="42">It sounds like the problem you see that comes out of all of this is
+that it makes the system in some sense less composable, it’s harder,
+at least requires more boilerplate to take little pieces of a UI and
+combine them together to make larger UIs. Do you think that problem is
+worse for Incr_dom than it is for Elm? Or do you see the same problem
+in both approaches?</p>
+<span class="ts">19:13</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="43">I see the same problem in both approaches, but I think that the
+boilerplate that you get from Elm is quite minimal and for Incr_dom,
+it was absolutely not. I believe that when I made the simplest
+possible combinator for two Incr_dom components, which was just
+combine their models or rather take a supermodel that splits into
+sub-models and apply action that would dispatch to one or the other,
+and a view that combined both sub-views, this was something like 50 to
+70 lines of code. And what that meant was that people were making
+monoliths where they didn’t want to break their code up into multiple
+pieces because they knew that they would have to do this recombining
+at some level. And that recombining was error prone and it was
+tedious. Maybe in the opposite order, it was tedious and therefore
+error prone.</p>
+<span class="ts">20:03</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="44">Great. So this is a problem that you wanted to solve, right? I think
+it seemed clear to you that it’s not great to not give people a way of
+building little reusable components. And if everyone’s building
+monolithic things, they’re not going to throw off small, useful,
+reusable bits. And you built this library called Bonsai, how does
+Bonsai help?</p>
+<span class="ts">20:21</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="45">Bonsai started out basically as a single type definition that
+encompassed what I saw as the right way to build an Incr_dom
+component. This type signature was almost a reification of a
+programming pattern. That programming pattern being that there is a
+function that can incrementally compute a view, arbitrary extra data
+that might be useful to downstream components, like talked about
+earlier, and an apply action. And this function is given a model to
+act on and a function for raising events so that it can perform the
+state machine transition. So Bonsai really started out as that
+function type.</p>
+<span class="ts">21:06</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="46">So just a bundle, you just take together the function for computing
+the view from the model, the function for updating the action, the way
+of throwing actions out into the world, just take all of those things
+and pack them together. And that’s what a Bonsai component was.</p>
+<span class="ts">21:19</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="47">Exactly. Yeah. And I was able to write some pretty nice combinators on
+top of this. So things like given two components, give me a new one
+that combines their models, combines their apply actions in the
+trivial manner. And then you could specify how you wanted the views
+combined as well. But fairly early on, I recognized that the fact that
+UI components were computing … Well, the fact that we called them UI
+components at all was a bit of a misnomer, really they’re
+something-producing. And the fact that they happened to be views most
+of the time was a bit of an accident really.</p>
+<span class="ts">21:59</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="48">So among the first things that I did was remove the hard-coded view
+from that type. So now instead of a UI component that produces a view
+and maybe some extra data, it was just, here is a component, not
+necessarily a UI component, that produced some result
+incrementally. And frequently, that result type would be a view, but
+it doesn’t have to be. And I think more than half of the components
+that I write for a web application won’t be manipulating views at
+all. They will be state machines that produce some results that I
+think might be interesting. And maybe they get transformed into a view
+later on the line or maybe they get passed in as inputs to other
+components.</p>
+<span class="ts">22:41</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="49">And this is a real break with the style of components that you see in
+systems like React, right? Every React component by its nature is
+producing some chunk of DOM. And here Bonsai is a kind of more general
+computational system that you can use for computing all sorts of
+things.</p>
+<span class="ts">22:58</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="50">Yes, absolutely. That is a massive difference. But the difference that
+matters to me is that Bonsai structures its components and its
+compositions in the form of a directed acyclic graph rather than as a
+tree. And this is the thing that allows you to get components that
+produce values to thread them into inputs for other
+components. Whereas in a React-style UI, the value that you’re
+computing incrementally must be a view. So if you want to communicate
+with other components, you’re almost forced to walk up the tree, pass
+something onto its parent, and then that parent is responsible for
+shuffling down whatever value you’ve computed.</p>
+<span class="ts">23:41</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="51">So that means that in React, when you break down your components, you
+essentially have to do it by slicing it along the structure of the
+generated DOM.</p>
+<span class="ts">23:50</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="52">That’s right. The structure of these components wind up being very
+closely related to the structure of the view that you want to compute
+in the end. There are workarounds for this. One of the ones that I’m
+thinking of now is that a parent component might produce a function
+that gets passed on to its children, and that function produces some
+more view. And this is a good way of kind of doing a bit of a
+decoupling, but well, it doesn’t really match my aesthetics for how I
+want to be programming. The tree style of building components in React
+also doesn’t let you move values from one child’s component of a node
+to another, a sibling.</p>
+<span class="ts">24:30</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="53">What’s the case where you’d want to do that?</p>
+<span class="ts">24:32</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="54">One motivating example might be a text box and a button, and you want
+the text box to have some text in it before the button is
+clickable. Now in a tree-motivated UI component, you might have a
+component for your text box, a component for your button, a callback
+that you pass to the text box to be notified when there’s text in it,
+and then a value passed into the button that says if it’s disabled or
+not. Whereas with a graph-oriented structure, you could have the value
+of the text for the text box flow into the button, and the button
+could check to see if it’s invariance or upheld. And the button
+doesn’t need to be a child of the text box, it just needs to depend on
+the value that is produced.</p>
+<span class="ts">25:19</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="55">So one thing that’s changed from the original view is that the
+components aren’t specifically view- or virtual DOM-producing
+components, they’re more general components. How else does a Bonsai
+type differ from what you might find in some other UI component
+framework?</p>
+<span class="ts">25:36</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="56">Well, when you’re comparing it to Incr_dom or Elm, one of the major
+differences is that components don’t actually expose what model they
+have, or really even if they have a model. And they don’t expose what
+their action type is either. So really all that a Bonsai.t has, which
+in Bonsai the primary type is called a computation, it’s only
+parameterized over what value it produces. And any state machine and
+transitions that it has is local to it.</p>
+<span class="ts">26:08</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="57">Part of what’s going on here is you’re basically giving a good way of
+compartmentalizing the model and the action. So essentially, there’s a
+part of this which is like a function, which takes some input and
+produces some output. And part of this which is a state machine, and
+it gives you a way of composing together functions in a way that let
+combine state machines as well. Is that a fair description?</p>
+<span class="ts">26:31</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="58">Yeah. Depending on who I’m talking to. I’ll describe Bonsai as a
+framework for building incremental state machines.</p>
+<span class="ts">26:38</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="59">So given that description, how general do you think Bonsai is? Is it
+useful outside of building web UIs? Is it useful outside of UI
+contexts entirely?</p>
+<span class="ts">26:48</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="60">I want to say yes, but I’ve been looking for an alternative example
+for a very long time and I haven’t been able to really come up with
+anything.</p>
+<span class="ts">26:55</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="61">Is that true for both the question of user interfaces that are not web
+user interfaces?</p>
+<span class="ts">27:00</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="62">Oh, no. I mean, I think Bonsai is broadly applicable to user
+interfaces, as long as you have some abstraction that exposes the
+desired view for your UI as a pure value. That is one of the downsides
+of Bonsai is that effectively everything inside of it has to be
+pure. It becomes very hard to reason about when you have mutable
+values. So it might be hard to build a Bonsai UI on top of platform du
+jour UI component library, which is primarily mutation-based. But it
+should be possible if someone wrote a virtual DOM-style abstraction on
+top of it.</p>
+<span class="ts">27:41</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="63">And this restriction, I guess, is essentially the same restriction the
+systems like React and Elm have. And Elm, I guess, at the language
+level enforces purity, and React, being in JavaScript, doesn’t. And
+similarly with Bonsai, because it’s in OCaml, which is a language that
+supports mutation without restricting it, like at the level of
+types. Also it’s the case that this is just a mistake you can make. If
+you use Bonsai and you use side effects in the middle, it’s going to
+be confusing, and that’s kind of that. So early on, you said that a
+repeated pattern in your way of thinking about the work you do is ways
+to turn the problems you solve into compiler problems, into
+programming language problems, and we haven’t really talked about how
+that affects Bonsai. What is the way in which the Bonsai work also
+looks like a compiler project?</p>
+<span class="ts">28:25</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="64">I’ve been describing Bonsai as an incrementalized directed acyclic
+graph. And one of the invariants that we enforce about this directed
+acyclic graph at the type level is that it can’t be dynamic. That is
+to say, once you’ve constructed the super-component that represents
+your entire application, all possible combinations of components are
+known. And this lets us effectively do a number of compiler
+optimizations. If you look at this DAG as a program, instead of as a
+forest of nodes communicating with one another, then you can employ
+some fairly rudimentary compiler optimizations, like constant
+folding or collapsing
+multiple nodes into one if you detect that one of them is going to run
+really fast and you would rather not have the overhead of
+incrementalization. In some cases, we can even transform the
+algorithms that are being used on a node by node basis. So we talked
+earlier a bit about view library Incremental allows you to express a
+lot of powerful algorithms incrementally. And one of the places where
+it really shines is when it deals with map-like data structures. And
+we are able to pick and choose from a number of these different
+algorithms at the point where Bonsai application is first evaluated to
+pick the one that is the most optimal for that particular node.</p>
+<span class="ts">29:55</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="65">Right. And you’re talking about this as being compiler optimizations,
+but it’s not like you’re hacking the OCaml compiler to do
+something. Where in the process of doing this does the
+compilation-like phase fit in?</p>
+<span class="ts">30:06</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="66">Yeah, so it happens exactly once. And that is when you start the
+Bonsai application. You give a Bonsai.t to the functional equivalent
+of a main method. And it’ll take that, it’ll crunch it, it’ll optimize
+it, and then it’ll start running. After it starts running, we don’t
+touch it anymore. But at that point where the user hands off the
+representation of their application, we are able to fully traverse the
+entire component graph and see where we want to make changes.</p>
+<span class="ts">30:36</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="67">Right. So when someone is building up a Bonsai computation, the thing
+I’m really building is something that’s closer to the abstract syntax
+tree of an expression that represents that computation. And then
+you’re running a compilation step to convert that into the real live
+running computation.</p>
+<span class="ts">30:51</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="68">Exactly. That’s why we call the thing computation. It is an
+unevaluated expression and that’s what they give to us. And we can
+look through the entire thing and then start running it.</p>
+<span class="ts">31:00</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="69">Right. So that’s a great approach, but it also limits you in some
+ways.</p>
+<span class="ts">31:05</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="70">Yeah. The way I think of an application written in Bonsai is really an
+application written in three different programming languages. The
+first one is a meta language, this language happens to be OCaml and it
+manipulates computation.t and composes the structure of the
+application. But once this meta programming is done, it’s done. You
+don’t get to add new possibilities for components at runtime. The
+second language is Bonsai itself, which when you look at code written
+in Bonsai, you can identify things that really look like programming
+language constructs. So we have our own if, we have our own way to do
+recursion, we have functions and ways to apply values to these
+functions. The third programming language is the one that you alluded
+to, which was that the actual business logic, the code that’s running
+inside of these abstract notions of the components is again, OCaml. At
+this level, you cannot add to the component graph. It’s restricted to
+performing calculations on values that are being passed through it and
+applying actions to transition state machines. But yeah, after stage
+one, you’re kind of set in stone.</p>
+<span class="ts">32:16</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="71">And maybe I should go back a little bit and say that when I say that
+the graph itself is static after this first stage is finished, I don’t
+mean that the application can’t change itself dynamically. So in
+Gmail, for example, you’ve got your inbox view and your compose view,
+and your reading-someone-else’s-email view. And in Bonsai you can
+absolutely switch between all of these at runtime. But at compile
+time, well, what I’m calling compile time, it’s known statically that
+there are those many views possible and it can traverse all of those
+separate sub-graphs even though there isn’t any data actually flowing
+through it, even though those components themselves aren’t active
+right then and there.</p>
+<span class="ts">33:02</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="72">And this is a kind of classic trade-off here where you’re taking away
+some real freedom from someone who is constructing the UI, there’s
+some kind of highly dynamic things that are maybe impossible or at
+least awkward to express in the context of Bonsai. But in exchange,
+what you have is the ability to do more things like these kind of
+optimizations that you’re talking about within the framework. So in
+some ways, you take away power from the user of a library and you give
+power to the implementer of the library to provide better services to
+the user.</p>
+<span class="ts">33:37</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="73">Exactly. Yeah. And I would say that the services that we provide go
+deeper than just compiler optimizations. I’ve been saying that I will
+build a debugger for a very long time and I haven’t yet, but it would
+be possible to build a very useful debugger that up ahead of time
+knows the exact structure of your UI and allows you to navigate the
+DAG and poke values and see what the states of various components are
+in a way that I think would be a lot harder if we didn’t have this
+upfront, solidified representation of the application.</p>
+<span class="ts">34:13</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="74">So one of the things that strikes me about the way that you describe
+all of this is in some sense, quite abstract, right? There’s all these
+fairly fancy sounding ideas about how we build computations and
+compose them together and how we’re going to have our own language
+inside of the language and our own version of if and our own version
+of recursion. It kind of sounds like a lot. I wonder, how does that
+affect the ability to construct a tool that you can give to people and
+they can easily use? What’s the learning curve like with Bonsai and
+how hard has it been for people and teams to pick it up and use it?</p>
+<span class="ts">34:48</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="75">Yeah. So I think it’s getting a lot better. It’s still not great. I
+learned a whole lot trying to teach very early versions of Bonsai to
+people. And in fact, I think we ran about 50 people through a class
+that included Bonsai in that class when it was still very young, and
+their frustrated expressions still motivate me today. I think that one
+of the things that we’ve been leaning on quite heavily is the ability
+to extend OCaml syntax itself to make expressions in Bonsai look a lot
+like expressions in OCaml. So here I’m talking about the
+PPX
+system which lets me write little extensions to OCaml syntax like
+“let” for binding variables or “if” or “match” for evaluating
+different possibilities of data that’s flowing through the Bonsai
+graph. So in a way, the structure of the Bonsai code looks an awful
+lot like OCaml, but still has all of the restrictions that we were
+talking about earlier.</p>
+<span class="ts">35:55</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="76">So this is another way of turning this into a programming languages
+problem, not just inside of Bonsai itself, do you do programming
+language self transformations, but you’ve also moved up into the OCaml
+syntax itself and added essentially new language features to OCaml to
+make it easier and more convenient to express Bonsai computations in a
+way that feels normal to people.</p>
+<span class="ts">36:17</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="77">Yeah. And I think that it’s one of the things that I really enjoy
+about a number of our other libraries that operate monadically in that
+you don’t really need to know what a monad is in order to use them
+effectively. But if they have radically different syntax than what
+you’re used to, it can still be an enormous pain. So by extending the
+syntax for monads, I think that a lot of people that start at Jane
+Street don’t know what it is, don’t really need to care. They’ll learn
+eventually as they see numerous examples of monads in the code, but it
+looks so much like regular OCaml that you can think of it as though it
+were regular OCaml.</p>
+<span class="ts">36:55</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="78">Yeah. This kind of just reminds me of the general fact that the
+ability to transform the syntax of your language is such a great
+feature. And it’s always sad when you run into languages that don’t
+have it. Just having some kind of syntactic abstractions where you can
+just write some piece of code that transforms it to simplify
+things. There are downsides to various kinds of macro capabilities in
+that the macros themselves can be hard to reason about and can
+sometimes give you awkward error message and all of that. But when
+done right, it’s just enormously powerful part of the world and large
+parts of the languages out there just never adopted.</p>
+<span class="ts">37:35</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="79">I think they’re moving in that direction though. It’s really hard to
+think of a programming language that has been designed in the past 10
+years that hasn’t at least acknowledged the power of metaprogramming
+and good metaprogramming in some way. I’m thinking here specifically
+about like Zig and
+Rust as examples of languages that are
+very static and very serious, and they still have excellent
+metaprogramming capabilities.</p>
+<span class="ts">38:02</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="80">I guess Java just recently got closures. So maybe it’ll get
+metaprogramming next.</p>
+<span class="ts">38:08</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="81">Yeah. One would hope. I think C# got source code generators which
+don’t let you extend existing files, but let you produce new ones
+based off of the contents of a syntax tree.</p>
+<span class="ts">38:20</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="82">Yeah, and it’s maybe worth saying, I think OCaml’s metaprogramming
+facilities are okay. They’re not great. It’s great that they’re there
+and they’re extremely useful, but I think people who work in Lisp or
+Scheme or Racket or something in that
+would mostly point and laugh at OCaml’s macro system.</p>
+<span class="ts">38:38</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="83">Yeah. I think that’s right. It’s simultaneously too powerful in that
+you can do basically anything and inject arbitrary code, but it’s also
+because of that, it’s really hard to just make a tiny one-off
+extension to OCaml that you’re using perhaps only within lexical scope
+of the definition of this macro. It would be great if we had some kind
+of macro system in addition to compiler extensions.</p>
+<span class="ts">39:04</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="84">Yeah. I agree. And there’s some exciting work in the direction of
+strengthening OCaml’s support for various kinds of macros. And also I
+think it would be great to have macros exposed in a modular way. Right
+now, what macros you’re using is a thing that’s kind of controlled
+entirely from the build system and is not integrated in a real way in
+the language. And I think that’s another thing that would make the
+system more usable and easier to apply in more cases. So a big part of
+landing a new library like Bonsai is evangelism, right? You can write
+the nicest library that you want, and if no one uses it, nothing good
+happens. How have you approached the problem of evangelizing Bonsai
+and getting people excited and getting people using it inside of Jane
+Street?</p>
+<span class="ts">39:47</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="85">I think one of the things that I’m still very happy that I did was
+backwards compatibility with Incr_dom in that you can kind of spread
+throughout an Incr_dom program, providing value to people that have
+existing applications. And once they see the difference between the
+code that they’re maintaining and the code that they’re adding, there
+were a lot of people that were very motivated to convert wholesale and
+start new applications using just Bonsai.</p>
+<span class="ts">40:15</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="86">And how has that gone in practice? How popular now is Bonsai compared
+to Incr_dom for people who are building new things?</p>
+<span class="ts">40:21</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="87">I’m not aware of any new serious projects that aren’t using it, but
+I’ll also say on the point of evangelism, I really enjoy it. Well, the
+main goal for Bonsai was to make people want to modularize their
+applications and break off bits and pieces that other people might
+find useful. So whenever someone does this, I will be their
+evangelist. And I maintain an enormous collection of examples using
+components that I’ve written, but also a lot of the other people have
+written and I will make sure that any new application knows exactly
+what powerful features other people at the company have contributed.</p>
+<span class="ts">41:00</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="88">What are you dissatisfied about with respect to Bonsai? What are the
+remaining things about it that are problematic, that you feel need to
+be much better than they are now?</p>
+<span class="ts">41:08</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="89">One of the things that I’m a bit disappointed by that isn’t directly
+related to Bonsai, but we still get flak for it, is composing
+components can lead to issues when you are styling things with CSS,
+because if a component author wants to ship a CSS file alongside their
+component, there could be issues with name clashes where two people
+pick the same name for a thing and now they’re overriding each other’s
+styles. This is largely solved by doing component styling in our
+virtual DOM library. So styles added directly to the virtual DOM
+nodes. But I think that CSS is a much maligned pattern-matching
+language. And the things that you can do in it are incredibly useful,
+especially for expressing things that are possible in OCaml like
+highlighting every other row in a table a different color. But also
+there are just things in CSS that you can do that you couldn’t do with
+inline styles, like changing the appearance of an item based on
+whether or not it’s being hovered over, for example.</p>
+<span class="ts">42:19</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="90">So this is a pretty weak point when you’re writing something using
+Bonsai web. And I have a project about to get merged that I hope will
+fix this, which also uses OCaml’s extension language. And the way that
+it works is by writing CSS directly in your OCaml file inside of an
+invocation to this compiler extension. It’ll pull out all of the CSS,
+look through the names, give them all unique names and then expose
+those names to your OCaml program so that you can use these uniquified
+hashed name values that are coming out of a very crisp and clean CSS
+string.</p>
+<span class="ts">43:02</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="91">So the goal here is to specifically get rid of this case where you
+essentially pun your way into the problem where you had two different
+classes for nodes, and you happened to name them the same thing, and
+you’re just going through and making sure that you have no unintended
+name clashes.</p>
+<span class="ts">43:18</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="92">Yes. Well, in fact, we do that by just hashing the contents of your
+string and also the file name that you’re currently in. And appending
+that hash will generate something that hopefully doesn’t wind up
+clashing with anything else. I’ll also say that the CSS language
+itself is not what people complain about when they complain about
+CSS. What they’re complaining about is the implementation of layout in
+the browser which can be very confusing, and the complex interplay
+between various styling rules. So these things aren’t going away with
+a PPX, they might go away with some other abstractions. We hide the
+details of the algorithms that are used to display and lay out
+content. But CSS itself, no, it’s quite nice I think.</p>
+<span class="ts">44:10</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="93">Got it. So you think this does solve the primary problem here, which
+is this kind of name clash issue?</p>
+<span class="ts">44:16</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="94">I think I can come up with other things that I don’t like about
+Bonsai. Right now, you need to repeat yourself a lot. Moving from one
+language to another, in this case, the Bonsai component language into
+the actual OCaml code that manipulates values at runtime is quite
+verbose. I would really like to get rid of a lot of that
+repetition. Right now, it’s not repetition that I think would cause
+people to inadvertently write bugs, but you do wind up repeating a
+bunch of names in multiple places, which is a bit unfortunate. And
+it’s something that a very recent addition to OCaml, by our own
+Stephen Dolan, is going to hopefully make better. And that is “let
+punning.” This verbosity,
+the repeating of these names is going to be fixed in a very new
+version of OCaml that lets you ignore cases where the variable that
+you’re binding to has the same name as the value that you’re binding.</p>
+<span class="ts">45:12</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="95">So that actually leads to another question. I’m curious what you think
+the ups and downs are of OCaml as a language for writing web
+applications? The normal language used in JavaScript, and there’s lots
+of others, you could write an Elm, you can write in
+TypeScript, you can write in
+Dart. How do you think OCaml measures up as a
+language for doing this kind of work?</p>
+<span class="ts">45:31</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="96">I have to say that web development at Jane Street is very different
+from web development anywhere else in that we have some of the fastest
+networks that money can buy. And because of that, a lot of the things
+that would kill Bonsai on arrival at any other company like somewhat
+enormous JavaScript bundle size and not being able to do server side
+rendering in order to cut down on initial load times or being able to
+split a application into many files so that you’re only loading the
+ones that are needed on the initial display. Things like this that are
+commonplace in other languages and frameworks are simply not
+present. And that’s because here we primarily use our web browsers as
+a 2D vector graphics library where we don’t care too much about web
+pages, almost all of them are a single page that loads a whole bunch
+of JavaScript, connects back to the server with a web socket
+connection and sits there chugging along all day. And the constraints
+that most web developers have to face are just simply nonexistent.</p>
+<span class="ts">46:40</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="97">So for us, the web browser is just another place to run an OCaml
+program and an OCaml program that happens to generate a UI. But a lot
+of the ordinary stuff that are the concerns of the web just kind of
+don’t show up.</p>
+<span class="ts">46:53</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="98">Yeah. I would say that OCaml is well-suited for this style of
+immutable program construction and its tools and its libraries make
+this very easy in a way that JavaScript, for example, does not.</p>
+<span class="ts">47:10</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="99">Is there anything about the language itself that you feel like gets in
+the way from a kind of expressiveness and convenience point of view?
+Are you mostly pretty happy with OCaml as a language for this kind of
+work?</p>
+<span class="ts">47:20</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="100">Yeah. Yeah, absolutely. I think if I wasn’t happy with it, we wouldn’t
+be having this conversation.</p>
+<span class="ts">47:27</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="101">Well, you can be happy but have some axes to grind about things that
+you’d like to make better. I feel like it’s rare to be so happy about
+a programming language that you don’t have complaints.</p>
+<span class="ts">47:36</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="102">Oh, I definitely have complaints. But they’re mostly from a library
+author’s perspective. I think there’s not a ton that I think I
+desperately want from my user’s perspective. I mean, I’m going to
+regret saying this. As soon as we’re done, I’m going to come up with
+five things that are actually deal breakers.</p>
+<span class="ts">47:58</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="103">So to ask a grander question still, in what ways are you dissatisfied
+about the web as a platform for writing user interfaces?</p>
+<span class="ts">48:07</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="104">I think that the one thing that every UI author has to contend with is
+the only options we really have are JavaScript and the DOM for
+programming language and UI runtime. And I think that this may change
+as WebAssembly
+picks up steam, and as they add the features that allow OCaml to
+compile down to it, like access to the garbage collector, or I guess
+the ability for us to implement our own garbage collector. I think we
+would be happy getting the OCaml GC to run on WebAssembly if that was
+also possible. But I think that the DOM is going to be here for a
+while. And it does a whole bunch of really amazing things. The fact
+that anyone really can create an accessible, styleable user interface
+with very little thought is unbelievably powerful. And I think that
+the prevalence of the web goes to show for just how valuable this
+is. But for people building user interface components that lie outside
+of what the styling and layout engines of browsers consider normal, it
+would be nice to be able to tell them, “Hands off, we’re going to be
+managing what we consider to be the DOM tree from here on out.” And be
+able to forward on some of the invariants that we maintain to the web
+browser in order for them to make it as performant as possible.</p>
+<span class="ts">49:38</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="105">So how different is this from just drawing your own widgets on a
+canvas inside of the browser? In fact, I think I heard a week ago that
+Google is planning on doing this for various
+things
+in the Google Docs Suite. Where they have done a lot of work over time
+to wrestle with the DOM and get it to do all sorts of things that the
+DOM was never designed to do, display hundreds of thousands of lines
+of a spreadsheet. And it sounds like they are giving up and they’re
+like, “Now we’re just going to render to canvas.” Does that give you
+the flexibility that you need? Is that enough?</p>
+<span class="ts">50:12</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="106">So, yes, but at great cost. The great cost being reimplementing text
+boxes. Clearly there’s more than just text boxes, but I think text
+boxes are an incredible example of complexity that you really don’t
+notice until it’s wrong. Things like selection not wrapping around
+lines correctly, or maintaining cursor position and moving them
+correctly through strings that aren’t necessarily ASCII. Doing text
+layout, doing text shaping, these are things that yeah, Google is
+going to have to do and they have the manpower to do it. But if you
+told me that I needed to implement a text box on top of canvas, well
+man, that’s maybe best measured in years.</p>
+<span class="ts">51:03</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="107">So what you want is not to have just the raw ability to kind of draw
+stuff to the canvas, you want something that preserves more of the
+power of the DOM that exists but still gives people more control. What
+would you do? What’s the magic feature you would ask for from the web?</p>
+<span class="ts">51:17</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="108">I guess direct integration into the layout engine and maybe APIs that
+allow us to tell the Chrome renderer what things to avoid drawing,
+direct access to the layout engine, maybe direct access to their
+underlying 2D graphics renderer. And I think a more powerful
+integration with incoming user events, things like keyboard and mouse
+that allow us to take a bit more power.</p>
+<span class="ts">51:50</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="109">Is this the kind of thing that people are talking about or is this
+just stuff you think would be awesome but it’s not on anyone’s radar?</p>
+<span class="ts">51:56</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="110">I think that there’s a proposal called
+Houdini that includes a lot of
+this. It’s not totally clear whether or not it will be adopted as a
+standard and when those features will arrive or how powerful they will
+be. But I think that certainly there are people, probably the same
+people that are working on Google Docs, that have been bitten by these
+problems and are eager to solve them.</p>
+<span class="ts">52:21</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="111">So you spent all this time on Bonsai, which is a UI toolkit. Are there
+other tools for building UIs that you are especially jealous of or
+have a lot of admiration for? What are other great systems that you’ve
+encountered for building user interfaces?</p>
+<span class="ts">52:36</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="112">Yeah. So I think that the Svelte project is a
+recent UI toolkit but also programming language that has a lot of
+features that I think make it very desirable for
+outside-of-Jane-Street UI development. It fundamentally operates on
+the basis that UI components are specified ahead of time. They are
+composed dynamically, but the UI components are passed through a
+compiler first and it can do optimizations, it can find places where
+bugs might be introduced by composing things incorrectly. And it just
+feels to me … I also haven’t done any programming in Svelte, but
+reading over the tutorials, it feels like the type of thing that
+might’ve been developed for the web with hindsight.</p>
+<span class="ts">53:29</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="113">Are there any approaches to building UIs that you’ve seen outside of
+the web context that you’re excited about? There’s a whole world, I
+don’t know, there’s wizards for composing UIs together and all sorts
+of systems for building UIs in different contexts. Is there anything
+in that world that you’re excited about that you think does something
+impressive and good?</p>
+<span class="ts">53:48</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="114">No. I think that UI-based UI design will almost always fall over. It
+will not expose enough power to the people that want it. And at that
+point, you need either very powerful hooks so that developers can
+attach things into a UI that was built in a GUI, or you need to
+transition that GUI into code and then hand it off to the dev. And I
+haven’t seen any of these work particularly well.</p>
+<span class="ts">54:16</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="115">Arguably, one of the most successful systems for building user
+interfaces is Excel. I wonder how you think about that fitting in?</p>
+<span class="ts">54:23</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="116">Excel is arguably the greatest programming language ever
+developed. Certainly its ability to convince non-programmers that they
+aren’t doing programming is unbelievable. It builds in an entire
+incremental framework for reducing recomputation of values. And it
+makes people integrate the data input that they have to do with the
+viewing and analysis that they want to do in a way that I just really
+haven’t seen replicated anywhere else.</p>
+<span class="ts">54:58</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="117">Right. I mean Excel is another case where it does the thing where it’s
+very limiting. You get the best behavior out of Excel when you do the
+maximum amount possible in the equation language and the equation
+language is very limited. Although excitingly, they recently got let
+expressions
+and
+closures,
+but still, it’s a very limited language. But once you accept those
+limitations, boy oh boy, is it a nice system to work in. I don’t want
+to build everything inside of Excel, I mean, I feel like there’s a
+whole separate long podcast one could have about all the things that
+go wrong when you use Excel, Excel has some imperfections. You can
+talk about the genomics
+disaster of
+various genomic markers being misinterpreted as dates and wildly
+messing up computations or results. Excel is far from perfect, but as
+a way of constructing easy-to-use and easy-to-understand interfaces
+for people doing data analysis, it’s pretty impressive.</p>
+<span class="ts">55:52</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="118">Absolutely. And I think that one of the reasons for that is that
+there’s this very tiny barrier between seeing something on your
+screen, seeing a visualization or some results for a formula and
+editing the formula that produced that result. You don’t need to dig
+through source code and find out where that value is being
+produced. You click on the thing and it’ll show you exactly how and
+why and where those values and those computations are coming from. And
+it’s unbelievably powerful. And I’ve been experiencing a different
+kind of visual-based programming in the
+Blender program, which is a 3D modeling
+animation rendering, but I’m using it almost entirely for shading in
+which a typical shader is a source code in a language that looks a lot
+like C. And you write a program that operates on usually a single
+pixel and it produces a color at the end. Blender has a wonderful
+setup in the form of what they call nodes, which is this
+graph-construction UI where you create nodes that represent different
+combinators over numbers or colors or textures. And you can visually
+see the output of an individual node in the editor. And as you combine
+and compose all of these different nodes, you build up something that
+is practically, well, for me at least, literally impossible to do in
+code without seeing all these intermediate steps represented so
+easily.</p>
+<span class="ts">57:30</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="119">When you say seeing the intermediate steps, do you mean seeing
+essentially the instructions in the intermediate steps or do you mean
+actually being able to interrogate and see the results in the middle
+of your image transformation pipeline?</p>
+<span class="ts">57:43</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="120">The latter. There’s a single key binding that if you have a node
+selected, it’ll change the output for the entire shader to just be
+that node, and of course, all of the things that it depends on. But
+there’s also an incredible plugin that’ll actually inline previews
+above every node that you care about. So you can see just what does
+this node contribute to the rest of the program.</p>
+<span class="ts">58:09</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="121">So part of the value here is just a really good debugger.</p>
+<span class="ts">58:13</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="122">Yeah. Yeah. Oh, absolutely.</p>
+<span class="ts">58:15</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="123">Right. And it makes sense. It’s for a kind of programming where a lot
+of the ordinary things you would do for understanding whether you’re
+doing the right thing just kind of don’t make sense. When you’re doing
+this numerical transformation of data, when you make mistakes, your
+program doesn’t do something like enormously wrong, it just looks
+wrong or something. And it’s hard to know what’s going on if you can’t
+visually inspect the intermediate components.</p>
+<span class="ts">58:38</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="124">Right. And a lot of the tools that we bring to bear on programs
+written out in source code just can’t apply here. How do you write a
+test that passes if your shader looks good? You can’t, you need a
+human to look at it and to tweak the parameters and make it appease
+some art director somewhere in a movie studio. The debuggability and
+expectability is the feature. It would not be what it is if it were
+merely a projection into source code or out of source code. And like
+with Excel, it has managed to convince a whole bunch of artists to do
+programming without knowing it. And I think that’s really empowering
+as well.</p>
+<span class="ts">59:18</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="125">Well, I look forward to you tricking a bunch of Jane Street people
+into thinking that they’re not programming while they develop UIs
+inside of our walls, and also provide them with excellent debugging
+tools.</p>
+<span class="ts">59:30</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="126">That’s right. Yeah, get back to me on that one.</p>
+<span class="ts">59:34</span>
+<h3 class="speaker">Ron</h3>
+<p data-p="127">Will do. Okay, well Ty, thanks for joining me. This has been a lot of
+fun. The world of UIs is enormously complicated, both the stuff we’re
+doing and just the whole world. It was fun to get your view on it all.</p>
+<span class="ts">59:46</span>
+<h3 class="speaker">Ty</h3>
+<p data-p="128">Thank you for having me. This has been a blast.</p>
+<p data-p="129">Ron You can find a full transcript of the episode along with more
+information about some of the topics we discussed, including Ty’s
+Bonsai library at signalsandthreads.com. Thanks for joining us and see
+you next time.</p>
+<script>window.__ZH = {"slug": "building-a-ui-framework", "source": "google-translate", "paragraphs": [{"idx": 0, "en": "Ty Overby is a programmer in Jane Street’s web platform group where he\nworks on Bonsai, our OCaml library for building interactive\nbrowser-based UIs. In this episode, Ty and Ron consider the functional\napproach to building user interfaces. They also discuss Ty’s\nprogramming roots in Neopets, what development features they crave on\nthe web, the unfairly maligned CSS, and why Excel is “arguably the\ngreatest programming language ever developed.”", "zh": "Ty Overby 是 Jane Street 网络平台小组的一名程序员，他在那里\n适用于 Bonsai，我们用于构建交互式的 OCaml 库\n基于浏览器的 UI。在这一集中，泰和罗恩考虑了函数式\n构建用户界面的方法。他们还讨论了 Ty 的\n编程源于尼奥宠物，他们渴望什么开发功能\n网络、不公正地谩骂的 CSS，以及为什么 Excel 是“可以说是最优秀的”\n有史以来最伟大的编程语言。”"}, {"idx": 1, "en": "Ty Overby is a programmer in Jane Street’s web platform group where he\nworks on Bonsai, our OCaml library for building interactive\nbrowser-based UI. In this episode, Ty and Ron consider the functional\napproach to building user interfaces. They also discuss Ty’s\nprogramming roots in Neopets, what development features they crave on\nthe web, the unfairly maligned CSS, and why Excel is “arguably the\ngreatest programming language ever developed.”", "zh": "Ty Overby 是 Jane Street 网络平台小组的一名程序员，他在那里\n适用于 Bonsai，我们用于构建交互式的 OCaml 库\n基于浏览器的用户界面。在这一集中，泰和罗恩考虑了函数式\n构建用户界面的方法。他们还讨论了 Ty 的\n编程源于尼奥宠物，他们渴望什么开发功能\n网络、不公正地谩骂的 CSS，以及为什么 Excel 是“可以说是最优秀的”\n有史以来最伟大的编程语言。”"}, {"idx": 2, "en": "Some links to topics that came up in the discussion:", "zh": "讨论中出现的一些主题链接："}, {"idx": 3, "en": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. It’s my\npleasure to be talking today with Ty Overby. Ty is a software engineer\nwho’s been at Jane Street since 2018. And his work here has been\nfocused on our tools for building web applications and specifically on\na library he designed called Bonsai. We’re going to talk a lot about\nthe ideas behind Bonsai and about UI development more generally. But\nfirst Ty, can you tell us a bit more about your background before Jane\nStreet?", "zh": "欢迎来到信号和线程，深入讨论每个信号和线程\n来自 Jane Street 的技术堆栈层。我是罗恩·明斯基。这是我的\n很高兴今天与泰·奥弗比交谈。 Ty 是一名软件工程师\n自 2018 年以来一直在简街工作。他在这里的工作一直是\n专注于我们用于构建 Web 应用程序的工具，特别是\n他设计了一个名为 Bonsai 的图书馆。我们将谈论很多\nBonsai 背后的想法以及更广泛的 UI 开发的想法。但是\n首先，Ty，您能在 Jane 之前告诉我们更多有关您的背景吗？\n街道？"}, {"idx": 4, "en": "Yeah, so I think my first experience with web development was probably\nwhen I was in middle school writing petpages for my\nNeopets. After that, I’ve\nbeen doing hobby programming ever since I was a kid, went to the\nUniversity of Washington and worked on compilers for a while at\nMicrosoft. I decided at some point to move to New York, so Jane Street\nseemed like a great place to continue my love for programming\nlanguages and somehow managed to get on a team doing some programming\nlanguages and web development stuff, which I think is pretty exciting.", "zh": "是的，所以我认为我的网络开发第一次经历可能是\n当我在中学时为我的孩子写宠物页\n尼奥宠物。之后，我已经\n我从小就喜欢编程，去过\n华盛顿大学，并在编译器方面工作了一段时间\n微软。我决定在某个时候搬到纽约，所以简街\n似乎是继续我对编程的热爱的好地方\n语言并以某种方式设法加入一个团队进行一些编程\n语言和网络开发的东西，我认为这非常令人兴奋。"}, {"idx": 5, "en": "So you got to combine two different loves.", "zh": "所以你必须把两种不同的爱结合起来。"}, {"idx": 6, "en": "Yeah.", "zh": "是的。"}, {"idx": 7, "en": "You talked a little bit about your hobby programming. I know that\nyou’re someone who really spends time and really enjoys digging into\nall sorts of things in your spare time. Can you tell us a little bit\nmore about what kind of things you’ve done on the side?", "zh": "您谈到了您的编程爱好。我知道\n你是一个真正花时间并且真正喜欢深入研究的人\n闲暇时做各种各样的事情。你能告诉我们一点吗\n更多关于你兼职做过哪些事情？"}, {"idx": 8, "en": "Yeah, so I guess a running theme of mine is that I wind up taking the\nhammer that is compiler development and bashing everything that I can\nget my hands on with it. I think my biggest, longest-running project\nis probably a computer-aided design library, suite of software, where\nin order to describe the shapes for your object you write programs,\nlittle functions that go from some point in space to the distance, to\nthe outline of your shape. Then there’s all sorts of fun\ncombinators that you\ncan write on top of this and all sorts of fun optimizations that you\ncan do if you somewhat limit the capabilities of the person using it,\ntaking compiler optimizations to the computer-aided design workflow.", "zh": "是的，所以我想我的一个持续主题是我最终接受了\n锤子就是编译器开发和我能做的一切\n让我动手使用它。我认为我最大、运行时间最长的项目\n可能是一个计算机辅助设计库，软件套件，其中\n为了描述你的物体的形状，你编写程序，\n从空间中的某个点到远处的小函数\n你的形状的轮廓。然后就是各种好玩的事情\n你的组合器\n可以在此基础上编写您所需要的各种有趣的优化\n如果你在某种程度上限制了使用它的人的能力，\n将编译器优化应用于计算机辅助设计工作流程。"}, {"idx": 9, "en": "So you’re diving right into the abstractions and the math, but to step\nback for a second, the thing you’re talking about as I understand it\nis what’s called programmatic CAD, which is instead of having\nsomething that’s the moral descendant of\nMacPaint or something, where\nyou go in and interactively construct some 3D object that’s going to\nthen be printed in the 3D printer or constructed in some other way,\nyou write a program to do that. And there’s actually lots of stuff out\nthere that lets you do this already. One of them that I’ve played\naround myself and with my kids is called\nOpenSCAD.", "zh": "所以你正在深入研究抽象和数学，但要一步一步\n回过头来，按照我的理解，你正在谈论的事情\n就是所谓的程序化 CAD，它不是\n道德后裔的东西\nMacPaint什么的，在哪里\n你进去并交互地构建一些 3D 对象\n然后用 3D 打印机打印或以其他方式构建，\n你编写一个程序来做到这一点。实际上还有很多东西\n那里已经可以让你这样做了。其中我玩过的一个\n我自己和我的孩子们被称为\n打开SCAD。"}, {"idx": 10, "en": "Yeah. So OpenSCAD is programmatic CAD. I believe it operates on a\nboundary\nrepresentation. So\nthis is very similar to what you would get in CAD software or Blender\nor any of the other 3D modeling softwares, which is that the\nfundamental primitive is the points or a face. Whereas the style that\nI’m particularly interested in as a functional programmer, is called\nfunctional representation or\nF-rep. And\nthese two different styles of representing shapes lead to some really\ninteresting trade-offs. Some things that are really easy in B-reps or\nboundary representation are very hard in F-reps and vice versa.", "zh": "是的。所以 OpenSCAD 是程序化 CAD。我相信它的运作基于\n边界\n代表。所以\n这与您在 CAD 软件或 Blender 中得到的非常相似\n或任何其他 3D 建模软件，即\n基本原语是点或面。而风格\n作为一名函数式程序员，我特别感兴趣的是\n功能表示或\nF-代表。并且\n这两种不同的形状表现方式导致了一些真正的问题\n有趣的权衡。有些事情在 B-reps 或\nF-reps 中的边界表示非常困难，反之亦然。"}, {"idx": 11, "en": "Right. And just to see if I have the description right, an F-rep is\nsomething where instead of describing explicitly through a collection\nof polygons or whatever, the boundary of some surface, you write down\na function and then the boundary is something like the zeros of that\nfunction. So implicitly you’re describing the boundary by just writing\ndown what the function is.", "zh": "正确的。只是为了看看我的描述是否正确，一位 F 代表\n一些东西而不是通过集合明确描述\n多边形或其他任何表面的边界，你写下来\n一个函数，然后边界就像它的零点一样\n功能。所以你只是通过写来隐含地描述边界\n下来的功能是什么。"}, {"idx": 12, "en": "They’re also called implicit\nsurfaces.", "zh": "它们也被称为隐式\n表面。"}, {"idx": 13, "en": "Why is it better to use implicit surfaces versus a boundary\nrepresentation? You said there are some things that are easier and\nsome things that are harder. Can you give me a sense of someone who\nmight use this? Why I might prefer the implicit representation?", "zh": "为什么使用隐式曲面比使用边界更好\n代表？你说有些事情比较容易\n有些事情比较难。你能给我一个关于某人的感觉吗？\n可能会用这个？为什么我可能更喜欢隐式表示？"}, {"idx": 14, "en": "Oh, I think a lot of the combinators are trivial to express. So things\nlike taking two shapes and finding their union is well, the two\nshapes, they’re two functions, so you apply them both. And then you\ntake the maximum of whichever of the two points and the function that\ncombines these now describes the shape that is the union of those two\nshapes. These functions return numbers that represent the distance to\nthe edge. So zero is on the edge, negative numbers are inside and\npositive numbers are outside. So union would be max, intersection\nwould be min, and negation or taking a shape and making the outside\ninside and the inside outside is just literally negation. And you can\nuse negation and union to get cuts. And also something that you can’t\ndo in boundary representation stuff is just write some code. And I\nreally enjoy just being able to think of a function and see what kind\nof shape it would create.", "zh": "哦，我认为很多组合器的表达都很简单。所以事情\n就像采取两个形状并发现它们的结合很好，两个\n形状，它们是两个函数，所以你可以同时应用它们。然后你\n取两点中的最大值以及函数\n结合这些现在描述了这两个的并集的形状\n形状。这些函数返回代表距离的数字\n边缘。所以零在边缘，负数在内部，\n正数在外面。所以并集将是最大，交集\n将是分钟，否定或形成形状并使外部\n内部和内部外部只是字面上的否定。你可以\n使用否定和联合来获得削减。还有一些你做不到的事情\n在边界表示方面所做的事情只是编写一些代码。而我\n真的很享受能够想到一个功能并看看是什么样的\n它所创造的形状。"}, {"idx": 15, "en": "Right. Although, I mean, you can write code, OpenSCAD lets you write\ncode that generates boundary representations and manipulates those\nboundary representations. So can’t you do it programmatically in both\nstyles?", "zh": "正确的。我的意思是，尽管您可以编写代码，但 OpenSCAD 可以让您编写代码\n生成边界表示并操纵它们的代码\n边界表示。所以你不能在两者中都以编程方式完成它吗\n风格？"}, {"idx": 16, "en": "Probably. I think some of the shapes that I’m interested in are things\nlike the interference pattern between two sine waves, each of them\ndescribing distances to the outside of a shape and cutting that off\nvia a circle. And the cutting off via a circle OpenSCAD can do just\nfine, but describing a shape implicitly is something that implicit\nsurfaces do pretty well. And the type of programming that you do is\nvery different.", "zh": "大概。我认为我感兴趣的一些形状是\n就像两个正弦波之间的干涉图案一样，它们中的每一个\n描述到形状外部的距离并将其切断\n通过一个圆圈。 OpenSCAD 可以通过圆形进行切割\n很好，但是隐含地描述形状是隐含的\n表面表现相当不错。你所做的编程类型是\n非常不同。"}, {"idx": 17, "en": "And I can immediately see how your functional programming background\nleaks into the way you talk about CAD. I think people who are doing\nCAD don’t normally talk about combinators. They might talk about the\noperations you use for combining shapes. And I guess those two are one\nand the same in the way that you’re describing them.", "zh": "我可以立即看出您的函数式编程背景如何\n泄漏到您谈论 CAD 的方式中。我认为正在做的人\nCAD 通常不讨论组合器。他们可能会谈论\n用于组合形状的操作。我猜这两个人是一体的\n和你描述它们的方式一样。"}, {"idx": 18, "en": "Yeah.", "zh": "是的。"}, {"idx": 19, "en": "As I understand it, there are other things that are supposed to be\ngood about implicit surface-style representations. I’ve used OpenSCAD\na lot and one thing that’s really annoying about it is you have to\ndecide early on when you’re constructing the boundaries how detailed\nthe boundary representation is going to be. So there’s essentially\nalmost tessellation of the surface or an approximation of the surface\nby a bunch of little tiny polygons. And then when you do things like\nmerge things together, you can get all sorts of weird artifacts that\ncome from exactly the kind of beats in the frequencies of the\ndifferent polygonalizations of the two shapes and you get all sorts of\nweird things that happen on the boundaries. And I think the implicit\nsurface approach gives you something where while you’re doing all of\nyour transformations, you have everything in some sense at full\nresolution. And then finally when you render it, you get to decide how\nyou want to do the final display and how detailed that needs to be.", "zh": "据我了解，还有其他事情应该是\n擅长隐式表面样式表示。我用过 OpenSCAD\n很多而且真正令人烦恼的一件事是你必须\n尽早决定何时构建边界的详细程度\n边界表示将是。所以本质上有\n表面的几乎镶嵌或表面的近似\n由一堆微小的多边形组成。然后当你做类似的事情时\n将事物合并在一起，你可以获得各种奇怪的文物\n完全来自于频率中的节拍\n两种形状的不同多边形化，你会得到各种各样的\n边界上发生的奇怪的事情。我认为隐含的\n表面方法可以让你在做所有事情的同时得到一些东西\n你的转变，在某种意义上你已经拥有了一切\n分辨率。最后当你渲染它时，你可以决定如何\n您想要进行最终的显示以及需要的详细程度。"}, {"idx": 20, "en": "Yeah, that’s exactly right. Sadly, one of the downsides is that doing\nthat final transformation from F-rep to B-rep, which is useful if you\nwant to 3D print something or pull it into a game engine, that’s\nreally hard. As far as I can tell, no one has done it perfectly\nyet. There’s an amazing project by Matt\nKeeter called\nlibfive, which I’ve built a ton\nof stuff on top of, and I’ve loved using that. And it’s very good, but\nit still has issues with weird edge cases, in this case, literally\nedge cases. You can imagine interesting things happening to a shape as\npoints go to infinity or negative infinity. And unless you’re very\ncareful, you can easily create topologies that are hard or impossible\nto render into a regular 3D file.", "zh": "是的，完全正确。可悲的是，缺点之一是\n从 F-rep 到 B-rep 的最终转变，如果您\n想要 3D 打印某些东西或将其拖入游戏引擎，那就是\n真的很难。据我所知，没有人能做到完美\n还没有。马特有一个令人惊叹的项目\n基特打来电话\nlib Five，我已经构建了大量\n上面的东西，我喜欢使用它。而且这很好，但是\n它仍然存在奇怪的边缘情况的问题，在这种情况下，字面上\n边缘情况。你可以想象一个形状发生有趣的事情\n点趋于无穷大或负无穷大。除非你非常\n小心，你可以轻松创建困难或不可能的拓扑\n渲染成常规 3D 文件。"}, {"idx": 21, "en": "Right. And I guess if you have points that go to infinity it’s\nprobably hard to find a 3D printer big enough to actually render the\nresulting surface.", "zh": "正确的。我想如果你有无穷大的点\n可能很难找到足够大的 3D 打印机来实际渲染\n由此产生的表面。"}, {"idx": 22, "en": "It’s true.", "zh": "这是真的。"}, {"idx": 23, "en": "Okay. So that’s a fun kind of hobby. You said you did a bunch of web\ndevelopment on the side as part of your personal work. Have you done\nweb development in a professional context as well before your work\nhere?", "zh": "好的。所以这是一种有趣的爱好。你说你做了很多网络\n作为您个人工作的一部分进行兼职开发。你做了吗\n在工作之前也可以在专业环境中进行网络开发\n在这里？"}, {"idx": 24, "en": "Yeah, so I helped out on a project at Microsoft building a in-browser\nREPL. I don’t know if any of my code is still\nalive in there, but I think that’s it actually, I think that was the\nonly brush that I had with web dev professionally before Jane Street.", "zh": "是的，所以我帮助了微软的一个项目，构建了一个浏览器内\n重复。我不知道我的代码是否仍然存在\n还活着，但我认为实际上就是这样，我认为这就是\n在 Jane Street 之前，我只与 Web 开发专业人士有过交流。"}, {"idx": 25, "en": "Got it. And then somehow, despite the lack of any professional\nbackground, nonetheless, you ended up building the library that is now\nJane Street’s default library for building user interfaces, which is\ncalled Bonsai. So let’s talk about that a little bit. So when you\narrived here, we already had some foundation for doing web\ndevelopment. There was a library called\nIncr_dom and this was based\non a compiler component, which we still use, called\nJs_of_ocaml. So Js_of_ocaml\nis a backend that takes OCaml and converts it into JavaScript, doing\nactually a surprisingly good job of respecting OCaml semantics. And we\nhad successfully built a number of user interfaces using Incr_dom and\nJs_of_ocaml, and also run into some trouble with it. Maybe you can\ntell us a little bit about what Incr_dom looked like to you when you\narrived and explain how it works for someone who’s never touched\nbefore?", "zh": "知道了。然后不知何故，尽管缺乏任何专业人士\n背景，尽管如此，您最终还是构建了现在的库\nJane Street 用于构建用户界面的默认库是\n称为盆景。那么让我们来谈谈这一点。所以当你\n到了这里，我们已经有了一些做web的基础了\n发展。曾经有一个图书馆叫\nIncr_dom 这是基于\n在我们仍在使用的编译器组件上，称为\njs_of_ocaml。所以 Js_of_ocaml\n是一个采用 OCaml 并将其转换为 JavaScript 的后端，执行以下操作\n实际上，在尊重 OCaml 语义方面做得非常好。而我们\n已经使用 Incr_dom 成功构建了许多用户界面和\njs_of_ocaml，并且也遇到了一些麻烦。也许你可以\n告诉我们一些关于当你\n到达并解释它如何为从未接触过的人起作用\n之前？"}, {"idx": 26, "en": "For people that are familiar with the Elm\narchitecture, Incr_dom\nwould seem quite natural. Let’s back up and talk about the Elm\narchitecture for a little bit. Elm is a\nprogramming language built entirely for developing user interfaces in\nthe browser, certainly its standard library is very focused on\nthis. And it also comes with a design pattern and that design pattern\nis separating the logic of your application into a view function that\ntakes inputs and the model for an application and produces a pure\nfunctional representation of its view. And then also an apply-action\nfunction, which can take in an existing model for the application and\nan action that is triggered either by the user interacting with the\npage in some way or by interactions with a web socket connection or\nother IO. And it’ll take this action and the current model and produce\na new model. And then the render function gets called again with a new\nmodel and hopefully the changes that you want to see represented on\nthe screen make their way there.", "zh": "对于熟悉 Elm 的人来说\n建筑，Incr_dom\n看起来很自然。让我们回过头来谈谈 Elm\n架构一点点。榆树是一种\n完全为开发用户界面而构建的编程语言\n浏览器，当然它的标准库是非常专注的\n这个。它还带有一个设计模式，并且该设计模式\n将应用程序的逻辑分离到视图函数中\n接受应用程序的输入和模型并生成纯\n其视图的函数表示。然后还有一个应用动作\n函数，它可以接受应用程序的现有模型并\n由用户与交互触发的动作\n以某种方式或通过与网络套接字连接交互或\n其他IO。它将采取这个行动和当前的模型并产生\n一个新的模型。然后使用新的渲染函数再次调用\n模型并希望您希望看到的变化体现在\n屏幕就到了那里。"}, {"idx": 27, "en": "Great. So this is in some sense, just another spin on the classic\nmodel-view-controller pattern and model is your representation of\ndata, view is what you’re going to display, and the controller is\nsomehow how you interact with the outside world and do transformations\nto your model, right? And I guess this whole thing will sound very\nfamiliar to anyone who’s used React, where\nReact is also based on a notion of a pure functional representation of\nthe DOM. You have some just pure data structure that represents the\nDOM you wish you had, and it gets slammed into the actual messy,\ncomplicated tree of objects that is the actual DOM in the browser in a\nhopefully efficient way. Can you say maybe a word about how Elm\narchitecture differs from what a React programmer might be used to?", "zh": "伟大的。所以从某种意义上说，这只是经典的另一种演绎\n模型-视图-控制器模式和模型是您的表示\n数据，视图是你要显示的内容，控制器是\n以某种方式你如何与外部世界互动并进行转变\n到你的模型，对吗？我想这整件事听起来会很\n使用过 React 的人都熟悉，其中\nReact 还基于纯函数表示的概念\nDOM。你有一些纯粹的数据结构来代表\n你希望拥有 DOM，但它却陷入了实际的混乱之中，\n复杂的对象树，即浏览器中的实际 DOM\n希望有效的方法。你能谈谈 Elm 是如何做到这一点的吗？\n架构与 React 程序员可能习惯的架构有何不同？"}, {"idx": 28, "en": "On the surface, they appear to be very similar. The one thing that\nReact users typically reach for is a state management library. And\nthis is changing over time. I think it’s a bit less common now that\nReact has adopted some of this into the library itself, but there were\nsome very popular libraries like\nRedux or\nMobX that did the pure functional\nmodel updating that Elm has kind of built into its framework. Prior to\nthis, the way that you did state in React was by putting state in your\ncomponents. And this is handy. It’s private. You don’t need the rest\nof your application to know about this state, but it also has some\nproblems like that if a component is removed from the component tree\nand then added back in again, the state is gone. So it’s a bit more\nlike having an immutable variable inside of your component tree. So\npeople reach for state management solutions that provided the model to\naction to model transformation that Elm has.", "zh": "从表面上看，它们似乎非常相似。有一件事是\nReact 用户通常会使用状态管理库。并且\n随着时间的推移，这种情况正在发生变化。我认为现在这种情况已经不太常见了\nReact 在库本身中采用了其中的一些内容，但是有\n一些非常受欢迎的图书馆，例如\n还原或\nMobX 做了纯函数式\nElm 已经内置到其框架中的模型更新。之前\n这，你在 React 中声明的方式是将状态放入你的\n组件。这很方便。这是私人的。你不需要其余的\n您的应用程序了解此状态，但它也有一些\n如果从组件树中删除组件会出现类似的问题\n然后再次添加回来，状态就没有了。所以有点多了\n就像在组件树中有一个不可变的变量一样。所以\n人们寻求状态管理解决方案，该解决方案提供了模型\nElm 所具有的模型转换行动。"}, {"idx": 29, "en": "And just to maybe say it in a slightly different way, the Elm approach\nis to some degree, like a good first-order approximation is, your UI\nis a function. And the key function is a function from model to\nview. And it really is just a pure function where the model is just\nsimple data and the view is just simple data. And in fact, immutable\ndata at that. And then there’s this extra action step where inside of\nthe view, there’s some, essentially, description of how actions can be\nused to update the model, say when you click a button and that leads\nto an event which asynchronously will later then cause the model to be\nupdated. So you don’t get this whole encapsulation of hiding state\ninside of components. Instead you have this pure, in some sense, more\ntotalistic like no, the whole UI is a function. And then we compose\nfunctions in the ordinary way that we compose functions in the context\nof functional programming.", "zh": "也许用一种稍微不同的方式来说，Elm 方法\n在某种程度上，就像一个好的一阶近似一样，你的 UI\n是一个函数。关键函数是从模型到\n视图。它实际上只是一个纯函数，其中模型只是\n简单数据，视图只是简单数据。而事实上，一成不变\n数据在那。然后还有这个额外的操作步骤\n视图中，本质上有一些关于如何执行操作的描述\n用于更新模型，例如当您单击按钮时会导致\n到一个事件，该事件稍后将导致模型\n已更新。所以你无法得到隐藏状态的完整封装\n组件内部。相反，你有这种纯粹的，在某种意义上，更多\n极权主义就像不一样，整个 UI 就是一个函数。然后我们组成\n以我们在上下文中组合函数的普通方式运行函数\n函数式编程。"}, {"idx": 30, "en": "Yeah, exactly. And I think a major selling point for libraries like\nthis is your application as a function where you take the state and\nyou transform it into a view. But really I think that that’s the least\ninteresting part. I think the way that you get applications that\npeople want to use is by having really well defined and edge-case-free\ninteractions. And that means transitioning from one model to the next,\nin a way that makes sense to your users. And I think that modeling\nthings as a state machine like Elm does, and like some of these React\nstate managers is a great way to do that.", "zh": "是的，完全正确。我认为图书馆的一个主要卖点是\n这是您的应用程序作为一个函数，您可以在其中获取状态和\n你把它转换成一个视图。但我真的认为这是最不重要的\n有趣的部分。我认为你获得应用程序的方式\n人们想要使用的是具有真正明确的定义和无边界情况\n互动。这意味着从一种模型过渡到另一种模型，\n以对您的用户有意义的方式。我认为建模\n就像 Elm 那样的状态机，以及 React 中的一些\n状态管理器是做到这一点的好方法。"}, {"idx": 31, "en": "So that’s like a new piece of jargon, a state machine. When you say\nit’s modeled as a state machine, what does that concretely mean?", "zh": "这就像一个新的术语：状态机。当你说\n它被建模为状态机，这具体意味着什么？"}, {"idx": 32, "en": "Yeah. So I guess the abstract notion of a state machine is you have\nsome state and then you have actions that express a desire to change\nthe state, and another function that takes an action and state and\nproduces a new state. This separation allows programs to more\naccurately read when interesting things happen as opposed to direct\nmutation. So you might notice a few actions coming in altogether and\nyou could debounce them to separate multiple actions into just a\nsingle one. You can imagine a user accidentally hitting a button twice\nor typing something a bit too fast, and you might want to put some\nguardrails on that and make sure that they aren’t doing anything\naccidentally. This is the type of thing where if in an action handler,\nyou are directly mutating some state, it might be a bit harder to do\nthis, but if you’re representing everything as transitions between\nstates that are described by actions that are raised by events, then\nthis kind of intentional transition becomes a lot more possible.", "zh": "是的。所以我想状态机的抽象概念是\n某种状态，然后你采取行动来表达改变的愿望\n状态，以及另一个执行操作和状态的函数\n产生一个新的状态。这种分离允许程序更\n当有趣的事情发生时准确地阅读，而不是直接阅读\n突变。所以你可能会注意到一些动作一起出现并且\n你可以对它们进行反跳操作，将多个操作分成一个\n单个的。您可以想象用户不小心按了两次按钮\n或者输入的内容有点太快，您可能需要输入一些内容\n并确保他们没有做任何事情\n不小心。这是一种如果在动作处理程序中，\n你直接改变某些状态，这可能会有点困难\n这个，但是如果你将一切都表示为之间的过渡\n由事件引发的动作描述的状态，然后\n这种有意的转变变得更有可能。"}, {"idx": 33, "en": "Which is to say, you might think about something like this as being\nprimarily about two different types of data, the model that represents\nthe state of your application and the view, which is how you present\nit to the user, but really there’s three, there’s the model and\nthere’s the view and there’s also the action, which is the thing that\nrepresents transitions, ways in which you change your model. And you\nhave some kind of explicit way of talking about the way in which\ntransitions cause the state to update. And it’s that structure that\nyou’re referring to as a state machine.", "zh": "也就是说，你可能会认为这样的事情是\n主要是关于两种不同类型的数据，代表的模型\n您的应用程序的状态和视图，即您呈现的方式\n它给用户，但实际上有三个，有型号和\n有观点，也有行动，这就是\n代表转变，即改变模型的方式。还有你\n有某种明确的方式来谈论\n转换导致状态更新。正是这个结构\n你指的是状态机。"}, {"idx": 34, "en": "Yeah, exactly.", "zh": "是的，完全正确。"}, {"idx": 35, "en": "Great. So how does this Elm model that you described, how does that\nrelate to what Incr_dom was like?", "zh": "伟大的。那么你所描述的这个 Elm 模型是如何实现的呢？\n与 Incr_dom 的样子有关吗？"}, {"idx": 36, "en": "Incr_dom took the pattern that Elm popularized and left it relatively\nunchanged with the exception of a single addition, which was combining\nit with a library that we have developed here internally called\nIncremental. And the\nIncremental library is effectively a smart\nmemoization technique\nwhere if you write a function using the Incremental library and you\nrun it multiple times where the inputs are changing only slightly\nbetween runs, then you could expect some better performance if the\noutput that you’re producing is changing slightly in response to\ninputs changing slightly.", "zh": "Incr_dom采用了Elm流行的模式并相对离开了它\n除了单个添加之外没有任何变化，该添加是将\n它与我们在这里内部开发的一个库一起调用\n增量式。还有\n增量库实际上是一个智能的\n记忆技术\n如果您使用增量库编写一个函数，并且您\n多次运行，其中输入仅略有变化\n在运行之间，那么如果\n您正在产生的输出会因响应而略有变化\n输入略有变化。"}, {"idx": 37, "en": "Right. And this goes back to a general fact I’ve long noted about UI\nframeworks, which is that hidden inside of every UI framework is some\nkind of incrementalization framework as well, because you basically\nneed this incrementalization for performance reasons everywhere. UIs\nin general, what are they doing? They are computing something to\ndisplay to the user and those things need to change quickly. And one\nof the things that can help them change quickly is they don’t change\nall at once, little bits of them change. You go and click somewhere\nand some small part of what you’re seeing changes, it’s not everything\nin the entire view being transformed all at once.", "zh": "正确的。这又回到了我长期以来注意到的关于 UI 的一个普遍事实\n框架，即每个 UI 框架内部都隐藏着一些\n也是一种增量框架，因为你基本上\n出于性能原因，到处都需要这种增量。用户界面\n一般来说，他们在做什么？他们正在计算一些东西\n向用户显示，而这些事情需要快速改变。还有一个\n能够帮助他们快速改变的事情就是他们不改变\n突然之间，其中的一小部分发生了变化。你去点击某个地方\n你所看到的一小部分发生了变化，但这并不是全部\n整个视野一下子就转变了。"}, {"idx": 38, "en": "So you need some way of computationally taking advantage of\nthis. Maybe we should mostly leave off those gory details here as\nwell. In some sense, the difference between Elm and Incr_dom is that\nElm has a way of doing incrementalization and Incr_dom has\nIncremental, which is a more powerful way of incrementalizing meaning\nyou can express more complicated algorithms incrementally, but I think\nthat’s kind of mostly not the thing that’s interesting about the gap\nbetween Incr_dom and Bonsai. So maybe we shouldn’t talk too much about\nIncremental, but I’m curious what you felt was problematic about\nIncremental. The story you’ve told so far is Elm is this nice way of\ndescribing things, and then Incr_dom takes the Elm model and adds this\nmore powerful incrementalization framework. That sounds great. What\ndoesn’t work that well about the model?", "zh": "所以你需要某种计算方式来利用\n这个。也许我们应该在这里省略那些血淋淋的细节，因为\n好吧。从某种意义上来说，Elm 和 Incr_dom 的区别在于\nElm 有一种增量化的方法，Incr_dom 有\n增量，这是一种更强大的增量意义方式\n你可以逐步表达更复杂的算法，但我认为\n这并不是差距的有趣之处\n在 Incr_dom 和 Bonsai 之间。所以也许我们不应该谈论太多\n增量，但我很好奇你觉得有什么问题\n增量式。到目前为止你所讲的故事是 Elm 是一种很好的方式\n描述事物，然后 Incr_dom 采用 Elm 模型并添加此\n更强大的增量框架。听起来很棒。什么\n模型效果不太好？"}, {"idx": 39, "en": "One of the things that I think Incremental does differently than your\naverage React application is that it also incrementally computes the\nstate machine transition functions, these apply action. And this is\nreally nice. It means that you can thread values throughout your\napplication and make use of them in the state machine transition\nfunctions just as you would threading values through your view\nfunction. But it does mean that combining components becomes a lot\nharder because you’ve not only got to take the views from multiple\ncomponents and stitch them together into one parent view, but also you\nneed to compose the apply actions for child components into this super\ncomponent. And the way that this is done with Incremental is very\nboilerplate heavy. The downside of having this library that expresses\na lot more of the power of incremental computing means that these\ncompositions were quite verbose.", "zh": "我认为增量所做的事情之一与你的不同\n平均 React 应用程序的特点是它还会增量计算\n状态机转换函数，这些函数应用动作。这是\n真的很好。这意味着您可以将价值观贯穿于您的整个过程中\n应用程序并在状态机转换中使用它们\n功能就像您在视图中串接值一样\n功能。但这确实意味着组合组件变得很多\n更难，因为你不仅要听取多个人的意见\n组件并将它们拼接到一个父视图中，而且您\n需要将子组件的应用操作组合到这个超级中\n组件。使用增量来完成此操作的方式非常\n样板重。拥有这个表达的库的缺点\n增量计算的更多威力意味着这些\n作文相当冗长。"}, {"idx": 40, "en": "So this whole point about the action application function itself being\ncomputed incrementally, on the face of it seems very abstract. Can you\ngive an example of where that gives you something useful?", "zh": "所以关于动作应用程序功能本身的整个要点是\n增量计算，表面上看起来很抽象。你可以吗\n举个例子，说明它在哪里给你带来了有用的东西？"}, {"idx": 41, "en": "We have this library that implements a UI component for very large\ntables. And one of the things about this table that’s quite unique is\nthat it can sort and filter and display an absolutely enormous amount\nof data, hundreds of thousands of rows. And really a lot of the magic\nthere is in the view where we only actually show a very small subset\nto the DOM. But during that sorting and filtering, we produce a lot of\nintermediate data structures that could be very useful in downstream\ncomponents. You might imagine that these sorted and filtered tables\nmight expose internal structures that allow you to very efficiently\nimplement row selection, where you want to be able to navigate through\nthe table using a keyboard. In a naive implementation, they might have\nto sort and filter all of that data again, but because we’ve done it\nincrementally and because the apply-action function is also computed\nincrementally, we can share that data a lot easier.", "zh": "我们有这个库，可以实现非常大的 UI 组件\n表。这张桌子的独特之处之一是\n它可以排序、过滤和显示绝对巨大的数量\n数据，数十万行。真的有很多魔力\n在视图中我们实际上只显示了一个非常小的子集\n到 DOM。但在排序和过滤过程中，我们产生了很多\n在下游可能非常有用的中间数据结构\n组件。您可能会想象这些经过排序和过滤的表\n可能会暴露内部结构，使您能够非常有效地\n实现行选择，您希望能够在其中导航\n使用键盘的表。在一个天真的实施中，他们可能有\n再次对所有数据进行排序和过滤，但因为我们已经完成了\n增量地并且因为应用动作函数也被计算\n逐步地，我们可以更轻松地共享这些数据。"}, {"idx": 42, "en": "It sounds like the problem you see that comes out of all of this is\nthat it makes the system in some sense less composable, it’s harder,\nat least requires more boilerplate to take little pieces of a UI and\ncombine them together to make larger UIs. Do you think that problem is\nworse for Incr_dom than it is for Elm? Or do you see the same problem\nin both approaches?", "zh": "听起来你看到的问题是\n从某种意义上说，它使系统的可组合性更差，更难，\n至少需要更多的样板来获取 UI 的一小部分，并且\n将它们组合在一起以制作更大的用户界面。你认为这个问题是\nIncr_dom 比 Elm 更糟糕？或者你是否也看到同样的问题\n在这两种方法中？"}, {"idx": 43, "en": "I see the same problem in both approaches, but I think that the\nboilerplate that you get from Elm is quite minimal and for Incr_dom,\nit was absolutely not. I believe that when I made the simplest\npossible combinator for two Incr_dom components, which was just\ncombine their models or rather take a supermodel that splits into\nsub-models and apply action that would dispatch to one or the other,\nand a view that combined both sub-views, this was something like 50 to\n70 lines of code. And what that meant was that people were making\nmonoliths where they didn’t want to break their code up into multiple\npieces because they knew that they would have to do this recombining\nat some level. And that recombining was error prone and it was\ntedious. Maybe in the opposite order, it was tedious and therefore\nerror prone.", "zh": "我在这两种方法中都看到了同样的问题，但我认为\n从 Elm 获得的样板文件非常少，对于 Incr_dom，\n绝对不是。我相信当我做了最简单的\n两个 Incr_dom 组件的可能组合器，这只是\n将他们的模特结合起来，或者更确切地说，将一个超级模特分成\n子模型并应用将分派给其中一个或另一个的操作，\n以及结合了两个子视图的视图，大约是 50 到\n70 行代码。这意味着人们正在制造\n他们不想将代码分成多个整体\n碎片，因为他们知道他们必须重新组合\n在某种程度上。重组很容易出错，而且是\n乏味的。也许以相反的顺序，这很乏味，因此\n容易出错。"}, {"idx": 44, "en": "Great. So this is a problem that you wanted to solve, right? I think\nit seemed clear to you that it’s not great to not give people a way of\nbuilding little reusable components. And if everyone’s building\nmonolithic things, they’re not going to throw off small, useful,\nreusable bits. And you built this library called Bonsai, how does\nBonsai help?", "zh": "伟大的。所以这是您想要解决的问题，对吧？我认为\n你似乎很清楚，不给人们提供一种方式并不好\n构建小的可重用组件。如果每个人都在建造\n整体的东西，他们不会抛弃小的，有用的，\n可重复使用的位。你建立了这个名为 Bonsai 的图书馆，怎么样\n盆景有帮助吗？"}, {"idx": 45, "en": "Bonsai started out basically as a single type definition that\nencompassed what I saw as the right way to build an Incr_dom\ncomponent. This type signature was almost a reification of a\nprogramming pattern. That programming pattern being that there is a\nfunction that can incrementally compute a view, arbitrary extra data\nthat might be useful to downstream components, like talked about\nearlier, and an apply action. And this function is given a model to\nact on and a function for raising events so that it can perform the\nstate machine transition. So Bonsai really started out as that\nfunction type.", "zh": "盆景最初基本上是作为一个单一的类型定义\n涵盖了我认为构建 Incr_dom 的正确方法\n组件。这种类型签名几乎是一个具体化的\n编程模式。该编程模式是有一个\n可以增量计算视图、任意额外数据的函数\n这可能对下游组件有用，就像讨论的那样\n更早，并采取行动。这个函数被赋予一个模型\n采取行动并引发事件的功能，以便它可以执行\n状态机转换。所以盆景真的是这样开始的\n函数类型。"}, {"idx": 46, "en": "So just a bundle, you just take together the function for computing\nthe view from the model, the function for updating the action, the way\nof throwing actions out into the world, just take all of those things\nand pack them together. And that’s what a Bonsai component was.", "zh": "所以只是一个捆绑，你只需要把计算的功能放在一起\n模型的视图、更新动作的函数、方式\n将行动扔到世界上，只需采取所有这些东西\n并将它们打包在一起。这就是盆景组件。"}, {"idx": 47, "en": "Exactly. Yeah. And I was able to write some pretty nice combinators on\ntop of this. So things like given two components, give me a new one\nthat combines their models, combines their apply actions in the\ntrivial manner. And then you could specify how you wanted the views\ncombined as well. But fairly early on, I recognized that the fact that\nUI components were computing … Well, the fact that we called them UI\ncomponents at all was a bit of a misnomer, really they’re\nsomething-producing. And the fact that they happened to be views most\nof the time was a bit of an accident really.", "zh": "确切地。是的。我能够在上面写一些非常好的组合器\n在此之上。所以像给定两个组件，给我一个新的\n结合了他们的模型，结合了他们在\n琐碎的方式。然后你可以指定你想要的视图\n也结合起来。但很早就，我认识到这一事实\nUI 组件负责计算……好吧，事实上我们称它们为 UI\n组件根本有点用词不当，实际上它们是\n生产某物。事实上，它们恰好是最多的观点\n当时确实有点意外。"}, {"idx": 48, "en": "So among the first things that I did was remove the hard-coded view\nfrom that type. So now instead of a UI component that produces a view\nand maybe some extra data, it was just, here is a component, not\nnecessarily a UI component, that produced some result\nincrementally. And frequently, that result type would be a view, but\nit doesn’t have to be. And I think more than half of the components\nthat I write for a web application won’t be manipulating views at\nall. They will be state machines that produce some results that I\nthink might be interesting. And maybe they get transformed into a view\nlater on the line or maybe they get passed in as inputs to other\ncomponents.", "zh": "所以我做的第一件事就是删除硬编码视图\n来自那种类型。所以现在代替生成视图的 UI 组件\n也许还有一些额外的数据，这只是，这是一个组件，而不是\n必然是一个 UI 组件，它产生了一些结果\n逐渐地。通常，该结果类型是视图，但是\n不一定是这样。我认为超过一半的组件\n我为 Web 应用程序编写的内容不会操纵视图\n所有。它们将是状态机，产生一些结果，我\n觉得可能很有趣。也许它们会变成一种风景\n稍后上线，或者它们可能作为其他内容的输入传递\n组件。"}, {"idx": 49, "en": "And this is a real break with the style of components that you see in\nsystems like React, right? Every React component by its nature is\nproducing some chunk of DOM. And here Bonsai is a kind of more general\ncomputational system that you can use for computing all sorts of\nthings.", "zh": "这与您所看到的组件风格是真正的突破\n像 React 这样的系统，对吗？每个 React 组件本质上都是\n生成一些 DOM 块。这里的盆景是一种更普遍的\n计算系统，您可以使用它来计算各种\n的事情。"}, {"idx": 50, "en": "Yes, absolutely. That is a massive difference. But the difference that\nmatters to me is that Bonsai structures its components and its\ncompositions in the form of a directed acyclic graph rather than as a\ntree. And this is the thing that allows you to get components that\nproduce values to thread them into inputs for other\ncomponents. Whereas in a React-style UI, the value that you’re\ncomputing incrementally must be a view. So if you want to communicate\nwith other components, you’re almost forced to walk up the tree, pass\nsomething onto its parent, and then that parent is responsible for\nshuffling down whatever value you’ve computed.", "zh": "是的，绝对是。这是一个巨大的差异。但区别在于\n对我来说重要的是盆景的结构及其组成部分\n以有向无环图的形式而不是作为\n树。这就是让你获得组件的东西\n产生值以将它们线程化到其他的输入中\n组件。而在 React 风格的 UI 中，你的价值是\n增量计算必须是一个视图。所以如果你想沟通\n对于其他组件，你几乎被迫走上树，通过\n某些东西放到它的父级上，然后该父级负责\n打乱你计算出的任何值。"}, {"idx": 51, "en": "So that means that in React, when you break down your components, you\nessentially have to do it by slicing it along the structure of the\ngenerated DOM.", "zh": "所以这意味着在 React 中，当你分解你的组件时，你\n本质上必须通过沿着结构进行切片来完成\n生成的 DOM。"}, {"idx": 52, "en": "That’s right. The structure of these components wind up being very\nclosely related to the structure of the view that you want to compute\nin the end. There are workarounds for this. One of the ones that I’m\nthinking of now is that a parent component might produce a function\nthat gets passed on to its children, and that function produces some\nmore view. And this is a good way of kind of doing a bit of a\ndecoupling, but well, it doesn’t really match my aesthetics for how I\nwant to be programming. The tree style of building components in React\nalso doesn’t let you move values from one child’s component of a node\nto another, a sibling.", "zh": "这是正确的。这些组件的结构非常复杂\n与您要计算的视图的结构密切相关\n最后。有一些解决方法。我就是其中之一\n现在想到的是父组件可能会产生一个函数\n它被传递给它的孩子，并且该函数产生一些\n更多视图。这是做一些事情的好方法\n解耦，但是，它与我的审美不太相符\n想要编程。 React中构建组件的树形风格\n也不允许您从节点的一个子组件中移动值\n另一个，一个兄弟姐妹。"}, {"idx": 53, "en": "What’s the case where you’d want to do that?", "zh": "在什么情况下您会想要这样做？"}, {"idx": 54, "en": "One motivating example might be a text box and a button, and you want\nthe text box to have some text in it before the button is\nclickable. Now in a tree-motivated UI component, you might have a\ncomponent for your text box, a component for your button, a callback\nthat you pass to the text box to be notified when there’s text in it,\nand then a value passed into the button that says if it’s disabled or\nnot. Whereas with a graph-oriented structure, you could have the value\nof the text for the text box flow into the button, and the button\ncould check to see if it’s invariance or upheld. And the button\ndoesn’t need to be a child of the text box, it just needs to depend on\nthe value that is produced.", "zh": "一个激励示例可能是一个文本框和一个按钮，并且您想要\n文本框在按钮之前包含一些文本\n可点击。现在，在树驱动的 UI 组件中，您可能有一个\n文本框组件、按钮组件、回调\n您传递到文本框以便在其中有文本时收到通知，\n然后将一个值传递到按钮，说明该按钮是否已禁用或\n不。而使用面向图形的结构，您可以获得以下值\n文本框的文本流入按钮，并且按钮\n可以检查它是否不变或得到维持。还有按钮\n不需要是文本框的子项，它只需要依赖于\n所产生的价值。"}, {"idx": 55, "en": "So one thing that’s changed from the original view is that the\ncomponents aren’t specifically view- or virtual DOM-producing\ncomponents, they’re more general components. How else does a Bonsai\ntype differ from what you might find in some other UI component\nframework?", "zh": "因此，与最初的观点相比，有一点发生了改变：\n组件并不是专门生成视图或虚拟 DOM\n组件，它们是更通用的组件。盆景还能怎样\n类型与您在其他 UI 组件中可能找到的类型不同\n框架？"}, {"idx": 56, "en": "Well, when you’re comparing it to Incr_dom or Elm, one of the major\ndifferences is that components don’t actually expose what model they\nhave, or really even if they have a model. And they don’t expose what\ntheir action type is either. So really all that a Bonsai.t has, which\nin Bonsai the primary type is called a computation, it’s only\nparameterized over what value it produces. And any state machine and\ntransitions that it has is local to it.", "zh": "好吧，当你将它与 Incr_dom 或 Elm 进行比较时，主要的之一\n区别在于组件实际上并不公开它们的模型\n有，或者即使他们有模型。而且他们没有暴露什么\n他们的行动类型是其中之一。 Bonsai.t 拥有的一切，\n在盆景中，主要类型称为计算，它只是\n参数化它产生的值。以及任何状态机和\n它所具有的转换对于它来说是本地的。"}, {"idx": 57, "en": "Part of what’s going on here is you’re basically giving a good way of\ncompartmentalizing the model and the action. So essentially, there’s a\npart of this which is like a function, which takes some input and\nproduces some output. And part of this which is a state machine, and\nit gives you a way of composing together functions in a way that let\ncombine state machines as well. Is that a fair description?", "zh": "这里发生的部分事情是你基本上提供了一个很好的方法\n区分模型和动作。所以本质上，有一个\n这一部分就像一个函数，它需要一些输入和\n产生一些输出。其中一部分是状态机，并且\n它为您提供了一种将函数组合在一起的方法，让\n也结合状态机。这是一个公平的描述吗？"}, {"idx": 58, "en": "Yeah. Depending on who I’m talking to. I’ll describe Bonsai as a\nframework for building incremental state machines.", "zh": "是的。取决于我在和谁说话。我将盆景描述为\n用于构建增量状态机的框架。"}, {"idx": 59, "en": "So given that description, how general do you think Bonsai is? Is it\nuseful outside of building web UIs? Is it useful outside of UI\ncontexts entirely?", "zh": "那么根据上述描述，您认为盆景有多普遍？是吗\n除了构建 Web UI 之外有用吗？在 UI 之外有用吗\n完全上下文？"}, {"idx": 60, "en": "I want to say yes, but I’ve been looking for an alternative example\nfor a very long time and I haven’t been able to really come up with\nanything.", "zh": "我想说是的，但我一直在寻找替代的例子\n很长一段时间我都无法真正想出\n任何东西。"}, {"idx": 61, "en": "Is that true for both the question of user interfaces that are not web\nuser interfaces?", "zh": "对于非 Web 的用户界面问题是否如此？\n用户界面？"}, {"idx": 62, "en": "Oh, no. I mean, I think Bonsai is broadly applicable to user\ninterfaces, as long as you have some abstraction that exposes the\ndesired view for your UI as a pure value. That is one of the downsides\nof Bonsai is that effectively everything inside of it has to be\npure. It becomes very hard to reason about when you have mutable\nvalues. So it might be hard to build a Bonsai UI on top of platform du\njour UI component library, which is primarily mutation-based. But it\nshould be possible if someone wrote a virtual DOM-style abstraction on\ntop of it.", "zh": "哦，不。我的意思是，我认为盆景广泛适用于用户\n接口，只要你有一些公开的抽象\nUI 所需的视图作为纯值。这是缺点之一\n盆景的本质是，它里面的所有东西都必须是有效的\n纯粹。当你有可变的时候，就变得很难推理\n价值观。因此，在平台上构建 Bonsai UI 可能很困难\njour UI 组件库，主要是基于突变的。但它\n如果有人在上面编写了虚拟 DOM 风格的抽象，应该是可能的\n其顶部。"}, {"idx": 63, "en": "And this restriction, I guess, is essentially the same restriction the\nsystems like React and Elm have. And Elm, I guess, at the language\nlevel enforces purity, and React, being in JavaScript, doesn’t. And\nsimilarly with Bonsai, because it’s in OCaml, which is a language that\nsupports mutation without restricting it, like at the level of\ntypes. Also it’s the case that this is just a mistake you can make. If\nyou use Bonsai and you use side effects in the middle, it’s going to\nbe confusing, and that’s kind of that. So early on, you said that a\nrepeated pattern in your way of thinking about the work you do is ways\nto turn the problems you solve into compiler problems, into\nprogramming language problems, and we haven’t really talked about how\nthat affects Bonsai. What is the way in which the Bonsai work also\nlooks like a compiler project?", "zh": "我想这个限制本质上与\n像 React 和 Elm 这样的系统都有。我猜榆树在语言方面\nlevel 强制执行纯度，而 React 在 JavaScript 中则不然。并且\n与 Bonsai 类似，因为它是用 OCaml 语言编写的，这是一种语言\n支持突变而不限制它，就像在\n类型。而且这只是你可能犯的错误。如果\n你使用盆景并且在中间使用副作用，它会\n令人困惑，就是这样。很早就你说过\n您思考自己所做工作的方式中重复的模式是：\n将你解决的问题转化为编译器问题，转化为\n编程语言问题，我们还没有真正讨论如何\n影响盆景。盆景的工作原理是什么\n看起来像一个编译器项目？"}, {"idx": 64, "en": "I’ve been describing Bonsai as an incrementalized directed acyclic\ngraph. And one of the invariants that we enforce about this directed\nacyclic graph at the type level is that it can’t be dynamic. That is\nto say, once you’ve constructed the super-component that represents\nyour entire application, all possible combinations of components are\nknown. And this lets us effectively do a number of compiler\noptimizations. If you look at this DAG as a program, instead of as a\nforest of nodes communicating with one another, then you can employ\nsome fairly rudimentary compiler optimizations, like constant\nfolding or collapsing\nmultiple nodes into one if you detect that one of them is going to run\nreally fast and you would rather not have the overhead of\nincrementalization. In some cases, we can even transform the\nalgorithms that are being used on a node by node basis. So we talked\nearlier a bit about view library Incremental allows you to express a\nlot of powerful algorithms incrementally. And one of the places where\nit really shines is when it deals with map-like data structures. And\nwe are able to pick and choose from a number of these different\nalgorithms at the point where Bonsai application is first evaluated to\npick the one that is the most optimal for that particular node.", "zh": "我一直将盆景描述为增量有向无环\n图表。我们强制执行的不变量之一是定向的\n类型级别的无环图的特点是它不能是动态的。那就是\n也就是说，一旦你构建了代表的超级组件\n您的整个应用程序，所有可能的组件组合都是\n已知。这让我们可以有效地进行一些编译\n优化。如果你把这个 DAG 看作一个程序，而不是一个\n相互通信的节点森林，那么您可以使用\n一些相当基本的编译器优化，例如常量\n折叠或塌陷\n如果您检测到其中一个节点将要运行，则将多个节点合而为一\n真的很快，你宁愿没有开销\n增量化。在某些情况下，我们甚至可以改变\n逐个节点使用的算法。所以我们聊了\n前面有一点关于视图库增量允许您表达\n许多强大的算法逐渐增加。以及其中一个地方\n它真正的亮点在于它处理类似地图的数据结构。并且\n我们可以从这些不同的选项中进行挑选\n盆景应用程序首次评估时的算法\n选择最适合该特定节点的节点。"}, {"idx": 65, "en": "Right. And you’re talking about this as being compiler optimizations,\nbut it’s not like you’re hacking the OCaml compiler to do\nsomething. Where in the process of doing this does the\ncompilation-like phase fit in?", "zh": "正确的。你说这是编译器优化，\n但这并不像你要破解 OCaml 编译器那样\n某事。在执行此操作的过程中，哪里执行了\n类似编译的阶段适合吗？"}, {"idx": 66, "en": "Yeah, so it happens exactly once. And that is when you start the\nBonsai application. You give a Bonsai.t to the functional equivalent\nof a main method. And it’ll take that, it’ll crunch it, it’ll optimize\nit, and then it’ll start running. After it starts running, we don’t\ntouch it anymore. But at that point where the user hands off the\nrepresentation of their application, we are able to fully traverse the\nentire component graph and see where we want to make changes.", "zh": "是的，所以它只发生一次。那就是当你开始\n盆景应用。您将 Bonsai.t 赋予功能等效项\n的一个主要方法。它会接受它，它会压缩它，它会优化\n它，然后它就会开始运行。当它开始运行后，我们不\n再碰它吧。但当用户放弃时\n代表他们的应用程序，我们能够完全遍历\n整个组件图并查看我们要更改的位置。"}, {"idx": 67, "en": "Right. So when someone is building up a Bonsai computation, the thing\nI’m really building is something that’s closer to the abstract syntax\ntree of an expression that represents that computation. And then\nyou’re running a compilation step to convert that into the real live\nrunning computation.", "zh": "正确的。所以当有人建立盆景计算时，事情\n我真正构建的是更接近抽象语法的东西\n表示该计算的表达式树。然后\n您正在运行编译步骤以将其转换为真实的现场\n运行计算。"}, {"idx": 68, "en": "Exactly. That’s why we call the thing computation. It is an\nunevaluated expression and that’s what they give to us. And we can\nlook through the entire thing and then start running it.", "zh": "确切地。这就是为什么我们称事物为计算。它是一个\n未经评估的表达，这就是他们给我们的。我们可以\n查看整个事情，然后开始运行它。"}, {"idx": 69, "en": "Right. So that’s a great approach, but it also limits you in some\nways.", "zh": "正确的。所以这是一个很好的方法，但它也限制了你在某些方面\n方式。"}, {"idx": 70, "en": "Yeah. The way I think of an application written in Bonsai is really an\napplication written in three different programming languages. The\nfirst one is a meta language, this language happens to be OCaml and it\nmanipulates computation.t and composes the structure of the\napplication. But once this meta programming is done, it’s done. You\ndon’t get to add new possibilities for components at runtime. The\nsecond language is Bonsai itself, which when you look at code written\nin Bonsai, you can identify things that really look like programming\nlanguage constructs. So we have our own if, we have our own way to do\nrecursion, we have functions and ways to apply values to these\nfunctions. The third programming language is the one that you alluded\nto, which was that the actual business logic, the code that’s running\ninside of these abstract notions of the components is again, OCaml. At\nthis level, you cannot add to the component graph. It’s restricted to\nperforming calculations on values that are being passed through it and\napplying actions to transition state machines. But yeah, after stage\none, you’re kind of set in stone.", "zh": "是的。我认为用 Bonsai 编写的应用程序实际上是一种\n用三种不同的编程语言编写的应用程序。的\n第一个是元语言，这种语言恰好是 OCaml，它\n操纵computation.t并组成结构\n应用程序。但一旦元编程完成，一切就完成了。你\n不要在运行时为组件添加新的可能性。的\n第二种语言是 Bonsai 本身，当你查看编写的代码时\n在盆景中，你可以识别出真正看起来像编程的东西\n语言构造。所以我们有我们自己的如果，我们有我们自己的方式去做\n递归，我们有函数和方法将值应用于这些\n功能。第三种编程语言就是您提到的那种\n到，这就是实际的业务逻辑，正在运行的代码\n组件的这些抽象概念的内部又是 OCaml。在\n在此级别，您无法添加到组件图中。它仅限于\n对通过它传递的值进行计算，并且\n将动作应用于过渡状态机。但是，是的，在舞台之后\n第一，你是一成不变的。"}, {"idx": 71, "en": "And maybe I should go back a little bit and say that when I say that\nthe graph itself is static after this first stage is finished, I don’t\nmean that the application can’t change itself dynamically. So in\nGmail, for example, you’ve got your inbox view and your compose view,\nand your reading-someone-else’s-email view. And in Bonsai you can\nabsolutely switch between all of these at runtime. But at compile\ntime, well, what I’m calling compile time, it’s known statically that\nthere are those many views possible and it can traverse all of those\nseparate sub-graphs even though there isn’t any data actually flowing\nthrough it, even though those components themselves aren’t active\nright then and there.", "zh": "也许当我这么说时我应该回头再说一遍\n第一阶段完成后，图表本身是静态的，我不这样做\n意味着应用程序无法动态更改自身。所以在\n例如，Gmail，您有收件箱视图和撰写视图，\n以及您阅读别人的电子邮件的视图。在盆景中你可以\n绝对在运行时在所有这些之间切换。但在编译时\n时间，好吧，我称之为编译时间，静态地知道\n有很多可能的视图，它可以遍历所有这些\n即使没有任何数据实际流动，也将子图分开\n通过它，即使这些组件本身并不活跃\n就在此时此地。"}, {"idx": 72, "en": "And this is a kind of classic trade-off here where you’re taking away\nsome real freedom from someone who is constructing the UI, there’s\nsome kind of highly dynamic things that are maybe impossible or at\nleast awkward to express in the context of Bonsai. But in exchange,\nwhat you have is the ability to do more things like these kind of\noptimizations that you’re talking about within the framework. So in\nsome ways, you take away power from the user of a library and you give\npower to the implementer of the library to provide better services to\nthe user.", "zh": "这是一种经典的权衡，你要拿走\n从构建 UI 的人那里获得一些真正的自由，\n某种高度动态的事情可能是不可能的或在\n在盆景的背景下表达起来最不尴尬。但作为交换，\n你所拥有的是做更多类似这样的事情的能力\n您在框架内谈论的优化。所以在\n在某些方面，你剥夺了图书馆用户的权力，并给予\n赋予图书馆实施者提供更好服务的权力\n用户。"}, {"idx": 73, "en": "Exactly. Yeah. And I would say that the services that we provide go\ndeeper than just compiler optimizations. I’ve been saying that I will\nbuild a debugger for a very long time and I haven’t yet, but it would\nbe possible to build a very useful debugger that up ahead of time\nknows the exact structure of your UI and allows you to navigate the\nDAG and poke values and see what the states of various components are\nin a way that I think would be a lot harder if we didn’t have this\nupfront, solidified representation of the application.", "zh": "确切地。是的。我想说的是，我们提供的服务\n不仅仅是编译器优化更深入。我一直说我会\n构建一个调试器很长时间了，我还没有，但它会\n可以提前构建一个非常有用的调试器\n了解用户界面的确切结构并允许您导航\nDAG和戳值，看看各个组件的状态是什么\n我认为如果我们没有这个就会困难得多\n应用程序的预先、固化的表示。"}, {"idx": 74, "en": "So one of the things that strikes me about the way that you describe\nall of this is in some sense, quite abstract, right? There’s all these\nfairly fancy sounding ideas about how we build computations and\ncompose them together and how we’re going to have our own language\ninside of the language and our own version of if and our own version\nof recursion. It kind of sounds like a lot. I wonder, how does that\naffect the ability to construct a tool that you can give to people and\nthey can easily use? What’s the learning curve like with Bonsai and\nhow hard has it been for people and teams to pick it up and use it?", "zh": "你描述的方式让我印象深刻的一件事\n所有这些在某种意义上都是相当抽象的，对吧？这些都有\n关于我们如何构建计算的听起来相当奇特的想法\n将它们组合在一起以及我们如何拥有自己的语言\n语言内部以及我们自己的 if 版本和我们自己的版本\n的递归。听起来好像很多。我想知道，这是怎么回事\n影响构建可以提供给人们的工具的能力，\n他们可以轻松使用吗？盆景的学习曲线是怎样的\n人们和团队拿起它并使用它有多困难？"}, {"idx": 75, "en": "Yeah. So I think it’s getting a lot better. It’s still not great. I\nlearned a whole lot trying to teach very early versions of Bonsai to\npeople. And in fact, I think we ran about 50 people through a class\nthat included Bonsai in that class when it was still very young, and\ntheir frustrated expressions still motivate me today. I think that one\nof the things that we’ve been leaning on quite heavily is the ability\nto extend OCaml syntax itself to make expressions in Bonsai look a lot\nlike expressions in OCaml. So here I’m talking about the\nPPX\nsystem which lets me write little extensions to OCaml syntax like\n“let” for binding variables or “if” or “match” for evaluating\ndifferent possibilities of data that’s flowing through the Bonsai\ngraph. So in a way, the structure of the Bonsai code looks an awful\nlot like OCaml, but still has all of the restrictions that we were\ntalking about earlier.", "zh": "是的。所以我认为情况正在好转。仍然不太好。我\n尝试教授盆景的早期版本，学到了很多东西\n人们。事实上，我认为我们让大约 50 个人参加了一个课程\n其中包括盆景，当时它还很年轻，并且\n他们沮丧的表情至今仍激励着我。我认为那一个\n我们一直非常依赖的东西之一是能力\n扩展 OCaml 语法本身，使 Bonsai 中的表达式看起来很多\n就像 OCaml 中的表达式一样。所以我在这里谈论的是\nPPX\n系统允许我为 OCaml 语法编写一些扩展，例如\n“let”用于绑定变量，“if”或“match”用于评估\n流经盆景的数据的不同可能性\n图表。所以在某种程度上，Bonsai 代码的结构看起来很糟糕\n很像 OCaml，但仍然有我们之前的所有限制\n谈论早些时候。"}, {"idx": 76, "en": "So this is another way of turning this into a programming languages\nproblem, not just inside of Bonsai itself, do you do programming\nlanguage self transformations, but you’ve also moved up into the OCaml\nsyntax itself and added essentially new language features to OCaml to\nmake it easier and more convenient to express Bonsai computations in a\nway that feels normal to people.", "zh": "所以这是将其转化为编程语言的另一种方法\n问题，不仅仅是盆景本身的问题，你会编程吗\n语言自我转换，但您也已经升级到 OCaml\n语法本身，并向 OCaml 添加了本质上新的语言功能\n使盆景计算更容易、更方便地表达\n人们感觉很正常的方式。"}, {"idx": 77, "en": "Yeah. And I think that it’s one of the things that I really enjoy\nabout a number of our other libraries that operate monadically in that\nyou don’t really need to know what a monad is in order to use them\neffectively. But if they have radically different syntax than what\nyou’re used to, it can still be an enormous pain. So by extending the\nsyntax for monads, I think that a lot of people that start at Jane\nStreet don’t know what it is, don’t really need to care. They’ll learn\neventually as they see numerous examples of monads in the code, but it\nlooks so much like regular OCaml that you can think of it as though it\nwere regular OCaml.", "zh": "是的。我认为这是我真正喜欢的事情之一\n关于我们其他一些以单一方式运行的库\n你实际上不需要知道 monad 是什么就可以使用它们\n有效地。但如果它们的语法与\n尽管你已经习惯了，但这仍然是一个巨大的痛苦。因此，通过扩展\nmonad 的语法，我认为很多人从 Jane 开始\nStreet不知道那是什么，也不需要关心。他们会学习\n最终，他们在代码中看到了大量 monad 的示例，但它\n看起来非常像常规的 OCaml，您可以将其视为\n是常规的 OCaml。"}, {"idx": 78, "en": "Yeah. This kind of just reminds me of the general fact that the\nability to transform the syntax of your language is such a great\nfeature. And it’s always sad when you run into languages that don’t\nhave it. Just having some kind of syntactic abstractions where you can\njust write some piece of code that transforms it to simplify\nthings. There are downsides to various kinds of macro capabilities in\nthat the macros themselves can be hard to reason about and can\nsometimes give you awkward error message and all of that. But when\ndone right, it’s just enormously powerful part of the world and large\nparts of the languages out there just never adopted.", "zh": "是的。这让我想起了一个普遍事实：\n改变语言语法的能力真是太棒了\n功能。当你遇到不支持的语言时，你总是会感到悲伤\n拥有它。只是有某种句法抽象，你可以\n只需编写一些代码来对其进行转换以简化\n的事情。各种宏功能都存在缺点\n宏本身可能很难推理并且可以\n有时会给你一些尴尬的错误信息等等。但是当\n如果做得好，它只是世界上极其强大的一部分\n部分语言从未被采用。"}, {"idx": 79, "en": "I think they’re moving in that direction though. It’s really hard to\nthink of a programming language that has been designed in the past 10\nyears that hasn’t at least acknowledged the power of metaprogramming\nand good metaprogramming in some way. I’m thinking here specifically\nabout like Zig and\nRust as examples of languages that are\nvery static and very serious, and they still have excellent\nmetaprogramming capabilities.", "zh": "我认为他们正在朝这个方向前进。确实很难\n想想过去 10 年来设计的一种编程语言\n这些年至少还没有承认元编程的力量\n以及在某种程度上良好的元编程。我在这里特别想\n关于像 Zig 和\nRust 作为语言的例子\n很静态也很严肃，而且他们还是有优秀的\n元编程能力。"}, {"idx": 80, "en": "I guess Java just recently got closures. So maybe it’ll get\nmetaprogramming next.", "zh": "我猜 Java 最近才关闭。所以也许会得到\n接下来是元编程。"}, {"idx": 81, "en": "Yeah. One would hope. I think C# got source code generators which\ndon’t let you extend existing files, but let you produce new ones\nbased off of the contents of a syntax tree.", "zh": "是的。人们会希望。我认为 C# 有源代码生成器\n不让您扩展现有文件，但让您生成新文件\n基于语法树的内容。"}, {"idx": 82, "en": "Yeah, and it’s maybe worth saying, I think OCaml’s metaprogramming\nfacilities are okay. They’re not great. It’s great that they’re there\nand they’re extremely useful, but I think people who work in Lisp or\nScheme or Racket or something in that\nwould mostly point and laugh at OCaml’s macro system.", "zh": "是的，也许值得一提的是，我认为 OCaml 的元编程\n设施还可以。他们并不出色。他们在那里真是太好了\n它们非常有用，但我认为使用 Lisp 或\n计划或球拍或其中的东西\n大多数人都会指指点点并嘲笑 OCaml 的宏观系统。"}, {"idx": 83, "en": "Yeah. I think that’s right. It’s simultaneously too powerful in that\nyou can do basically anything and inject arbitrary code, but it’s also\nbecause of that, it’s really hard to just make a tiny one-off\nextension to OCaml that you’re using perhaps only within lexical scope\nof the definition of this macro. It would be great if we had some kind\nof macro system in addition to compiler extensions.", "zh": "是的。我认为这是对的。同时它也太强大了\n你基本上可以做任何事情并注入任意代码，但它也是\n正因为如此，仅仅做一个小小的一次性真的很难\n您可能仅在词法范围内使用的 OCaml 扩展\n这个宏的定义。如果我们有某种东西那就太好了\n除了编译器扩展之外的宏系统。"}, {"idx": 84, "en": "Yeah. I agree. And there’s some exciting work in the direction of\nstrengthening OCaml’s support for various kinds of macros. And also I\nthink it would be great to have macros exposed in a modular way. Right\nnow, what macros you’re using is a thing that’s kind of controlled\nentirely from the build system and is not integrated in a real way in\nthe language. And I think that’s another thing that would make the\nsystem more usable and easier to apply in more cases. So a big part of\nlanding a new library like Bonsai is evangelism, right? You can write\nthe nicest library that you want, and if no one uses it, nothing good\nhappens. How have you approached the problem of evangelizing Bonsai\nand getting people excited and getting people using it inside of Jane\nStreet?", "zh": "是的。我同意。并且有一些令人兴奋的工作\n加强 OCaml 对各种宏的支持。还有我\n认为以模块化方式公开宏会很棒。右\n现在，您使用的宏是一种受控的东西\n完全来自构建系统，并且没有以真正的方式集成\n语言。我认为这是另一件事\n系统更可用，更容易在更多情况下应用。所以很大一部分\n建立像盆景这样的新图书馆就是福音传播，对吗？你可以写\n你想要的最好的库，如果没有人使用它，那就没有什么好处\n发生。您是如何处理盆景传播问题的\n让人们兴奋并让人们在简体内使用它\n街道？"}, {"idx": 85, "en": "I think one of the things that I’m still very happy that I did was\nbackwards compatibility with Incr_dom in that you can kind of spread\nthroughout an Incr_dom program, providing value to people that have\nexisting applications. And once they see the difference between the\ncode that they’re maintaining and the code that they’re adding, there\nwere a lot of people that were very motivated to convert wholesale and\nstart new applications using just Bonsai.", "zh": "我认为我仍然很高兴所做的一件事是\n与 Incr_dom 向后兼容，您可以进行传播\n在整个 Incr_dom 计划中，为拥有以下权利的人们提供价值：\n现有的应用程序。一旦他们看到两者之间的差异\n他们正在维护的代码以及他们正在添加的代码，在那里\n很多人都非常积极地进行批发和转换\n仅使用盆景即可启动新的应用程序。"}, {"idx": 86, "en": "And how has that gone in practice? How popular now is Bonsai compared\nto Incr_dom for people who are building new things?", "zh": "这在实践中进展如何？盆景现在有多流行比较\n为那些正在构建新事物的人提供Incr_dom？"}, {"idx": 87, "en": "I’m not aware of any new serious projects that aren’t using it, but\nI’ll also say on the point of evangelism, I really enjoy it. Well, the\nmain goal for Bonsai was to make people want to modularize their\napplications and break off bits and pieces that other people might\nfind useful. So whenever someone does this, I will be their\nevangelist. And I maintain an enormous collection of examples using\ncomponents that I’ve written, but also a lot of the other people have\nwritten and I will make sure that any new application knows exactly\nwhat powerful features other people at the company have contributed.", "zh": "我不知道有任何新的严肃项目没有使用它，但是\n我还要说，关于传福音，我真的很喜欢。嗯，\n盆景的主要目标是让人们想要模块化他们的\n应用程序并分解其他人可能会遇到的碎片\n发现有用的。所以每当有人这样做时，我就会成为他们的\n传道者。我使用以下方法维护了大量示例\n我写过的组件，还有很多其他人也写过\n书面，我将确保任何新的应用程序都准确地知道\n公司的其他人贡献了哪些强大的功能。"}, {"idx": 88, "en": "What are you dissatisfied about with respect to Bonsai? What are the\nremaining things about it that are problematic, that you feel need to\nbe much better than they are now?", "zh": "您对盆景有哪些不满意的地方？有哪些\n剩下的有问题的事情，你觉得有必要\n会比他们现在好很多吗？"}, {"idx": 89, "en": "One of the things that I’m a bit disappointed by that isn’t directly\nrelated to Bonsai, but we still get flak for it, is composing\ncomponents can lead to issues when you are styling things with CSS,\nbecause if a component author wants to ship a CSS file alongside their\ncomponent, there could be issues with name clashes where two people\npick the same name for a thing and now they’re overriding each other’s\nstyles. This is largely solved by doing component styling in our\nvirtual DOM library. So styles added directly to the virtual DOM\nnodes. But I think that CSS is a much maligned pattern-matching\nlanguage. And the things that you can do in it are incredibly useful,\nespecially for expressing things that are possible in OCaml like\nhighlighting every other row in a table a different color. But also\nthere are just things in CSS that you can do that you couldn’t do with\ninline styles, like changing the appearance of an item based on\nwhether or not it’s being hovered over, for example.", "zh": "让我有点失望的一件事并不是直接\n与盆景有关，但我们仍然受到批评，正在作曲\n当您使用 CSS 设计样式时，组件可能会导致问题，\n因为如果组件作者想要将 CSS 文件与他们的组件一起发布\n组件中，两个人可能会出现姓名冲突的问题\n为某件事选择相同的名称，现在它们正在覆盖彼此的名称\n风格。这在很大程度上可以通过在我们的组件中进行组件样式来解决\n虚拟 DOM 库。所以样式直接添加到虚拟DOM中\n节点。但我认为 CSS 是一种备受诟病的模式匹配\n语言。你可以在其中做的事情非常有用，\n特别是对于表达 OCaml 中可能的事物，例如\n用不同的颜色突出显示表格中的每隔一行。但也\nCSS 中有一些你可以做而不能做的事情\n内联样式，例如根据以下内容更改项目的外观\n例如，它是否被悬停在上面。"}, {"idx": 90, "en": "So this is a pretty weak point when you’re writing something using\nBonsai web. And I have a project about to get merged that I hope will\nfix this, which also uses OCaml’s extension language. And the way that\nit works is by writing CSS directly in your OCaml file inside of an\ninvocation to this compiler extension. It’ll pull out all of the CSS,\nlook through the names, give them all unique names and then expose\nthose names to your OCaml program so that you can use these uniquified\nhashed name values that are coming out of a very crisp and clean CSS\nstring.", "zh": "所以当你使用以下方式编写东西时，这是一个相当薄弱的点\n盆景网．我有一个项目即将合并，我希望能够\n修复这个问题，它也使用 OCaml 的扩展语言。以及那样的方式\n它的工作原理是直接在 OCaml 文件中编写 CSS\n调用此编译器扩展。它将拉出所有 CSS，\n查看名称，给它们所有唯一的名称，然后公开\n这些名称添加到您的 OCaml 程序中，以便您可以使用这些唯一的名称\n来自非常清晰干净的 CSS 的哈希名称值\n字符串。"}, {"idx": 91, "en": "So the goal here is to specifically get rid of this case where you\nessentially pun your way into the problem where you had two different\nclasses for nodes, and you happened to name them the same thing, and\nyou’re just going through and making sure that you have no unintended\nname clashes.", "zh": "所以这里的目标是专门摆脱这种情况\n本质上是用双关语解决你有两个不同的问题\n节点的类，并且您碰巧将它们命名为相同的东西，并且\n你只是经历并确保你没有意外的\n名字冲突。"}, {"idx": 92, "en": "Yes. Well, in fact, we do that by just hashing the contents of your\nstring and also the file name that you’re currently in. And appending\nthat hash will generate something that hopefully doesn’t wind up\nclashing with anything else. I’ll also say that the CSS language\nitself is not what people complain about when they complain about\nCSS. What they’re complaining about is the implementation of layout in\nthe browser which can be very confusing, and the complex interplay\nbetween various styling rules. So these things aren’t going away with\na PPX, they might go away with some other abstractions. We hide the\ndetails of the algorithms that are used to display and lay out\ncontent. But CSS itself, no, it’s quite nice I think.", "zh": "是的。好吧，事实上，我们只是通过散列您的内容来做到这一点\n字符串以及您当前所在的文件名。并附加\n该哈希将生成一些希望不会结束的东西\n与其他任何事物发生冲突。我还会说 CSS 语言\n人们抱怨的时候抱怨的并不是它本身\nCSS。他们抱怨的是布局的实现\n浏览器可能会非常令人困惑，而且复杂的相互作用\n各种样式规则之间。所以这些事情不会随着\n对于 PPX，他们可能会放弃一些其他抽象。我们隐藏\n用于显示和布局的算法的详细信息\n内容。但 CSS 本身，不，我认为它非常好。"}, {"idx": 93, "en": "Got it. So you think this does solve the primary problem here, which\nis this kind of name clash issue?", "zh": "知道了。所以你认为这确实解决了这里的主要问题\n这是一种名称冲突问题吗？"}, {"idx": 94, "en": "I think I can come up with other things that I don’t like about\nBonsai. Right now, you need to repeat yourself a lot. Moving from one\nlanguage to another, in this case, the Bonsai component language into\nthe actual OCaml code that manipulates values at runtime is quite\nverbose. I would really like to get rid of a lot of that\nrepetition. Right now, it’s not repetition that I think would cause\npeople to inadvertently write bugs, but you do wind up repeating a\nbunch of names in multiple places, which is a bit unfortunate. And\nit’s something that a very recent addition to OCaml, by our own\nStephen Dolan, is going to hopefully make better. And that is “let\npunning.” This verbosity,\nthe repeating of these names is going to be fixed in a very new\nversion of OCaml that lets you ignore cases where the variable that\nyou’re binding to has the same name as the value that you’re binding.", "zh": "我想我可以想出其他我不喜欢的事情\n盆景。现在，你需要经常重复自己的话。从一开始移动\n语言转换为另一种语言，在本例中，盆景组件语言转换为\n在运行时操作值的实际 OCaml 代码相当\n冗长。我真的很想摆脱很多这样的东西\n重复。现在，我认为这不会导致重复\n人们无意中编写了错误，但你最终确实重复了\n一堆名字出现在多个地方，这有点不幸。并且\n这是我们自己最近添加到 OCaml 中的东西\n斯蒂芬·多兰希望能做得更好。那就是“让\n双关语。”这种啰嗦，\n这些名称的重复将在一个非常新的版本中得到修复\nOCaml 版本允许您忽略变量的情况\n您要绑定的名称与您要绑定的值的名称相同。"}, {"idx": 95, "en": "So that actually leads to another question. I’m curious what you think\nthe ups and downs are of OCaml as a language for writing web\napplications? The normal language used in JavaScript, and there’s lots\nof others, you could write an Elm, you can write in\nTypeScript, you can write in\nDart. How do you think OCaml measures up as a\nlanguage for doing this kind of work?", "zh": "这实际上引出了另一个问题。我很好奇你的想法\nOCaml 作为一种用于编写网络的语言的起起落落\n应用程序？ JavaScript 中使用的普通语言，有很多\n其他的，你可以写一个Elm，你可以写在\nTypeScript，你可以这样写\n飞镖。您认为 OCaml 作为一个\n做这种工作的语言？"}, {"idx": 96, "en": "I have to say that web development at Jane Street is very different\nfrom web development anywhere else in that we have some of the fastest\nnetworks that money can buy. And because of that, a lot of the things\nthat would kill Bonsai on arrival at any other company like somewhat\nenormous JavaScript bundle size and not being able to do server side\nrendering in order to cut down on initial load times or being able to\nsplit a application into many files so that you’re only loading the\nones that are needed on the initial display. Things like this that are\ncommonplace in other languages and frameworks are simply not\npresent. And that’s because here we primarily use our web browsers as\na 2D vector graphics library where we don’t care too much about web\npages, almost all of them are a single page that loads a whole bunch\nof JavaScript, connects back to the server with a web socket\nconnection and sits there chugging along all day. And the constraints\nthat most web developers have to face are just simply nonexistent.", "zh": "我不得不说 Jane Street 的 Web 开发非常不同\n与其他任何地方的网络开发相比，我们拥有一些最快的\n金钱可以买到的网络。正因为如此，很多事情\n这会在到达任何其他公司时杀死 Bonsai\nJavaScript 包大小巨大并且无法在服务器端进行\n渲染以减少初始加载时间或能够\n将应用程序拆分为许多文件，以便您只加载\n初始显示时需要的那些。像这样的事情就是\n在其他语言和框架中并不常见\n存在。那是因为在这里我们主要使用网络浏览器作为\n一个 2D 矢量图形库，我们不太关心网络\n页面，几乎所有都是加载一大堆的单个页面\nJavaScript 的，通过 Web 套接字连接回服务器\n连接并坐在那里一整天。和限制\n大多数网络开发人员必须面对的问题根本不存在。"}, {"idx": 97, "en": "So for us, the web browser is just another place to run an OCaml\nprogram and an OCaml program that happens to generate a UI. But a lot\nof the ordinary stuff that are the concerns of the web just kind of\ndon’t show up.", "zh": "所以对于我们来说，网络浏览器只是运行 OCaml 的另一个地方\n程序和恰好生成 UI 的 OCaml 程序。但很多\n网络所关注的普通事物只是\n不要出现。"}, {"idx": 98, "en": "Yeah. I would say that OCaml is well-suited for this style of\nimmutable program construction and its tools and its libraries make\nthis very easy in a way that JavaScript, for example, does not.", "zh": "是的。我想说 OCaml 非常适合这种风格\n不可变的程序构造及其工具和库使得\n这非常简单，而 JavaScript 等则不然。"}, {"idx": 99, "en": "Is there anything about the language itself that you feel like gets in\nthe way from a kind of expressiveness and convenience point of view?\nAre you mostly pretty happy with OCaml as a language for this kind of\nwork?", "zh": "语言本身有什么让你觉得融入的地方吗？\n从一种表现力和便利性的角度来看如何？\n您对 OCaml 作为此类语言感到非常满意吗？\n工作？"}, {"idx": 100, "en": "Yeah. Yeah, absolutely. I think if I wasn’t happy with it, we wouldn’t\nbe having this conversation.", "zh": "是的。是的，绝对是。我想如果我对此不满意，我们就不会\n正在进行这次谈话。"}, {"idx": 101, "en": "Well, you can be happy but have some axes to grind about things that\nyou’d like to make better. I feel like it’s rare to be so happy about\na programming language that you don’t have complaints.", "zh": "好吧，你可以很快乐，但也有一些事情需要磨砺\n你想做得更好。我觉得难得这么开心\n一种让您毫无怨言的编程语言。"}, {"idx": 102, "en": "Oh, I definitely have complaints. But they’re mostly from a library\nauthor’s perspective. I think there’s not a ton that I think I\ndesperately want from my user’s perspective. I mean, I’m going to\nregret saying this. As soon as we’re done, I’m going to come up with\nfive things that are actually deal breakers.", "zh": "哦，我确实有抱怨。但它们大多来自图书馆\n作者的观点。我认为我认为我没有太多\n迫切希望从我的用户的角度来看。我的意思是，我要去\n后悔说了这句话。一旦我们完成了，我就会想出\n实际上破坏交易的五件事。"}, {"idx": 103, "en": "So to ask a grander question still, in what ways are you dissatisfied\nabout the web as a platform for writing user interfaces?", "zh": "所以再问一个更宏大的问题，你在哪些方面不满意\n关于网络作为编写用户界面的平台？"}, {"idx": 104, "en": "I think that the one thing that every UI author has to contend with is\nthe only options we really have are JavaScript and the DOM for\nprogramming language and UI runtime. And I think that this may change\nas WebAssembly\npicks up steam, and as they add the features that allow OCaml to\ncompile down to it, like access to the garbage collector, or I guess\nthe ability for us to implement our own garbage collector. I think we\nwould be happy getting the OCaml GC to run on WebAssembly if that was\nalso possible. But I think that the DOM is going to be here for a\nwhile. And it does a whole bunch of really amazing things. The fact\nthat anyone really can create an accessible, styleable user interface\nwith very little thought is unbelievably powerful. And I think that\nthe prevalence of the web goes to show for just how valuable this\nis. But for people building user interface components that lie outside\nof what the styling and layout engines of browsers consider normal, it\nwould be nice to be able to tell them, “Hands off, we’re going to be\nmanaging what we consider to be the DOM tree from here on out.” And be\nable to forward on some of the invariants that we maintain to the web\nbrowser in order for them to make it as performant as possible.", "zh": "我认为每个 UI 作者必须面对的一件事是\n我们真正拥有的唯一选择是 JavaScript 和 DOM\n编程语言和 UI 运行时。我认为这可能会改变\n作为 WebAssembly\n随着他们添加允许 OCaml 的功能，\n编译到它，就像访问垃圾收集器，或者我猜\n我们能够实现自己的垃圾收集器。我想我们\n如果是的话，我会很高兴让 OCaml GC 在 WebAssembly 上运行\n也有可能。但我认为 DOM 将会存在一段时间\n同时。它做了很多非常令人惊奇的事情。事实\n任何人都可以真正创建一个易于访问、可设计风格的用户界面\n只需很少的思考就具有令人难以置信的力量。我认为\n网络的盛行表明了这一点的价值\n群岛但对于构建外部用户界面组件的人来说\n浏览器的样式和布局引擎认为正常的内容，\n如果能够告诉他们，“放手，我们会\n从现在开始管理我们认为的 DOM 树。”并且是\n能够将我们维护的一些不变量转发到网络上\n浏览器，以便他们尽可能提高性能。"}, {"idx": 105, "en": "So how different is this from just drawing your own widgets on a\ncanvas inside of the browser? In fact, I think I heard a week ago that\nGoogle is planning on doing this for various\nthings\nin the Google Docs Suite. Where they have done a lot of work over time\nto wrestle with the DOM and get it to do all sorts of things that the\nDOM was never designed to do, display hundreds of thousands of lines\nof a spreadsheet. And it sounds like they are giving up and they’re\nlike, “Now we’re just going to render to canvas.” Does that give you\nthe flexibility that you need? Is that enough?", "zh": "那么这与仅仅在上面绘制您自己的小部件有什么不同？\n浏览器内的画布？事实上，我想我一周前就听说过\n谷歌正计划为各种\n东西\n在 Google 文档套件中。随着时间的推移，他们做了很多工作\n与 DOM 较量并让它做各种事情\nDOM 的设计目的从来就不是为了显示数十万行\n电子表格的。听起来他们正在放弃，他们正在\n就像，“现在我们要渲染到画布上。”这是否给你\n您需要的灵活性？够了吗？"}, {"idx": 106, "en": "So, yes, but at great cost. The great cost being reimplementing text\nboxes. Clearly there’s more than just text boxes, but I think text\nboxes are an incredible example of complexity that you really don’t\nnotice until it’s wrong. Things like selection not wrapping around\nlines correctly, or maintaining cursor position and moving them\ncorrectly through strings that aren’t necessarily ASCII. Doing text\nlayout, doing text shaping, these are things that yeah, Google is\ngoing to have to do and they have the manpower to do it. But if you\ntold me that I needed to implement a text box on top of canvas, well\nman, that’s maybe best measured in years.", "zh": "所以，是的，但代价很大。重新实现文本的巨大成本\n盒子。显然不仅仅是文本框，但我认为文本\n盒子是一个令人难以置信的复杂性例子，但你实际上并不知道\n注意，直到出错为止。像选择不环绕之类的事情\n正确的线条，或保持光标位置并移动它们\n正确地通过不一定是 ASCII 的字符串。做文字\n布局，进行文本塑造，这些都是谷歌所做的事情\n必须要做的事情，而且他们有人力去做。但如果你\n告诉我我需要在画布上实现一个文本框，嗯\n伙计，这也许最好以年来衡量。"}, {"idx": 107, "en": "So what you want is not to have just the raw ability to kind of draw\nstuff to the canvas, you want something that preserves more of the\npower of the DOM that exists but still gives people more control. What\nwould you do? What’s the magic feature you would ask for from the web?", "zh": "所以你想要的不仅仅是拥有绘画的原始能力\n东西到画布上，你想要保留更多内容的东西\nDOM 的力量虽然存在，但仍然给予人们更多的控制权。你会怎么办？您希望网络有什么神奇的功能？"}, {"idx": 108, "en": "I guess direct integration into the layout engine and maybe APIs that\nallow us to tell the Chrome renderer what things to avoid drawing,\ndirect access to the layout engine, maybe direct access to their\nunderlying 2D graphics renderer. And I think a more powerful\nintegration with incoming user events, things like keyboard and mouse\nthat allow us to take a bit more power.", "zh": "我想直接集成到布局引擎中，也许还有 API\n让我们告诉 Chrome 渲染器要避免绘制哪些内容，\n直接访问布局引擎，也许直接访问他们的\n底层 2D 图形渲染器。而且我认为更强大\n与传入的用户事件集成，例如键盘和鼠标\n这让我们能够获得更多的力量。"}, {"idx": 109, "en": "Is this the kind of thing that people are talking about or is this\njust stuff you think would be awesome but it’s not on anyone’s radar?", "zh": "这是人们正在谈论的事情还是这就是\n只是你认为很棒但没有人注意到的东西？"}, {"idx": 110, "en": "I think that there’s a proposal called\nHoudini that includes a lot of\nthis. It’s not totally clear whether or not it will be adopted as a\nstandard and when those features will arrive or how powerful they will\nbe. But I think that certainly there are people, probably the same\npeople that are working on Google Docs, that have been bitten by these\nproblems and are eager to solve them.", "zh": "我认为有一个提案叫做\nHoudini包含了很多\n这个。目前还不完全清楚它是否会被采纳为\n标准以及这些功能何时到来或它们的强大程度\n是。但我认为肯定有一些人，可能是同样的人\n从事 Google Docs 工作的人们，都被这些问题困扰过\n问题并渴望解决它们。"}, {"idx": 111, "en": "So you spent all this time on Bonsai, which is a UI toolkit. Are there\nother tools for building UIs that you are especially jealous of or\nhave a lot of admiration for? What are other great systems that you’ve\nencountered for building user interfaces?", "zh": "所以你把所有的时间都花在了 Bonsai 这个 UI 工具包上。有吗\n其他用于构建您特别嫉妒的 UI 的工具或\n有很多钦佩吗？您还有哪些其他出色的系统\n构建用户界面时遇到过什么？"}, {"idx": 112, "en": "Yeah. So I think that the Svelte project is a\nrecent UI toolkit but also programming language that has a lot of\nfeatures that I think make it very desirable for\noutside-of-Jane-Street UI development. It fundamentally operates on\nthe basis that UI components are specified ahead of time. They are\ncomposed dynamically, but the UI components are passed through a\ncompiler first and it can do optimizations, it can find places where\nbugs might be introduced by composing things incorrectly. And it just\nfeels to me … I also haven’t done any programming in Svelte, but\nreading over the tutorials, it feels like the type of thing that\nmight’ve been developed for the web with hindsight.", "zh": "是的。所以我认为 Svelte 项目是\n最近的 UI 工具包，还有包含很多内容的编程语言\n我认为它非常理想的功能\nJane-Street 之外的 UI 开发。它从根本上运作于\nUI组件提前指定的基础。他们是\n动态组合，但 UI 组件是通过\n首先编译器它可以进行优化，它可以找到需要的地方\n错误的组合可能会引入错误。而它只是\n我觉得……我也没有在 Svelte 中做过任何编程，但是\n读完教程，感觉就像是这样的事情\n事后看来，它可能是为网络开发的。"}, {"idx": 113, "en": "Are there any approaches to building UIs that you’ve seen outside of\nthe web context that you’re excited about? There’s a whole world, I\ndon’t know, there’s wizards for composing UIs together and all sorts\nof systems for building UIs in different contexts. Is there anything\nin that world that you’re excited about that you think does something\nimpressive and good?", "zh": "您是否在其他领域见过任何构建 UI 的方法？\n您感兴趣的网络环境是什么？有一整个世界，我\n不知道，有用于组合 UI 和各种类型的向导\n用于在不同上下文中构建 UI 的系统。有什么吗\n在那个让你感到兴奋、你认为能做某事的世界里\n令人印象深刻且良好？"}, {"idx": 114, "en": "No. I think that UI-based UI design will almost always fall over. It\nwill not expose enough power to the people that want it. And at that\npoint, you need either very powerful hooks so that developers can\nattach things into a UI that was built in a GUI, or you need to\ntransition that GUI into code and then hand it off to the dev. And I\nhaven’t seen any of these work particularly well.", "zh": "不，我认为基于 UI 的 UI 设计几乎总是会失败。它\n不会向想要的人暴露足够的权力。就在那时\n一点，您需要非常强大的钩子，以便开发人员可以\n将事物附加到 GUI 中构建的 UI 中，或者您需要\n将 GUI 转换为代码，然后将其交给开发人员。而我\n还没有看到这些工作特别好。"}, {"idx": 115, "en": "Arguably, one of the most successful systems for building user\ninterfaces is Excel. I wonder how you think about that fitting in?", "zh": "可以说，这是建立用户最成功的系统之一\n界面是Excel。我想知道你如何看待这种融入？"}, {"idx": 116, "en": "Excel is arguably the greatest programming language ever\ndeveloped. Certainly its ability to convince non-programmers that they\naren’t doing programming is unbelievable. It builds in an entire\nincremental framework for reducing recomputation of values. And it\nmakes people integrate the data input that they have to do with the\nviewing and analysis that they want to do in a way that I just really\nhaven’t seen replicated anywhere else.", "zh": "Excel 可以说是有史以来最伟大的编程语言\n开发的。当然，它有能力让非程序员相信他们\n不做编程是难以置信的。它构建在一个完整的\n用于减少值重新计算的增量框架。还有它\n使人们能够整合与他们相关的数据输入\n他们想要以我真正想要的方式进行观察和分析\n还没有在其他地方看到过复制。"}, {"idx": 117, "en": "Right. I mean Excel is another case where it does the thing where it’s\nvery limiting. You get the best behavior out of Excel when you do the\nmaximum amount possible in the equation language and the equation\nlanguage is very limited. Although excitingly, they recently got let\nexpressions\nand\nclosures,\nbut still, it’s a very limited language. But once you accept those\nlimitations, boy oh boy, is it a nice system to work in. I don’t want\nto build everything inside of Excel, I mean, I feel like there’s a\nwhole separate long podcast one could have about all the things that\ngo wrong when you use Excel, Excel has some imperfections. You can\ntalk about the genomics\ndisaster of\nvarious genomic markers being misinterpreted as dates and wildly\nmessing up computations or results. Excel is far from perfect, but as\na way of constructing easy-to-use and easy-to-understand interfaces\nfor people doing data analysis, it’s pretty impressive.", "zh": "正确的。我的意思是 Excel 是另一种情况，它做它该做的事情\n非常有限。当您执行以下操作时，您将获得 Excel 的最佳性能\n方程语言和方程中可能的最大数量\n语言非常有限。尽管令人兴奋，但他们最近被允许\n表达式\n和\n关闭，\n但它仍然是一种非常有限的语言。但一旦你接受了这些\n局限性，天哪，这是一个很好的工作系统吗？我不想\n要在 Excel 中构建所有内容，我的意思是，我觉得有一个\n一个完整独立的长播客，可以讲述所有的事情\n使用Excel时出错，Excel有一些不完善的地方。你可以\n谈论基因组学\n的灾难\n各种基因组标记被错误地解释为日期并广泛存在\n搞乱计算或结果。 Excel 远非完美，但\n一种构建易于使用和易于理解的界面的方法\n对于做数据分析的人来说，这是相当令人印象深刻的。"}, {"idx": 118, "en": "Absolutely. And I think that one of the reasons for that is that\nthere’s this very tiny barrier between seeing something on your\nscreen, seeing a visualization or some results for a formula and\nediting the formula that produced that result. You don’t need to dig\nthrough source code and find out where that value is being\nproduced. You click on the thing and it’ll show you exactly how and\nwhy and where those values and those computations are coming from. And\nit’s unbelievably powerful. And I’ve been experiencing a different\nkind of visual-based programming in the\nBlender program, which is a 3D modeling\nanimation rendering, but I’m using it almost entirely for shading in\nwhich a typical shader is a source code in a language that looks a lot\nlike C. And you write a program that operates on usually a single\npixel and it produces a color at the end. Blender has a wonderful\nsetup in the form of what they call nodes, which is this\ngraph-construction UI where you create nodes that represent different\ncombinators over numbers or colors or textures. And you can visually\nsee the output of an individual node in the editor. And as you combine\nand compose all of these different nodes, you build up something that\nis practically, well, for me at least, literally impossible to do in\ncode without seeing all these intermediate steps represented so\neasily.", "zh": "绝对地。我认为原因之一是\n看到你身上的东西之间有一个非常小的障碍\n屏幕，查看可视化或公式的一些结果以及\n编辑产生该结果的公式。你不需要挖掘\n通过源代码找出该值在哪里\n产生的。你点击这个东西，它会告诉你具体如何以及\n这些值和计算的原因和来源。并且\n它的功能强大得令人难以置信。而我却经历了不一样的经历\n一种基于视觉的编程\nBlender程序，这是一个3D建模\n动画渲染，但我几乎完全用它来着色\n典型的着色器是一种看起来很多的语言的源代码\n就像 C 一样。你编写一个程序，通常在一个单一的\n像素并在最后产生颜色。搅拌机有一个奇妙的\n以他们所谓的节点的形式进行设置，这就是\n图形构建 UI，您可以在其中创建代表不同的节点\n数字、颜色或纹理的组合器。并且你可以直观地\n在编辑器中查看单个节点的输出。当你结合起来时\n并组合所有这些不同的节点，您构建了一些东西\n实际上，至少对我来说，实际上是不可能做到的\n代码没有看到所有这些中间步骤表示如此\n很容易。"}, {"idx": 119, "en": "When you say seeing the intermediate steps, do you mean seeing\nessentially the instructions in the intermediate steps or do you mean\nactually being able to interrogate and see the results in the middle\nof your image transformation pipeline?", "zh": "当您说看到中间步骤时，您的意思是看到\n本质上是中间步骤中的说明，或者您的意思是\n实际上能够询问并看到中间的结果\n你的图像转换管道？"}, {"idx": 120, "en": "The latter. There’s a single key binding that if you have a node\nselected, it’ll change the output for the entire shader to just be\nthat node, and of course, all of the things that it depends on. But\nthere’s also an incredible plugin that’ll actually inline previews\nabove every node that you care about. So you can see just what does\nthis node contribute to the rest of the program.", "zh": "后者。如果您有一个节点，则有一个键绑定\n选择后，它会将整个着色器的输出更改为\n那个节点，当然还有它所依赖的所有东西。但是\n还有一个令人难以置信的插件，实际上可以内联预览\n位于您关心的每个节点之上。所以你可以看到什么\n该节点对程序的其余部分做出贡献。"}, {"idx": 121, "en": "So part of the value here is just a really good debugger.", "zh": "所以这里的部分价值只是一个非常好的调试器。"}, {"idx": 122, "en": "Yeah. Yeah. Oh, absolutely.", "zh": "是的。是的。哦，绝对是。"}, {"idx": 123, "en": "Right. And it makes sense. It’s for a kind of programming where a lot\nof the ordinary things you would do for understanding whether you’re\ndoing the right thing just kind of don’t make sense. When you’re doing\nthis numerical transformation of data, when you make mistakes, your\nprogram doesn’t do something like enormously wrong, it just looks\nwrong or something. And it’s hard to know what’s going on if you can’t\nvisually inspect the intermediate components.", "zh": "正确的。这是有道理的。这是一种有很多内容的编程\n为了了解您是否\n做正确的事是没有意义的。当你在做的时候\n这种数据的数字转换，当你犯错误时，你的\n程序并没有做一些非常错误的事情，它只是看起来\n错了或者什么的。如果你不能，就很难知道发生了什么\n目视检查中间部件。"}, {"idx": 124, "en": "Right. And a lot of the tools that we bring to bear on programs\nwritten out in source code just can’t apply here. How do you write a\ntest that passes if your shader looks good? You can’t, you need a\nhuman to look at it and to tweak the parameters and make it appease\nsome art director somewhere in a movie studio. The debuggability and\nexpectability is the feature. It would not be what it is if it were\nmerely a projection into source code or out of source code. And like\nwith Excel, it has managed to convince a whole bunch of artists to do\nprogramming without knowing it. And I think that’s really empowering\nas well.", "zh": "正确的。以及我们为项目带来的许多工具\n用源代码写出来的方法在这里是不适用的。你怎么写一个\n如果您的着色器看起来不错，测试就通过了？你不能，你需要一个\n人类观察它并调整参数并使其安抚\n电影制片厂某处的某个艺术总监。可调试性和\n可预期性是其特点。如果是的话，事情就不会是这样了\n只是到源代码或源代码之外的投影。并且喜欢\n借助 Excel，它成功说服了一大批艺术家这样做\n在不知情的情况下进行编程。我认为这真的很有力量\n以及。"}, {"idx": 125, "en": "Well, I look forward to you tricking a bunch of Jane Street people\ninto thinking that they’re not programming while they develop UIs\ninside of our walls, and also provide them with excellent debugging\ntools.", "zh": "好吧，我期待着你欺骗一群简街的人\n认为他们在开发 UI 时并不是在编程\n在我们的墙内，还为他们提供出色的调试\n工具。"}, {"idx": 126, "en": "That’s right. Yeah, get back to me on that one.", "zh": "这是正确的。是的，请回到我那儿去。"}, {"idx": 127, "en": "Will do. Okay, well Ty, thanks for joining me. This has been a lot of\nfun. The world of UIs is enormously complicated, both the stuff we’re\ndoing and just the whole world. It was fun to get your view on it all.", "zh": "会做。好吧，泰，谢谢你加入我。这已经是很多\n有趣。 UI 的世界非常复杂，我们所涉及的东西\n所做的一切以及整个世界。了解您对这一切的看法很有趣。"}, {"idx": 128, "en": "Thank you for having me. This has been a blast.", "zh": "谢谢你有我。这真是太棒了。"}, {"idx": 129, "en": "Ron You can find a full transcript of the episode along with more\ninformation about some of the topics we discussed, including Ty’s\nBonsai library at signalsandthreads.com. Thanks for joining us and see\nyou next time.", "zh": "罗恩 您可以找到该集的完整文字记录以及更多内容\n有关我们讨论的一些主题的信息，包括 Ty 的\nSignalsandthreads.com 上的盆景库。感谢您加入我们并查看\n下次你。"}]};</script>
+<script src="translate-ui.js"></script>
+</body>
+</html>

@@ -1,0 +1,2527 @@
+{
+  "slug": "building-a-data-warehouse-from-scratch",
+  "title": "Building a Data Warehouse from Scratch",
+  "mp3_rel": "audio/building-a-data-warehouse-from-scratch.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "In university Jacob Baskin studied at the intersection of computer science and economics,\nthinking about systems that incentivize people to express their true preferences. He put\nthose ideas into practice at Google, where he worked on ad serving, before joining Jane\nStreet’s database infrastructure team. In this episode, Ron and Jacob discuss Superstore,\na distributed columnar database now central to Jane Street’s tech stack that Jacob began\nbuilding practically the day he started. How do you support wide-ranging analytical\nqueries while transactional writes stream in at the speed of trading systems? And what’s\nit like when your first design doc leads to an eight-figure hardware purchase? After\nbuilding Superstore Jacob has since gone back to his roots, thinking about schemes for\nbidding on compute time as he works to optimize usage of the Hive, Jane Street’s massive\ncompute cluster for research."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "Mechanism design and economics (00:00:02)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, it’s my pleasure to have Jacob Baskin here on Signals and Threads. Jacob’s a\nsoftware engineer here who has worked on a bunch of large scale compute and data systems\nthat we’ve built here, and we’ll talk about a few of those. But first of all, just\nwelcome. Thanks for joining me."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Happy to be here."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I always like to hear a little bit about how people got started. Can you tell me a\nlittle bit more about how you got into computer science in the first place?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so I’ve been coding since I was a little kid. My dad taught me basic back when I was\nseven. But then in college, I was actually not going to be a computer science major. I\ninitially planned to be a psychology major, but I couldn’t get away. I enjoyed coding too\nmuch and there was too much cool stuff to work on. So I went to Brown University and I\nended up doing a bunch of stuff for my thesis around mechanism design and the connection\nbetween economics and algorithms, which I found super interesting and had no particular\nbelief that I would ever end up using this in my career. There’s some really cool stuff\nwhere incorporating the economics makes finding efficient algorithms and finding good ways\nto actually do the computations within a reasonable amount of time much more difficult."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just say a bit of jargon, like mechanism design is weird econ jargon for designing\nmarkets, right?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Well, markets are one kind of mechanism. I guess if you want to be technical about\nit, there’s a lot of mechanisms that don’t look like markets. But usually when people talk\nabout mechanism design, they’re talking about something that looks like an auction, where\npeople have some number that’s denominated in dollars or whatever, that they’re willing to\npay for a certain thing or a certain collection of things. And your job as a mechanism\ndesigner is getting everyone to say their amount of dollars without having to be strategic\nand underhanded in a way that lets you figure out a socially good, so something that will\nresult in the most actual value for real human beings, allocation of resources to the\npeople who are contending for them."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And then how does mechanism design connect into software engineering?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, often the thing that you’re trying to do is hard, not just from a mechanism\nperspective. It’s not just that different people want things in different amounts and you\nhave to figure out who wants stuff more and who wants stuff less, but actually figuring\nout the allocation is computationally difficult. So some classic problems and mechanism\ndesign are things like building networks. If you want to connect a bunch of different\npeople’s houses to the internet, you have to literally go in the world and dig trenches\nand put fiber in trenches, right? And figuring out what are the right trenches to dig and\nwhat’s the right fiber to put. Even if you’re the king of the world and you get to dig\nwhatever trenches you want and command the resources of everyone in the economy, still\ninvolves some algorithms and computation, but in a world where you actually have to find\ncontractors to do this and pay them and Verizon is out there and AT&T is out there and\nthey want to do this in different places and are willing to charge you different amounts,\nright?  Then you get this combination of this algorithmically challenging problem, this\neconomically challenging problem. And you have to kind of solve both at once and they have\ninteresting effects on each other."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Although I would like to point out that I asked you, how does it connect to software\nengineering? And then you told me how it connected –"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "It connected to computer science."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "To digging trenches."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes. Fair enough. Okay. It connects to software engineering because a lot of the problems\nthat we’re trying to build software to solve are problems that are economically important,\nwhere the ways that people interact with software are driven by their incentives and by\ntheir economic desires."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And obviously you can totally see this stuff playing out in design of exchanges and\nmarkets and stuff like that. And there you see a rich intertwining of what you do on the\nmechanism design and how people behave and how that affects the technology. So despite you\nimagining this wouldn’t come up much in life, here you are at a trading firm."
+    },
+    {
+      "type": "ts",
+      "text": "Building ad markets at Google (00:03:57)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right. Here I am. It turns out that my interests are what they are and are somewhat\nconsistent over the course of my life. But in fact, the way that I ended up dealing with\nthis first at work involved advertising. My first job out of school was at Google, and I\nwound up working on Google’s very large and very interesting advertising business, helping\nGoogle do a better job of showing ads on other people’s websites. The system that I was\nworking on, interestingly enough, was called AdExchange."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So yet another market."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yet another market. And this one was in fact a two-sided market, much like financial\nmarkets because you had people with space who wanted to show ads and then you had people\nwho had ads and wanted to find space for them. And our job was to connect them. And we did\nin fact have to do some mechanism design to make the system work well."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I mean, Google obviously selling advertising is very deep in that business. And in\nfact, early on it was kind of the only way they made any money at all. Where was this in\nthe kind of evolution of Google’s ad business? What had been happening in their business\nat the time?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So in 2008, which was in fact the year that I started at Google, they bought a company\ncalled DoubleClick, which is one of the original companies for doing banner ads. Back in\nthe olden days in the internet, advertisements were much more about like you go to a\nwebsite and there’s like an image and that image is an image that advertises something and\nyou have to pick which image to load when someone visits the website. And that particular\nproblem of loading the right image when a person visits the website and then also keeping\ntrack of all of these, that was DoubleClick’s bread and butter. And Google was very good\nat showing ads on Google search, but not so good at showing ads on other people’s\nwebsites. I mean, Google’s had that business for a long time too, but particularly when it\ncame to sort of larger and fancier websites, DoubleClick was the industry leader.  So\nGoogle acquired them and then they had this problem of, well, can we do both? Can we take\nthe stuff that we’re so good at when it comes to showing ads on google.com, which was an\nauction forever. They wrote very interesting papers back when they were building the\nsystem about how they did this auction mechanism for showing ads on Google. Can we combine\nthat kind of auction mechanism with something that takes into account the needs and the\ndesires of large web publishers, people like newspapers or large news operations,\nHuffington Post, Buzzfeed, this was the aughts. So those were large companies at the\ntime. So how do we adapt this auctioning world to one where there’s all these publishers,\nbut also where we don’t know what all the ads are in the world, where in fact there’s all\nof these other companies, whether they’re ad agencies or whether they’re middlemen who\nunderstand the advertisers and what they want and want to integrate with our system in\nsome reasonable way."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can you say a little bit more about what the kind of two sides of this two company combo\nwas? I can sort of guess at what Google was good at here. Google is really good at\nbuilding infrastructure and I bet did a lot of good work on setting up the auction so it\nmade sense and had coherent incentives and all of that."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So what was DoubleClick bringing to the table?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What was DoubleClick good at?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Double-Click understood enterprise customers. I don’t want to overgeneralize about Google\nin the mid 2000s, but there is certainly an ethos of we don’t know why anyone would rather\ntalk to a salesperson than use a web UI."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I mean, I do sympathize."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "I sympathize too. I would almost always rather use a web UI than talk to a salesperson,\nbut there are definitely cases, especially when it’s one company talking to another\ncompany where first of all, having the attitude as a business that we really want to\nunderstand what it is that our customers are trying to do and why, rather than think that\nwe should know better than them and tell them what we should try to do. And then also have\na much more managed relationship with these people that’s not just like, “Here you go,\nenjoy your advertising system.” So that was sort of where DoubleClick was coming in. They\nhad built relationships with the very largest web publishers and the very largest\nadvertisers. And obviously Google appreciated having those relationships, but they also\nreally appreciated having the DNA of, well, here’s what it takes to serve large customers,\nwhich was just not something that Google did very much of at all in the early days."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So then what was the kind of technical work that you were doing? You have these\ntwo companies that you need to integrate their businesses together. How does that turn\ninto a technical problem?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so we were building all of this on Google infrastructure. So DoubleClick and Google\nhad completely separate technical infrastructure and pretty quickly the decision that, and\nthis was in fact before I started, Google made the decision we’re going to throw out all\nthe DoubleClick stuff and build it all again on Google infrastructure because of course\nthey did.  So the challenge became sort of trying to take the insights that DoubleClick\nhad about their business and combine them with Google’s … It’s worth saying that at the\ntime, Google’s infrastructure felt like it came from the future. A lot of the stuff that\nGoogle built … And these days, we just sort of live with it in the cloud. So we don’t\nrecognize after the fact how revolutionary it was back in the mid 2000s, but things like\nMapReduce and BigTable, which were Google’s distributed systems for storing and processing\nlarge amounts of data. They had this very large distributed file system called GFS that\nstored many petabytes of data. You could just run applications over thousands of computers\nat once just by typing in the right numbers into a config file. These things were not\ntable stakes across the industry."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I remember when those papers came out, they made a huge splash because it was\n… In some sense, the underlying techniques were not super new or surprising exactly, but\nthey had sort of implemented it at scale and gotten … And there’s a lot of hard things\nto go from taking an idea that kind of makes sense to doing it really effectively at scale\nand had learned a lot from that experience. And it was actually great that they published\nthose papers and I think it influenced the industry broadly a bunch."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So really the technical work or one very hard piece of technical work was taking this\nGoogle infrastructure that was, again, very horizontally scalable and combining it with\nthese double click insights about what is the feature set that you need to serve these\nlarge publishers and large advertisers. For ad exchange specifically, there’s another very\ninteresting technical piece, which is called real-time bidding. To integrate with the\nsystems on the advertiser’s side, the things that actually know what ads people want to\nshow, rather than have them give us all of their ad inventory in advance and be able to\npick out of a database, we actually would query these systems across the internet for\nevery single ad impression that they wanted to show and let them submit a bid in real\ntime."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, wait, how does that actually work practically? They have ads. Those ads have\nrelatively heavy assets like images and stuff that need to get delivered. And is it like\nliterally just in time, like someone loads a webpage and it needs to find an ad and it\ngoes all the way end to end to the actual advertiser who’s providing the ad and gets the\nimage at the last moment?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is it really like just in time the whole way through?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so it’s actually, it’s just in time twice. So the first thing that happens is you\nsay like, “Hey, I want to show an ad here.” And then you need people to bid. So that goes\nthrough Google systems to look at all of the people who sort of have bids. They have some\nfilter criteria. We don’t call everyone for every single time Google shows an ad on the\ninternet, but there’s some filter criteria. We choose which advertisers call. We say like,\n“Hey, here’s information about this advertising spot on this website. What’s your bid?”\nAnd then they return us a bid and then if they win, we inject a little HTML snippet into\nthe ad unit on the webpage. That goes to their system and fetches the image."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So then the final asset is not actually flowing through Google systems, that’s\njust being directly loaded from the final advertiser."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. With a lot of asterisks around … This is all very much integrated with all of\nthe crazy ad tracking pixels and cookies stuff that got built in the internet around that\ntime. So really the load on pages for loading ads, I mean these days as well, but also in\nthose days, was incredibly heavy just in terms of all of the various tracking cookies and\npixels and different domains that provided all of this different stuff to do metrics and\nmonitoring for the ad. That ended up being much worse than the image itself."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. And then also this whole infrastructure is also probably kind of a security\ndisaster, although maybe in a way that wasn’t as obvious back then."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Definitely all of the tracking and cookie stuff is absolutely a security and privacy mess,\nbut we did in fact think about this. And one of the things that we built was a way for\nadvertisers to link what they knew about a given user with a particular ad impression\nwithout us being able to extend their reach to that user across the internet. We would\nanonymize users identifiers in a way that didn’t give advertisers access to them, but it\nstill let them know if they had seen that user before."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So I guess that sounds like part of the security problem. I guess the other\nsecurity problem is around the like delivery of weird malware through JavaScript nonsense,"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This kind of complex routing system."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes. So Google also had pretty reasonable controls for that. That can be very\ndifficult. That was a real arms race with malware actors, but at least we tried very\nhard. But yes, certainly once you get to put arbitrary HTML inside a user’s browser, yeah,\nit’s a pretty fraught scenario. And certainly at the time, browsers didn’t have any\nparticularly good sandboxing abilities for managing this well."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Luckily when this all started, it was less important and then we had some time to\nspend time making it better as it got more central to the world."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think that’s fair. It’s certainly very important to the publishers at the time. If\nyou remember back in the day, the New York Times didn’t have a paywall. Just so much\njournalism on the internet and just content more generally on the internet was ad\nsupported. And this is one of the exciting things about working in that industry at the\ntime is we were like on a mission to make the ad supported internet actually work for\npeople. Now we failed, but we tried really hard."
+    },
+    {
+      "type": "ts",
+      "text": "What the theory misses (00:14:21)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you’d studied something about mechanism design in school, and then here you were right\nin the middle of designing these mechanisms. How well did the lessons that you learned in\nschool pan out? What do you feel like you learned from the whole process of trying to do\nthis stuff with a real system?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So the main message that you get or that I got at the time from the sort of academic\ncommunity around mechanism design was that building incentive compatible mechanisms was\nextremely valuable. That if you build the mechanism right, it benefits people to tell you\nthe truth. And if you build mechanisms wrong, then people are going to try and game the\nsystem, and this will end up resulting in a worse situation than you otherwise would\nhave. And I think the main thing that I learned in industry was that’s definitely a\nvaluable thing that it’s nice to do, but that is a much smaller part of the problem than I\nbelieved it was back when I was in school."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what’s the rest of the problem?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So two big things that you have to focus on that are not covered in that view of mechanism\ndesign are first of all, people need to understand the mechanism. It’s no good if you can\ngive them the complicated proof that the mechanism is incentive compatible if they don’t\nhave any idea what the heck is going on. So being able to point to, well, here’s why this\ngood thing happened to you. Here’s why this bad thing happened to you. Here’s why we\ncharge you this amount without having to get a whiteboard out is really important when\nyou’re actually trying to sell something to people who are not mechanism design PhDs."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can you give an example of a part of the technical design that was done to achieve that\ngoal of making the results more explainable to people?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Okay. Well, so a great example is budgets. If I’m an advertiser and I want to go and show\nads on websites, probably I don’t want to spend infinite amounts of money, even if I can\nget really good prices all day."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Probably I want to spend a thousand bucks, maybe a thousand bucks a day."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You want some risk limits?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I want some risk limits."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Fantastic."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So let’s say that I go and I start spending my budget and I spend it really quickly and\nthen I have like five bucks left and it’s getting towards the end of the day. What should\nI do to give myself better outcomes? Well, I should probably lower my bid, right? Because\nthe chances are that I have been spending too fast and I could get more of the good stuff\nthat I want for less money if I just bid less for it. And this is not really an incentive\ncompatible result because another way of saying that is if I have a budget, then I should\nbid less than my marginal value of each thing in order to get the best results for\nme. Right. So budgets break sort of a very naively memoryless incentive compatible auction\nall the time. And yet very few people try and model this for their market participants.\nIn almost all the cases, what you’ll see is that people offer, maybe they have some kind\nof second price auction, maybe not even, but nobody tries to take into account people’s\nbudgets when figuring out how to allocate them stuff."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "When you say nobody, you mean like in the academic literature, nobody thinks about\nbudgets, or do you mean in real world systems?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "In real world systems, people let you manage your budget. They don’t try and manage your\nbudget for you. And they will even maybe say like, “Hey, you should bid less so that your\nbudget lasts all day.” And rather than trying to model budgets as part of the mechanism,\nthey just let it be this other thing that people have to manage on their own. Because when\nwe try and incorporate people’s budgets for them in some way, they just get results that\nthey don’t understand. And in fact, people have a lot of constraints that they’re not\ntelling you that you’re not really in a good place to know and you just kind of have to\nlet them do their thing and be sort of incentive compatible in a narrower sense if you can\nwithout really trying to be fully incentive compatible in some theoretical sense. I\nremember –"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So simplicity is a value."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Simplicity is a value."
+    },
+    {
+      "type": "ts",
+      "text": "Distributed systems lessons (00:18:21)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So Google was obviously an interesting place to learn about all of this kind of market\nstuff around ads, but there’s also a lot of interesting technical stuff happening there as\nyou were mentioning. What do you feel like you learned from the experience of being a kind\nof systems engineer and systems designer in that world?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Just so much. I feel like I’m still mining a lot of my early Google experience for\nsoftware engineering insights. One of the main things that I learned was kind of how to\nthink about distributed systems in ways that let you design them well. The Google approach\nto building distributed systems is to try and make the hard part be as contained as\npossible. You take some existing system that does a very hard distributed system thing,\nwhether that’s distributed consensus or whether that’s like building a large stateful key\nvalue store, and then you build your system in terms of that existing thing. And often\nthis is sort of a nested process where like Big Table, which is this great distributed key\nvalue store is built on top of Chubby, which is this distributed consensus mechanism. And\nmost engineers at Google are not building big table or Chubby, they’re building something\non top of both of them.  And in particular, building large stateless systems is much\neasier than building large stateful systems. So you really want to contain the state of\nyour system in as few different components as you can."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although I find it’s always kind of funny when people talk about building stateless\nsystems, like often there is state there. It’s just like not being managed by you."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And so it’s more about like, it’s not so much about the system you’re building being\nstateless, but the component that you’re adding on, not being responsible for managing\nthis data on itself."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, almost every system is like stateful in some sense, or what is it even doing? Maybe\nyou’re building a data center of a million pocket calculators, but otherwise you’re pretty\nstateful. But yeah, again, the goal is having as few of the components be stateful as you\ncan.  So a very Google approach to this kind of problem is like, well, we’ll have this\nstateful core that goes and gets the data and loads into memory in some extremely\nefficient form, and then we’ll just have a bazillion web servers that I’ll go talk to it\nand we’ll push as much of the workout to these bazillion web servers as we can, and then\nthey’ll make what are hopefully very efficient queries to the thing maintaining the state,\nand that’s what the system will look like. This does not look a lot like the way that\ntrading systems work, where you end up keeping the state very close to the edge because\nyou prioritize latency at levels that Google just didn’t. Our latency target for ad\nserving was 250 milliseconds."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which by some measures is kind of fast, but-"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s fast enough that you’re not going to go and get a cup of coffee waiting for the\nwebsite to load, which is really the important thing."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. But it’s very, very different from the kind of latencies that we worry about when\nwe’re building systems."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And so you can do a lot of things with a 250 millisecond latency budget that you can’t if\nyour latency budget is in the microseconds."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Yeah. And people often talk about technical organizations pointing out that the\ntechnical organizations are often kind of shaped like their initial application and\nGoogle’s early infrastructure in many ways was built around search and ours was built very\nmuch around trading systems and that’s led to some very different choices."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And in ads at Google, we were 100% using components that were initially developed for\nGoogle search. Google looked at advertising, this was before my time, Google looked at\nadvertising as just a search problem. Our problem is like we have to index all of the ads\nin the world and find the best one to show for a given website. Yeah, if you squint hard\nenough, sure."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. So you learned a bunch of this fun stuff at Google. How did you end up here?"
+    },
+    {
+      "type": "ts",
+      "text": "A curb-mapping startup (00:21:56)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so from Google, I ended up going and doing a startup focused on helping cities\nmanage their curbs."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What do you mean manage their curbs?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So if you walk down the sidewalk, certainly in New York, but also in really just about any\ncity in the world, there will be all kinds of arcane paint markings and signs with icons\non them and so forth, denoting if someone pulls a vehicle over to the side of this\nparticular street, what are they allowed to do and what is going to get them a ticket?\nOkay. Maybe you’re allowed to park, but do you have to pay? Can you park for four hours or\ncan you only park for one hour? Maybe you can’t park, but if you’re a truck, you can load\nand unload goods from the truck. Maybe you can’t unload goods, but you can unload\npassengers, but only for three minutes. All of these rules have sort of been built up over\ntime and accrued in these cities and almost nobody has a good record of what they are and\nwhy.  Okay. So we were trying to solve this problem and build a platform for cities to\nmanage both the actual physical control infrastructure that causes these rules to take\neffect on a given street, and then also better be able to understand and analyze what the\nrules even were. How many parking spots are there in New York? This is a harder question\nto answer than one might think, especially because it changes day to day and hour to hour."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Wait, it changes day to day. How does it change from hour to hour?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, there’s a sign that says no stopping 4:00 PM to 6:00 PM Monday to Friday."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. And then how is this company going to solve those problems?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "One of the interesting things about parking signs is that exactly where they are matters\nto plus or minus one parking spot, which is a little tighter than you can do reliably in\nurban areas with GPS. Okay. So one piece of infrastructure we had was an app that used\nsort of AR inspired visual odometry techniques to figure out exactly where along the\nstreet different things like signs were."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Wait, AR, augmented reality."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So if you like Pokemon GO, you lift up your phone and there on the table is sitting at\nPokemon and you move your phone around and the Pokemon stays where they are relative to\nthe things in the scene, even if your phone moves. So to do that, you have to build a map\nof the scene inside your phone."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "If you can build a map of a scene inside your phone, then you can build a map of a block\ninside your phone."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And then we can use those to position the parking signs along the block with extremely\nhigh accuracy."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Nice. Okay. Fun."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So that data collection problem is actually really fun to solve. And then once you have\nthe data of like, well, where are the parking signs? Well, then you have to figure out\nwhat they say, which is a transcription problem. We didn’t have Claude back in the day. We\nhad to figure out how to do this using slightly less general techniques."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And then even once you know what, they say you have to know what that means."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And parking signs have this language that’s sort of all their own where often-"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I would think one advantage is like the vocabulary is relatively small."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "The vocabulary is relatively small. We ended up essentially hand building parsers for\nthis, but it’s actually quite tricky because this is designed to be sort of easily looked\nat by humans who know that particular city very well. So the vocabulary varies city to\ncity and also things like the position of different numbers and words on the sign looks\nvery different than the linear reading of a sentence of text on a computer. There’s a big\ntwo over here and then somewhere else on the sign, it’ll say maximum hours parking. And do\nyou connect those? Well, yes, as a human, we’re very good at using spatial context to put\nthese things together, but figuring out a way to model this in a computer can be quite\nchallenging."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this sounds like a big pile of fun, grotty engineering problems and a bunch of weird\ndomain specific knowledge that you need to make this thing work. How did this work out as\na business?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Not so well. Not so well, Ron. I love this problem to death. I still wish this data\nexisted in the world, but we were not really set up very well to turn this into a\nbusiness."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay."
+    },
+    {
+      "type": "ts",
+      "text": "Joining Jane Street and the limits of Postgres (00:26:02)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "That didn’t so much work out. And then I was saying, “Well, okay, what do I do next?” I\nknew I didn’t want to go back to Google. Partly just kind of been there, done that. Partly\nthe company had gotten much, much bigger in the time that I was there and in the time\nsince I was there. And I was looking for something that I could do in New York. I loved\nliving in New York. I didn’t want to move."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Back to being enough of an urbanist to want to do a startup around cities."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And I loved this kind of economic thinking that I was doing back earlier in my\ncareer. And I knew of, in fact, a bunch of people who were doing finance-y type stuff in\nNew York. And so I thought, well, where do I do this? What’s the right place for me to put\nall these things together? Jane Street was a super obvious choice for me, partly because\nalmost all the people I knew who were working in the financial sphere were in fact at Jane\nStreet already. These are people who I’d worked with at university. These are people I\nknew from Google. These were random people I knew socially. It was a bunch of people who I\nthought were extremely smart, who I really respected, and they all managed to wind up at\nthis place. And you’re kind of like, “Hmm, I wonder how that happened.” I mean, also I had\ndone some functional programming in college, and even back in 2008, already in the back of\nmy head was, “Oh, Jane Street’s a place you can go and write OCaml.” Oh, that sounds\npretty fun."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So our odd taste in programming languages strikes again."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely. And I had in fact written some OCaml to do some combinatorial optimization\nproblem solving for a class back in university. Not that that came in that handy when I\nstarted here. The OCaml that Jane Street writes actually looks pretty different than the\nOCaml that I wrote 15 years ago. But yeah, I’d known about the place and it seemed really\ncool. And so I thought, why don’t I interview with them and see what there is?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Cool. Okay. So when you got here, what did you find yourself doing? What part of the\norganization did you land in?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So one of the things that Jane Street does before you start is there’s this team match\nprocess where you go and meet with people who seem like teams that you might want to work\non and you chat with them. So one of the teams that I did a team match with was this team\ncalled database infrastructure. And I talked to this guy, Sam, who talked about, well,\nJane Street runs all these Postgres databases. Some of them are really big and we’re\nhaving trouble managing them and we just sort of let people put whatever data in there and\nit doesn’t always go very well, so we really want to make this work better. And I’m like,\nokay, well, that definitely sounds like a hard problem, but why are you trying to do this?\nWhy don’t you have some kind of distributed analytical database that can query over all of\nthis different data without it having to live on a single computer that runs Postgres?\nAnd so I’m like, yeah, that kind of does seem like something we thought about. We haven’t\nbuilt it yet, but it seems like that would be a good direction to at least explore. And\nI’m like, okay, I’m very happy to work on these database problems, but just so you know,\nif I come and work on your team, I’m going to try and build this data warehouse analytics\nthing."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So can we dig in a little bit more to the kind of like, status quo ante, what is wrong\nwith the throw a lot of data into a Postgres database? Isn’t that what databases are for\nis throwing a lot of data into them? How were you using them and what was weird about that\nuse from your perspective?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So Postgres is a great database, but it has a lot of different goals that it’s trying to\nmeet. One of the things that Postgres is trying to do is be able to do really fast single\nrow or few row transactions. Think about running a store. Someone clicks a checkout button\non your website and they go and buy a widget. And you want to both record this order that\nsomeone bought this widget. You want to decrease the number of widgets in your inventory\nby one. And you want this to all happen while the page is loading in a very short amount\nof time and you want it to all succeed atomically. Postgres has to solve that\nproblem. There’s this other set of problems which we kind of call sort of analytical\nprocessing, which are about I have a lot of data and I want to answer questions about all\nof this data altogether in aggregate in some way that could involve not just single rows,\nbut like many millions of rows of data.  Postgres can do this for you as well, but it’s\nmuch slower at it because it’s constrained by needing to store this data in a way that\nlets it do these atomic transactions over very few rows. It’s like for example, Postgres\nmaintains indexes. You have all this data in a table and Postgres can look up this data\nfor you by potentially a lot of different things, a lot of different potential keys into\nthis piece of data. But that means that all these indexes have to live on disk. And also\nPostgres can very efficiently update individual rows. And if you think about it, what this\nmeans is that Postgres can’t really compress across rows. Because if I have to be able to\nchange that one bit on that one row, if that bit is compressed into like some 50 kilobyte\nor one megabyte chunk, well then every time I change a row, I got to write that 50\nkilobytes or that one megabyte of data back to disk, and that’s just going to be a\nnon-starter for these transactional use cases.  So Postgres does as good of a job as it\ncan given the constraints that it has. But ultimately, when you’re doing these analytical\nprocessing use cases, you really want to lay out the actual data at rest in a very, very\ndifferent way."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this kind of goes back to this classic distinction between row oriented\ndatabases and column oriented databases, which has always struck me as super weird. The\nidea is like, I would like to get a piece of software for managing my data. It’s like,\nwait, do you want a row oriented database or a column oriented data? And I’m like, you\nmean I have to pick my data structure now? Why can’t I pick it on a table by table basis?\nWhy can’t I take my data and represent it multiple different ways so that I can do both\nthis kind of access and that kind of access efficiently, depending on the particular kind\nof thing I want to do?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And a lot of people try and build systems that do both. But what we found is that the\nabstractions that make columnar databases efficient kind of leak through the interface\nlayer. You can go out and find right now a lot of SQL compliant, whatever that means,\ndifferent things to different people, databases that have columnar storage. In fact, at\nJane Street, we were using one at the time that I came and made my bold claim, which was\ncalled Vertica, which is an existing columnar database. It’s in fact very efficient for a\nlot of these sorts of analytical problems. What we found with Vertica is that because it\ntried to give you these full SQL transactional semantics, it was very easy to break. A lot\nof the things that you could do with SQL that Postgres can support very efficiently,\ntrying to build that transactional layer over underlying columnar data just gets rid of a\nlot of the advantages that you’re trying to get in the first place.  And the way that this\ngets implemented with a lot of these systems just dramatically slows down the queries and\ncan even make the database unusable. Now what most-"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "SQL is like the blessing and curse of the database industry."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s this language defined like, what, in the 70s, I think, that somehow we’re all\nstill using more or less the same language today. And I guess the problem you’re pointing\nat here is like a kind of overexpressiveness problem of like SQL can do a lot of different\nthings, but the implementation you put under it, maybe we’ll do some of those things\nreally well and some of those things really badly. And when you give the full API surface\nto people, they’ll maybe try and do all the things that you tell them that you can do and\nit’s going to be a bad time."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Now the way that I’d put that is that SQL does such a good job of being what it is that it\ndoesn’t feel like programming. If someone told you like, “Oh, C++ is way too expressive.”\nIt lets you do whatever you want to do. And sometimes people do bad things with C++ and\nthat means it’s a mistake. No, God knows C++ has plenty of faults, but you’re not going to\nsay, “Oh, it’s too expressive. It lets you do too many different things.” If people\ntreated the SQL that they write as if they were writing a software system when they were\nconstructing their queries, I think we wouldn’t mind that SQL can do all these different\nthings and it has leaky abstractions and et cetera, et cetera. This is all stuff that as\nsoftware engineers we take for granted, but SQL makes it so natural to write queries that\nyou just feel like you’re asking a question of the system.  You don’t feel like you’re\nwriting a program. Even though what a database’s query planner actually is, is a compiler\nthat generates code to run your SQL query as a program. It doesn’t feel like that’s what\nit’s doing to us because SQL is such a good abstraction."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. But I think it also goes back to almost like the mechanism design point you were\nmaking before of sometimes it’s more important to be explainable. And the key thing that\nSQL trades away is explainability, which is like you do put in a SQL query and then it’s\noptimized and then a miracle happens or maybe the miracle doesn’t happen. And depending on\nnot just the shape of the tables you run it on, but the statistics that were gathered from\nthat table, it will optimize in different ways. It can be very hard to predict what the\nbehavior is. Right, so you’re sort of not used to as a user who’s sitting there writing\nSQL work."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Whereas we can all simulate our compilers in our head and understand exactly what they do\nto our OCaml code. I think a lot of the last 10 years or 15 years even maybe of CPU design\nhas been designed to give people the illusion that they still understand what the CPU is\ndoing to their code when in fact they have no freaking idea what makes it fast."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I mean, I think what you’re saying is obviously true in the sense that if you want to\nunderstand what’s actually happening in a program that you write in OCaml or C or\nwhatever, and you really want to understand it at a very low level of detail, God help\nyou. There’s an enormous amount of complex things happening at many different levels and\nlots of optimizations that are in there that try to make it fast for you even when you\nhaven’t done all the careful work for yourself. But I think there’s a difference of\ndegree. There are deep algorithmic big O notation changes to the execution of a SQL query,\nwhich makes it dramatically harder to predict what it’s going to do just from the query\nalone than you can from looking at a program in almost any ordinary-"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "This is true. Very few compilers will change the big O complexity of your code up from\nunder you. Whereas the decisions of the query optimizer for a SQL query engine can often\nbe extremely load bearing. That’s a hundred percent true."
+    },
+    {
+      "type": "ts",
+      "text": "The Wild West and long-running transactions (00:36:09)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And when you say we were throwing lots of data and creating lots of queries and\nstuff, what for, what was the use case that you were running into that we were all kind of\nrunning into and how we were using databases?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so the funny thing is that this was in many ways just kind of emergent from lots of\ndifferent people’s connected use of these databases. So a great example is like a list of\nall the trades that Jane Street has done every day. You can totally imagine why that’s\nvaluable. Okay, let’s take some information that I have in my trading. Let’s combine that\nwith all the trades that Jane Street is doing and derive some insight from this. Super\nvaluable. Let’s understand things about the fees that we’re paying to exchanges or the\npositions that we keep in our different accounts."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Or the symbology."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Or the symbology."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Or the different symbols."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Yeah. What markets does this stock trade on? What currency is it denominated and\nstuff like that."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And part of what gets surfaced here is part of the value here is database as\necosystem. The set of things that you can join together, like every new thing that you add\nto that increases the value of the platform. And the key thing about joining the data\nbehavior is literally join, like SQL joins or the essential data operation for bringing\nthis data together."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And many companies, when faced with these problems with transactional databases, end up\nessentially getting rid of a lot of the flexibility and a lot of the usability of these\nsystems in order to maintain the scale. They will have a schema council that before you’re\nallowed to add a table to the database, you have to have these people sit in judgment on\nyou and find a schema. You’ll end up with databases where the only queries you’re allowed\nto run are ones that have been code reviewed."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And in fact, often what you’ll have is you’ll have code that sits in front of the database\nand you can’t just use the database directly. You go to the program that you type\nsomething into a GUI and it goes off and constructs the queries. And so you don’t have any\nkind of free reign in just running whatever queries that you want."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "But we are getting huge value from traders, not just traders, but among other people,\ntraders, being able to do more or less whatever they want on these databases. And we were\nputting in a ton of work on maintaining the database in such ways to give traders the\nillusion that they could do whatever they want. Don’t get me wrong, Postgres is a very\ngood database, but there’s a lot of things that you can do once you have hundreds of users\non a Postgres database that will slow down and kill the database for everyone. Long\nrunning transactions being the best example. So rather than just not let people run\ntransactions on the shared database, we had a long running transaction killer that would\ngo around and kill long running transactions if they got too long."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So can you say more about this? Why are long running transactions bad?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "The way that Postgres does animicity is essentially every time you have a transaction that\nwrites to a table, it sort of forks the table and keeps it in two states, the state before\nyour transaction and the state after your transaction. And then once you commit, it then\nhas to do essentially almost like a version control merge."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that on the face of it sounds insanely expensive. When you say forks the table, do you\nmean like makes a whole copy of the table?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well so –"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That would be bad."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "It’s all copy on write, right? So it only forks the pieces of the table that you touch."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it’s both copy on write and it’s copy on write in a kind of segmented way."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. Okay."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Then why is that bad? A nice analogy for this is like version control. When you like Git\nor whatever, you can have lots of forks and actually it’s like kind of okay to have lots\nof fork. You in fact have lots of long running forks and that doesn’t necessarily cause\nother things to fall apart. Why is it problematic to have these long running transactions\nin a database context?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "The way the transaction semantics that databases give people aren’t like, okay, begin\ntransaction starts a fork and you work in that fork and then later on you have to\nmerge. So the way that the semantics of transactions in SQL and thus in Postgres is that\nwhile a transaction is in flight, it’s effectively locking all the rows that it’s\nchanging. Not necessarily every row that it’s reading, but every row that it’s writing to,\nit gets effectively a lock. This is to stop merge hell from happening when transactions\ncommit, which turns out to not be what most people want out of their databases.  So\ninstead of letting you do whatever you want and then merging, we assume that if you’re\ntouching something, you want to lock it until your transaction’s done and then the next\nperson gets to run on that. But what that means is that long running transactions can\naccrue along a large amount of locks and a large amount of data that we don’t know if it’s\nthe future or not. And this can end up effectively costing a lot of storage and a lot of\ncompute time on the database for having to take this into account and do all the\nbookkeeping for this transaction while it’s open. Once a transaction gets closed, you just\ncan very quickly garbage collect all of the past stuff that happened before this\ntransaction."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is the main issue there that if you’re acquiring a bunch of locks that you’re basically\nrunning into issues of performance isolation, like this long running transaction blocks\nother transactions from completing because maybe somebody else wanted to write to that"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And now they have to be pushed later in time. Yeah,"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "That’s certainly the brunt of the problem. There’s other ways that this interacts with\nreplication, for instance, and the ability to do what Postgres calls vacuuming, which is\ncleaning up old data in a table that where long running transactions make that hard\ntoo. But yeah, certainly this ability to have this chain of long running transactions is\none of the things that makes this difficult for Postgres to manage performably."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. Okay. So the state of the world is we have this incredibly valuable, not just a\nsingle database, but a set of databases that are being used in this kind of somewhat wild\nand undisciplined way where lots of people are pretty freely throwing in new kinds of\ndata, throwing new SQL transactions at it and relatively routinely running into exciting\nperformance problems, that you have a bunch of people who are doing a lot of operational\nwork to try and keep this Frankenstein monstrosity running efficiently."
+    },
+    {
+      "type": "ts",
+      "text": "Designing Superstore (00:42:06)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And just another big part of the problem is that Postgres very inherently has to keep all\nof your data on a single machine. So we had, I think at the time it was like the largest\ncomputer that Jane Street owned was running Trader DB. So yeah, so what are our\nrequirements when we’re trying to replace the system? What are the things that we want out\nof the new system? Well, we still want it to be the Wild West. We still want people to\nfeel like they can do anything. We absolutely want this to be able to store more data that\nyou can fit on a computer. And ideally, we want this to be much more compressible and much\nbetter at doing sort of large reads over arbitrarily large amounts of data than Postgres."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And essentially you want to move from something that is focused on transactions to\nthings that are focused on big read queries that get lots of data and figure out the\nresults of complex computations."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And we also want it to be much harder for people to break isolation. We want it\nto be much harder for me to go and do some crazy thing on the system that will impact your\nability to use it. Right. Both from a correctness perspective and also from a performance\nperspective. It should be much harder for a single user to bork the whole system for\neveryone."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Did you have problems? I would’ve thought you’d have lots of performance isolation\nproblems in something like Postgres and very few correctness problems."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, you had deadlocks were sort of the main ways. Is a deadlock a performance problem?\nWell, in a sense."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s a very, very bad performance problem. Got it. And inherently when you’re grabbing\nlots of locks … Actually, how do you deal with deadlocks in the Postgres world? Does the\nwhole thing lock?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So we had a deadlock detector, and if queries got deadlocked, we would just kill them."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Makes sense."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So this is what we wanted. There’s no free lunch, right? As I said, we’re not going to\njust do Postgres, but better because we think Postgres is pretty good. So what can we give\nup? Well, it would be really nice if we could give up transactions."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Although transactions are really nice."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "These transactions are really nice. Well,"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s nice to be able to reason consistently about the data in your database."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "It sure is. So what if we couldn’t … Is there a way that we could avoid giving up\ntransactions entirely while still avoiding the kinds of problems that transactions caused\non Postgres? So this ended up being a lot of the meat of what we tried to build when we\nwere specing out our data warehouse. And we looked at a lot of the existing systems around\nthis. A lot of them either give up transactions entirely. You have something like Kafka,\nsay, which Kafka isn’t a database. Yeah, I know you"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Don’t think of Kafka as a database."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "But it is a system that stores a lot of data, right? For sure. And if you look at Kafka,\nit doesn’t have read-modify-write and –"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "To the degree that it has any notion of consistency, it’s the ordering guarantees that are\nprovided, and those are very narrowly scoped."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And there’s the amount of data that you could fit inside of a single partition of a single\ntopic, that’s the scope over which you have well-defined ordering."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Or you have something like Redis, for instance, which has no guarantees essentially\nacross keys."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. Yeah. Another way of limiting the scope."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is totally not good enough. If you’re trying to do some complex join across multiple\ntables where you need consistency across those things, its like you definitely need to\ncross keys."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And so on the flip side, you have something like Vertica, which tries to provide\nfull transactional semantics, but if you use it just right, you can make it efficient,\nwhich again, we still want this to be the Wild West. So we want something that you don’t\nneed to use just right, and it’ll still work well. So what we ended up landing on is\nsomething in the middle. In particular, we wanted to make it possible to do consistent\nrights to a single table because this is something that comes up a lot is I want to have\nsome log of a systems behavior or going back to the list of all the trades that we do. You\nreally want to not miss any trades. You really want to not double count any trades, but\nyou don’t necessarily need to insert new trades transactionally with other pieces of data\nbecause either the trade happens or it doesn’t and you have some source of truth for that.\nSo you can always just pull in new trades from the source of truth to keep this up to\ndate."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And also to the degree that you’re making changes, most of the changes are\nappends."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’re mostly adding new data. And so a lot of the crosstable stuff that happens is like,\nit’s not quite consistent for free, but it’s mostly consistent in the sense that you might\nbe missing data, but the data is mostly not being changed under your feet."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So we wanted to have data that you could atomically write to a single table, you\ncould get order preserving writes to a single table. You could essentially get all of the\nguarantees that you want for that table, but not between tables. Another key thing that we\ngave up, so one of the big problems with columnar databases is that rewriting stuff is\nreally annoying because … So the way that columnar databases store their data is every\ncolumn becomes its own separate stream of data. And the reason you do that is because a\nsingle column of data turns out to be extremely easy to compress and manage. The other\nreason you do this is because most queries don’t hit all the columns in a table,\nespecially analytical queries. You have these very wide tables, and maybe a given query\nneeds like seven out of a hundred columns, and you just get to ignore the other 93.  And\nso this makes adding new columns to a table nearly free at query time, which is super\ncool. Sure. So given this layout, doing an update of a single row, something that is in\nPostgres, extremely easy and efficient, becomes very difficult because first of all, all\nthese columns are their own separate things, and second of all, they’re all compressed.\nBut again, we didn’t want to give up the ability to update and delete data because it\nturns out that being able to do that is really important."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Even though it’s by far not the ordinary thing, mostly you stream it in"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sometimes, you get it wrong."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And you’d like to go and edit the table."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So we want to have these be able to happen, but we’re sort of okay with them being slow,\nas long as they don’t slow down other stuff that’s going on in the database. So what we\ndecided to do, and this is kind of a weird decision, is we decided to make all writes in\nthis database asynchronous. Now you write to this table and your writes gets committed,\nwhich is the database says, yes, I acknowledge your write. This is going to go in in the\ncorrect order. This is going to go in atomically if you ask it to be atomic and so forth,\nbut readers aren’t necessarily going to be able to see it just yet. And this lets us take\nthe time in between when you do the write and when it becomes readable to make sure that\nthe data that you’re writing gets readable efficiently, that we put it in the right place\nin the columnar data store, that we redo the compression if we have to do the compression\nand so forth and so on.  And we’re much happier doing that neither when someone’s waiting\nfor their read to complete, nor when someone’s waiting for their write to commit, but\nsomewhere in the middle."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this is very different from doing updates to a database via SQL, where SQL is\nkind of part of the language and you’re kind of just mixing together the reads and the\nwrites into one set of SQL expressions and they kind of all are supposed to operate in\nthis kind of integrated way. And here you’re kind of breaking out the writes essentially\nas a totally separate API that has different semantics and where the kind of results of\nthose writes happen asynchronously."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And part of you will not see very many commercial or open source systems that\nmake this decision just because, I think mostly because you have to educate your users\nevery single time. But this is one of the cool things about being at Jane Street where all\nof our users are in house is we just get to tell them how it works and why. And we can\neven build the first few examples ourselves to give them examples of how this works really\nnicely. And also very importantly, we can have, even if SQL is like the first class read\ninterface to this system, it doesn’t need to be the first class write interface. Because\none thing that we noticed looking at Trader DB, for instance, is that even though a lot of\nthe read queries were extremely ad hoc and just written by hand by a human being, most of\nthe writes were happening in much better to find ways through actual software systems."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And maybe this goes back to its role as an analytical database. The place where the\ninnovation is happening is on the query side, on the read side. And there’s data\nloading. You got to do the data loading,"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yep"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But the data loading is kind of done once per data source and that’s kind of that."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Often. Now we didn’t want to stop people from writing ad hoc data to the database if they\nwanted to. A very common case is like, I have this shared data that’s very big and\nimportant and I want to query it, but I want to join it with some other thing that nobody\nelse has ever heard of. So you want to make it easy to upload your little join table to\nthe database to join with the big existing table. We want to have ad hoc data. We don’t\nnecessarily need to have that have full SQL semantics. You just upload the whole table at\nonce. And if that’s fast enough, then if you want to change the analysis, re-upload it."
+    },
+    {
+      "type": "ts",
+      "text": "No direct Parquet access (00:51:04)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So you sort of avoid the whole writing an individual row by just not having\nthat. Exactly. Not a thing in the system. So another thing that’s interesting about this\nsystem, it’s called Superstore, is that another thing that we … There’s various things\nthat we have not given people who want it, who want it from it. In particular, just to say\na little more about the underlying design, the underlying data is actually stored in\nParquet files. Parquet is lovely open source format for storing columnar data. And a\nrequest that people have put out a lot, which has always been denied is like, oh, can I\njust access the Parquet files directly? You have all these nice parquet files distributed\nin this nice distributed system. Can I just go and read them directly and do something\nwhatever I want to them? And the answer from the Superstore team has been no. I’m curious,\nwhy is that?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So in some sense, this seems like a very natural decision to make because if you look at,\nagain, Postgres, can you just go and read the files on just that Postgres uses to store\nits tables? No, that would be crazy. You have a database for that. So if you think about\nit as like, well, we’re building a software system and offering it to the firm, it’s a\nvery natural decision. But the funny thing is how little software that Jane Street\ndevelops actually works like that. People are very smart and good at programming and love\nlooking under the hood and understanding what’s going on. And so once you tell them like,\n“Hey, this is a bunch of parquet files on a disk.” They’re like, “Oh, so I can read them,\nright?” So why don’t we let them read?  Because we get to manage all of the reads and all\nof the writes, we get to build a lot of features that we can reason about. So one of the\nbest examples is just access control. Sure. If we let people access our Parquet files on\nthe disk, then we’d be stuck with Unix file system access controls because they were\nreading files off of a disk and we don’t have any code that’s running in between the disk\nand them. But in fact, since they’re reading them through our system, we get to build an\naccess control layer and have ACLs and so forth for these data sets.  Another thing that\nwe can do is we can do usage logging. So this came out of a real problem with Trader DB\nand with other systems at Jane Street, which is they become nearly impossible to deprecate\nor to do schema evolution on. Imagine you have a table and a database and there are like\n500 different people querying this database every day and you want to delete this\ntable. Well, which of these 500 people are querying this table? How do you find out? I can\ngo, maybe, okay, so I write down every SQL query that everyone is running and I grep for\nthe name of my table. Well, okay, maybe this works and I find and I grep and I don’t see\nany matches to my table. Well, except there’s a view that references my table and now I\nhave to grep for the view too.  Well, maybe there’s a view on that view. So it ends up\nbeing very difficult to understand who is using this table and who’s not. And then even if\nyou do understand it, why are they using it? And what data are they reading from it and\nhow much … Maybe you can keep this data that you have, you only retain the last month\ninstead of going back to all time. Can you do that efficiently? Who knows?  So being able\nto have full read and write access logs to Superstore turned out to be very important. And\nto even just build a taxonomy of like, well, here’s the list of all of the data sets that\npeople are storing in our system. Now again, Postgres has that, but this is a system\nthat’s many orders of magnitude larger than Postgres. I guess this is another important\nthing to say is single computer databases only scale so far. If you want more than a few\nthousand tables, you’re going to need something that scales horizontally."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And all of this is happening in the context of a huge explosion in the amount of\ndata that we’re using and the kind of intensity we’re using that data and many different\nnew use cases for all of this data. And somewhere along the way in the middle of this, a\nkind of revolution in the kind of machine learning driven approaches that we’re using also\narrived and also put a lot more pressure on this system."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And it just turns out that once you have a system that’s able to query over many terabytes\nof data efficiently, you keep finding new use cases. And again, we were building this,\nthis database we keep talking about is called Trader DB. We’re building this mostly for\ntraders and researchers, but we keep finding use cases across the firm. Cybersecurity\nwants to have access logs for our network. Oh, why don’t you just put that in Superstore?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Tools and compilers wants to have access"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "For all the history of the code review that people have done for all sorts of ad hoc\nqueries that people want to do."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right. Every build that’s ever run at Jane Street. And you just kind of put stuff in. And\nthen from the trading side, you end up wanting a record of the thing that a trading system\nthought at the time that it made a given order is a very good example of a kind of data\nthat has very high cardinality. You want to write down rows like that across the firm like\nmany billions of times a day. And we just couldn’t do that really, except that now we\ncan. So you end up doing it a lot."
+    },
+    {
+      "type": "ts",
+      "text": "Build vs. buy (00:56:14)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing I wonder about this design is like, we sort of pointed a few different kinds\nof systems where there are kind of clear distinctions and approach, but data warehouses\naren’t like a new idea. Lots of people have written data warehouses and there’s lots of\ncommercial products for data warehouses. How did you think about the question of, should\nwe just like, I don’t know, sign up for yield software-as-a-service data warehouse thing\nversus, “No, actually we’re going to go and design our own thing from scratch.”"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So software as a service is a very interesting question here because really most of the\ndata warehouses that are at the cutting edge in the world that we see are cloud software\nas a service offerings, Snowflake and Databricks being kind of the two primary examples\nthat it makes sense to point to. And these are perfectly good software. There are a few\ndisadvantages there. One is they’re extremely expensive. And in particular, whenever I\ntalk to people who work at companies that use these systems, they end up thinking very\nhard about what queries they want to run or not just because the cost of running a lot of\nqueries in dollars is quite high and we just sort of don’t want to think about that. The\nother problem is that our data isn’t in the cloud. We have a lot of systems producing data\nand managing data on premises and requiring people to copy all of their data to the cloud\nin order to run queries over them just seemed like not a great idea.  Sure. But even\nstill, once you’re on premises, there’s still many offerings. There’s commercial\nofferings, there’s open source offerings, so why don’t we just use one of those? Well, one\nof the things that we’ve learned, and really I say we, but this was really not me who was\npushing this because I kind of came in here and I’m like, “Oh, Jane Street has so much not\ninvented here syndrome. We never use open source software. We just write everything from\nscratch.” Probably it’s because this Ron guy needs everyone write everything in OCaml."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That is a fair complaint."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "But I do think, I guess now I’ve been here for long enough that I kind of see some of the\nmethod and the madness. In particular, the finance use case does not get very well\nunderstood by the open source community because we keep pretty quiet about exactly what\nwe’re doing and why, because we think it’s a competitive advantage. Sure. And our\ncompetitors think the same thing. So you’ll have a lot of open source people who can spout\noff what’s sort of the tech company reason to use an analytical. Okay, people visit your\nwebsite and record all their clicks and all their visits and sessions and stuff, and you\nneed a big database for this because you have millions of people visiting your\nwebsite. That’s a very well understood use case for data warehouses. And so a lot of the\nopen source products are very good at solving that.  I think very few people who are\ndeveloping these systems can spout off some of the finance related use cases quite as\nwell. And there’s just a huge advantage for us in being able to do the specific thing that\nwe want to do very well. And because these systems aren’t necessarily built for these use\ncases from the top, we don’t have any particular reason to believe that they’re going to\nprioritize the things that we care the most about. Honestly, even in the ones that do\nthink more about finance use cases, there are time series databases where a lot of the\npeople who are using them are finance companies, but Jane Street’s a weird finance\ncompany. So being able to just sort of go into our system and make this thing work is\nextremely valuable."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The exact choice of trade-offs is an enormously load bearing thing. And the fact that we\nget to make the choice of which of these features matters and which doesn’t and where can\nwe give up on something and where are we going to demand that we really get really\nperfect. That’s just an extremely powerful place to be."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And we have use cases that if we were to share them with people building these pieces of\nsoftware commercially, which is make them shudder and walk out of the room. And honestly,\nsometimes they make me shudder and walk out of the room. And one impulse that I’ve had to\nreally stifle in myself is asking people who are using tools like Superstore are like,\n“Have you tried not doing that? “ I ask it more than no times. It’s definitely good to\npush on people and see if there’s a better way for them to meet their use case and the\nfirst thing they have to have come up with, but you really want to not push back on the\nuse case itself because our traders are very smart and they’ve thought very hard about\nwhat is the thing that they want to understand.  So being able to say yes in many more\ncases than a vendor would perhaps say yes to us is a huge advantage."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing I wonder about this story in general that you’re telling is that you kind of\njoined Jane Street and were kind of immediately plopped into a team and started to help\nlead a project that was to replace a pretty central piece of infrastructure that the day\nit falls over, it’s really bad, like a pretty important central piece. And here you are,\nlike a person pretty new to the organization. And how did that all happen?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so a lot of this is not on me. And I had many collaborators doing this. Many of them\nhad been at Jane Street much longer than me. I talked briefly about Sam, who was my boss\nwhen I started at Jane Street. He was very much bought into this general project and did a\nlot of the work of giving me talking tos when I proposed something that just would not\nwork at Jane Street or that is a bad idea for reasons that he understood and that I didn’t\nunderstand yet. And just sort of transmitting to me what are the things that make software\nvaluable at Jane Street and why? And also doing a lot of the work with the prospective\nusers of this system to explain to them what we’re building and why, and make sure that\nthey were ready to use it once something existed.  So these were both incredibly\nimportant. I was involved with them, but I don’t think that they worked, I don’t think I\ndeserved the credit for them going well. I think really this involved a lot of very\nimpressive organizational flexibility from across Jane Street. One kind of conversation\nthat I had a lot that I found very impressive was I would go and talk to a team who we\nthought might one day want to use Superstore. This is before it existed. And they would\nsay like, “Hmm, this seems pretty hard. Are you sure you’re going to be able to do it? “\nAnd we’d say like, “Well, we’re going to try really hard to do it. We’re going to\nprioritize this exact thing that you’re talking about working for the following reasons,\nbut you just have to kind of trust us that we really think that this is achievable because\nwe’ve run some tests and it seems to look good.” And they’d be like, “Okay, this sounds\ngreat. We will use it when it’s available.” And I was like, “Okay, wow.  This was a very\nego-free conversation with a lot of trust between teams and trust of me who had not\nparticularly done anything at that point.” And once we did launch the thing, we got a lot\nof usage very quickly. I think in many ways it turned out to work quite well, which is\nnice, but people were willing to give it a try pretty easily and early on, which I think\nreally helped contribute to the system’s success."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Maybe there’s two key cultural things going on there. One is this kind of extension\nof grace, the trusting of someone else that’s trying to do things, something, and it seems\nlike a reasonable thing to try and do. And I guess the other thing is just the willingness\nto make bets. It’s a trading firm. We make bets all the time. And the idea that some of\nthe software projects we’re doing are also bets. And I think I’m fairly confident that the\nvarious people that you talked to who said, “Oh, this seems hard.” Some of them thought,\n“Yeah, this probably won’t work, but it’s okay. We’re allowed to make bets that there’s\nsome risk and sometimes they work and sometimes they don’t.”"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, and one of the fun conversations on that note that I got to have pretty early on in\nmy tenure at Jane Street was buying the storage appliances that were going to back\nSuperstore. So there’s a few questions here. One is when do you buy these? And the second\none is how do you size them? Now this is in 2022 when supply chain dislocations from COVID\nwere still going on and lead times were quite long."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Thank God there are no more supply chain dislocations"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s all good now."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "All fixed. So we didn’t have a running system yet, right? So we sat down with a relatively\nsmall group of people like, “Okay, well, what’s the right amount of storage for us to\nbuy?” And I don’t know how, but we ended up landing on a number of 10 petabytes. I was\nlike, “What, petabytes, really? That seems like pretty big.” And they’re like, “Yeah, but\nyou don’t really want to go smaller than that. “ Well, how much is this going to cost? And\nit was some eight figure amount of money. And I just, to be clear, I had just come from a\nstartup where we had never seen an eight figure amount of money in the whole company’s\nexistence."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And before that, you were at Google where they hadn’t seen a storage number as small as\neight petabytes."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right. But where decisions were made in a much larger and more centralized way. So the\nfact that a few people could get in the room and decide to write this check on the\nstrength of a design doc was pretty … I mean, it made me nervous that day, I would say,\nbut I think it’s also a very impressive thing to be able to do as a company of Jane\nStreet’s size."
+    },
+    {
+      "type": "ts",
+      "text": "What he’d do differently (01:05:23)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So Superstore had a bunch of embedded bets in it of different design choices, different\nthings it was trying to achieve. And on the whole, it has panned out very well. Are there\nany aspects of the initial approach or design or things you did that you kind of in\nretrospect think didn’t pan out particularly well, decisions that you kind of regret?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes. So I think the main decision that I regret from Superstore is the way that we handled\nthe metadata. So in all of these columnar databases, the metadata ends up being a pretty\nkey piece. Metadata being just like, what are the tables and what are the pointers to the\ndata that’s currently in them?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I guess also what are the permissions and who has access to what? Is that also part of\nthe metadata?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "In our case, no. But in many other systems, yes, permissions live in those metadata\nstores. Sure. So we thought, well, what do we want to use for the metadata store? This\npretty clearly has to be some sort of distributed globally consistent storage system\nbecause you certainly don’t want your data to be consistent or not just you don’t\nwant. It’s impossible to have a system where your data is consistent, but your metadata is\nnot if the metadata is like the pointers to the data. Sure. It’s like, well, what should\nwe use for this? We decided to use CockroachDB. It’s"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s like a well-known, well-regarded, open source-"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Transactional data."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Transactional data, thats right."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And again, you want the metadata store to be transactional because very often doing these\ntransactional, even lightly transactional operations over the underlying data require\ntransactional metadata operations."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And you do a transaction every time you add a new chunk of data, you’re doing a\ntransaction and it really looks more like the Postgres use case in that instead of\noperating on whole columns, you really are operating on rows of like, oh, there’s a new\nchunk of data and I want to register that chunk of data. And so the ordinary use case is\nlike the dual. It’s the opposite thing here."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And in many ways, CockroachDB was a great fit, but it turned out that we’ve had more and\nmore problems with it as we’ve been scaling. I think one of the key areas where we’ve been\nhaving problems with CockroachDB comes to write latency. So we have a lot of the data\nthat’s in Superstore. I would say probably by bytes the majority of the data that’s in\nSuperstore is data that comes in streaming. Some system is writing some stream of data and\nthen we want to take that stream of data and materialize it as a Superstore table as fast\nas we can. As fast as we can is ideally within less than a second, which is like, again,\nfor a trading system, not fast, but for analytical database pretty fast."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. They’re fast enough that you could build stuff for analyzing trading on the day and\nit would be fine, fast enough that you could build monitoring systems based on this, not\nfast enough that you would want your path from quote to order or something to go through\nthe system."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And this particular style of access ends up being pretty bad for CockroachDB because every\ntime you need to write to a row, you end up doing a transactional update, which for\nCockroachDB being distributed means like distributed consensus round. And CockroachDB gets\nat scale by just dividing all of the rows in the world into many different Paxos group, or\nsorry, not Paxos, Raft, many different consensus groups that are independent of each other\nand like having a bunch of stuff on top of that to make that mutually consistent. But if\nyou’re touching the same row over and over and over and over and over again, in effect,\nyou’re serialized. There’s no way for them to do those transactions in parallel. And the\nwall time that a single consensus round takes ends up being quite high."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. And just to unpack a little bit of the distributed systems terminology here,\nconsensus is like the name for the algorithm that does the simplest like get a bunch of\nservers in different places to agree on anything. It could be a single bit."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. I don’t want to have there be a single computer that’s the only place that stores\nlike what’s the latest data in this table because then if that computer gets unplugged, I\ncan’t access my table. So what CockroachDB does and what many distributed systems do is\nthey write this to a bunch of computers and then essentially they vote. If the majority of\nthe computers agree on where the data is, then congratulations you get to write your\ntable. And this gives you very nice fault tolerance guarantees. But the way that these\ncomputers have to exchange information ends up being a really limiting factor in the\ndesign of the system."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to be clear, you were saying that the bad thing is having to go to a single place\nover and over to make a decision, but actually if you just had to go to a single place\nover and over to make a decision, it would be fine."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It turns out CPUs are pretty fast. CPUs are fast. They make a lot of decisions and\nit’s all of this network communications and distributed synchronization that ends up\nmaking this slow."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And one of the things we’re doing now is like ripping out all of the Cockroach DB and\nreplacing it with Aria."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And Aria is this very finance style state machine replication system that basically shoves\nall of the data, it gets consistency by shoving all the data through a single core and you\njust distribute that data out by reliable ordered multicast and it gets to all the\npeople. And the thing that’s weird about the system from a kind of big systems person kind\nof perspective is there is a single point of failure, which is the sequencer, the thing in\nthe middle that gets all the transactions and brought –"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "There is a plug that if someone unplugs, the entire Aria system will go down. And once\nSuperstore is built on Aria, there is a single plug that you can pull to disable an entire\nSuperstore cluster."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although it’s worth saying, it disables it in a kind of temporary way and that you can\nactually recover in that all of the information that goes through the sequencer is also\nreplicated and captured by other components of the system."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Effectively, you’re in read-only mode for a while."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And then there’s a careful, in the end involving some human intervention\nstep to make sure the original sequencer is good and dead to flip over to a backup\nsequencer. So when it’s a single point of failure, you’re not totally dead, but you are\npaused in a way that’s not awesome. Although I think one of the points about this design\nthat I think is interesting is it’s true that it’s not great to have single points of\nfailure, but if you have a single single point of failure, it’s not as bad. A well-tended\nmachine might experience a hardware failure once every four years in a well-cooled data\ncenter and all of that. And then what you’re really taking on in exchange for way higher\nperformance is like, it will be down for a minute once every four years. And that’s not\nnecessarily so bad."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And you have a background rate of outages. I’m not going to sit here and say, “Oh,\nSuperstore never has outages. This is going to be our primary cause of outages.” No, we’re\nhumans. We write bugs the same as anyone. And if you look at what causes system downtime,\nincluding for big tech systems that don’t have single points of failure, it turns out that\nit’s almost always caused by software bugs and not by the kinds of failures that people\nare designing against."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And anyway, so here, the point that you’re pointing to as a bit of regret is the core\nmetadata system was basically architected with a kind of higher requirements, like made a\nbunch of trade-offs in favor of very high availability that blocked you from having the\nkind of throughput you needed to really scale the system as far as we want to."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And throughput in this particular dimension, I think what we, the reasoning-"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The query throughput is fine."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Query throughput is fine. Total commit throughput across all of our tables is fine. It\nturns out the thing that we can’t scale is just like the rate of commits to a single\ntable. And I just don’t think that we fully appreciated how much of a blocker that would\nbe when we were designing Superstore initially."
+    },
+    {
+      "type": "ts",
+      "text": "The Hive (01:12:58)"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. Okay. So let’s talk about the after Superstore world. So you no longer work on\nSuperstore. What’s your day job today?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So today I work on Jane Street’s compute cluster, which is called The Hive. So the Hive is\nnot like all of the computers at Jane Street, but it is sort of the place that you go to\nif you have a computation that needs to be done by a lot of computers at once. So examples\nof this include, for instance, training neural networks, but also things like analyzing\nmany days worth of trading to understand what the patterns might be that we see there."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Or running large scale simulations where you take the actual code of our trading systems\nand run them in simulated mode, like over large swaths of historical data."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes, exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this system is actually like, I have a great fondness for it because it’s like\none of the first … The early prototype of this thing is one of the first systems I\nworked on. The original version of the hive was like six Dell boxes piled up on a card\ntable and I think was like set up what we used to call a Beowulf cluster back in the day.\nIt was like very simple and very primitive. And it’s a very different system now. First of\nall, then it was a very kind of simple and naive kind of scheduling story of like you\nwould run one thing at a time, it would get the whole hive, you’d have a master process,\nwhich is like go off and schedule jobs running on individual cores and gather the results\ntogether and write them down to a file. It was also just about CPUs. We didn’t do any GPU\nstuff back then. It was like more than 20 years ago. Things are dramatically different\nnow. Can you maybe say a little bit more on what is the kind of use cases that are driving\nthe work on the hive today?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So there’s a ton of different use cases on the hive, but if you look at where most of our\ngrowth is coming from, most of the growth in demand for hive compute is coming from\ntraining neural networks and processing the feature data that we’re going to feed to these\nneural networks."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Some of which ends up being on GPUs and some of which ends up being on CPUs."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So the training itself for neural networks happens almost exclusively on GPUs, but a\nlot of the data production and the data analysis that go before and after the training\nruns happen on CPUs. Great. The hive is we have hundreds of thousands of CPU cores and\nover 10,000 GPUs running on the hive. And this is big enough that it’s become essentially\na giant DOS machine. You can point this many things at almost anything and make it go\ndown. So one of the big challenges has been just scaling the underlying infrastructure\nthat powers the hive to make sure that it doesn’t rely on anything that it’s going to DOS,\nand that it can actually feed all of these computers efficiently. So what are some of the\nthings that we’ve had to make sure that we can scale? So one of them is just storage. And\nall of these computers have to have their input somewhere and then also have their output\nsomewhere.  Sometimes this is Superstore, but in fact, some of the larger data sets on the\nHive are too big for us to want to store them in Superstore. We just store them directly\non a storage appliance or on a large object storage system. And it’s very easy to\naccidentally write code that makes these storage appliances fall over. So we’ve been\nworking very hard to make sure that hive jobs don’t bring down storage appliances."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is that a problem you solve by making the hive itself better or is it a problem you solve\nby isolating the hive so that its queries don’t like reach out and smack some unsuspecting\nsystem on the head and knock it over?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So we have to do both. We definitely isolate the hive in many ways and we make it much\nharder for Hive. We try and make it impossible for HiveJobs to accidentally interact with\ntrading systems, which would be a big no-no. But even the stuff that the Hive is supposed\nto talk to, we want to make sure that the Hive talks to it gently enough that that thing\ndoesn’t get taken down. A great example, we’re still using, for better or for worse, NFS\nas the protocol by which Hive machines access much of their data. And NFS has some bizarre\nlocking semantics around certain interactions, especially when it comes to things like\nlisting directories and creating new files in a directory. A very easy way to bring down\nour storage appliances on the hive is to create thousands of files in the same directory\nfrom different computers all at once at the same time."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, interesting. Just because there’s a kind of consistency semantics on the directory\nitself."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Pretty clearly, I think most people would realize that if you tried to write to the\nsame file from 5,000 machines at the same time, that would go badly. But people don’t\nrealize that creating a file in a directory is effectively writing to a file."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. It feels like it should be okay, right? It’s just like some kind of eventually\nconsistent, eventually all the files that you added show up there would be fine, but like-\nThat’s not how that works. That’s not how NFS works, right? Okay."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So obviously you shouldn’t do that. We put some checks in place like disabled jobs that we\nthink are doing that, but then a big part of this is just building the interfaces to the\nhive in such a way that people won’t do that. Rather than having people open files\ndirectly, we build frameworks that they can use that can manage their data in larger\nchunks."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing that’s notable is that your experience coming to work on The Hive is sort of\nthe opposite of your experience of coming to work on Superstore. You started working on\nSuperstore when it didn’t exist.  And then you got to ask the nice question of like, what\nare the APIs I would like to have people to have in order to use this system? And how can\nI pick just the right trade-offs and all of that? And in The Hive, you came up in a much\nworse position of a system that the worst of all situations I initially wrote and then has\nbeen used by lots of people and evolved a lot over time and is the beating heart of a lot\nof our research work. And you don’t have the freedom to just be like, “Ah, and here’s what\nall the APIs are going to be. “ It’s already being used actively and all the time. So what\ndo you do about that? How do you think about improving the system and changing the kind of\ntrade-offs in a world where there’s already a ton of uses before you get to make any of\nthose decisions?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "It’s really hard, I think is the long and short of it. One of the things that I really try\nand do is I try and understand the full stack of code. One of the things that I found was\nhappening a lot when I started on The Hive is that we were building features and then\nshipping the features and then nobody would use them. And so why was that? It’s because\nthe people who the features were designed for were not actually using our APIs\ndirectly. They were using other systems that used our APIs in turn. So it’s not enough to\ndesign a feature that solves a problem. You have to design a feature in a way that solves\na problem in concert with the other layers of our research stack."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And there’s like 20 years of people hacking away on these layers. So there’s like a lot\nthere."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. So having that sort of full end-to-end understanding and actually interacting\nwith researchers. In fact, the first thing that I did when I started on the Hive team was\nI didn’t work on the Hive at all. I sat on a trading desk for a month using the Hive with\nthem. I worked with these traders to take some of their code and rewrite it in a way that\nwas sort of more maintainable and better integrated with the rest of the code base, but\nthat involved a lot of using the Hive and changing the way that this code interacted with\nthe Hive, which really gave me an appreciation for at least one of the ways that actual\ntrading code interacted with the Hive. And my goal was to use that kind of insights to\nbetter align the way that we released our features with the ways that users were actually\nworking."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So now you’ve had some experience going off and using it, an experience, seeing what’s\ngoing on in the team and making changes to the system. What do you think of as the\nproblems that there are to solve? What are the important things to be done to make the\nHive better fit for both what we’re doing today and the insane amount of compute we are\nbringing up over the next several years?"
+    },
+    {
+      "type": "ts",
+      "text": "Scheduling compute as mechanism design (01:21:17)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So bringing this all the way back to the beginning, one of the main challenges that the\nHive has is a mechanism design challenge. So one of the things we have to do is we have to\nschedule different jobs. We have to decide what computers are going to run which people’s\ncode. And sometimes more people are demanding hive resources than we have resources to\ngive. So we have to decide how to prioritize them. And being a trading firm, we do this\nusing money. People bid in dollars per CPU hour or dollars per GPU hour for how much they\nwant to run their code on the system and we run a second price auction. So this all sounds\nwell and good, but in fact, the structure of the mechanism makes it very hard for people\nto say things that we want them to be able to tell us about how they want their code to\nrun on the hive."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Are you telling me you would like them to be able to express their true preferences about\nhow valuable they think their job is?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, so the funny thing again is that it’s not so much about getting the exact dollar\nvalue, which they don’t know down to the cent how valuable their thing is. It’s about what\nis the structure of their preferences. And particularly the thing that we haven’t been\ndoing a good job at modeling is urgency, right? Maybe this piece of work is worth $10,000\nand this piece of work is worth $5,000, but the $5,000 work decays much faster. If I don’t\ndo it this hour, it’s going to be worth $0. Whereas the $10,000 piece of work, if I don’t\nget to it until tomorrow, it’ll still be worth $10,000. That’s a very valuable piece of\ninformation when you’re trying to figure out what the computers should do right now."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. This is like a key insight that was not at all obvious to me, but as I’ve kind of\nheard people talk about the kind of scheduling problems on the hive, just like makes a ton\nof sense, which is if you think about it in terms of utility curve, the thing that matters\nis the kind of derivative, right? It’s like, if your utility curve is flat, I would like\nto get this done, but it’s worth the same if it happens today or tomorrow, then while I’m\nnot very urgent to get it scheduled right now, I’m kind of happy to wait. And if there’s\nfree time on the hive, happy to schedule it then, but it can also wait and other things\nthat are more urgent can go first. And so this very simple thing of not a single dollar\nvalue, but a curve seems like a much better way of thinking about what’s going on."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So assuming again that you give people good ways to specify this, and there’s a real\nAPI design problem for how do you not just make this thing of running a program on the\nhive be an entire economics quiz?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Having everyone have full freedom in writing out their utility curve for every job sounds\nalso like a nightmare."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right. And plus you hope that they’re like convex."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Right. Yeah. It would be weird if they went up in time."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, but sometimes they do, right? Think about a thing that runs every hour or every day\nthat you want sort of a regular monitoring cadence. In that case, really your utility is\nhow close you get to being exactly one day after the last thing and one day before the\nnext thing. You’re probably fine with like a 20-hour gap and then a 28-hour gap, but like\na four-hour gap and then a 44-hour gap sucks a lot."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, so that means there’s like a peak around where you would like to get the job to run."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "It’s not a convex utility curve."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But we in fact don’t –"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "We’re not modeling that."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay, good. Back to the-"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "We’re not modeling that. There’s a paper from CMU that talks about this. So you want to\nmodel this thing over time. This of course creates an NP hard scheduling problem. I mean,\nit’s already NP hard because we have these chunky jobs that need a certain number of GPUs\nin order to run. So that’s solving problem."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Gang scheduling now you want a whole group. And this is because the GPU problems\nthemselves, in fact, all of the original stuff that we scheduled on the hive was this kind\nof like, you just have a bag of jobs, they’re all independent, they all just want to run,\nyou want to get the result, that’s kind of that."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "And this was before multi-core OCaml. They all used exactly one core. We really had an\nabstract problem."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And now we have, especially GPU jobs where they’re locked into a tight barrier\nsynchronization thing and they are like, if you’re missing any GPU, you can’t do anything\nand you just kind of have to have this very tight scheduling."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So even solving the scheduling problem at a given time T involves a lot of sort of\ncombinatorial work. As our GPU clusters get more advanced, we want to be topologically\naware also. We want to make sure that people get scheduled on GPUs that have good\nconnectivity to each other. And then of course, as our GPUs are now in multiple data\ncenters, we have to pick which data centers things run in, which often means copying their\ndata from where it lives to where the free computers are. So that also gets very\nchallenging. Sure. But then on top of that, we want to add this time dimension, which just\nmakes the problem much more complex. So we know that we’re not going to be solving this\nproblem in an algorithmically perfect way, but we still think that the moves that we can\ndo, like if you think about this as a local search problem, the moves that we can do to go\nfrom the schedule to a better schedule are valuable enough that it’s worth adding this\nextra dimension in the modeling."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Right. And what’s the key pathology in the original kind of just like where it’s\ngoing to have, everyone’s going to bid for right now, whether they can run and you just\nhave them bid against each other and the highest bid wins. What’s the particular thing\nthat goes wrong in that case?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So the particular thing that goes wrong is people end up paying much, too much money to\nget their large jobs run and then feeling sad that they didn’t just wait until the\nnight. Essentially, people sort of schedule hive jobs for the future when they think the\nresources are going to be cheap because there’s no good way of them modeling their urgency\nin the bid."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So the main issue is the auction happens when you propose the job and what you\nreally want to do is give the system your job and be like, “Here are my preferences, run\nit at some point when it makes sense, given what I’ve told you about my preferences.”"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And that’s the thing that’s missing."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Right. People end up doing their own work in their head or sometimes even writing little\nPython notebooks, modeling what they expect to be the future usage of the hive to figure\nout when to submit their jobs."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And thus we have pushed a lot of complexity on the users."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. Okay. So that’s one thing that’s wrong. There’s like some problems in the basic\nscheduling … Mechanism that don’t let us exercise the kind of intelligence we want to in\nterms of picking what jobs run when. What else is wrong with the system?"
+    },
+    {
+      "type": "ts",
+      "text": "Distributing work and queries (01:27:33)"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Well, another class of problems is that we are not very good at starting at running\npeople’s work efficiently on a worker by worker basis. So I want to run this thing on the\nhive. Maybe I want to run a thousand different copies of the same process over a thousand\ndifferent shards of my data. This means that the very first thing that the hive has to do\nis get my code onto a thousand different cores. Okay. There’s a bunch of problems with\nthis. One is, well, maybe my code is quite large and just literally physically copying the\nbytes is going to be an expensive thing to do. Another thing that’s a problem with this\nis, well, right now all of these bytes are located in one particular place and now I have\na thousand different computers all trying to talk to the same one computer that happens to\nhave these bytes.  And that’s not going to necessarily go very well either. Yep. So it\nturns out the way to solve this is more or less with BitTorrent."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The same thing that we use to download copies of Red Hat Linux back in the day."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s built almost exactly for this problem of like, I want to have this data fan out\nfrom this one place to many different places. The fundamental insight here is that think\nabout the first person who successfully manages to get a chunk of your file. Well, now\nthey can share that chunk with everyone else while taking load off of the place that the\nfile originally was. So if you have your readers also be writers or your receivers also be\ntransmitters of data, then you end up evening out the work distribution much more nicely\nacross all of the machines that are trying to do work at once. And in this particular case\nof like a hive worker that’s trying to start running a binary that it doesn’t have all of\nyet, that’s just wasted cores. So you might as well use those cores transmitting chunks of\nthe executable to other machines."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s funny, BitTorrent is also like an exercise in mechanism design. And this is a problem\nthat we don’t have, but the original BitTorrent design is designed for mutually\ndistrustful people to share data. And one of the things that it wanted to do was\nincentivize people to be transmitters by giving them more download speed if they donated\nupload speed."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which I guess is not actually a part of the thing that we have to worry about here."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "No, we like to think that all of our … In fact, not only do we like to think that all of\nour employees are good actors for stuff like this, but also there’s no particular benefit\nto you in not transmitting while you receive, given that you’re just sort of wasting space\nout."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the incentives are in fact perfectly well aligned."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Cool. What about the APIs that end users get? Those grew very organically. The initial\nAPIs that we provided were like rock simple and not very scalable and not very\nexpressive. And then people have built lots of stuff on the outside of those and kind of\nextending in all sorts of ways those original designs, but there wasn’t ever a, let’s stop\nand think about what the right API really should be. So what kind of problems does that\ncreate?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "So one of the primary APIs that people use to access the hive is essentially this\ncomputation graph API, where you build this sort of graph of tasks that have dependencies\nof data that are produced by other tasks and so forth and so on. And you end up developing\nthis entire graph where you have your source data at one end of the graph and then like\nyour computation result at the other end. And you tell the hive, “Hey, run this stuff,”\nand it will do it in topological order and so forth. So this is nice that we have\nthis. One question you might ask is, are there optimizations you can do on this graph to\nmake it faster to run? And well, hey, now you’re back to writing a query planner. In fact,\none very common case of this is where your task graph is actually using a data frame\nlibrary like Polars in each individual task.  And then in fact, you can analyze the\ncomputation that polars or a different library is doing and optimize not just how the\ncomputation graph is structured between the machines, but what computation gets done on\neach existing machine versus when the computations get distributed."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the Polars story kind of brings us all the way back to SQL."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "All the way back to SQL, a lot of the work that’s done on the hive looks a lot like a big\ndistributed query. Not all of it, God knows. I’m not going to say that GPU training is\nsomething we can write SQL for, but a lot of the work that’s done preparing data sets and\nanalyzing data sets on the hive looks much more like an SQL query than most code in the\nworld."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And if you go look at the difference between Polars and Pandas, which are like Pandas\nbeing the standard dominant data frame library and Polars being this growing upstart, the\nbig difference there is again, the shape of the APIs and Polars is like, rather Pandas is\nthe eager mode thing. It’s just like you tell it what you want it to do and it immediately\ndoes it. And Polars does what’s called lazy execution, but really the way to think about\nit is the operations don’t really run the thing immediately. What they do is they build up\nthe query piece by piece, and then you get the whole query and you can see the whole thing\nand the system can optimize it."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And other distributed systems like Spark end up having the same insight. Spark\nalso looks a lot like a distributed query engine. So really we want to build sort of a\ndistributed query engine style interface onto the hive. And we’ve been taking a lot of\nsteps in that direction."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So are you saying that the API that we want is literally Polars or do you think that\nsomething of that style is what you want?"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "I want Polars to be part of it. I don’t think … So Polars has a distributed product. I\ndon’t think we are literally going to have people write a Polars LazyFrame, and that is\nthe way that you use this interface in the hive. But my guess is that Polars will be in\nthere somewhere, but you’ll also have other capabilities that map to some of, again, the\nJane Street specific or the finance specific things that we care about where we sort of\nprivilege things like operations over many dates or operations over different symbols, and\nwe can do a better job because we understand our domain of making sure that things are,\nfor instance, balanced across shards."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But the kind of key enabler is you want the computation to be run in a way that gives you\na kind of graph of a computation that is like-"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. You need some declarative computation graph. And the more that we know about what\nexactly you’re trying to run over what exact data, the better we can do of scheduling this\nand making it efficient."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Awesome. All right. So that is the mission that you are currently on or part of the\nmission"
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "That you’re creating on. That’s definitely part of the mission that I’m currently on is\nhow do we run these very large DAGs of computation efficiently and what’s more information\nthat we can get about these computations that can help us do so?"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Awesome. Okay. Well, maybe that’s a good place to stop. All right. Thanks so much."
+    },
+    {
+      "type": "speaker",
+      "text": "Jacob"
+    },
+    {
+      "type": "p",
+      "text": "Thank you, Ron. This is a lot of fun."
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with show notes and links at\nsignalsandthreads.com."
+    }
+  ]
+}

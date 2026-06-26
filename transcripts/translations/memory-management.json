@@ -1,0 +1,1115 @@
+{
+  "slug": "memory-management",
+  "paragraphs": [
+    {
+      "idx": 0,
+      "en": "Stephen Dolan works on Jane Street’s Tools and Compilers team where he\nfocuses on the OCaml compiler. In this episode, Stephen and Ron take a\ntrip down memory lane, discussing how to manage computer memory\nefficiently and safely. They consider trade-offs between reference\ncounting and garbage collection, the surprising gains achieved by\nprefetching, and how new language features like local allocation and\nunboxed types could give OCaml users more control over their memory.",
+      "zh": "Stephen Dolan 在 Jane Street 的工具与编译器团队工作，专注于 OCaml 编译器。在本期节目中，Stephen 和 Ron 一起踏上内存管理的回忆之旅，探讨如何高效且安全地管理计算机内存。他们分析了引用计数与垃圾回收之间的权衡，预取所带来的惊人性能提升，以及局部分配和非装箱类型等新语言特性如何让 OCaml 用户对内存拥有更多控制权。"
+    },
+    {
+      "idx": 1,
+      "en": "Stephen Dolan works on Jane Street’s Tools and Compilers team where he\nfocuses on the OCaml compiler. In this episode, Stephen and Ron take a\ntrip down memory lane, discussing how to manage computer memory\nefficiently and safely. They consider trade-offs between reference\ncounting and garbage collection, the surprising gains achieved by\nprefetching, and how new language features like local allocation and\nunboxed types could give OCaml users more control over their memory.",
+      "zh": "Stephen Dolan 在 Jane Street 的工具与编译器团队工作，专注于 OCaml 编译器。在本期节目中，Stephen 和 Ron 一起踏上内存管理的回忆之旅，探讨如何高效且安全地管理计算机内存。他们分析了引用计数与垃圾回收之间的权衡，预取所带来的惊人性能提升，以及局部分配和非装箱类型等新语言特性如何让 OCaml 用户对内存拥有更多控制权。"
+    },
+    {
+      "idx": 2,
+      "en": "Some links to topics that came up in the discussion:",
+      "zh": "以下是讨论中涉及话题的相关链接："
+    },
+    {
+      "idx": 3,
+      "en": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. It is my\npleasure to introduce Stephen Dolan. Stephen Dolan works here at Jane\nStreet on the Tools and Compilers team, in particular working on the\nOCaml compiler. Stephen has an interesting set of experiences, both in\nindustry and in academia.",
+      "zh": "欢迎来到 Signals and Threads，这是来自 Jane Street 的深度技术对话节目，涵盖整个技术栈的每一层。我是 Ron Minsky。很高兴为大家介绍 Stephen Dolan。Stephen Dolan 在 Jane Street 的工具与编译器团队工作，尤其专注于 OCaml 编译器。Stephen 有着丰富的经历，横跨工业界和学术界。"
+    },
+    {
+      "idx": 4,
+      "en": "A thing that you might have heard about that he’s done is he wrote a\nlittle tool called jq for querying JSON objects, which lots and lots\nof people have run into. And his dissertation, which made a lot of\nwaves, was about a system for reconciling subtyping and type\ninference, and a prototype system for doing that together called\nMLsub. And we are totally not going to talk about that today. Instead,\nwe’re going to talk about what Stephen has spent his time\nprocrastinating on while he was doing his dissertation, which is\nmemory management.",
+      "zh": "你可能听说过他做的一件事，就是他写了一个叫 jq 的小工具，用于查询 JSON 对象，很多很多人都用过。他的博士论文引起了不小的轰动，研究的是如何调和子类型与类型推断，并为此开发了一个叫做 MLsub 的原型系统。不过今天我们完全不打算聊这些，而是要聊 Stephen 在写论文期间用来拖延时间所做的事情——内存管理。"
+    },
+    {
+      "idx": 5,
+      "en": "In particular, Stephen did a bunch of work on OCaml’s multicore\ngarbage collector. Stephen joined Jane Street in 2019, and he’s worked\non OCaml’s garbage collector directly and also on extending OCaml’s\nlanguage to give programmers more direct control over how memory is\nmanaged, which is very important from a performance perspective. And\nwe’re going to talk about a lot of that today. To start with, Stephen,\nmaybe you could give us a little bit of an overview of how memory\nmanagement works, not just in OCaml, which is what you’ve been working\non here, but in general, across lots of different programming\nlanguages.",
+      "zh": "具体来说，Stephen 在 OCaml 的多核垃圾回收器上做了大量工作。Stephen 从 Cambridge University 取得博士学位后，大约一年半前加入了 Jane Street。Stephen，欢迎你。"
+    },
+    {
+      "idx": 6,
+      "en": "Sure, that sounds like a good idea. And thanks for the\nintroduction. So I suppose at a basic level, programs need to put\ntheir data in memory somewhere and need to make sure that there aren’t\ntwo things in the same place at the same time. I suppose at the very\nbasic level, the simplest way of doing that is you just write a big\nmap of where everything goes. Everything goes into a specific spot and\nnever moves. And there’s just a fixed amount of memory in use for all\ntime.",
+      "zh": "当然，这听起来是个好主意。感谢介绍。我想从最基础的层面来解释一下什么是内存管理。作为程序员，除了位和字节之外，你最基本的工具就是某个存储数据的地方。内存管理的核心问题是：数据存在哪里，以及存多久？"
+    },
+    {
+      "idx": 7,
+      "en": "I mean, people actually do that for tiny programs running on tiny\nmachines in microcontrollers, but it reaches its limits fairly quickly\nafter that. So I suppose for full-scale programming languages, the two\nbasic things that you have for managing memory are the stack and the\nheap. So the stack is, you notice that an awful lot of values that our\nprogram manipulates are used for a very short space of time.",
+      "zh": "当然，对于跑在微控制器上的小程序来说，人们确实会这么做，但是嘛，是的。"
+    },
+    {
+      "idx": 8,
+      "en": "There’s a local variable in a function. You need some memory to store\nit. Then when the function returns, it’s gone and you don’t need it\nagain. So you can just reserve a large piece of memory, use it as a\nstack. So it just grows from one end, whenever you need a bit of\nmemory, you put it on the end, whenever you’re done with it, you pop\nit off and you ensure that you do things in a strictly last in, first\nout manner.",
+      "zh": "函数里有一个局部变量，你需要一块内存来存储它。函数返回时，你不再需要那块内存了，它就会被复用。这就是栈分配。"
+    },
+    {
+      "idx": 9,
+      "en": "Right. And the ordering there is in part enforced by the discipline of\nfunction calls. You call a function, it gets a new stack frame, you do\nsome stuff. Then when the function returns, the stack frame vanishes,\nand it looks like a stack data structure.",
+      "zh": "对。这里的顺序在一定程度上是由函数调用的规则来保证的。你调用一个函数，就把一个栈帧压进去；从函数返回，就把栈帧弹出来。所以你自然而然地得到了这种嵌套的顺序。"
+    },
+    {
+      "idx": 10,
+      "en": "Yeah, exactly. It works particularly well for the local variables of a\nfunction. Of course not all memory that a program uses is going to\nwork in such a straightforward way. Sometimes exactly how long a piece\nof data is going to hang around for is not completely obvious, or even\nwhen it’s obvious doesn’t line up perfectly with a single function\ncall.",
+      "zh": "是的，完全正确。这对函数的局部变量来说特别好用。当然，并非所有内存都有这种简单清晰的模式——在函数调用时创建，在函数返回时销毁。"
+    },
+    {
+      "idx": 11,
+      "en": "So then you’ve got heap allocations where you have some lifetime which\nis more complicated than a stack. And there are lots and lots of\ntechniques for dealing with those. I suppose the oldest one is the\nC-style one, where there’s a function called to malloc some memory, to\nallocate a new piece of memory. And then when you’re done with it, you\nfree it. And if you make some minor slip-up here, so you free\nsomething twice accidentally, or you continue using something after\nyou’ve freed it, then your program has an exploitable security\nvulnerability and everything breaks in a million different ways.",
+      "zh": "这时候就有了堆分配，堆上数据的生命周期比栈规则下的生命周期更为复杂，需要以其他方式来管理。因此，针对这种更复杂的情况，存在不同的管理策略。"
+    },
+    {
+      "idx": 12,
+      "en": "So the ones I’m interested in are what’s called safe languages, where\nthere’s some means of managing heap memory, where this doesn’t happen,\nwhere it’s actually memory safe. You end up not crashing or being\nexploitable or reusing memory with different types and so on. Those\nboil down to some form of garbage collection when the language is\nresponsible for working out when memory is in use and freeing it when\nit’s no longer in use.",
+      "zh": "我感兴趣的是所谓的安全语言，这类语言有某种机制来保证内存的安全管理。理论上，程序员不会出错，不会访问不该访问的内存。主要有两种方式：第一种是垃圾回收，运行时系统本身会追踪内存，并在确认某块内存不再被使用时将其释放。另一种是编译期检查，由编译器来验证你的操作是否正确。"
+    },
+    {
+      "idx": 13,
+      "en": "And the alternative being some form of static tracking, a static\nverification that you’ve done your manual memory management correctly,\nlike the ownership and borrowing in Rust. So at the moment OCaml, the\nprogramming language very heavily used in Jane Street, is very far off\nthe garbage-collect-everything scales, which is the right trade-off\nonly some of the time. And some of the things that we’re working on,\nthis is to try to allow some other styles of memory management so you\ncan do more explicit control over how long things are aligned for.",
+      "zh": "另一种方式是某种形式的静态追踪——通过静态验证来确认你已经正确地管理了内存，编译器才会接受你的程序。"
+    },
+    {
+      "idx": 14,
+      "en": "Right. So just to summarize that, heap and stack are the two basic\ndata structures. It is maybe worth saying with the heap, you have some\nbig region of memory and one way or another, you keep track of some\nnotion of what’s free and what’s in use and in the C world, where\nyou’re doing things manually and unsafely, malloc and free are the\nthings for moving those data structures around.",
+      "zh": "好的。简单总结一下，堆和栈是两种基本的数据结构。在离开栈分配这个话题之前，也许值得一提的是，在不安全的语言中，你也可以写出有缺陷的栈分配，对吧？比如，在函数返回之后，你还可能持有一个指向局部变量的引用。以 C 为例，你可以这样做，然后产生悬空指针。"
+    },
+    {
+      "idx": 15,
+      "en": "And you have to make sure you call them in exactly the right\nplaces. And then in a garbage-collected language, we have some system\nthat’s still got some notion of what’s allocated and what isn’t\nallocated, but we have automated techniques for computing an\napproximation of what are the things that you actually need to keep\naround and making sure that you keep around at least all the things\nthat you need to keep around and maybe a little bit extra. Is it maybe\nworth talking about what are those techniques for approximating what\nis the stuff that you need to keep around?",
+      "zh": "而且你必须确保在恰当的地方调用它们。而在垃圾回收语言中，内存管理完全是自动的。问题就变成了：回收器是如何工作的？"
+    },
+    {
+      "idx": 16,
+      "en": "Sure. Yeah. So I suppose the big two of them are what’s called tracing\ncollection and reference counting, which have their own innumerably\nmany different variants. But in tracing collection, you periodically\nwork out what’s live by starting with the stuff that you definitely\nknow is in use. So the local variables of functions that are running\nand global variables and tracing from there. So following every\npointer that they point to to see which… So the structure has a\nreference to that structure, has a reference to that structure. So you\nfollow all of the references until you find the set of all of the\nstructures that are in use.",
+      "zh": "当然。我想其中最主要的两种方式是追踪式回收和引用计数。追踪式回收中有很多不同的流派，大家对此多少有些了解。但其基本概念是：你取一组根——也就是那些可以被直接访问的东西，包括当前调用栈中的局部变量、全局变量等。"
+    },
+    {
+      "idx": 17,
+      "en": "And when you get to the end and you have no more references left to\nfollow, then everything that you haven’t yet touched is garbage. That\nspace cannot possibly ever be used again. So that’s available for\nfuture allocations. The alternative is reference counting. So each\npiece of memory that’s in use, you keep track of how many references\nthere are to it. And you increment or decrement that when more\nreferences are created or destroyed. So you’re constantly maintaining\nthis counter for how many other pieces of data refer to a piece of\ndata. And if it ever reaches zero, then that bit of memory can be\nreused.",
+      "zh": "当你走到最后，没有更多的引用可以跟踪时，所有你访问过的对象就都是存活的，也就是说，还有正在运行的代码可以访问它们。而所有你没有访问过的对象就是死亡的，可以被回收。"
+    },
+    {
+      "idx": 18,
+      "en": "Right. And I guess one immediate problem with the naive ref counting\napproach is when you have cycles, when you have a set of data that\npoints circularly to itself. And then if you just do the kind of naive\nref counting thing, the count will never get decremented to zero. And\nas a result, you’ll never collect that data.",
+      "zh": "对。我猜朴素引用计数方式的一个直接问题就是循环引用。如果两个对象互相指向对方，那它们的引用计数就永远不会降到零。"
+    },
+    {
+      "idx": 19,
+      "en": "Yeah, exactly. I suppose a really good overview of this is there’s a\npaper called “A Unified Theory of Garbage Collection,” which is David\nBacon, I think, which, one way of looking at this is that in tracing\nGC, you need to walk over all of the stuff that’s still in use. And\nthen everything that you don’t touch is the stuff that’s dead and can\nbe garbage collected.",
+      "zh": "是的，确实如此。关于这个话题有一篇很好的综述，叫做《A Unified Theory of Garbage Collection》，文中深入探讨了这一问题，并解释了引用计数和追踪式回收之间其实有着非常紧密的联系。"
+    },
+    {
+      "idx": 20,
+      "en": "Whereas in reference counting, you need to walk over all of the stuff\nthat’s dead. Whenever a reference reaches zero, you need to go through\nall of its references, decrement all of those references and see that\nthose reach zero. So you end up tracing a different set of stuff. You\nend up tracing through all the stuff that you’re about to get rid of\ninstead of the stuff that you’re trying to keep alive. But as you say,\nif there are cycles here, then the cycle ref counts never go to zero,\nessentially.",
+      "zh": "而在引用计数中，你需要遍历所有已死亡的对象。每当引用计数降为零，你就需要递归地处理它所指向的所有对象，并将那些对象的计数减一。所以你始终要为所有死亡的对象付出代价。"
+    },
+    {
+      "idx": 21,
+      "en": "Right. Although there are various hacks that people have for getting\nrid of this. I don’t know if I have the right summary of this, but my\nsense is that you, roughly speaking, you occasionally do some tracing\nto figure out what’s actually dead to get rid of cycles. Is that a\ngood summary of how these cycle-removal techniques for ref counting\nsystems work?",
+      "zh": "对，不过人们也有各种办法来规避这个问题。我不知道是否要深入讲，但 Python 就做了这方面的事情。"
+    },
+    {
+      "idx": 22,
+      "en": "Python does the one you’re saying, it has a mostly reference-counted\nsystem and periodically runs a tracing collector to collect\ncycles. The other technique is you can have some programmer annotation\nthat says certain references should be weak and shouldn’t contribute\nto the reference counts so that those references aren’t enough to keep\nthings alive.",
+      "zh": "Python 用的就是你说的那种方式，它主要采用引用计数，并周期性地运行一个追踪式垃圾回收器。"
+    },
+    {
+      "idx": 23,
+      "en": "So a cycle that involves those gets collected anyway. But it’s a\nlittle trickier though and requires the programmer to really\nunderstand what’s going on and cooperate in telling you which\nreferences are which. The general solutions that work without any\nprogrammer annotation boil down to occasionally do tracing.",
+      "zh": "所以涉及循环引用的对象最终还是会被回收。不过这稍微有些棘手，需要额外了解哪些对象可能处于循环中，哪些不会。"
+    },
+    {
+      "idx": 24,
+      "en": "And how do you think of the trade-off between ref counting and\ntracing-based garbage collection? I feel like there’s an intuition out\nthere of, oh, ref counting is faster and tracing is slower and that’s\nthe trade-off between them, which I think is a bad summary. How would\nyou describe the difference?",
+      "zh": "你怎么看引用计数和追踪式垃圾回收之间的权衡？我感觉普遍的说法是引用计数更简单但更慢，而追踪式更复杂但更快。"
+    },
+    {
+      "idx": 25,
+      "en": "Yeah, I think that’s certainly not a great summary. It is a big enough\nchunk of work to implement a memory-management system for a language\nthat it’s quite difficult to compare like with like, because there\naren’t that many that have a choice between the two. The few\nexperiments that have been done have mostly shown that ref counting,\nespecially ref counting in a multi-threaded system, is really quite\nslow.",
+      "zh": "嗯，我觉得这个总结确实不够准确。实现一个好的追踪式回收器确实是相当大的工程量。引用计数则相对容易添加到一门语言中，递增和递减计数的基本操作并不复杂。"
+    },
+    {
+      "idx": 26,
+      "en": "There are some tricks called deferred reference counting to avoid some\nof the overhead, but mostly you end up having to do an awful lot of\nincreasing and decreasing the reference counts every time you move\npointers around. And in a multi-threaded system, those operations end\nup being atomic operations, which carry their own overhead. The\nbenefit that you do get though is that memory can be reused much\nfaster than it can be reused in a tracing system.",
+      "zh": "有一些叫做延迟引用计数的技巧可以减少部分开销，但大体上来说，每次内存操作都要付出一个固定的额外代价。而这个固定开销往往并不小。"
+    },
+    {
+      "idx": 27,
+      "en": "So ref counting systems tend to detect more or less immediately when a\npiece of data is free and is available for reuse, whereas tracing\ngarbage collected systems, even when they don’t stop the whole world\nto do everything at once, even when they run incrementally, they tend\nto operate in phases. And if a piece of memory becomes available for\nreuse, becomes garbage during this phase, it’s not going to be noticed\nuntil the next phase.",
+      "zh": "引用计数系统能够几乎立即检测到某块数据已经空闲并可以复用。而追踪式回收器则需要对所有存活数据执行一次单独的遍历，才能确定哪些数据是死亡的。"
+    },
+    {
+      "idx": 28,
+      "en": "So it tends to hang around for a bit longer before being reused. So\nthat trade-off usually means that ref counting can often work in a\nsmaller amount of memory than tracing garbage collection can. I think\na very rough one would be ref counting tends to take up less memory\nand tracing would usually be faster, but that’s also pretty simplistic\nbecause tracing garbage collection has a lot of knobs to twiddle.",
+      "zh": "所以数据往往会多存留一段时间才能被复用。这种权衡通常意味着追踪式回收器比引用计数系统需要更多的内存峰值。"
+    },
+    {
+      "idx": 29,
+      "en": "In particular, you get to choose afterwards how often you want the\ngarbage collector to run. You can choose to trace frequently or not to\ntrace frequently, which means that you can’t really describe the\nperformance of a program in terms of a single point saying it takes\nthis long and uses this much memory. It’s more like a curve that you\nget.",
+      "zh": "特别是，你可以在事后选择希望垃圾回收器多久运行一次。你可以让它更频繁地运行，从而降低内存峰值；也可以让它更少运行，从而减少总体的 CPU 时间消耗。"
+    },
+    {
+      "idx": 30,
+      "en": "With a tracing system, you could decide to say, “I want my program to\nnot take very long,” and then you’ll need a ton of memory. Or you\ncould say, “I want my program to not use very much memory,” and then\nit’ll take a long time, garbage collecting constantly. So you get this\nknob that you can slide from one extreme to the other.",
+      "zh": "使用追踪式系统，你可以选择说「我希望程序运行时间不要太长」，然后频繁地运行 GC；也可以很少运行它，节省 CPU 时间，但内存峰值可能会更高。"
+    },
+    {
+      "idx": 31,
+      "en": "Right. And then one of the dark arts of building performant garbage\ncollected programs is figuring out just how to twiddle that knob just\nso that you get the right behavior for the program in question.",
+      "zh": "对。而调优高性能垃圾回收程序的一门暗黑艺术，就是搞清楚该用什么 GC 参数——运行多频繁？堆允许增长到多大？诸如此类。"
+    },
+    {
+      "idx": 32,
+      "en": "Yeah. I mean, this varies a lot from collector to collector. I mean,\nsome of them have a lot of things to twiddle and they can be very\ndifficult to get the performance to go the way you want. I quite like\nthe design of the OCaml one in this regard. I mean, there are a few,\nbut there’s basically only one that matters. And if you put it one\ndirection, the program takes more memory and goes faster and if you\nput it the other direction, the program takes less memory and goes\nslower.",
+      "zh": "是的。不同回收器之间差异很大。比如，相比 JVM 的回收器，OCaml 的回收器参数就相对较少，据我了解是这样。而 JVM 回收器的参数，依我的经验，实在是多得过头了。"
+    },
+    {
+      "idx": 33,
+      "en": "That’s pleasingly simple. I guess another thing that people think of\nas a trade-off there has to do with the length of pauses, right? If\nyou want responsive programs, then I think people think, oh, tracing\ncollectors are problematic because they have these phases where they\nstop the program and scan everything and then ref counting ones less\nso because there’s kind of incrementally doing the work immediately as\nsoon as it becomes relevant.",
+      "zh": "这倒挺清爽的。我想另一个人们常提到的权衡点是停顿时间。传统观点似乎认为追踪式回收会导致 GC 停顿，而引用计数则更为平滑。"
+    },
+    {
+      "idx": 34,
+      "en": "But that’s not quite right either, right? Because the whole thing\nwhere once you decrement the counts to zero, there could be a whole\nbig thing that becomes immediately unavailable. And then you have to\nimmediately, synchronously collect all of it. Whereas tracing\ncollectors are often designed, and the OCaml one in particular is\ndesigned, to operate incrementally, where you can collect things in\nslices and do a few 100 microseconds of work here and a few 100\nmicroseconds of work there and never have to delete a whole big data\nstructure all at once.",
+      "zh": "但这也不完全对，对吧？因为一旦引用计数降到零并触发递归，你仍然可能面临一个 O(n) 的遍历。"
+    },
+    {
+      "idx": 35,
+      "en": "Yeah. It’s a bit of a pity that that’s a fairly common\nmisconception. It is exactly as you say it. When you remove the final\nreference to the root of a very large tree, most ref counting systems\nwill then immediately have to traverse the entire tree just to\ndecrement all of the references and mark them all as free. In a very\nnaively implemented garbage collector where you just periodically stop\nthe world and do everything, you end up with massive pauses and a very\nnaively implemented reference counting system tends to work reasonably\nwell.",
+      "zh": "是的。这个相当普遍的误解确实有点遗憾。正如你所说，当你把引用计数减到零并触发递归时，这个递归可以任意深，花的时间也可以任意长。"
+    },
+    {
+      "idx": 36,
+      "en": "But when you get really down into the details of optimizing for post\ntimes, there’s a bit more that you can do in a tracing collector. The\nwork there is already in phases, and it’s easy to divide up into\nchunks. It’s a bit trickier to do that kind of thing with a ref\ncounting collector. It’s not impossible. There are ref counting\ncollectors that do lazy destruction of things.",
+      "zh": "但当你真正深入到针对停顿时间进行优化的细节时，涉及的东西就更多了。"
+    },
+    {
+      "idx": 37,
+      "en": "Do they do lazy propagation of the counts as well?",
+      "zh": "他们也做了计数的惰性传播吗？"
+    },
+    {
+      "idx": 38,
+      "en": "This has been implemented and this has been done. I don’t think this\nis deployed much in production systems because you lose what’s often\ndescribed as one of the major benefits of ref counting, in that the\ndisruptors run promptly. If you’re going to delay them, then you end\nup with having something that has the bad finalization semantics of a\ntracing garbage collector with the overhead of actually maintaining\nreference counts all the time. So it’s not…",
+      "zh": "这个方案已经有人实现和研究过了。我不认为目前有哪里在生产环境中真正部署了它。这是一个聪明的设计，但有其自身的复杂性。"
+    },
+    {
+      "idx": 39,
+      "en": "It’s a clever design which obtains for you the worst of both worlds.",
+      "zh": "这是一个聪明的设计，能让你同时得到两种方式最坏的特性。"
+    },
+    {
+      "idx": 40,
+      "en": "More or less. Yeah. Actually, it’s not strictly the worst because the\ncase where reference counting does really well is when there are\nobjects that just only ever have one reference and they don’t have\nreferences to anything else. A good example of this is a large I/O\nbuffer, that you’re opening a file, allocating a big buffer, using it\nfor some stuff, and then throwing away the buffer.",
+      "zh": "差不多吧。不过也不完全是最坏的情况，因为引用计数真正大放异彩的场景，是当你拥有大量大型对象时，比如大型缓冲区。"
+    },
+    {
+      "idx": 41,
+      "en": "And in a ref-counted system, you don’t need to worry about the\ntraversals because it’s a buffer. It’s got no pointers in it. It’s\njust got some bytes. The ref count goes from zero to one when you\nallocate the buffer. You do some stuff with it, and then it goes from\none to zero when you’re done. And then the next buffer you want, you\nget the same buffer back. So your program keeps running only ever\nusing one of these buffers for every single file that it opens.",
+      "zh": "在引用计数系统中，你不需要担心遍历，因为它是一个缓冲区，不指向其他任何东西。所以当它的引用计数降为零时，你直接释放那块缓冲区就行了，不需要递归到任何地方。"
+    },
+    {
+      "idx": 42,
+      "en": "That style of memory usage where there’s a single large object, it’s\nquite difficult to get that to perform well with a tracing garbage\ncollector. You often end up cycling through 100 buffers because it\ntakes that long for the collector to notice that the first one is now\navailable for reuse, because that’s how often it’s cycling through the\nentire heap. This is partially why it’s so difficult to compare these\nbecause they’re so heavily workload dependent. And if you have a\nfavorite, you can easily come up with programs where your favorite\nstrategy is the best one.",
+      "zh": "这种只有单个大型对象的内存使用方式，很难与追踪式回收器配合得好，因为追踪式回收器往往会把对象多留一段时间。"
+    },
+    {
+      "idx": 43,
+      "en": "Right. And also in a given language ecosystem, the programs are going\nto evolve towards the efficient idioms. So you take a set of\nbenchmarks and you change how memory management works and you may get\nworse performance than it seems like you should because things have\nbeen tuned for the other behavior.",
+      "zh": "对。而且在特定的语言生态中，程序会逐渐向其内存管理策略的高效情形演化。如果策略是引用计数，你往往会看到更多使用大量大型缓冲区的程序，因为这种模式效果非常好。"
+    },
+    {
+      "idx": 44,
+      "en": "Yeah, exactly. I mean, to some extent, even the example I just said\nabout buffer management is a candidate for that. In languages with\nlots of garbage collection, you’ll often find APIs where the caller\nprovides the buffer. So reading a file, should reading a file return\nyou some bytes or should it accept a byte buffer into which to put the\ncontents? And in languages where you’re using tracing GC and it’s\ndifficult to efficiently allocate and deallocate a large buffer all\nthe time, you’ll often end up with APIs where the caller provides the\nbuffer. I mean, that’s more efficient in ref-counted languages, too,\nbut it’s less of a gap.",
+      "zh": "是的，确实如此。从某种程度上说，我刚才提到的缓冲区管理的例子，本来就是一种典型的 C 语言风格，大量管理大型缓冲区。这也是引用计数在 C 这类语言中效果很好的部分原因——当然，C 是手动管理内存而非引用计数，但风格是类似的。"
+    },
+    {
+      "idx": 45,
+      "en": "The other thing that’s interesting about ref-counted GCs is the\ndeterminism of finalizers, which I guess you don’t get if you do lazy\nfinalization, but you do get otherwise, also makes it easier to manage\nthings other than memory in the garbage collector, right? Because you\nknow, when things are going to be deallocated.",
+      "zh": "引用计数 GC 的另一个有趣之处，是终结器的确定性，我想这其实是所有系统都有的特性。但终结器到底是什么呢？"
+    },
+    {
+      "idx": 46,
+      "en": "So if you’re managing something like memory in your GPU, which you\nhave a very small amount of and would like to give back as soon as\npossible, you can do that in a ref counted system, and in a tracing\nGC, it’s much harder because you really want to know that when you’re\ndone with this particular round of training, that you’ve given up the\nrelevant resources on the GPU. And it’s just harder to know that if\nthat memory is being again managed by this unpredictable tracer.",
+      "zh": "比如你在管理 GPU 上的内存，那是一种数量非常有限、需要仔细对待的资源，所以知道何时可以释放 GPU 内存非常重要。在垃圾回收语言中，通过终结器，你可以在一个对象被垃圾回收时执行一段代码，用来释放相应的 GPU 内存。"
+    },
+    {
+      "idx": 47,
+      "en": "Well, I suppose for that sort of example, what you really want is\nownership, for instance like Rust provides or uniqueness types like in\nClean or linear types or any of the various implementations of this\nidea, but where you know that you have the only reference to this GPU\nmemory or this hardware resource or whatever, so that you can see on a\nparticular line of code, that’s where I get rid of what I know to be\nthe only reference.",
+      "zh": "我想对于这类例子，你真正需要的其实是所有权，比如 Rust 那样的机制。也就是能够说「这个对象拥有这块 GPU 缓冲区」，当它被丢弃或销毁时，缓冲区就会被释放。这种方式更自然一些。"
+    },
+    {
+      "idx": 48,
+      "en": "If you’re using ref counting, then you don’t necessarily know that\nmaybe something you have called has accidentally captured a reference\nto that GPU buffer and stored it in a global data structure or a cache\nor something. And it’s hanging around there. And at the point where\nyou think you’re done with the reference count is actually two, not\none. You don’t quite have the level of determinism with ref counting\nthat you might imagine. You know that if this is the only reference,\nthen it will definitely be cleaned up at this point. But it can be\nhard to tell that it’s genuinely the only reference to something.",
+      "zh": "如果你用的是引用计数，你不一定能确定你调用的某段代码是否把引用存储到了某个全局变量里。你可以通过查看所有代码来推断，但无法只看局部代码就得出结论。"
+    },
+    {
+      "idx": 49,
+      "en": "Right. I guess the behavior is more deterministic, but you can’t quite\nreason about it locally. You can’t just look at the code in front of\nyou and know that it’s gone. Some other thing that you may have called\nmay have stashed a reference. So it’s a little harder to predict\nwhat’s going on. So we’ve talked a bunch about the trade-off between\ntwo different flavors of automatic garbage collection. How do you\nthink about the trade-off between C- or Rust-style manual garbage\ncollection versus automatic collection?",
+      "zh": "对。我想行为虽然更确定，但你并不能完全从局部来推断。你必须从整个程序的角度来推理，才能精确知道它何时发生。"
+    },
+    {
+      "idx": 50,
+      "en": "Well, since you did say C or Rust style, I’m going to have to jump on\nthat one first because I see a big difference between the safe and the\nunsafe styles. The unchecked style in C is essentially a mechanism for\nupgrading any bug in your program into an exploitable security\nhole. There are no benign mistakes when you’re using truly manual\nunchecked memory management.",
+      "zh": "既然你提到了 C 或 Rust 的风格，我得先跳出来说几句，因为我认为安全语言和不安全语言之间存在明确的分野，而我当然是坚定地站在安全语言这一边的。"
+    },
+    {
+      "idx": 51,
+      "en": "Right. There was some results not so far in the past where Microsoft,\nI think, said something like 40 or 60 or something percent of their\nbugs were just buffer overflows or some basic memory management\nproblems.",
+      "zh": "对。不久前有一些研究结果显示，Microsoft 似乎表示，Windows 中大约 40% 的安全漏洞是由内存不安全造成的。"
+    },
+    {
+      "idx": 52,
+      "en": "Yeah, it is a bit saddening, but on happier topics, Rust exists. That\nbasically gets you the coding style of very well written C++, where\nall of the memory management is being correctly done. And the compiler\ncan actually verify this and tell you that all of the memory\nmanagement is being correctly done. Which is a style that I like if\nI’m writing that sort of low-level code where I’m paying lots of\nattention to exactly how memory is laid out.",
+      "zh": "是的，这确实让人有些沮丧，不过说个让人开心的消息，Rust 出现了。它基本上给你提供了 C++ 的编码风格——需要花大量时间思考所有权和进行显式内存管理——但没有那些最严重的缺陷。"
+    },
+    {
+      "idx": 53,
+      "en": "But not a style that I like if I’m writing a type checker or writing\nsomething higher level that deals with lots of complicated linked\ntree-like structures, because it’s just a lot of work to explain to\nthe compiler exactly why it’s okay to hold onto a particular\nreference. Sometimes it’s easier to just have a long-time tracing\ngarbage collector work out which ones it’s safe to hold onto.",
+      "zh": "不过那不是我喜欢的风格，当我在写类型检查器，或者编写处理树状结构的高层逻辑、共享关系很复杂的东西时，尤其如此。"
+    },
+    {
+      "idx": 54,
+      "en": "Right. So trade-off number one, manual collection is manual. It\nrequires work. Okay. But how about in the other direction? What are\nthe upsides of manual management?",
+      "zh": "对。所以权衡一：手动管理就是手动的，需要额外的工作。好，但如果我只是在比较自动策略呢？也就是说，如果我可以在引用计数和追踪式 GC 之间选择，性能上的权衡是什么？"
+    },
+    {
+      "idx": 55,
+      "en": "So for purely memory, it’s primarily performance. You can go faster,\nyou can write the API, looks like it’s returning strings and not have\nto deal with manually managing buffers, working out when it’s safe to\nreuse a buffer, worrying about aliasing between two mutable\nstructures.",
+      "zh": "就纯内存而言，主要还是性能问题。你可以跑得更快，可以按自己的意愿设计 API，诸如此类。更根本的问题是我刚才描述的别名和可变性问题。"
+    },
+    {
+      "idx": 56,
+      "en": "You can write in-place mutation of things and know that you’re\nmutating the only reference to this thing. So nobody else’s data\nstructures are suddenly going to change underneath them. And you can\ngenerally write in the very efficient programming style that you can\ndo in, say, C, but you can write in that style while still writing\nrobust modular software and not worrying about having mysterious side\neffects because you mutated or freed something.",
+      "zh": "你可以对某些东西进行原地修改，并且知道你正在修改的是对该对象的唯一引用。这是另一种风格上的特点。"
+    },
+    {
+      "idx": 57,
+      "en": "So I guess you’re really highlighting two benefits. One benefit is\nmore precise control makes things more performant. And then the other\none is the same type-level mechanisms that let you get rid of the\ngarbage collector also let you get rid of a bunch of common and\ndifficult programming problems. Basically in order to get rid of the\nneed for a garbage collector, you want some type-level tracking of who\nowns this piece of memory. So I can tell when no one owns it and I can\nmake sure statically in the code that it’s something that gets rid of\nit at the right point in time.",
+      "zh": "所以我觉得你其实是在强调两个好处。一个好处是更精确的控制让程序跑得更快；另一个好处是你可以写出更丰富的算法。"
+    },
+    {
+      "idx": 58,
+      "en": "And that you never use something that has already had that been done\nto it. At the same time, that tracking of ownership avoids what you\nrefer to as aliasing problems, which is basically the kind of bug you\nrun into when you have some function that has two arguments that are\nreferring to what seem like two different things. And under the\ncovers, in a way that you’re not necessarily thinking about, it turns\nout they share some structures underneath. And so when you mutate\nthings, you can end up with all sorts of bizarre results in the case\nwhere there’s aliasing, where you have two things pointed to the same\nplace, that you wouldn’t see if they were actually distinct.",
+      "zh": "而且你永远不会去使用一个已经被处理过的东西。但与此同时，这种被迫的约束有时也会妨碍某些编程风格。"
+    },
+    {
+      "idx": 59,
+      "en": "Yeah. And it’s not just those bugs that have a cost, it’s the things\npeople do to avoid the possibility of those bugs has a cost. In\nlanguages where you’re making heavy use of mutable data, you often\nfind people doing defensive deep copying of things. Some function\ntakes in a list. But the first thing it does is copy that to another\nlist because, oh, someone might have passed me their list and I’m\ngoing to start adding things to the end of it.",
+      "zh": "是的。而且有代价的不只是那些 bug 本身，还有人们为了避免这些 bug 而采取的种种措施。比如，你没法共享那个数据结构，因为一旦共享了，它就可能被改动……"
+    },
+    {
+      "idx": 60,
+      "en": "I can’t add stuff to the end of someone else’s list or some of their\ndata structures might be corrupted. So you see these kind of defensive\ncopying, or even deep copying of structures, just to make sure that\nthey’re all separate. That’s often a waste of time, but it’s difficult\nto tell exactly when it’s a waste of time without doing this careful\nporing through every line of code.",
+      "zh": "我没办法往别人列表的末尾添加东西，否则他们的某些数据结构可能就损坏了。为了防范共享可变状态带来的问题，你最终会做大量的拷贝。"
+    },
+    {
+      "idx": 61,
+      "en": "I know two good strategies to avoid having to do that. There is have\ntype-level control over aliasing like Rust does and know exactly\nwhether two things might overlap and know that if someone’s passing\nthis to me, then either it’s a borrowed and mutable reference, I don’t\nget to change it, or it’s transferred ownership or give me a mutable\nreference to it, and I do. Or alternatively, the other one is use\nimmutable data structures into a garbage collector. So you can update\nan OCaml map and you get a new map and you haven’t changed the old\none. I would quite like to be able to do both of those tricks in the\nsame language, but we’ll wait for now.",
+      "zh": "我知道有两种好的策略可以避免这种情况。一是像 Rust 那样，在类型层面对别名进行控制；或者像大多数函数式语言那样，保证不可变性。"
+    },
+    {
+      "idx": 62,
+      "en": "Yeah, I like that account because I feel like it explains the\ndifference between a language like OCaml and a language like Rust,\nvery cleanly. And I think there’s a funny thing that on some level\nRust and OCaml seem massively different, but from a kind of\nsensibility perspective, they seem very close. In fact, I think it is\nnot accidental that the first version of Rust was written in OCaml,\ncertainly written by people who understand languages like OCaml very\nwell.",
+      "zh": "是的，我喜欢这种解释方式，因为我觉得它很好地说明了 OCaml 和 C 这两种语言在性能问题上的差异所在。"
+    },
+    {
+      "idx": 63,
+      "en": "The problem is shared mutation. And there are two ways out. You can\nmake sure there’s no sharing, or you can make sure there’s no\nmutation. And sometimes you want to be able to take both in the same\nlanguage and there are varying trade-offs when you do that. So one of\nthe advantages of manual memory management is just performance. And on\nthe automatic garbage collector side, one of the ways one deals with\nthat is by just piling almost unbounded amounts of cleverness into\ntrying to make the garbage collector more efficient.",
+      "zh": "问题的根源是共享可变状态。解决它有两条路：要么确保没有共享，要么确保没有可变性。"
+    },
+    {
+      "idx": 64,
+      "en": "You can’t quite close all the gap. There’s nothing quite as good as a\nhuman who’s carefully designed exactly what you want. No automated\nsystem quite gets there, but there’s a lot of work that can be done to\nmake garbage collectors faster. And there’s in fact been a lot of work\nrecently on OCaml’s garbage collector, which you’ve had some\ninvolvement in, making it faster. So I’d like to talk some about\nthat. But before we do, it might be worth having a quick tour of how\nOCaml’s garbage collector works. Can you say a little bit about the\nstructure of OCaml’s GC?",
+      "zh": "你不可能完全弥合这个差距。没有什么能比得上一个人类工程师——他精心为特定用途设计了数据结构，清楚地了解别名情况，能够基于此做出完美的决策。"
+    },
+    {
+      "idx": 65,
+      "en": "So it’s what’s called a generational collector, which means there are\nroughly two almost independent garbage collectors in there. I’m going\nto start by describing the one called the major collector. So that one\nis responsible for most of the memory of the program. It’s got an\nallocator that’s fairly standard. I mean, it’s quite a neat one, but\nit’s interface looks more or less like a C allocator, except it\ndoesn’t have a free operation.",
+      "zh": "这就是所谓的分代收集器，意思是大致上存在两个几乎相互独立的堆。有一个叫做小堆的小型堆，新分配的对象就放在这里；还有一个叫做大堆的大型堆，存放那些经历了多次垃圾回收仍然存活下来的对象。"
+    },
+    {
+      "idx": 66,
+      "en": "And every so often it samples all of the, what are called the\nroots. Those are the things that are definitely in use. They’re the\nlocal variables for the functions that are currently running and the\nglobal variables for all the modules that have been loaded. And a\ncouple of other weird special case things, but that’s most of it. And\nthen the idea is it’s going to trace everything from the roots,\neverything reachable by following any reference, starting from the\nroots, gets marked is what the term is.",
+      "zh": "每隔一段时间，它会扫描所有被称为根的东西。根就是那些可以从程序中直接访问到的东西，也就是当前作用域里的局部变量、全局变量等等。"
+    },
+    {
+      "idx": 67,
+      "en": "There’s a little bit at the start of each object that indicates\nwhether or not it’s been marked. And if one’s out of things deserves a\nbig stack of stuff that is in the process of being marked. When it\nfinds a new object, pushes it onto that stack, marks it, and then\nperiodically pops something off, marks all of its fields. When it runs\nout of stuff to mark, then it enters the other phase, which is called\nsweeping. It runs through all of the objects and the ones that haven’t\nbeen marked, those are free memory.",
+      "zh": "每个对象开头有一小块区域，用来标记它是否已经被标记过。然后收集器从那些根出发，把所有存活的对象都标记一遍。"
+    },
+    {
+      "idx": 68,
+      "en": "The stuff that hasn’t been marked by that stage is garbage and can be\nreused.  It gets re-added to the allocator’s data structures for\nfuture allocations. This is known as a mark-and-sweep garbage\ncollector. It’s got the two phases of marking and sweeping. The one in\nOCaml is what’s called incremental, which doesn’t stop everything and\nthen walk over the entire heap. Instead, it divides up that work of\nmarking and also the work of sweeping into small, fixed-size slices\nand just does some marking periodically. And then in the sweep phase,\ndoes some sweeping periodically and maintains all of the states that\nit can leave off and resume. So the program has never stopped for very\nlong.",
+      "zh": "到那个阶段还没有被标记的东西就是垃圾，可以被重新利用。它们会被重新加入空闲列表，然后标记被清除，我们重新开始这个过程。"
+    },
+    {
+      "idx": 69,
+      "en": "Right. And importantly, this matters a lot if you’re building various\nkinds of soft real-time applications, where your response time\nmatters. The idea that you might need to scan your entire heap\nperiodically is just really destructive to having any kind of\npredictable latency profile.",
+      "zh": "对。而且重要的是，如果你在开发各种软实时应用，比如游戏引擎，或者任何对延迟敏感的场景，这一点就格外关键。"
+    },
+    {
+      "idx": 70,
+      "en": "Sure. Yeah. I mean, it matters for soft real-time programs, but I\nthink it even matters for any kind of program. I mean, if you have a\nheap that’s maybe a gigabyte or a couple of gigabytes, doing a full\nmark and sweep collection is going to take a second or two. Even a\nprogram that doesn’t have any soft, real-time constraint, anything\neven vaguely interactive will be unhappy or will cause unhappiness if\nit just stops for a second or two.",
+      "zh": "当然，是的。我是说，它对软实时程序很重要，但我觉得说实话，对任何类型的服务器或者任何交互式程序都同样重要。"
+    },
+    {
+      "idx": 71,
+      "en": "Any sort of graphical program or anything that’s going to respond to\nany sort of user requests is much better if it can divide up that work\ninto short, 100s of microsecond or few milliseconds pauses. That’s the\nmajor collector. There’s an observation, it’s very old, the original\npaper that spotted it. It’s a thing called the generational\nhypothesis. And it’s a remarkable fact about programming languages in\nthat it’s one of the few that’s been well confirmed across a huge\nrange of completely different programming languages.",
+      "zh": "任何图形程序，或者任何需要响应用户请求的程序，如果没有 GC 带来的随机停顿，用起来会舒服得多。"
+    },
+    {
+      "idx": 72,
+      "en": "This is one that’s been shown to hold in functional languages and\nobject-oriented languages and imperative languages. It seems to be\nremarkably robust to what sort of language or even program you’re\ndealing with. And it’s the observation that objects which have\nrecently been allocated are likely to be the ones with the shortest\nlifetimes. That lots and lots of objects don’t live for very long.",
+      "zh": "这个规律在函数式语言、面向对象语言和命令式语言中都已经被证实。你最近分配的对象，更可能是短命的。"
+    },
+    {
+      "idx": 73,
+      "en": "They’re used just as temporary storage and then thrown away. If you’ve\ngot a collection of objects, the ones that have been around the\nlongest are the ones that are likely to stay around the longest. The\nones that you’ve just allocated are likely to go away soon. So you can\nuse this to massively speed up a garbage collector. What you do is you\ndo what’s called a generational collector. You have a separate area\nfor objects that have very recently been allocated.",
+      "zh": "它们只是用作临时存储，用完就丢了。如果你有一批对象，通常能存活下来的没有多少。"
+    },
+    {
+      "idx": 74,
+      "en": "You allocate new objects there using a very, very fast collector,\nwhich is just subtraction. It’s known as bump pointer allocator, which\nmeans there’s a pointer, and when you want to allocate five bytes, you\nsubtract five from the pointer and just put all of the objects one by\none in this contiguous region of memory. And then when that fills up,\nthen you do what’s called a minor garbage collection.",
+      "zh": "你在那里用一个非常非常快的分配器来分配新对象，就是做减法而已。这种方式被称为撞针分配器。"
+    },
+    {
+      "idx": 75,
+      "en": "And you just go over the objects that are live in that region, which,\nbecause that region is relatively small, it doesn’t take too long. And\nanything that’s still alive there, you move onto the major heap or you\npromote in some way. You do something more expensive to keep them\nalive. You copy them out of that region or you move them to one end of\nthat region, or you do something with them. But the point is that\nusually you can eliminate 90% of the allocations that way, sometimes\neven more.",
+      "zh": "你只需要遍历那个区域里存活的对象，由于这个区域相对较小，这是一个很快的操作。"
+    },
+    {
+      "idx": 76,
+      "en": "Right. And a neat trick about the minor collector is that you pay for\nallocation. And for the things that aren’t promoted to the next stage,\nthe deallocation is kind of free because you only had to do work\nproportional to the number of things that were live.",
+      "zh": "对。小堆收集器有一个很妙的地方，就是你只为分配付出代价。而那些立刻被丢弃的东西，回收时完全不需要付出任何代价。在大多数对象都是短命的常见情况下，这最终代价极低。"
+    },
+    {
+      "idx": 77,
+      "en": "Yes. And also you pay very, very little for allocation. A real\nallocator, like the major heap uses, or like all heap allocations in,\nsay, C or Rust use, that has to do a certain amount of work. It can’t\njust slap objects anywhere in memory. It needs to find somewhere where\nthey fit to avoid using too much memory. It needs to make sure gaps in\nthe heap are filled in with appropriate-sized objects.",
+      "zh": "是的。而且你在分配上付出的代价也非常非常小。像大堆使用的真正的分配器，必须处理内存碎片、各种大小的对象，等等各种问题。"
+    },
+    {
+      "idx": 78,
+      "en": "There are reasonably efficient allocators but there’s some actual work\nthat has to be done there. One of the advantages of a generational\ncollector is you can defer that work until objects have survived at\nleast one minor collection. So that means you use an extremely stupid\nallocator for the first time around and only if the objects survive a\nwhile, only then is it worth actually trying to find a permanent home\nin a fragmented heap for them. And that way you can avoid even using\nthe major allocator in 90% of cases.",
+      "zh": "虽然有效率还不错的分配器，但那里还是有一些实际的工作需要完成。而撞针分配器就只是把一个指针减一下，就这样。"
+    },
+    {
+      "idx": 79,
+      "en": "I guess one thing that’s important to mention about the OCaml\ncollector is it’s a single-core collector or a single-threaded\ncollector. You can’t have multiple threads concurrently allocating on\nthe same heap and concurrently accessing data on the same heap. In\nOCaml we have a single lock that separates out different threads to\nmake sure that they don’t interact. And one of the other pieces of\nwork, which I don’t know how much we’ll get to, is you did a lot of\nwork on the multicore garbage collector that is currently extremely\nactively being pushed on upstream and people are trying to get out.",
+      "zh": "我觉得有一点值得特别提一下，那就是传统 OCaml 的收集器是单核收集器，对吧？"
+    },
+    {
+      "idx": 80,
+      "en": "But within its scope as a single-core collector, OCaml’s collector is\npretty well respected. It’s considered to be a nice balance. It’s both\nsimple and pretty easy to understand and efficient and all of\nthat. And people say lots of nice things about it. And I used to\nbelieve those things too. And then recently, you worked along with a\nguy named Will Hasenplaugh on some changes to OCaml’s collector that\nmade the marking phase two to three times faster, which I found very\nsurprising for a well regarded and like 20-year-old garbage collector,\nor 25-year-old garbage collector, to suddenly get so much better and\nhave such low-hanging fruit. So what is the thing that you did to make\nit so much faster?",
+      "zh": "但在单核收集器这个范畴内，OCaml 的收集器还是相当受业界认可的。它能和最好的方案竞争。不是最差的，但也算不上最顶尖的。"
+    },
+    {
+      "idx": 81,
+      "en": "Yeah, it was surprising to us as well quite how much of a difference\nthat change made. I think it might be best by explaining some stuff\nabout how people write high-performance code. So one of the first\nthings that you learn when you get into writing really efficient\nprograms is following pointers is slow. There’s a cache and there’s\nthe whole memory system of the CPU. And it’s really good if you’re\njust streaming in sequentially a big, long array.",
+      "zh": "是的，这个变化带来的差异有多大，我们自己也挺惊讶的。我觉得在某些情况下可能超过了 2 倍的提升。"
+    },
+    {
+      "idx": 82,
+      "en": "But if you’re chasing over pointers randomly, it’s going to be much\nslower. And the reason is, if you’re just copying a load of memory or\njust adding up a really long array of numbers, then it can stream that\nin from memory at, I think Skylake processors are something like 12\ngigabytes a second on one core, which is, I mean, that’s a lot of\nmemory coming in.",
+      "zh": "但如果你在内存中随机地追着指针跑，速度就会慢得多。原因是，如果你随机选一个内存地址，很可能它不在缓存里。"
+    },
+    {
+      "idx": 83,
+      "en": "So if your core is running at three gigahertz, that’s four bytes a\ncycle. If a cache line is 64 bytes, you’re getting a new cache line\nworth of memory every 16 cycles. They’re just constantly coming\nin. Whereas if you set up a big, long array, you’re following a link\nlist. Every time you have to get the next element of the list, you\nhave to dereference a new pointer.",
+      "zh": "所以如果你的核心运行在 3 GHz，那就是每个时钟周期 4 个字节。如果一个缓存行是 64 字节，你大概在以每秒 200 GB 的速度加载数据。"
+    },
+    {
+      "idx": 84,
+      "en": "So each time you follow one of those, that means you have to make a\nnew request to the memory system to look at a new place. Not somewhere\nit’s been streaming sequentially out of, but a new different\nplace. And that request can take something like 300 cycles. So instead\nof getting a new item or a new thing every 16 cycles, you’re getting a\nnew item every 300 cycles, and your program, even though it looks\nexactly the same as the array version, it’s going over a list and\nadding up numbers for a slightly different notion of list, but it’s\nnow dozens of times slower.",
+      "zh": "所以每次你追一个这样的指针，就意味着你必须向内存系统发出一个新的请求。而内存系统的请求所花的时间，远远远远超过一个时钟周期。"
+    },
+    {
+      "idx": 85,
+      "en": "Right. I think the key insight here is to think about the things\ninside of your single computer as, in fact, a distributed system. The\nissue is the memory is very far away. You have a lot of bandwidth, but\nthe latency is high. So if you need to do a bunch of dependent fetches\nand you need to get some data and then make a decision, and get some\nother data and make a decision, and make some other data.",
+      "zh": "对。我觉得这里的关键洞见在于，要把一台计算机内部的各个部件，在某种程度上想象成一个分布式系统。"
+    },
+    {
+      "idx": 86,
+      "en": "Just like you’re pinging some server far away and have all of these\nextra round trips, it doesn’t matter that you have 10 gigabits worth\nof bandwidth through the computer, you’re going to be kind of poking\nalong request by request if the latency is long. And it’s essentially\nthe same story here, except the long latencies are all kind of on the\nscale of what fits inside your very small computer.",
+      "zh": "就像你在 ping 一台很远的服务器，产生了一堆额外的往返延迟一样——如果处理器每次都要等待 200 个时钟周期才能从主内存拿到数据，那它跑得再快也没用。"
+    },
+    {
+      "idx": 87,
+      "en": "Yeah, exactly that. So the marking phase of a garbage collector is\nkind of the maximally bad example for this. It’s a thing that has to\nchase every single pointer in the system. Every time it finds a new\nobject, it has to de-reference every single point that it sees. And it\nall points to random other locations on the heap. So it spends most of\nits time just doing these one requests, wait to see whether that comes\nback. Oh, that was another thing I have to follow. Okay, follow some\nof those references. Wait to see what those come back with.",
+      "zh": "是的，正是如此。所以垃圾回收器的标记阶段，可以说是随机内存访问的极端反面教材。你追一个指针，到达一个对象，再追另一个指针，到达另一个对象。每一次追指针的操作都可能是一次缓存未命中。"
+    },
+    {
+      "idx": 88,
+      "en": "It’s like a garbage collector was a machine designed for creating\ncache misses.",
+      "zh": "垃圾回收器就像是一台专门用来制造缓存未命中的机器。"
+    },
+    {
+      "idx": 89,
+      "en": "Yeah, exactly so. Just sitting there doing cache misses all day. And\nso at some fundamental level, it kind of has to do all of these cache\nmisses. I mean, we’re trying to mark a chunk of a heap. The heap might\nbe gigabytes large, the cache or at least the L1 level of the cache is\n32 kilobytes large. It doesn’t fit, and it doesn’t fit by a factor of\ntens of thousands. But the trouble is that the garbage collector is\ndoing those cache misses one at a time, it’s waiting for the answers\nto this one before it even begins processing the next one.",
+      "zh": "是的，正是这样。就坐在那里整天不停地缓存未命中。所以从某种根本层面上来说，如果我们能更好地隐藏这些缓存未命中的延迟，那就太好了。"
+    },
+    {
+      "idx": 90,
+      "en": "Yeah, that totally makes sense.",
+      "zh": "是的，这完全说得通。"
+    },
+    {
+      "idx": 91,
+      "en": "So it turns out that the current crop of processors can do maybe 10 or\nso cache misses, can be active in parallel. It’s still that model of,\nyou’re sending requests to a faraway server and they take a while to\nget back. And there’s no really good way of making them get back any\nfaster, but you don’t have to wait for the answers to the first one\nbefore you send the next. You can have about 10 of them in flight or\nmore.",
+      "zh": "事实证明，现在这一代处理器大概可以同时处理 10 个左右的缓存未命中，也就是说可以同时活跃地处理 10 个缓存未命中。所以如果你能一次性发出 10 个请求，它们就会相互重叠，总时间和只处理一个差不多。"
+    },
+    {
+      "idx": 92,
+      "en": "I think the new Apple chips, or so I’ve heard, can handle about 20 of\nthem in flight at once. So there’s quite a lot of width here. So the\nchange that we made to the garbage collector is to use what’s called\nprefetching instructions. Those are instructions where you say in\nadvance you start saying, “Please start loading this piece of memory.”\nWith the idea being that by the time you actually get around to using\nit, it’s already made its way into cache.",
+      "zh": "我听说新的 Apple 芯片可以同时处理大约 20 个这样的在途请求。所以这里有相当多的硬件级并行性可以利用。"
+    },
+    {
+      "idx": 93,
+      "en": "The observation that makes this work is that in the marking phase of a\ngarbage collector, your job is to mark everything that’s reachable\nthrough any of the references. But you don’t actually care what order\nyou mark them in. It doesn’t really matter. Instead of marking them\njust one at a time, what we did is we put a small queue in front of\nmarking.",
+      "zh": "让这个方案能够奏效的关键观察是：在垃圾回收器的标记阶段，你的任务非常简单。你只需要对每个存活的对象恰好访问一次，并对其进行标记。"
+    },
+    {
+      "idx": 94,
+      "en": "So every time we discover a new object that needs marking, instead of\nimmediately walking over its fields, we issue a prefetch and add it to\nthis small queue, and then take the next thing out of that queue,\nprefetch it, add it back to the queue. And by the time we actually got\nround to traversing the fields of an object, we’ve prefetched it maybe\n10 objects ago. So firstly, there’s a good chance that the data that\nwe’re looking for has made it into cache at this point. But more\nimportantly, while it was sitting in that queue, it was 10th in the\nline. There were 10 other things being prefetched at the same time.",
+      "zh": "所以每次我们发现一个需要标记的新对象，不是立刻遍历它的字段、追它的指针，而是把它放进一个队列里。当我们想做点工作的时候，就从队列里取出来，同时为队列里接下来的几个元素预取缓存行。"
+    },
+    {
+      "idx": 95,
+      "en": "We get to overlap 10 requests or 20 or 30 or whatever many number of\nrequests the hardware can handle. So we end up making much better use\nof the hardware’s resources. In that example, each individual memory\nrequest that’s not in cache still has to wait the full 300 cycles. But\nif we can get 10 of them going at the same time, then we can be\nhitting a new cache line every 30 cycles. I mean, that’s not as good\nas getting on every 16 cycles, but it’s close. You’re actually able to\nget to a reasonable fraction of the raw memory bandwidth of the\nmachine while just traversing randomly over this huge one gigabyte\nheap. It worked out very neatly.",
+      "zh": "我们就能让 10 个、20 个、30 个或者说硬件能支持的任意数量的请求相互重叠。这样标记阶段的总体耗时就会短得多。"
+    },
+    {
+      "idx": 96,
+      "en": "Yeah. In fact, one of the things that surprised me about this whole\nstory is how surprised we were. As you point out, the idea isn’t\nnew. There are papers about using prefetching to make garbage\ncollectors faster, and they report speedups. And they’re all not as\ngood as this. I’m curious if you have any insight on it. What\nhappened? Is it that the OCaml garbage collector is somehow different\nor have machines just evolved since those papers were written so that\nthe constants are different and the value of making this kind of\nchange is just higher than it used to be?",
+      "zh": "是的。事实上，关于这整件事情，有一点让我感到意外，那就是我们自己也感到很惊讶。我们原则上知道预取是有帮助的，但改进的幅度比我们预期的要大。"
+    },
+    {
+      "idx": 97,
+      "en": "So yeah, the memory-level parallelism. So that number that I’ve been\nsaying is around 10, of how many things you can have going at the same\ntime, that used to be smaller than 10, which meant there was a smaller\nbenefit from being able to do these tricks. As well as that, there’s\nthe fact that the OCaml garbage collector has to touch very little\nmemory other than the stuff that’s on the heap.",
+      "zh": "是的，关于内存级并行性——我一直说的那个数字，也就是你的处理器能同时处理多少件事，大概是 10 左右，但这个数字是会变的。不同的处理器有不同的能力。"
+    },
+    {
+      "idx": 98,
+      "en": "The thing that all garbage collectors have to do is tell whether a\npiece of memory contains a pointer because they need to traverse all\nthe pointers and they need to not traverse the things which are not\npointers. In OCaml that’s done using what’s called tagging. Each eight\nbytes of memory on the heap, the ones that end in a one are integers,\nand the ones that end in the zero are pointers.",
+      "zh": "所有垃圾回收器都必须做的一件事，是判断一块内存里存的是不是一个指针。在 OCaml 里，这件事恰好特别容易，因为每个对象都有一个标签来说明它是哪种对象。"
+    },
+    {
+      "idx": 99,
+      "en": "So it’s very easy to tell in the garbage collector, as you’re walking\nalong, which is which. That’s not the case for all garbage\ncollectors. In a lot of other garbage collectors, there’s a separate\ndata structure off to one side that you have to look up with some tag\nfrom each object to work out its layout, to decide where the pointers\nare.",
+      "zh": "所以在垃圾回收器里，当你遍历对象的时候，非常容易分辨哪个是哪个。正是这类特性，让预取在 OCaml 中特别好用。"
+    },
+    {
+      "idx": 100,
+      "en": "So, I mean, this is fairly speculative, I haven’t really dug into many\nother implementations of prefetching, but that’s one reason why it’s\nperhaps easier to get good results out of OCaml, because there are\njust very few memory accesses to be done in the first place. There are\nonly the memory accesses to the actual data. There are no, like,\noff-to-one-side table look-ups to worry about.",
+      "zh": "我的意思是，这有点偏推测性，我没有深入研究过很多其他 GC 标记阶段预取的实现。但我猜测，预取在 OCaml 里能产生如此大的差异，原因之一就是很容易区分什么是指针、什么不是，因此预取可以做得非常可靠。"
+    },
+    {
+      "idx": 101,
+      "en": "So in a world where we have a lot more parallel memory-fetching\nhardware than we used to, are we under-using software prefetching in\ngeneral? One of the nice things about using software prefetch\ninstructions in a garbage collector is it’s a relatively simple story.",
+      "zh": "那么，在我们拥有比过去多得多的并行内存获取硬件的今天，我们是否在开发更多预取技术方面投入不足呢？"
+    },
+    {
+      "idx": 102,
+      "en": "The garbage collector is running, while it’s running, nothing else is\nrunning. It’s kind of taken over your program. You don’t have to worry\nabout competing with resources for anything else. Do you think we\nshould be surfacing software prefetching more directly to programmers\nin a more general context and one that’s not quite as simple as the\ngarbage collector case, where people are doing all sorts of ad hoc\ndata structures?",
+      "zh": "垃圾回收器在运行的时候，其他什么都不运行。它某种程度上接管了整台机器。我们用的是停止一切的垃圾回收器。这意味着预取只需要和 GC 自身内部的其他操作竞争资源。"
+    },
+    {
+      "idx": 103,
+      "en": "Yeah. I think that’s probably worthwhile. It’s a little bit difficult\nthough. In fact, I think Sam Ainsworth and Timothy Jones at Cambridge\nhave a couple of papers on actually doing this in OCaml, about\nexposing some prefetching instructions and using them to try and speed\nthings up. In general though, it’s pretty difficult because to get\ngood performance out of prefetching, you need to get the timing just\nright, you need to prefetch something so that you’re going to need to\naccess it soon.",
+      "zh": "是的，我觉得这可能是值得做的。不过确实有点难。事实上，我觉得剑桥的 Sam Ainsworth 之前在这方面做过研究，他花了相当多的心思思考如何可靠地把预取引入到任意程序中。"
+    },
+    {
+      "idx": 104,
+      "en": "If you need to access it immediately, then there was no point in\nprefetching because the time that you end up using the data, the\nprefetch hasn’t completed. And if you end up accessing it quite a\nwhile away, then your prefetch gets fetched all the way into cache,\nbut then it gets flushed out of cache because something else comes in\nbefore you ever get around to using it.",
+      "zh": "如果你需要立刻访问某个数据，那预取就没有意义了，因为花在预取上的时间比直接加载还多。"
+    },
+    {
+      "idx": 105,
+      "en": "The marking phase of a garbage collector is maybe an easy case for\nthat sort of work, because it genuinely doesn’t care what order it\ntraverses things in. Adding this little ring buffer to make sure\neverything gets traversed 10 units of time after it was accessed or\n100 or whatever the numbers are, was a relatively straightforward\nchange.",
+      "zh": "垃圾回收器的标记阶段对这类工作来说可能是个简单的情况，因为它通常不需要立刻访问内存。当你追一个指针的时候，你需要标记目标对象。但实际上，目标对象不需要在内存里，你就可以开始处理下一个对象了。"
+    },
+    {
+      "idx": 106,
+      "en": "Whereas adding prefetches in ways that are definitely going to be\nuseful is a bit trickier in other contexts. An example of a case where\nyou might want to do it is in the List.map function, a very commonly\nused functional in OCaml, which applies some transformation to every\nelement of a list. And it needs to traverse this list and lists in\nOCaml are link lists. So a nice thing that you might try and do is,\nwhen you’re about to access this element of the list, and you’re about\nto run the user function on this element of the list, prefetch the\nnext element.",
+      "zh": "而在其他场景下，要在确保有效的前提下添加预取，就有点棘手了。有些你可能想预取的情况，并不清楚预取是否真的会有用。"
+    },
+    {
+      "idx": 107,
+      "en": "But the trouble is if the function that you’re mapping, the function\nthat you’re calling the user function, is very simple then, it’s just\nadding one or something, then the prefetch won’t have any real benefit\nbecause it won’t actually be very far ahead of time. The actual access\ndone to the list will happen before the prefetch is completed. If the\nfunction you’re doing is very complicated and very slow, then the\nprefetching will actually be harmful because you’ll have pushed\nsomething out of cache early and then taken up space, but it won’t be\nin cache by the time you get to the searcher that you need.",
+      "zh": "但问题是，如果你映射的那个函数——你调用的那个用户函数——如果它自己也追了很多指针，那么预取列表的下一个元素就帮不上什么忙了。"
+    },
+    {
+      "idx": 108,
+      "en": "And if the thing in the list is itself a complicated linked structure,\nthen merely having prefetched the next link list node doesn’t mean\nyou’ve prefetched its contents. So it might not actually be enough to\nspeed things up. There’s definitely gains to be had in exposing it to\nprogrammers, but it’s quite tricky to do in a modular, general\nway. You’d really like that someone who understood memories of systems\ncould put the prefetching stuff into the commonly used libraries, and\nthen everyone’s code would go faster. But unfortunately it seems quite\nnot really to work like that. It depends on very subtle details of\nexactly how fast everything is and exactly how much memory it uses.",
+      "zh": "而且如果列表中的元素本身就是一个复杂的链式结构，那么仅仅预取了下一个列表项的第一个元素，对你来说也帮助不大。你还没有开始预取那个第一元素所指向的东西。"
+    },
+    {
+      "idx": 109,
+      "en": "Right. There’s essentially a lack of composability of the performance\nsemantics. You can go and optimize some data structure and it may work\nwell in some context where you use it, and then in some other context\nwhere you’re iterating over it in different ways and doing different\nthings in between each step where you test the data structure, and\nthat can just totally change what’s happening. So it’s not even clear,\neven if you were an expert trying to design the ideal data structure,\nit’s just not clear that the thing exists. Because it doesn’t have\nenough knowledge to make the right choices given that it needs to be\ngeneral purpose and be used in lots of different contexts.",
+      "zh": "对。这本质上是性能语义缺乏可组合性的问题。你可以去优化最内层的部分，但调用方在上面又会产生自己的内存访问模式。"
+    },
+    {
+      "idx": 110,
+      "en": "Yeah. And unfortunately, it’s also an area where the performance of a\nlot of these things doesn’t smoothly degrade as things get worse. It’s\neither hitting L1 three cycles, missing L1 but getting the next best\nthing in L2 is, I don’t know, 40 cycles. There’s a sudden big jump,\nand then hitting the last level cache is, I don’t know, 60.",
+      "zh": "是的。而且遗憾的是，这也是一个很多东西的性能不能以任何好的方式扩展的领域。如果你有一个嵌套的数据结构，所需的时间会随着深度增长。"
+    },
+    {
+      "idx": 111,
+      "en": "And then missing that is 300. So if you get some of this and it’s\nnearly right, and your program changes in a way that makes it just\nvery slightly slower or very slightly bigger, then suddenly that can\nhave a five or 10 times difference in the performance. Because the\nthing that was reliably hitting in cache was no longer hitting in\ncache or the prefetch that was reliably there is now getting evicted.",
+      "zh": "而错过那次预取的代价是 300 个周期。所以如果你做了部分优化，感觉差不多对了，但程序稍微改了一点，预取不再完美对齐，你就可能陷入一种糟糕的状态——你刚好越过了预取开始失效的那个临界点。"
+    },
+    {
+      "idx": 112,
+      "en": "So the garbage collector work you’ve done is about making the\nautomatic garbage collection story more efficient by just going and\nimproving the actual collector itself, which is great stuff. And in\nfact it had shockingly good effects on a bunch of different programs\nthat we run in real life. So that’s great.",
+      "zh": "所以你在垃圾回收方面做的工作是为了让自动垃圾回收机制更高效。但这并不是故事的全部，对吧？我们一直在讨论的另一件事是给程序员更多的控制权，本质上是在语言里加入一些手动内存管理的选项。这是怎么回事？"
+    },
+    {
+      "idx": 113,
+      "en": "But that’s not the only story, right? The other thing we’ve been\ntalking about is giving programmers more control over memory. And some\nof the work that you’ve been doing is about that. And one interesting\none is adding what are called local types, essentially adding safe\nstack allocation to OCaml. Can you give a summary of what you think\nthe benefit of this is? What’s the point of adding safe stack\nallocation to a language like OCaml?",
+      "zh": "但这并不是故事的全部，对吧？我们一直在讨论的另一件事是给程序员更多的控制权，本质上是在语言里加入一些手动内存管理的选项。这是怎么回事？"
+    },
+    {
+      "idx": 114,
+      "en": "Right. A lot of functions use temporary data. My go-to example from\nearlier of a buffer that you’re using to load the file before you\nparse its contents, or just any small data structure that’s just used\nto pass options around or something. And these data structures are\ncreated, used a couple of times, and then immediately destroyed, or\nshould be immediately destroyed. You know that five lines of code\nlater, nothing will ever use them again.",
+      "zh": "对。很多函数会用到临时数据。我之前举的一个典型例子是：你正在构建一个缓冲区，准备通过网络发送出去，这就是一个例子。"
+    },
+    {
+      "idx": 115,
+      "en": "But in OCaml at the\nmoment, those\nend up being heap allocations, these small little buffers or the sum\nor list things that you might use to pass arguments to a function or\npass optional arguments, all of these end up being small\nallocations. They’re allocations on the minor heap, which is\nrelatively cheap, but they do consume some space on the minor heap and\nthey make the next minor collection happen a bit sooner and they have\na non-zero cost.",
+      "zh": "但在目前的 OCaml 里，这些最终都会落到堆上进行分配——那些你创建出来、组合一下、然后马上丢掉的小缓冲区或小数据结构。"
+    },
+    {
+      "idx": 116,
+      "en": "It would be nice if these things had a lower cost. If you do a stack\nallocation in C or C++ or Rust, stack allocation in those languages\nhas a cost about the same as minor heap allocation in OCaml. There’s\njust a subtraction from a pointer that’s in the register. But when\nyou’re done with it, you get to undo that stack allocation by undoing\nthe register movement, rather than having to wait for the next garbage\ncollector. You don’t contribute towards the next garbage collection\npause, you don’t add any GC work, and more importantly, you get to\nreuse that exact bit of memory, which is definitely in L1 cache,\nbecause you’ve just used it. You get to reuse those bytes for the next\ntemporary allocation that you do.",
+      "zh": "如果这些东西的开销能更低就好了。在 C、C++ 或 Rust 里做一次栈分配，基本上是免费的。栈分配的代价是……没有。栈帧只需要设置一次，那个帧里的所有局部变量就都在那个帧里了。"
+    },
+    {
+      "idx": 117,
+      "en": "Yeah. I was going to poke on exactly this question, which is if minor\nallocation is so cheap, doesn’t that get rid of a lot of the benefits\nof stack allocation? And the story you’re telling about cache provides\na good answer. In fact, a thing that we’ve noticed experimentally is\nthat there are two incompatible ways you can tweak the GC to make your\nprograms run faster. First, you can make your program faster by making\nthe minor heap bigger because making it bigger gives you more time to\ndiscover that things that were recently allocated are, in fact, going\nto become unreachable soon.",
+      "zh": "嗯。我正想就这个问题追问一下——既然小堆分配已经很便宜了，这是不是就消除了栈分配的动力？两者到底有什么区别？"
+    },
+    {
+      "idx": 118,
+      "en": "And so never need to be promoted to the major heap and you can avoid\nall the work associated with that. And then the other totally\nincompatible trick is to make the minor heap smaller. In particular, a\ntightly written program that doesn’t do that much minor allocation can\nrun faster with a smaller minor heap, because that reduces the number\nof cache lines that are touched as the allocator strides over the\nminor heap. And so stack allocation, I guess, gives you the best of\nboth worlds. You get better cache behavior, but without creating a lot\nof unnecessary promotions.",
+      "zh": "所以它们就永远不需要被提升到大堆，你可以避免与此相关的所有开销。但小堆回收做不到的是，它无法消除小堆回收本身的开销。"
+    },
+    {
+      "idx": 119,
+      "en": "Yeah. With local stack allocations, you actually get both of those\nadvantages. As you say, you get the advantage of reusing that same\ncache memory as though your minor heap was much smaller because it’s\nall reusing the same bit of stack memory, but also all of the\nallocations that don’t go through this local mechanism, the ones that\nare still being minor collected, the ones that are still happening on\nthe minor heap, there’s a lot fewer of those. So if there’s half as\nmany of those it’s as though you had twice as big a minor heap, you\nget the same avoiding promotion benefits.",
+      "zh": "是的。用局部栈分配，你实际上两个好处都能得到。正如你所说，你省掉了小堆回收本身的额外工作，也省掉了将对象提升到大堆的工作。"
+    },
+    {
+      "idx": 120,
+      "en": "Okay. So stack allocation is a thing that exists in languages previous\nto OCaml. Can you describe how the thing you are currently designing\nfor OCaml differs from what shows up in other places? I guess Rust is\none that I know about.",
+      "zh": "好的。那么栈分配是在 OCaml 之前的语言里就存在的东西。你能描述一下像 C 和 Rust 这样的语言里栈分配是怎么工作的吗？然后 OCaml 的计划又是什么？"
+    },
+    {
+      "idx": 121,
+      "en": "Two languages that make heavy use of stack allocation are Rust and\nGo. The comparison to Rust makes a bit more sense because the stack\nallocation in Go is for allocations that the compiler can see\ndefinitely don’t escape. There’s no particularly good way of\nexpressing in a function interface type that a certain value isn’t\ngoing to escape. If you’re passing things around to other functions,\nit’s difficult for those to be stack-allocated, to kind of a\ncompletely best-effort, invisible thing.",
+      "zh": "大量使用栈分配的两种语言是 Rust 和 Go。拿 Rust 来做比较比较合适，因为 Rust 费了很大力气让它的栈分配是安全的。"
+    },
+    {
+      "idx": 122,
+      "en": "We’d really like to be able to express some of the stuff in types that\nprogrammers can know that something is or isn’t going to be stack\nallocated. So the main challenge is to do this in a way that’s safe so\nthat the compiler can guarantee at compile time that memory isn’t\ngoing to be accessed after it’s been freed. That means that you need\nto ensure that no references to a locally allocated value are used\nafter it’s gone out of scope.",
+      "zh": "我们真的很希望能在类型里表达某些东西，让程序员知道某样东西是栈分配的，从而可以对其进行推理。"
+    },
+    {
+      "idx": 123,
+      "en": "The tricky case there is about when you locally allocate something\nlike a data structure to describe how to initialize something, and you\npass it to a function. So in say, C, you could allocate that data\nstructure locally on the stack, pass a reference to it to a function,\nthen that function could say, “Ooh, a pointer to something.” And they\ncan put that in a global variable or squirrel it away in some cache or\nhide it somewhere in your program.",
+      "zh": "棘手的情况是这样的：你在局部分配了一个数据结构来描述某项工作，然后把一个指向它的引用传给了某个函数。"
+    },
+    {
+      "idx": 124,
+      "en": "Then later on it returns and you’ve got this dangling reference to\nsomething which you later access and everything explodes or worse. So\nthe challenge is to allow programmers to write that kind of program\nwhere you are really passing references to locally allocated data\naround to other functions and have that somehow be safe. Definitely\nthe most well-known way of doing that is the one that Rust has.",
+      "zh": "之后那个函数返回了，而你手上拿着的是一个悬空引用，指向的是之后你去访问时就会崩溃的东西。"
+    },
+    {
+      "idx": 125,
+      "en": "So in Rust, there are these new entities at the type level called\nlifetimes. They’re\nlike variables in the type system, and there’s a lifetime variable\nassociated with each reference type. Instead of saying, I have a\nreference to a tuple, you say, I have a reference to a tuple with a\nparticular lifetime alpha. And then if you try to use a reference\nwhere you try to make something point to something else, you can only\ndo so if the lifetimes are compatible.",
+      "zh": "所以在 Rust 里，类型层面有一种新的实体叫做生命周期。它们就像类型系统里的变量，代表某个特定栈帧或某个特定局部区域的范围，诸如此类。"
+    },
+    {
+      "idx": 126,
+      "en": "So you try to store a reference to this thing with lifetime alpha in\nthe thing with lifetime beta, then you must know that beta outlives\nalpha, so that you’ll never end up with a dangling reference. That\nmeans if you’ve got this idea of a function that accepts some locally\nallocated data, then that ends up being expressed as a function that’s\npolymorphic in lifetime. If you’ve got something which accepts as a\nparameter, a locally allocated tuple, then the type of that in Rust is\nsomething like for all lifetimes alpha, it accepts a tuple of lifetime\nalpha.",
+      "zh": "所以当你试图把一个生命周期为 alpha 的引用存入生命周期为 beta 的东西里时，Rust 的类型检查器就会报错，说生命周期 alpha 不够长，没法存入生命周期为 beta 的东西里。"
+    },
+    {
+      "idx": 127,
+      "en": "And then that’s enough to know that the function’s not going to store\nthat in a global variable because the global variable has lifetime\nstatic. And if it did that, then it wouldn’t be able to accept a tuple\nof lifetime alpha, it would have to accept the tuple of lifetime\nstatic. The fact that this function is able to compile with the type\n“for all alpha” means that it genuinely works for any possible\nlifetime. Callers of that function can make a tuple on the stack. So\nit has a particular lifetime representing its scope and can then pass\nit to this function that works for all lifetimes. And since it works\nfor any lifetime, it will work for this one too.",
+      "zh": "这就足以保证那个函数不会把它存进某个全局变量，因为那样做会违反生命周期约束。"
+    },
+    {
+      "idx": 128,
+      "en": "And since it works for any lifetime, it can’t possibly leak a\nreference to that tuple into any other scope than the one that came\nin. So that works very neatly. And you can use these lifetime\nvariables to express various complicated relationships between\nlifetimes, but there is a tricky part to it from a type-system point\nof view. It’s that this function, which just takes a tuple, now has a\nlifetime variable in it, and is in fact now a polymorphic function.",
+      "zh": "而且由于它对任意生命周期都成立，所以它不可能把那个元组的引用泄露到任何其他上下文里。因为你声明的是这个函数对任意 alpha 都成立，所以这个函数不可能在对 alpha 做任何具体的事情。"
+    },
+    {
+      "idx": 129,
+      "en": "So if you find yourself writing higher-order codes, this is functions\nwhich take functions as parameters, which you find yourself doing this\nin OCaml quite a lot. If you’re writing some of those, then if your\nhigher-order function is allocating some local tuple and giving it to\na callback that it had accepted, then the type of that callback needs\nto be polymorphic. It needs to work for any alpha. It actually needs\nto be for all alpha because there’s no way of even naming the alpha\nthat it’s supposed to work with from outside the function.",
+      "zh": "所以如果你发现自己在写高阶代码——也就是把函数作为参数传递的那种函数——你会花大量时间来写下生命周期，以及搞清楚它们是怎么组合的。"
+    },
+    {
+      "idx": 130,
+      "en": "It’s some anonymous alpha representing a particular lifetime that\nisn’t in scope. You need a surprising amount of type-level machinery\nto get this to work. There’s a feature in Rust for exactly this\npurpose called higher-rank trait bounds, which basically allows you to\nsay, I am accepting a parameter. And it’s not that I am polymorphic in\nthe lifetime, it’s that I require that my parameter be polymorphic in\nthe lifetime so that I can make up a particular lifetime, like the\nscope from this line to that line, and then use this callback function\nthat I took as a parameter with that lifetime.",
+      "zh": "那是某个匿名的 alpha，代表某个不在当前作用域内的特定生命周期。你需要出乎意料地多的生命周期变量，才能正确表达高阶函数。"
+    },
+    {
+      "idx": 131,
+      "en": "It’s fairly well-studied machinery, but it is fairly heavyweight\nmachinery. And in particular, it’s a fact about type systems that once\nyou have that type inference, more or less stops working, that you\ncan’t do the level of, in OCaml, even higher-order functions can have\ntheir types inferred. You can just write an implementation of List.map\nor something, and OCaml will say, “Yep, that’s got this type.” Whereas\nif you’re doing it with these higher-rank types, which is the thing\nthat you need in Rust to do these sort of callbacks, you really have\nto be explicitly writing out the types of all of those higher-order\nfunctions because there’s no way that the compiler can figure them out\nby itself.",
+      "zh": "这是一套研究相当成熟的机制，但也是相当重型的机制。特别是，它并不是隐形的机制。用户确实需要思考生命周期的问题。"
+    },
+    {
+      "idx": 132,
+      "en": "There’s a lot of heavy machinery, which means there’s work to do for\nthe person implementing the type system and figuring it all out. But\nworse than that, it leaks into the experience of the programmer. So\none thing it requires is that you have to do a lot of annotations. Is\nit also the case that the annotations are themselves subtle to figure\nout what the right ones are? Are these easy annotations to write or\nhard annotations to write?",
+      "zh": "有大量繁重的机制，这意味着实现类型检查器的人有很多工作要做，写程序的人有很多工作要做，而且思考这些事情会带来很大的心智负担。"
+    },
+    {
+      "idx": 133,
+      "en": "In principle, they’re relatively tricky. You’re dealing with rank-two\ntypes. These are fairly advanced things. On the other hand, the Rust\ncompiler is very good at guiding you down these paths. It says, “Ah,\nyou’re trying to do something that needs this feature. Copy-paste this\npiece of code into the type and it’ll probably work.” Because to be\nhonest, in Rust, it mostly just comes up in this particular context.",
+      "zh": "原则上，这些东西相对比较棘手。你在处理二阶类型，这属于相当高阶的类型理论。但在实践中，类型推导往往效果还不错。"
+    },
+    {
+      "idx": 134,
+      "en": "I’m certainly not saying that I think Rust has made a bad choice here,\nthe Rust design is quite comfortable with a fairly heavy amount of\nannotations. You end up writing types a lot. So writing these\nannotations maybe isn’t the end of the world. It’s certainly not\nappropriate for OCaml, where programmers are used to a compiler that\nknows an awful lot more about a program, where you can just start\nmashing out code and have the compiler tell you whether there are type\nerrors in it without having given it very many hints about what it is\nthat you’re trying to do.",
+      "zh": "我当然不是说 Rust 做出了一个糟糕的选择，Rust 的设计写起来相当舒服，即便在数学上并不理想。这是一个非常契合 Rust 自身目标的设计。"
+    },
+    {
+      "idx": 135,
+      "en": "Which is really a rather nice feature.",
+      "zh": "这其实是一个相当不错的特性。"
+    },
+    {
+      "idx": 136,
+      "en": "It is. I do like it. So to be able to keep some amount of that, we’ve\ngone for a different design in the local-types work. Instead of having\nlifetime variables, we have natively this concept of a function that\ndoes not capture its argument. It’s a function whose argument\ndefinitely won’t be squirreled away into a global variable or some\ncache or some memoized structure or anything. It’s definitely not\ngoing to capture its argument.",
+      "zh": "确实。我挺喜欢它的。为了能保留其中的一部分，我们在 OCaml 里选择了一种不同的设计。核心思路是：我们不使用任意的生命周期，而是使用一个与调用函数的栈帧对应的单一 region。"
+    },
+    {
+      "idx": 137,
+      "en": "That means if you have one of those functions, you can locally\nallocate the tuple or whatever and pass it directly to a function like\nthat. The user experience in this case is pretty similar, but\nimportantly, there are no variables and no polymorphism going on at\nthe type level. So the type inference story works out a lot more\nsimply. There is a trade-off here in that it’s a lot less flexible\nthan Rust.",
+      "zh": "这意味着如果你有这样一个函数，你可以在局部分配那个元组或者别的什么，然后把一个指向它的引用传给这个函数。这个函数会很开心，因为它在执行过程中可以使用那个引用。最后，当函数返回时，栈帧结束，所有那些局部分配的东西就都被释放了。"
+    },
+    {
+      "idx": 138,
+      "en": "It more or less only covers this case. Rust’s lifetime variables can\nbe used for lots more stuff than just saying a function that accepts\nstack-allocated arguments. You can have a function with multiple\nlifetime parameters, and you can say it takes these two arguments of\nthis lifetime, this argument is a tuple where one half is this\nlifetime, the other half is that lifetime, it returns something which\nhas a third lifetime, which is related to these two in some\ncomplicated way. And you can have really precise specifications of\nlifetime behavior, which are basically impossible with our system for\nOCaml.",
+      "zh": "它基本上只覆盖这一种情况。Rust 的生命周期变量能用于更多场景，比如在数据结构里存储引用，或者从函数里返回引用。所有这些都由 Rust 的生命周期来处理，而这些都不在 OCaml 的局部类型的覆盖范围内。"
+    },
+    {
+      "idx": 139,
+      "en": "But on the other hand, in the common case of passing a reference to a\nstack-allocated thing to a function, you don’t have to write any\nannotations and the types are much simpler. I think this is kind of an\ninteresting trade-off between the two. A lot of it is driven by the\nfact that in Rust this memory management system is the only one there\nis, and it has to work for everything. That’s all memory goes through\nthe lifetime system in Rust, whereas in OCaml, when we get to the\ncomplicated cases, we haven’t thrown away the garbage collector. We\ncan still use it for anything difficult.",
+      "zh": "但另一方面，在把指向栈分配对象的引用传给函数这个常见场景中，OCaml 的局部类型让你写起来更简单，读起来也更简单。"
+    },
+    {
+      "idx": 140,
+      "en": "Right. Yeah. It’s a very different kind of set of ergonomic\nchoices. In many ways, I think about what language I want OCaml to\nevolve in over, I don’t know, the next five to 10 years, is kind of\nexactly this, of something that is simple and ergonomic to use by\ndefault, but that when you need precise control, you have some ways of\ngiving more of that precise control. And maybe with trade-offs where\nit’s not quite as much precise control as you could get in the most\nadvanced system, but aiming for or something that is simple and easy\nfor people to use most of the time.",
+      "zh": "对。是的。这是一套在工程体验上非常不同的取舍。在很多方面，我对 OCaml 的理解是，它想成为那种让你沉浸在代码逻辑里的语言，而不是让你深陷在语言机制本身里面。"
+    },
+    {
+      "idx": 141,
+      "en": "That’s definitely my goal as well for this kind of thing. It can often\nbe a really tricky needle to thread because it’s actually a lot harder\nto have a language that is easy mostly, and occasionally you have\nprecise control over things. It’s actually a much more difficult\ndesign than one which allows precise control of everything and\nrequires precise control of everything all the time. The interface\nbetween the bits where it’s automatic and the bits where it’s manual\ncan be quite a tricky thing to work out.",
+      "zh": "这也绝对是我在做这类事情时的目标。这往往是一根非常棘手的针要穿——因为你需要某些机制，但同时又想控制住人们必须理解的机制数量。"
+    },
+    {
+      "idx": 142,
+      "en": "So one tricky aspect of stack allocation has to do with things like\nsmart constructors, right? Which is to say some of the time you want\nto allocate something in basically a stack-like discipline, but you’d\nalso like some abstraction capabilities. I’d like to be able to not\nhave to in-line in my present function, do all the work of doing the\nallocation. I’d like to write some function that wraps up some pattern\nthat allocates something for me. And then I can use it following a\nstack discipline. How does that fit into this design?",
+      "zh": "那么栈分配有一个棘手的地方，跟智能构造器这类东西有关，对吧？也就是说，假设你有一个局部分配的东西，然后你想从一个函数里把它返回出去。这该怎么处理？"
+    },
+    {
+      "idx": 143,
+      "en": "That fits in fairly neatly, actually. There’s a lot of difficulty in\nreturning a stack-allocated thing if you take the Algol, C, Rust view\nof stacks, where there is the stack, each function call pushes a new\nframe onto the stack, and that frame is destroyed from the function\nreturns. The trouble is, it gives you very little obvious places for\nthe return value of the function to go.",
+      "zh": "这其实嵌入得相当自然。从函数里返回一个栈分配的东西，在一般情况下有很多难点。"
+    },
+    {
+      "idx": 144,
+      "en": "If you’re just returning an integer or something that fits in a\nregister, then it’s easy enough. You pick some register as the return\nvalue. If it’s larger than that, it’s quite tricky. You can reserve\nsome space in the caller’s side, but then the caller needs to know\nexactly how big that is. So in particular, the callee can’t decide\nitself how large an object to return. And if the callee is allocating\nthat object on its own stack, you may need to copy these things or\nmove them around or something like that.",
+      "zh": "如果你只是返回一个整数或者某个能放进寄存器的东西，那倒够简单的。你只需要弹出栈帧，把整数留在寄存器里就行了。"
+    },
+    {
+      "idx": 145,
+      "en": "What we’ve actually gone for is instead something closer to actually\nhow Forth does stacks, which never really made any sense to me until I\nstarted working on this project, which is that there’s a separate code\nin a data stack. The region of memory for calls and returns, so the\nactivation records of functions. That’s slightly different from the\nregion of memory where the local allocations take place.",
+      "zh": "我们实际采用的方案，更接近 Forth 处理栈的方式——将栈嵌套在另一个栈里面。我们有一个副栈，局部分配的东西就放在这里。"
+    },
+    {
+      "idx": 146,
+      "en": "And they line up most of the time. So normally a function does local\nallocations, pushes some stuff to its data stack. The local\nallocations then they’re cleared out at the time it returns. But it\nmeans that you can allow a certain amount of slip between them to\nhandle these smart constructors. A smart constructor in this model is\njust a function which allocates things on the local stack, which it\nthen leaves there as it returns. The return has to pop a return\naddress, but it pops a return address off the code stack, the system\nstack, and leaves the local allocations where they are.",
+      "zh": "它们大多数时候是对齐的。所以通常情况下，一个函数进行局部分配，往副栈上压一些东西，做一些工作，然后再把它们弹出来。"
+    },
+    {
+      "idx": 147,
+      "en": "And they show up in exactly the same place of memory as if the caller\nhad done that allocation. You don’t need to do this little awkward\ndance where you copy them from one place to another, just to get them\nto the other side of the return address slot. I think that was quite a\ntricky problem before we settled on the idea of just having a slightly\ndifferent region of memory. It also means that it makes the\nimplementation a lot simpler because the binary format of it is more\nor less the same as the minor heap. So much of the garbage collector\nsupport is already there.",
+      "zh": "它们出现在内存里的位置，跟调用者自己做那次分配时完全一样。你不需要拷贝任何东西。"
+    },
+    {
+      "idx": 148,
+      "en": "And do programmers have to think explicitly about these stack frames\nthat are going on this other stack? When we write programs with\nfunctions, basically the structure of the function stack falls\nnaturally out of the structure of the function calls. Is the structure\nof the data stack something that the programmer has to think about\nexplicitly, or does that fall out of some other part of the structure\nof the code?",
+      "zh": "那程序员需要显式地去思考这些在另一个栈上发生的栈帧吗？"
+    },
+    {
+      "idx": 149,
+      "en": "The programmer has to think about it explicitly when they’re trying to\ndo something other than make it follow the structure of the function\ncalls. By default, it just follows the structure of the function\ncalls. But if you’re writing one of these smart-constructor things\nthat allocates something for the caller to deallocate, then those\nrequire an annotation. You need to say, “In those functions, I am\nactually allocating something that I expect to outlive this function\nframe and it’s the caller’s problem to clean up.”",
+      "zh": "当程序员想做的事不只是局部分配时，就需要显式地思考这个问题。如果你做的一切都只是做一些局部分配，在函数里使用它们，然后返回一个非局部分配的东西，那你完全不用想这些。"
+    },
+    {
+      "idx": 150,
+      "en": "Got it. So you have to say that a given function is going to return\nsomething on the parent stack, and then beyond that you just use the\nfunctions and that’s that. You don’t have to explicitly say, “And now\nI’m going to open a new stack frame.” So you’re not explicitly in the\ncode manipulating stack frames.",
+      "zh": "明白了。所以你需要声明某个函数会在父栈上返回东西，然后那个父栈帧就是最终用来把那些东西压上去的那个。"
+    },
+    {
+      "idx": 151,
+      "en": "Yeah, that’s correct. We did at one point have a… Maybe we could\njust infer all of this and just have the compiler decide when things\ngo on the stack. And realized shortly afterwards that if we left it\nentirely up to the compiler, it would put everything on the stack,\nwhich sounds good in theory, but really isn’t because things on the\nstack don’t get deallocated for a long time. So if every single\nallocation goes there, nothing ever gets deallocated and there’s just\na massive stack all the time.",
+      "zh": "对，正是这样。我们确实在某个时候曾经想过……也许我们可以把这些全部推断出来，让编译器自动搞清楚栈分配该放在哪里。结果这引发了一些问题。"
+    },
+    {
+      "idx": 152,
+      "en": "Yeah, that doesn’t sound good.",
+      "zh": "嗯。听起来不太妙。"
+    },
+    {
+      "idx": 153,
+      "en": "So you really do want stack frames to end occasionally. The current\nsetup is that they end when things go out of scope at the end of the\nfunction, unless you explicitly tell it otherwise.",
+      "zh": "所以你确实希望栈帧能够偶尔结束。目前的设定是，它们在普通 OCaml 意义上的作用域结束时就结束，这是一个相当合理的规则。"
+    },
+    {
+      "idx": 154,
+      "en": "So all of this stuff about local types, that’s all about making stack\nallocation better and more available for more things. Let’s talk about\nmaking the heap better. When I think about what’s wrong with\nallocations on the OCaml heap, I think of there as being two\nproblems. One is that the data is too scattered, right? There are too\nmany pointers to chase. It’s not rectangular enough in other\nwords. And the other is that the data is too big.",
+      "zh": "那么这些关于局部类型的内容，都是关于如何让 OCaml 里的栈分配更好、更普及的。然后还有一个独立的问题是关于非装箱类型的。那是怎么回事？"
+    },
+    {
+      "idx": 155,
+      "en": "And I think of these as both problems having to do with OCaml’s super\nnice and simple data representation. Which is to say OCaml values are\none of two things. They’re either a thing that fits inside of a single\nmachine word, call those immediates, or they’re heap allocated values,\nright? And heap allocated values all look the same. There are some\nnumber of words, the first word is some header stuff that tells you\nwhat kind of thing it is, and then for everything that you put in\nthere’s one full word.",
+      "zh": "我把这两个问题都看作与 OCaml 那套超级好用且简洁的数据表示模型有关——也就是说，所有东西都能放进一个机器字里，要么是一个指针，要么是一个整数。"
+    },
+    {
+      "idx": 156,
+      "en": "So would you like to represent a character? Great. Here’s your machine\nword of eight bytes to represent that one character. Would you like to\nrepresent two characters? Great. Here’s eight bytes. Anything you\nwant, it fits into the same size slot. So there’s a lot of\nuniformity. OCaml is, under cover of dark, it turns out it’s really\njust like a scheme implementation in terms of its memory\nrepresentation.",
+      "zh": "想表示一个字符？好，给你八个字节的机器字来表示你的字符。想表示一个浮点数？好，你实际上需要 64 位。但它必须藏在一个指针后面。所以给你八个字节的机器字，指向另一个八个字节的机器字。"
+    },
+    {
+      "idx": 157,
+      "en": "So another thing that we’ve been doing some thinking about is some\nways of changing this, which is a system that you’ve been working on\ncalled unboxed types. And I’m wondering if you can give us a tour of\nhow unboxed types kind of steps away from this very simple memory\nmodel that OCaml has to give the programmer more control over how\nmemory’s laid out.",
+      "zh": "所以我们一直在思考的另一件事，是一些改变这种状况的方法，也就是重新设计 OCaml 在内部表示事物的方式。这就是所谓的非装箱类型。"
+    },
+    {
+      "idx": 158,
+      "en": "Right. I mean, there’s a few things that you really want to be able to\ndo, which, I mean, as you just mentioned, the avoiding all of these\npointers, all of these indirections, all of these separate allocations\nthat OCaml currently forces you to do. Some things that we’d really\nlike to be able to do in OCaml are C-style, in-lining one struct into\nanother.",
+      "zh": "对。我是说，有几件事是你真正想做到的，就像你刚才描述的那样——你基本上可以内联数据结构，或者把它们紧密地打包在一起。"
+    },
+    {
+      "idx": 159,
+      "en": "You can have one record type include that record in another record\ntype, and have that be as though you had manually copy-pasted the\nfields in, not a separate allocation under pointer between them. Or do\nthe same, particularly with primitive integer types, like, Int32 in\nOCaml has a somewhat hilarious representation. A 32-bit integer is\ncurrently represented as a 64-bit pointer to a sequence of three\n64-bit words. There’s a header, there’s the fact that it is a 32-bit\ninteger, and then there’s the 32-bit integer expanded to fill 64 bits.",
+      "zh": "你可以让一种记录类型把另一种记录类型直接包含进来，就好像那些字段是直接嵌入到外层记录里一样。"
+    },
+    {
+      "idx": 160,
+      "en": "And there are good reasons why it’s like that from the point of view\nof keeping everything uniform with respect to the rest of the\nsystem. But none of those reasons are very satisfying if you are\nwriting an application that’s primarily processing 32-bit integers and\nhas to use this bizarrely verbose representation for them.",
+      "zh": "从保持一切对垃圾回收器统一、让 GC 保持简洁的角度来看，这样设计是有充分理由的。"
+    },
+    {
+      "idx": 161,
+      "en": "So we’d really like some of these things to be able to be represented\nnatively, both to make the heap structures more efficient so that you\ncan have a pointer to a heap structure, which is in fact a flash\nsequence of bits rather than a nest of linked structures. But also to\nmake some of the heap structures just go away entirely. At the moment,\nif you want to avoid a heap allocation, and you’re trying to pass two\nvalues to an OCaml function, you need to make a tuple on the heap to\npass them. Or you can use pass two arguments and have two separate\nvariable names. There’s no way where you can write one name and have\nthat one name represent two things without it being a heap allocation.",
+      "zh": "所以我们真的很希望其中一些东西能够以原生方式表示——既是为了让堆上的表示更小、减少间接层，也是为了让函数的调用约定更好。"
+    },
+    {
+      "idx": 162,
+      "en": "Right. And this, I guess, highlights a general phenomenon in OCaml and\nI think in other languages, where the abstractions that you use, which\nyou almost want to think about as, like, step back, how am I\nabstractly structuring my code, the abstractions call out very\nparticular performance choices. And as relevant in this conversation,\nvery particular memory representations. And so you need to make some\nreal changes in order to give yourself the power to have different\nmemory representations than the ones that are there by default.",
+      "zh": "对。我想这也凸显了 OCaml 以及其他语言中一个普遍现象——抽象是有代价的，对吧？如果我有一个接受类型 T 的值的函数，在 C++ 里它可能会对不同的 T 进行不同的特化，你就可以对某些类型得到更高效的结果。"
+    },
+    {
+      "idx": 163,
+      "en": "Yeah. And it’s that abstraction which makes this tricky. And some of\nthose things could be done fairly straightforwardly. In-lining one\nrecord into another is a fairly straightforward transformation that\nthe compiler could do if both of those records had visible type\ndefinitions. Or if you could see that this type is Int32, you could\nuse an efficient representation for that pretty straightforwardly.",
+      "zh": "是的。正是这种抽象让这件事变得棘手。其中有些东西可以相当容易地做到。"
+    },
+    {
+      "idx": 164,
+      "en": "But things like passing two arguments to a function and having those\nconsume two registers instead of one, that kind of flies in the face\nof a lot of how polymorphism works in OCaml. A lot of the things like\nList.map, which is supposed to work on any function, List.map unpacks\na list, the actual implementation of it, it unpacks a list whose\nelement type it does not know, plucks an element that it does not know\nabout over the list, passes that to a function, not knowing anything\nabout what that function does. Only knowing that the element type of\nthe list happens to be the same type as the argument type of the\nfunction.",
+      "zh": "但像是给函数传两个参数、让它们占用两个寄存器而不是一个寄存器这样的事，就会改变调用约定。这样一来，你就不能只有一个通用版本的函数了，你需要针对不同的类型参数有不同版本的函数。"
+    },
+    {
+      "idx": 165,
+      "en": "And that works in OCaml without generating a million different copies\nof List.map for every time it’s used. Sometimes it gets in-lined but\nthere is a generic case. There is one map that works for any possible\nfunction or any possible list type. And the only reason that can be\nmade to work is because OCaml knows that an arbitrary argument to an\narbitrary function can in fact be represented in a single integer\nregister.",
+      "zh": "这在 OCaml 里是可行的，不需要为 List.map 每次用于不同类型时都生成一百万个不同的副本。但它之所以能行，是因为它使用了这种统一的表示方式。"
+    },
+    {
+      "idx": 166,
+      "en": "And that’s of course only true because of the inefficient\nrepresentation that it uses for various things. Things that really\nshould be represented as a floating point register or a pair of\ninteger registers, are instead represented in a single integer\nregister by making a heap allocation, passing around a pointer to\nthat.",
+      "zh": "当然，这只是因为它对各种事物使用了低效的表示方式。在某些情况下，让 List.map 与更高效的类型配合使用会更困难。"
+    },
+    {
+      "idx": 167,
+      "en": "So you’re pointing at this kind of notion of polymorphism as the way\nof dealing with it. To what degree is this about the compilation\nstrategy, right? Part of what’s going on is OCaml supports separate\ncompilation. You can compile your individual file separately. And when\nyou compile List.map, there really is just one implementation of\nList.map, which is then used in lots of places, but that’s not the\nonly way to compile.",
+      "zh": "所以你指的是多态这个概念，把它作为解决问题的方式。那么多态在多大程度上是实现非装箱的障碍呢？"
+    },
+    {
+      "idx": 168,
+      "en": "You could do a whole program compiler and optimizer, where it kind of\ngets the whole program together, in some sense, before it\ncompiles. And it can see the concrete types at which List.map is used\nand maybe specialize the behavior for those types. So I’m wondering to\nwhat degree the problem with polymorphism is fundamental and to what\ndegree it is a kind of result of the engineering choice about how the\ncompiler works on large code bases.",
+      "zh": "你可以做一个全程序编译器和优化器，把整个程序放在一起，为不同的类型生成专门化的代码，这本质上就是 C++ 和 Rust 用模板和泛型所做的事情。"
+    },
+    {
+      "idx": 169,
+      "en": "Right. There’s definitely been languages that work like that, as\nyou’re saying, where things like List.map, there is no possible\ngeneric implementation that works in all cases. And it has to be\nspecialized for every different type with which it’s used. For\nfunctions like List.map, that works pretty well. It gets a little bit\ntrickier when you start dealing with some more advanced forms of\npolymorphism.",
+      "zh": "对。确实有些语言是这样工作的，就像你说的，Lisp 和 Smalltalk 这类语言里，所有东西都是统一的表示，效率稍微低一些。"
+    },
+    {
+      "idx": 170,
+      "en": "OCaml supports some things like, it supports polymorphic record fields\nand first-class modules and various other things where you can package\nup this concept of a polymorphic function, and pass it around as a\nvalue or store it in a hash table or do stuff with it. And then pluck\nit out and call it with different types. So it’s not enough to\nspecialize each call site because sometimes you don’t even know what\nfunction it is that you’re calling at the time that you’re\nspecializing. You would need to somehow package up this representation\nof every possible type or every possible type that it could be called\nat and pass those things around.",
+      "zh": "OCaml 支持一些特性，比如多态记录字段、一等模块等各种东西，使得你可以写出这样的程序：编译器在编译某个函数时，根本无法知道将来会传入什么类型。"
+    },
+    {
+      "idx": 171,
+      "en": "There are certainly language designs that don’t have those more\nadvanced polymorphism features or restrict them in some way, and work\nby specializing all of the polymorphic functions at each use, the\ntechnique called monomorphization. That works pretty well. It\ngenerates fast code. It generates quite large code because you’ve got\nall of these duplicated copies of slightly similar things. And it can\ntake a long time to compile because it’s not enough to just point to…\nIt can be a good, specialized List.map for performance, but when you\njust want a fast build, it’s nice to be able to just point out the\ngeneric implementation of it.",
+      "zh": "当然，也有一些语言设计没有那些更高级的多态特性，或者以某种方式对其加以限制，这样就可以为所有类型生成专门化版本。"
+    },
+    {
+      "idx": 172,
+      "en": "Right. And separate compilation is really nice, right? Having an\nincremental build where you build your program bit by bit, rather than\nhaving to do the whole thing in one big go is from a kind of\nstraightforward developer-experience point of view, really rather a\nbig win.",
+      "zh": "对。而且独立编译真的很好用，不是吗？有了增量构建，你构建好自己的库，库会被缓存起来，不需要反复重新构建。这样就能得到一个非常不错的增量构建系统。这是个很棒的特性。"
+    },
+    {
+      "idx": 173,
+      "en": "Yeah. Another point in the spectrum of techniques you can use here is\nwhat the .NET generic system does, which is essentially\nmonomorphization, but it’s happening at one time because there’s a JIT\ncompiler. There’s List.map, and there’s this thing that represents the\ngeneric List.map. And every time you call it, it says, “Ah, what type\nare you calling this at?” “Ah, I haven’t actually compiled a version\nof List.map that type yet, let me go off and compile one of those for\nyou.” And then you run that.",
+      "zh": "是的。在这一系列技术手段当中，还有另一个方向，就是 .NET 泛型系统的做法——为所有基础类型（比如 int、float 这些）生成专门化代码，然后对所有指针类型使用一个通用版本。"
+    },
+    {
+      "idx": 174,
+      "en": "That works quite neatly. It fixes the code size problem or somewhat\nfixes it. You still end up with many copies of List.map, but you end\nup with only the ones that you use rather than every possible one. You\ndo end up with some disadvantages that are hard to get around that are\nfundamental to JITs in that sometimes you will hit an uncompiled case\nand your program will stop and it enters JIT-compiling mode for a\nwhile.",
+      "zh": "这个方案相当简洁。它解决了代码体积的问题，或者说在一定程度上缓解了这个问题。你最终还是会有多份拷贝，但数量是有界的。"
+    },
+    {
+      "idx": 175,
+      "en": "It’s a new kind of pause, not only the garbage collector, but the\ncompiler itself can now interrupt your program.",
+      "zh": "这是一种新的停顿，不只是垃圾回收器，连编译器本身也可能打断你的程序来生成这些代码。当然，它并不是真的打断程序，只是意味着第一次使用某个新的类型组合时，你需要多付出一点时间。"
+    },
+    {
+      "idx": 176,
+      "en": "Yeah. So this wide spectrum of approaches here, the one that OCaml\nuses, everything being uniform, is definitely not the only one. I will\nsay that it’s not obviously worse than any of the others. There’s no\nclear winner here. They’re all quite tricky in various edge cases,\nespecially when you have advanced modular features.",
+      "zh": "是的。所以说，在这个宽泛的方案谱系里，OCaml 所采用的——让一切都保持统一表示——在某种意义上是与独立编译最兼容的极端情况。这很好。"
+    },
+    {
+      "idx": 177,
+      "en": "All right. So we’ve gotten a little far afield. Let’s get back to the\nunboxed types question.",
+      "zh": "好了，我们扯得有点远了。让我们回到非装箱类型的话题吧。"
+    },
+    {
+      "idx": 178,
+      "en": "Yeah. Okay. So how does this actually work in the unboxed type’s view\nof the world? The design we were going for there was to try and keep\nthe nice properties of separate compilation, all of the benefits that\nOCaml has from, as you say, secretly being a Lisp machine, where there\nis a generic implementation of these functions. And the thing that\nwe’re missing from the type system is the ability to express that this\nis a generic polymorphic function, but it’s not actually going to work\nfor all types.",
+      "zh": "好的。那么在非装箱类型的视角下，这到底是怎么运作的？我们采用的设计是基于一个叫做种类系统的东西。种类系统的作用是给类型赋予一个类型。"
+    },
+    {
+      "idx": 179,
+      "en": "It’s going to work for those types that fit in a single integer\nregister and don’t require garbage collection support or those types\nwhich contain only floating point data or somewhere between saying,\nthis is a function with concrete types that works only in this\ncase. And this is a function that works for every possible type you\ncould ever write, which are the only two things you have in OCaml at\nthe moment.",
+      "zh": "它适用于那些能放进单个整数寄存器、且不需要垃圾回收的类型。这些就是具有这种特定种类的类型。"
+    },
+    {
+      "idx": 180,
+      "en": "But being able to say this works for all of the types that have this\nlayout. And so we’ve prototyped some of this. It works quite neatly\nfor some cases where you can implement stuff like data structures,\nwhich are generic and parameterized by a type, but are parameterized\nonly by those types that don’t require any garbage collector\nsupport. So you never have to pay the cost of garbage collector\nbarriers, even though you are in generic code.",
+      "zh": "但关键在于能够说「这适用于所有具有这种布局的类型」。我们已经对此做了原型验证，这也是我们打算在 OCaml 5 中发布的特性。"
+    },
+    {
+      "idx": 181,
+      "en": "Right. And just to kind of tie this to some broader nomenclature, this\nnotion of a type of type is what’s typically called a kind, right?\nWhat you’re essentially adding is a kind system to OCaml for tracking\nthe fact that different data we have might have different layouts and\nthe regular polymorphic functions work over now, one of the various\nlayouts, and we can have different layouts. And we can still write\nfunctions that are polymorphic, they’re just polymorphic for a given\nfixed layout of data.",
+      "zh": "对。顺便把这个和更广泛的术语联系一下：类型的类型这个概念，在类型论里叫做种类。在实践中，我们谈论的是具有特定内存布局的类型，比如「这是一个 64 位整数」、「这是一个 32 位整数」或者「这是一个浮点数」。"
+    },
+    {
+      "idx": 182,
+      "en": "Yeah. And there is in fact one particular layout called value, which\nrepresents OCaml’s current notion of polymorphism. In the unboxed\ntype’s view of the world, a function which is polymorphic over all\ntypes of layout value is what OCaml today would call just\npolymorphic. All of the other layouts, all of the other kinds, are the\nnew additions where you can say it’s polymorphic over things which are\nunboxed tuples of a certain width or things which are immediate\nvalues, never containing pointers and so on.",
+      "zh": "是的。实际上有一种特殊的布局叫做 value，它代表 OCaml 目前对类型的理解，本质上就是「能放进一个机器字」。"
+    },
+    {
+      "idx": 183,
+      "en": "Got it. So the new abstractions that we’re presenting people with are\nthese different data layouts. And some of them are about atomic bits\nof data. I can say I have an atomic piece of data and I can say how\nwide it is. This is an eight-bit-wide character. This is a 32-bit-wide\ninteger. And then the next level up from that is I can express\ncollections.",
+      "zh": "明白了。所以我们向用户呈现的新抽象就是这些不同的数据布局。核心思想是你可以编写对布局多态的代码。"
+    },
+    {
+      "idx": 184,
+      "en": "I can say a tuple or a struct and say this is like an unboxed tuple or\nan unboxed struct, and it contains inside of it things whose layout is\nspecifically specified as well. Once I have this kind of unboxed\nstruct, what can I do with it? How do I actually use it? And in fact,\nwhere is that data represented?",
+      "zh": "我可以声明一个元组或者结构体，说这是一个非装箱元组或非装箱结构体，它包含一个这种布局的东西和一个那种布局的东西。"
+    },
+    {
+      "idx": 185,
+      "en": "Right. The idea of an unboxed struct is that it’s just something which\nis wider than a normal data value. So there’s never any representation\nof it on the heap. There’s just, if you have a local variable of type\n“unboxed tuple of two Ints,” then that’s the same as having two local\nvariables.",
+      "zh": "对。非装箱结构体的概念就是它比普通的数据值更宽，我们支持各种不同的尺寸。"
+    },
+    {
+      "idx": 186,
+      "en": "It’s not one which is a pointer to something, it’s just two local\nvariables. They live in separate registers. If you pass them to a\nfunction that takes up two of its argument slots, instead of taking up\none, if you return it, it has to return a wider structure and so\non. The idea is that these things will work like normal OCaml values,\nbut will never be anywhere other than the local variable stack or\nsimilar.",
+      "zh": "它不是一个指向某处的指针，就是两个局部变量。它们住在不同的寄存器里，可以通过不同的寄存器来传递。"
+    },
+    {
+      "idx": 187,
+      "en": "Got it. So this is, in some sense, a way of encoding this pattern of\ntaking… I have a bunch of things I want to pass them to some other\nfunction, right? I kind of get a calling convention now, where if I\npass some unboxed structure to another function, then it’s just going\nto get turned into ordinary function parameters. And it also gives me\na kind of multi-argument return. If I want to return one of these\nstructures, I now have a way of returning a bunch of things without\ngoing through an intermediate heap-allocated value.",
+      "zh": "明白了。所以从某种意义上说，这是一种编码某种模式的方式——我有一堆逻辑上属于同一组的东西，希望它们能一起传递，但访问数据时不需要额外的间接寻址。"
+    },
+    {
+      "idx": 188,
+      "en": "Yeah. And you’re right to mention calling conventions because these,\nin fact, a lot of the design here was based on a paper by, I think\nRichard Eisenberg and co. from the Haskell community, entitled “Kinds\nare Calling Conventions.” It’s about determining the calling\nconvention of a function based not on its type, but on the kinds of\nits type.",
+      "zh": "是的。你提到调用约定是对的，因为这里很多设计确实是关于调用约定的——也就是如何向函数传参。因为函数并不知道自己会接收到一个非装箱结构体。"
+    },
+    {
+      "idx": 189,
+      "en": "All functions of a given kind. So all of the things that take floating\narguments, all the things that take non-pointer arguments, those will\nall have the same calling convention. And you can write generic\npolymorphic code that calls those functions in a completely uniform\nway. It’s only when the kinds differ that you might have different\ncalling conventions. The kinds tell you how many registers a value\nneeds and so on.",
+      "zh": "同一种类的所有函数共享相同的调用约定。所有接受浮点参数的函数、所有接受整数参数的函数、所有返回一对浮点数的函数，都使用同样的调用约定。"
+    },
+    {
+      "idx": 190,
+      "en": "Okay. But I claim this whole thing about unboxed types is about how to\nmore efficiently represent things on the heap. And then we’ve said,\nah, we have all these structures that do not in the ordinary course\nadmit a representation on the heap. So how does this tie back to the\nheap?",
+      "zh": "好的。但我认为，关于非装箱类型这整件事，核心在于如何更高效地表示存活在堆上的数据，对吧？因为我最初说的就是如何在堆中内联数据结构，而不是用指针指向它们。"
+    },
+    {
+      "idx": 191,
+      "en": "Oh, actually, that is true. A lot of the interesting stuff, in fact, a\nlot of the hard stuff with the unboxed types work is not just about\ngetting better heap representations, it’s about not having heap\nrepresentations at all for things that don’t need to be on the heap in\nthe first place. For any of these unboxed tuples or unboxed\nstructures, you can always choose to put them on the heap if you want\nto box them up and have a single pointer to represent this collection\nof things.",
+      "zh": "哦，其实你说的是对的。非装箱类型工作中很多有趣的地方，其实也是最难的地方，就在于堆上的表示。问题在于，在堆上要让垃圾回收器正常工作，就必须知道指针在哪里。"
+    },
+    {
+      "idx": 192,
+      "en": "There are a couple of restrictions on being able to do that, to do\nwith weird internal details of the OCaml garbage collector, which\ncurrently expects an object to consist either entirely of tagged\npointers that it knows how to look at, or to not contain any pointers\nat all. So while an unboxed tuple containing one pointer and one float\nis a thing that you can pass around or pass to a function and so on,\nit’s not a thing that you can store on the heap because the garbage\ncollector won’t know how to process it. You can convert back and forth\nbetween these unboxed things and heap allocations, but there are a\ncouple of sharp corners at the moment to do with exactly how the\ngarbage collector expects the heap to be laid out.",
+      "zh": "要做到这一点，有一些限制，与垃圾回收器的一些奇怪内部细节有关，但原则上，你可以有一个记录，里面有一个整数字段、一个浮点数字段和一个指针字段，它们都直接存放在记录里。"
+    },
+    {
+      "idx": 193,
+      "en": "Got it. So there’s some explicit way, if I just use an unboxed struct\non its own, that’s a kind of floating, ethereal thing. It exists at no\nfixed point in memory. And in fact, I guess, has to be immutable\nbecause in order for something to be a mutable object, it has to have\na fixed location somewhere that multiple… You need to be able to\nalias. Multiple different parts of the program have to talk about the\nsame thing.",
+      "zh": "明白了。所以有一种明确的方式：如果我单独使用一个非装箱结构体，它就是一块扁平的数据块。但如果我想把它放到一个堆分配的结构里，只需要说把这个扁平的东西放进我的记录，它就会直接存在于记录中。"
+    },
+    {
+      "idx": 194,
+      "en": "So it needs a location as a name in order to be mutable. So we have\nthese ethereal, immutable unboxed things, and then we have some\nexplicit way of packing them into the coarse, low-level,\nheap-allocated structures. And presumably when we do that, we get all\nthe nice, tight packing of data so that we don’t have to spend a whole\n64 bits to represent our eight-bit character.",
+      "zh": "所以它需要一个名字作为位置才能支持可变操作。我们有这些虚无飘渺、不可变的非装箱结构体，你可以把它们作为值到处传递；如果你想让它们可变，可以把它们放进记录，然后就能对记录字段进行修改了。"
+    },
+    {
+      "idx": 195,
+      "en": "Yeah. The design at the moment is that you either get the tight\npacking of data, or sometimes you get a compiler error saying, “I’m\nafraid I can’t do that, Dave.” You just can’t have a pointer and an\neight-bit char right beside each other. The garbage collector will be\nvery confused. It’s a separate bit of work that might be worthwhile\ndoing some time to maybe lift some of those restrictions and let the\ngarbage collector handle more densely-packed, complicated,\nhalf-pointer, half-data structures. But I think the goal at the moment\nis to actually surface the capabilities that the OCaml runtime system\nalready has to the programmer. There’s more stuff that you can do than\nyou can comfortably do in the source language at the moment.",
+      "zh": "是的。目前的设计是这样的：要么你得到紧密打包的数据，有时会有几个额外的填充位，但不会有装箱操作；要么你可以选择装箱，那就需要垃圾回收器来处理这个指针。"
+    },
+    {
+      "idx": 196,
+      "en": "Got it. So there’s still a thing missing from the story, as I\nunderstand it, which is, I also want to do some imperative programming\non these things. I have some big data store where I have a bunch of\nnicely, compactly packed things. And now what do I want to do? I want\nto write some code that walks over that and maybe mutates it. Because\noften the most efficient way of dealing with large chunks of memory is\nnot to do things always in a purely functional style, sometimes you\nactually want to imperatively modify data. So how does that fit into\nthe unboxed types design?",
+      "zh": "明白了。所以这个故事里还缺少一块，按我的理解是：我还想能够把一个浮点数放进列表，这意味着要以某种方式把它放到堆上。这是怎么做到的？"
+    },
+    {
+      "idx": 197,
+      "en": "I don’t think there’s any huge differences there from normal boxed\ndata. So at some point, at some level, there has to be some boxing in\nat least the way we’ve been doing things to get the\nmutability. Because as you’ve mentioned, a purely unboxed tuple is\njust some data. There’s nothing there to mutate. But as long as the\nouter structure is mutable, you can write some syntax that looks like\nyou’re mutating inner fields, even though it’s doing something a\nlittle bit more complicated.",
+      "zh": "我觉得这和普通的装箱数据没有太大区别。所以在某个层面上，对于你能做的所有有趣的事情，你都需要能够在垃圾回收的堆上分配这些东西。"
+    },
+    {
+      "idx": 198,
+      "en": "Got it. So at the end of the day, we have more primitives than just,\ntake some unboxed structure and flatten it onto a heap-allocated thing\nor un-flatten it. There’s also some notion of saying, I want to\naddress something deep in the middle of this unboxed structure and\nsay, let’s modify that. And that’s another language feature that kind\nof is surfaced to let you express that in a concise way.",
+      "zh": "明白了。所以说到底，我们拥有的原语不仅仅是「把一个非装箱结构体展平到包含它的东西里」，我们也可以真正把它放到堆上。"
+    },
+    {
+      "idx": 199,
+      "en": "So one of the really lovely things about OCaml is variants, right?\nVariants is this language feature that lets you express, I have some\ndata structure which is this or that or the other. And in this\ndiscussion of unboxed types, we’ve been talking entirely about records\nand tuples. The difference between variants, which are sum types\nrepresent disjunctions, this or that, versus product types, things\nthat represent this and that and the other. Should the unboxed types\nsupport in OCaml also have some kind of support for unboxed variants?\nIs that a meaningful idea?",
+      "zh": "OCaml 有一个真的很棒的特性，就是变体，对吧？变体是一种语言特性，让你可以让某个东西是 A 或 B 或 C，并在数据旁边存储一个标签来表明它是哪种情况。变体在模式匹配等方面给你带来很多好的特性。"
+    },
+    {
+      "idx": 200,
+      "en": "It’s definitely meaningful and the degree to which it’s easy\nvaries. So unboxing one variant into another variant is actually a\nthing that I think Gabriel Scherer and Nicolas Chataing in upstream\nOCaml development are working on. So this is if I have a variant that\nsays it’s foo or bar or baz, and bar is in fact itself a variant,\nthat’s one of these three things, then maybe we should in-line that\nand represent that as a single variant with five cases, rather than\nlike a variant whose middle case points to a third one.",
+      "zh": "这确实是有意义的，实现的难易程度也各有不同。把一个变体非装箱地放进外层记录其实相当简单。比如说，如果我有一个记录，其中有一个字段是变体，那我可以直接把变体的标签和变体的数据放到记录里。"
+    },
+    {
+      "idx": 201,
+      "en": "And that’s the moral equivalent of in-lining one record into another,\nit’s a fairly straightforward transformation. You could do it by\ncopying and pasting the code, but you’d rather it was done by the\ncompiler. A trickier one is doing unboxed variance as local values or\nas return values, return values being a particularly interesting\none. This is very useful for functions which we’d like that to be\nefficient. But it’s useful for larger variants as well.",
+      "zh": "这在道理上等价于把一个记录内联到另一个记录里，是你之前描述的做法的一个相当直接的扩展。"
+    },
+    {
+      "idx": 202,
+      "en": "The difficulty is that the exact size of the variant is not known in\nadvance because the different cases of a variant can have different\nnumbers of fields. So you end up needing to do something where over\napproximation reserve enough space or enough registers for the largest\nof the possible cases, which might even be larger than any of the\ncases, because the fields may have incompatible parts. You may have a\none case where there’s an unboxed floating point value and another\ncase there’s an unboxed integer value, and you need to reserve both\nthe floating and the integer registers to handle one case or the\nother.",
+      "zh": "难点在于变体的确切大小事先是不知道的，因为变体的不同分支可以有不同的大小。"
+    },
+    {
+      "idx": 203,
+      "en": "And this is one aspect, it’s a thing that’s desirable to do, but it\ndoesn’t quite fit into the model of stuff the OCaml system can already\ndo that we’d like to surface to the programmer. The OCaml backend\ncompiler-optimization pipeline doesn’t know how to return things whose\nlayout may depend on which case it’s in. Some of the trickiness\ninvolved in getting that to work is what originally pushed Leo White\nand I to start thinking about the local types, because that provides a\ndifferent and much simpler way of getting many of the same benefits in\nthat a function that’s returning a variant instead doing this somewhat\nfiddly but very optimized representation of a variant could instead\nreturn a locally allocated variant. And then it would have the same\nrepresentation as variants normally do in OCaml, it would just be\nallocated somewhere else and deallocated very cheaply.",
+      "zh": "这是一个方面——它是值得做的事，但并不完全契合这个模型，是类型理论与实现现实略有分歧的地方。"
+    },
+    {
+      "idx": 204,
+      "en": "Right. And I guess that’s one of the trade-offs. I mean, I guess in\nsome cases you can imagine doing the same kind of feature in both\nunboxed types and with local types. And one of the nice things about\ndoing it with local types is that it gets to use the same data types,\nright? The fact that unboxed types is based on a kind system means\nthat you kind of have to throw all your ordinary types away.",
+      "zh": "对。我猜这就是其中一个权衡。我的意思是，在某些情况下，你可以想象采取保守的做法，也就是让所有东西都取最大变体分支的大小。"
+    },
+    {
+      "idx": 205,
+      "en": "Would you like to return an ordinary OCaml option value? The answer is\nno, you can’t do that as an unboxed type because it’s just not\nunboxed. It has the value representation. It doesn’t have one of these\nother representations. And so there’s a kind of code duplication and\nlack of polymorphism issue here, whereas in the case of local types,\nwell, you can just use exactly the same data layouts, which gives you\nkind of more data and code sharing than you get otherwise.",
+      "zh": "你想要返回一个普通的 OCaml option 类型值吗？答案是不行，你无法把它做成非装箱的，因为 option 要么是 None，要么是 Some of something，而你事先不知道大小——或者说你知道，是 1 和 2，但它们不一样大。"
+    },
+    {
+      "idx": 206,
+      "en": "Yeah. And in fact, it’s very hard to tell which of the two approaches\nis going to be the best for any given situation. For variants like\nOk or Error, I’m leaning towards local types being a nicer way of\nexpressing that. But for things like option, actually unboxed types\nare great. For an option, what you’d really like is something like\nnull where you can say… So the option type in OCaml is… A t option is\neither Some t or None.",
+      "zh": "是的。而且事实上，对于任何给定的变体类型，很难判断哪种方案更好。"
+    },
+    {
+      "idx": 207,
+      "en": "So it kind of represents a nullable t. But the issue is that that Some\nt case involves an extra heap allocation just for this block. And the\nonly thing that the block does is say that it’s not None. Many\nlanguages do and have a distinguished null value. But the trouble is\nthat that gets you something different from an option. Because with an\noption, you can distinguish Some of None from None. If you have a\nnested option, you know at which level the null was introduced.",
+      "zh": "所以它某种程度上代表了一个可空的 t。但问题在于 Some t 这个分支需要为 Some 包装器额外进行一次堆分配。"
+    },
+    {
+      "idx": 208,
+      "en": "Right. Some of None or Some of Some of None, or Some of Some of Some\nof Some of None, right?",
+      "zh": "对。Some of None，或者 Some of Some of None，或者 Some of Some of Some of Some of None，对吧？"
+    },
+    {
+      "idx": 209,
+      "en": "Yeah. Exactly. You very rarely use these things on purpose, but the\nlack of them is quite annoying in a lot of languages. For instance,\nI’m not sure if it’s still this way, but back in the day, at least the\nJava hashtable had the standard hashtable interface in Java has a .get\nmethod. And the .get, you pass it the key and it might return null,\nbut if it returns null, does that mean that the key was not present in\nthe hash table or the key was present in the hash table, but the value\nthat was associated with it was itself null?",
+      "zh": "是的，没错。你几乎不会故意使用这些东西，但缺少它们在类型系统里会很烦人。所以有这些「坑」——理论上你应该能有 option option t，但在实践中这是非常罕见的用法。"
+    },
+    {
+      "idx": 210,
+      "en": "Right. You would never write code that just nested options directly\nbecause it would be really confusing. But it’s really an abstraction\nproblem in that you might very well have some abstract type, which\nunder the covers is implemented as an option. And then you might want\nan optional version of that. And boy oh boy do you not want to have\nthe breaking of abstraction that you would get when you collapse the\ntwo None and Some of None. Those mean really different things. And\ntotally non-perverse, reasonable code will run up against this and do\ncrazy bad things.",
+      "zh": "对。你绝对不会直接写嵌套的 option，因为那会非常令人困惑。真正需要用到它的场景是：你有某个多态的东西，在某个地方它被实例化为 option 类型，而你又想把它再包一层 option。"
+    },
+    {
+      "idx": 211,
+      "en": "Yeah. But on the other hand, an awful lot of the cases of option in\nOCaml are things like string option or Int option, where it’s very\nobvious there is not going to be any nested options going on and you\nreally could just represent it as a special magical value. So what you\nreally want to be able to do there is write a t option as t nullable,\nbut in order to be allowed to write t nullable, you would need to know\nthat t is itself not a nullable type, so that you’re never going to\nrun into this case of confusing the two nulls.",
+      "zh": "是的。但另一方面，OCaml 里 option 的大量使用场景都是像 string option 或 int option 这样的，而对这些来说，有一个非装箱的 option 会非常好用。"
+    },
+    {
+      "idx": 212,
+      "en": "So that fits very neatly into the kind system of the unboxed types,\nwhere there’s a kind of non-nullable types. I mean, I think we were\neven discussing making this be the default for an abstract type t that\nyou write in an interface file with no actual annotation, because this\nmeans that you can then write t option or t nullable, get a type error\non writing t nullable nullable, and know that anywhere where t\nnullable appears, t will itself never be a nullable type. So there’ll\nbe no ambiguity by what the null is attached to and what the null\nmeans.",
+      "zh": "这非常契合非装箱类型的种类系统——有一种非空指针的种类，也有一种可能为空指针的种类。string option，或者 int option（考虑到 int 是非装箱的），可以表示为一个可能为空的指针或者一个可能为零的整数。"
+    },
+    {
+      "idx": 213,
+      "en": "That is really cool. I feel like this problem of how do you deal with\nnested options efficiently is something that has been kicking around\nthe OCaml community for, I think, a solid 20 years. I think there’s\nlike a 20-year-old discussion post I saw, discussing various ways of\nfixing this. So it’s neat. I guess one of the things I keep on coming\nback to is building a good programming language takes a really long\ntime. The idea that there’s a problem that you identify and it takes\nyou 20 years to figure out is actually just not that weird.",
+      "zh": "这真的很酷。我感觉嵌套 option 如何高效处理这个问题，是我偶尔思考过的。看起来你们找到了一个非常干净的答案。"
+    },
+    {
+      "idx": 214,
+      "en": "Yeah. I think there’s always this trade-off between trying to find an\nefficient solution for the problem and trying to rearrange things so\nthat the problem never ever comes up. So the nullable thing that we’re\ndoing is not trying to find an efficient representation for nested\noptions, it’s just trying to arrange the whole type system so that we\nnever, ever have to nest them and we can prove that they will never\nnest.",
+      "zh": "是的。我觉得这里始终存在一个权衡：是为你实际遇到的问题找一个高效的解决方案，还是寻找一个通用的解决方案。如果你着眼于具体的类型，往往能找到更高效的解决方案。"
+    },
+    {
+      "idx": 215,
+      "en": "Yeah. And I guess this is just part of a bigger set of trade-offs of\nhow much do you get the right thing to happen by cleverly arranging\nthe system without any thinking about it, the right thing happens. And\nhow much do you give the programmer explicit control? And there are\nlots of different trade-off points that you can pick there.",
+      "zh": "是的。我想这只是一组更大权衡的一部分：你在多大程度上为你要做的具体事情选择正确的类型和表示，又在多大程度上为了通用性而牺牲一些效率。"
+    },
+    {
+      "idx": 216,
+      "en": "Yeah. And as I mentioned before, the really difficult thing is when\nyou want both in the same language, because it’s very easy to get into\na bad state where the bit of the language that assumes everything will\nbe right all the time butts up against the bit of the language where\nthe programmer has explicit control and decided it would be efficient\nto sometimes do the other thing here.",
+      "zh": "是的。就像我之前说的，真正困难的是当你想在同一门语言里同时拥有两者的时候。因为这些东西在某些方面从根本上是相互矛盾的。"
+    },
+    {
+      "idx": 217,
+      "en": "Well, good luck, I suppose. I think your task for the next little bit\nis to figure out how effectively we can do this in OCaml.",
+      "zh": "那祝你们好运吧。我想你接下来一段时间的任务就是弄清楚这些东西能多有效地推广到 OCaml 里，对吧？理论有了，原型也有了，现在得让它们变成真实可用的东西。"
+    },
+    {
+      "idx": 218,
+      "en": "Sounds good.",
+      "zh": "听起来不错。"
+    },
+    {
+      "idx": 219,
+      "en": "All right. Well, thanks for coming. This has been a bunch of fun. I\nfeel like the part I’ve liked most about this is the way in which what\nseems like a low-level, systems-y topic turns out to be so tied into\nfancy-shmancy type theory stuff. Sometimes the best solution involves\npulling things from a couple of different domains. But anyway, thanks\nfor joining. This has been great.",
+      "zh": "好了，谢谢你来参加节目。这次真的很有趣。我觉得我最喜欢的部分是思考怎样以一种不过于侵入性的方式构建这些新的语言特性，保持 OCaml 的那种感觉，不强迫人们去思考他们本不需要思考的事情。"
+    },
+    {
+      "idx": 220,
+      "en": "Thanks for having me.",
+      "zh": "谢谢你邀请我。"
+    },
+    {
+      "idx": 221,
+      "en": "You’ll find a complete transcript of the episode, along with links to\nsome of the things that we discussed, including some of Stephen’s\npapers and write-ups and some of the new language features he’s worked\non, at signalsandthreads.com. Thanks for joining us, and see you next\ntime.",
+      "zh": "你可以在 signalsandthreads.com 找到本集的完整文字稿，以及我们讨论到的一些内容的相关链接。如果你对节目有什么想法，或者希望我们探讨某些话题，欢迎写信给我们：feedback@signalsandthreads.com。"
+    }
+  ]
+}

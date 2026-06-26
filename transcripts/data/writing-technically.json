@@ -1,0 +1,1263 @@
+{
+  "slug": "writing-technically",
+  "title": "Writing, Technically with James Somers",
+  "mp3_rel": "audio/writing-technically.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "James Somers is Jane Street’s writer-in-residence, splitting his time\nbetween English and OCaml, and helping to push forward all sorts of\nefforts around knowledge-sharing at Jane Street. In this episode,\nJames and Ron talk about the role of technical writing in an\norganization like Jane Street, and how engineering software relates to\nediting prose."
+    },
+    {
+      "type": "p",
+      "text": "James Somers is Jane Street’s writer-in-residence, splitting his time\nbetween English and OCaml, and helping to push forward all sorts of\nefforts around knowledge-sharing at Jane Street. In this episode,\nJames and Ron talk about the role of technical writing in an\norganization like Jane Street, and how engineering software relates to\nediting prose."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. A note\nabout audio quality: We tried out some new equipment this episode, and\nit didn’t work out quite as well as we’d hoped. That’s said, we think\nthe interview came out pretty well, audio issues notwithstanding. So,\nwithout further ado."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Today, we’re going to have a conversation about documentation and\nwriting in the context of software and software engineering. And I am\nvery pleased to have with me James Somers. James has experience both\nas a professional writer and a professional software engineer. And\nhe’s worked here at Jane Street for about three and a half\nyears. James, maybe to get started, you can just describe what your\njob here is."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:47"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Well, I’m making it up as I go, I think. But I would say I spend most\nof my time writing code actually, probably about 75% of my time. And\nthe rest I sort of am a writer or editor in residence. So just sort of\nhelping people write documentation, edit it, think about it, and doing\nall of that as it comes in."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And why does that seem important to you? What is the thing that you’re\ntrying to achieve at Jane Street for the organization?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:14"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It helps to know what it’s actually like to build software\nhere. So I think being a programmer as the first thing that I am, and\nthen being a writer or editor is the second thing, is going to really\nhelp all of the documentation that I look at. So for instance, you’ve\ngot to know the language. OCaml is a strange language that I didn’t\nknow beforehand. You have to know our libraries, we produce basically\nour own standard library for OCaml. We build a lot of our own\ndevelopment tools in-house. We have a testing framework and a build\nsystem. We have our own unique way that we deploy applications,\nmonitor them, log them. And I think just having empathy for a regular\ndeveloper here requires you to be a regular developer here because\nit’s kind of unusual. There’s not really an experience outside that\ncan prepare you exactly for this ecosystem, which is very much our\nown."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I think what you’re talking about there is ways in which, in order\nto be an effective writer here, you need to understand the\nenvironment. And maybe that’s just a thing you need to be an effective\nwriter in any context is to understand the thing about which you’re\nwriting, right? Writing and thinking are deeply intertwined. And if\nyou don’t understand the context, it’s hard to do an effective job of\nwriting. But I was getting at a different question, which is, what do\nyou think of as the purpose of this role of writer in residence? It’s\nclear why Jane Street needs software engineers, we have a big and\ncomplicated business, we need lots of custom software to execute on\nthat business. But what do you think of as the role of someone who has\na kind of special focus on writing in a place like this?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:44"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "That’s a good question. I think if you don’t have somebody who focuses\non that, your documentation will likely go the way of all\ndocumentation everywhere, which is that it’s a bit of a backwater. It\nbecomes a bit neglected, in part because it’s very hard to do well, in\npart because it’s not as exciting as building a new thing. And I think\npeople are not necessarily natural writers, and they’re not\nnecessarily natural technical writers. I mean, if you think about when\npeople are writing documentation, it’s usually right after they’ve\nbuilt some piece of software, right after they’ve written a library,\nsay. It’s almost the worst moment possible to write about the thing\nbecause you’re so immersed in it. And in particular, you’re immersed\nin all the implementation details because that’s what took all of your\ntime. And so you’re not really thinking about it the way that an\noutsider would think about it, and yet you’re the one writing it. And\nso I’m sort of a perpetual outsider. I think that’s my job, is just to\nbe an outsider all the time, to be the dumbest person who can\nunderstand what I’m writing about. And that is usually going to be the\nlevel of comprehension that the reader is at. If they’re not as dumb\nas me, they’re at least less patient or more pressed for time. And so\nthey need the slightly more empathetic version of the document."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it seems like you come in and engage with Jane Street’s culture\naround writing and teaching and generating documentation in a bunch of\ndifferent ways. I’m curious what you think of as the good sides and\nbad sides of the culture that you see around this kind of work. In\nwhat ways is Jane Street good at generating documentations? And what\ndo you see as essentially problems, things that people need to learn\nmore about, need to get better at?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:34"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think people are very conscientious and very aware in general,\nthat documentation is an important problem we’re solving. It’s not\nreally an afterthought here the way that it can be in other\nplaces. And I think there’s a great amount of tooling and energy that\ngoes into keeping documentation up-to-date. But I mean, we still have\nall the same problems that anybody else does. And I think part of the\nissue with our culture is that we have a culture of heavily\nassociating software with the specific people who build and maintain\nit. I mean, we’re not a giant company, we’re relatively big but not\ngiant. I remember the weirdest thing about the company when I joined\nwas that I get to my desk and there’s a telephone on it. And I\nremember thinking, like, “Why on earth would you call a programmer?”\nBut you call a programmer because here, unlike maybe if you’re working\nin another language, the answer to some question is not on the\ninternet, it’s in the room somewhere or in the office or in one of the\nother offices."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:40"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "And so you pick up the phone and you talk to the specific person who\nowns a piece of code. Our code review system even bakes ownership into\nit. So people own files, they have an obligation which is clearly\ndefined. And I think there’s many, many benefits to that environment,\nbut it does mean that a good document could just be a list of people\nwho are associated with a project. A lot of people would find that\ndocument pretty useful, because those are the people you could pick up\nthe phone and talk to."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And actually, that document, in some sense, exists, you can navigate\nto any part of the tree and go to the tools and say, “Who are the\npeople who review this piece of code?” Who are typically the people\nwho are most familiar with it. So you can go and discover who is it\nthat owns any particular file in the tree."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:25"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Right, right. We haven’t yet hooked it up to the phone system, but\nreally it wouldn’t be that hard to do. But, you know, the downside of\nthat is that you’re not leaving a paper trail for other people. You’re\nnot leaving marks of the conversation that you had over the phone. And\nthose searchable trails turn out to be incredibly useful, especially\nfor new people, maybe people who haven’t been around to have those\nconversations for many years. So the writing is, to say a very obvious\nthing, writing is humanity’s invention for storing knowledge over\ntime. And I think that fact can sometimes be forgotten in an\norganization that produces software. But write stuff down and it’s\nuseful forever after."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And writing is a way of achieving scale, of distributing\nknowledge at scale. And you’re talking about the culture as it is and\nhow you’ve seen it for the last three years. I’ve been here for almost\n20 years at this point, and when I started, there were about 40\npeople, now there’s about 1500. So the organization has grown\nmassively, but I think objectively you’re obviously right, in the\nsense that you compare it to a really large tech organization, we’ve\ngot a couple of orders of magnitude to get there. But this thing you\npoint out of it being very human centric, there are people who are\ndeep experts, I think some of that comes from just being a place where\nwe build technology that’s fairly unique, there isn’t as much outside\ninformation on it, you can’t go and look up on Stack Overflow to\nunderstand lots of the details, sometimes because it’s about obscure\nfinance stuff and sometimes because of the programming language. And\nalso because it’s just an organization with very low turnover, there\nare just lots of people who’ve been here a really long time and have\nbecome deep wells of institutional knowledge."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But even so, over the time that I’ve been here, I feel like I’ve seen\na real shift where it’s become more and more important to write things\ndown. And from my perspective, that’s why at some point I thought,\n“Oh, we have to hire someone to focus on writing.” Because I felt like\nit was a place where we were historically pretty weak and needed to\nget better. And a thing I’ve always been very aware of is, writing’s\nreally hard, and lots of people aren’t comfortable doing it. And so\nhaving someone who feels like they can spend the time really helping\npeople to write better seemed really important."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:37"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Hear, hear."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some ways, it actually feels parallel to me to the transformation\nthat the organization went through around testing. Early on, when we\nbuilt our first trading systems, testing was a lot thinner than now I\nwould care to dwell on. We relied a lot more on the fact that there\nwas a very small code base, very well understood by a small set of\npeople who were thinking about it very deeply, and relying on things\nlike the protections from OCaml’s type system to help you catch lots\nof kinds of errors. And at a certain scale, I think that worked\nokay. And then over time, it became more and more awkward that we\ndidn’t have really good testing practices. And then at some point,\nthere was a kind of revolution where we started thinking much more\ndeeply about testing, did a lot more of building out testing\ntools. And now, it’s just a pervasive thing everywhere that people are\nconstantly thinking about, not just how to write their code, but how\nto write their code in a way that’s easy to test. And how to build\ntools that make that testing as lightweight as possible. And I still\nfeel like we are not as far down the line of making that same\ntransformation around documentation as I’d like us to be."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:42"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Well, I think one difference is that in some ways, testing is a\nsingle player game and documentation is a multiplayer game. So when\nyou improve your testing story, you make your development life a\nmillion times easier as an individual. I was just working on something\nearlier today, I spent the last two days just building a test harness\nfor this thing, because once I have that test harness, the development\nbecomes infinitely easier. And I’m going to be able to make new\ndecisions about how this should work much more confidently. When you\ntry to adopt something like documentation-driven development, let’s\nsay, you’re mostly making your life worse at first and not necessarily\nis this ever going to pay off for you personally because you’re not\nreally the audience for the documentation. Of course you might come\nback to something that you haven’t worked on in a long time. And it’s\nvery helpful to have good documentation there."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:36"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "But really what you’re working on when you’re writing a piece of\ndocumentation is kind of other-focused, in a way that a test is giving\nyou a super power for yourself. So I don’t know if that gap can ever\nbe fully bridged because I don’t know if you’re going to have the same\n“aha” moment where a developer realizes, “Oh my God, I’m going to be\n20 times as productive if I write better documentation.” The\norganization will be 20 times as productive. So it’s sort of incumbent\non the organization to think about this and have this “aha” moment,\nbut it’s not going to translate into individuals, I don’t think."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, I think testing is halfway in between the simple task of\nwriting code and the task of writing documentation, in the sense that\nyou definitely get personal benefit from testing. But I feel like,\nespecially in a large, complex project, the really great situation is\nwhere you and all of the people around you are pervasively testing the\nwork. And then you can reach into parts of the code base that you\nhaven’t previously touched before and make changes with much greater\nconfidence because there’s a significant base of testing. And that\nkind of effect does happen in the context of documentation. If you\nwalk into a code base that’s thoroughly and well documented, it’s just\nmuch easier to learn and to make changes and to understand what’s\ngoing on. It’s I think a smaller effect than testing, but some amount\nof empathy for other people can really help."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But for sure, some of the documentation you write is just for\nusers. And there I guess part of what you want is some other kind of\nfeedback, which actually brings me to another thing. So you spend a\nbunch of time working on writing, but also you said you spend the\nmajority of your time writing code. And that code is all around\ndocumentation, but it’s on the tooling side of documentation. Can you\ntalk a little bit about what kind of work you do there? And then, what\nkind of role you think tools play in the larger task of documenting\nand writing?"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:20"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So one of the things I work on is a tool for literate\ndocs, where basically you have\nlike a markdown file with code blocks in it, but those code blocks\ncompile. And the benefit of having the code blocks compile is that\nthey’re not going to go out of date. If they depend on some library\nand you change the API to that library, the documentation will\nfail. It’ll throw an error, just like any other code file. And that\nhelps mitigate one of the biggest, if not the biggest problems with\ndocumentation, which is that it tends to rot. So this helps with\ndocumentation from going stale. It also means that docs are tightly\nintegrated with our build system. A lot of the work that I do is just\na consequence of that fact. But we have a lot of control over our\ndocumentation. So one of the things I work on, I’m sort of a web\ndeveloper in a former life, is publishing our documentation that comes\nout of our build system to a website where people can read it. It\nseems fairly simple, but we try to make cool features on this website,\nlike the ability to see how many people are looking at your\ndocument. Try to give people incentives to write better documentation,\nmaybe by implementing something like likes, allowing people to\ncomment, just sort of making a social piece of software."
+    },
+    {
+      "type": "ts",
+      "text": "00:13:34"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "The other thing I work on is an internal search engine. So basically,\nsomething that searches our wiki, these literate docs, API docs,\ninternal blogs, mailing lists, even code review comments. Some of this\nis still in the works. And the benefit of doing that is obviously you\nneed people to be able to find documentation. I mean one thing that\nyou find as you do scale as an organization is that people might be\nproducing incredibly good documents and just nobody’s finding\nthem. And that actually happens a lot. It’s sort of like the plight of\na tool developer is always that they need to make their tools\ndiscoverable. So I worked for a long time on the tools and compilers\nteam at Jane Street, and these people were incredibly productive with\nthe tools that they built, very often more productive than their\nexternal users, because the external users didn’t necessarily know\nabout all the great features. So it’s incumbent on the documentation\nsystem to make things as discoverable as possible."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So zooming out for a second, at a high level, search is about\ndiscoverability. Some of the features you talked about in the\npublishing system are about essentially social feedback, almost the\ngamification of documentation, making it so that when people generate\ndocumentation they can see the impact on the world and how useful it\nis and how often it’s referenced, even if they can’t see how it\naffects their own workflow, as we were talking about before. And then,\nthe first one you talked about is about giving feedback between the\nsoftware and the documentation itself, so that when the software\nchanges, you get cues that tell you that things need to be updated. So\nI guess like three different aspects of how humans interact with the\ndocumentation, how you can push that forward to make people get more\nout of it and do more of the documentation work."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:16"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think to that last point, it sounds mechanical and\nboring. Just that, “Oh, the docs are going to break when your code\nchanges.” But actually it’s just an excuse to go back and look at the\ndocs, and to change them. And most people, I think, who encounter a\nbuild error in some documentation are going to have a moment where\nthey rethink, “Does this make sense anymore?” I think people are\nactually pretty good about thinking about their documentation when\nit’s in sight. It’s just that it is so often out of sight, out of\nmind. A lot of what the tooling does is just remind you that the docs\nneed to be kept up-to-date, and people are reading your\ndocumentation. That’s the social thing, it’s like just being reminded\nthat this page is actually being read by people is a hell of an\nincentive to make it better."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And also knowing that pages aren’t being read by people. Knowing that\nyou’ve spent a bunch of time creating some documentation and no one’s\nusing it, that’s time that you can save next time if you figure out\nwhat’s worth spending your time on and what isn’t. It’s funny, you\ntalked before about how documentation doesn’t so much help the\ndevelopers who are doing the work, it helps the people who are using\ntheir software, and that’s why it’s sometimes left behind. I’ve in\nsome ways had the opposite experience. So one of the things I spend a\nfair amount of time doing is reviewing other people’s code. And over\nthe years, I’ve come to spend much more of my time thinking about\nessentially documentation. When I read a piece of code, the first\nthing I will look at is the doc comments that explain what the code is\nfor. I’ll look at the high-level description of the change and try and\nunderstand that. I’ll look at the names of functions and variables,\nvarious identifiers in the code, to try and see if I can understand\nwhat the code is supposed to be doing, before I actually read the code\nthat does anything."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think the most productive thing I do usually when code reviewing\nis sit down and write some documentation, or just ask the person who\ngave me the feature, either to add a little more explanation\nthemselves or to explain it to me so I can sit down and write some\ndocumentation as I’m doing the review. And I feel like a thing that I\nvery often discover when doing this is that this uncovers real\nconceptual mistakes, real bugs in the system. People I think sometimes\nthink, “Well, no, I should just write my code so it’s really clear and\nthen I don’t so much need to write the documentation.” And I think\nthis is almost never true. In reality, when people sit down and think\nthrough documentation, they end up having a deeper and better\nunderstanding of the code that they’re writing themselves."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:36"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I couldn’t agree more. I mean, how many times have I written the\nchange-set message, the commit message, and realized that I’m going on\nand on trying to explain away some terrible decision I’ve made. It’s\nthat going on and on where I’m sort of starting to picture my reviewer\nreading this message and having to confront the reality of the monster\nthat I’ve created, that I think, “Okay, actually this whole thing was\na first draft.” And I have to go back and write the second draft. I\nthink a thing you learn, obviously in any kind of creative work, maybe\nin writing it’s especially vivid, is that all writing is rewriting, is\nwhat my sophomore English teacher said to me."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you think of the process of writing English prose and the process\nof writing software as similar to each other? Do you feel like you’re\nusing some of the same mental machinery as you do that? Or do you\nthink of them as very different exercises?"
+    },
+    {
+      "type": "ts",
+      "text": "00:18:30"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I think in the micro they’re pretty different. And I would say in the\nmicro software feels easier to write because there are fewer degrees\nof freedom. So there’s so many ways that a sentence can go wrong, that\na paragraph can go wrong, that a full piece can go wrong. At least in\nthe world of software, you’re sort of constrained by the library\nfunctions available to you, the thing exactly that you’re trying to\ndo, the language. The language is a formally constrained language with\na lot fewer building blocks than something like English. So I think in\nthe micro it does feel pretty different. And one of the things I\nreally like about this mix is that it’s not like I like writing more\nthan programming or I like programming more than writing, and they’re\neach a break from the other. Writing is so cognitively, creatively\npainful in a way, sometimes, and programming is so delightful, it’s\nlike playing a little video game. But you know, by the same token,\ncoding can maybe sometimes feel small in a way that writing can feel\nbig."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:33"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "But the macro thing is very similar, in that you think that you’ve\ngotten it down, and you have not. And the better you get at writing, I\nthink, is often about just having a tolerance, the way a distance\nrunner has a tolerance for the miles, to the revision process. And\nthat is exactly the same as a programmer. I think I’m a fairly naive\nprogrammer compared to some of the people we have around here. And the\nthing you notice them doing is just having this willingness to dive\nback in after they’ve supposedly finished something. And that\nwillingness to dive back into the same damn piece of work over and\nover and over again, I mean, that’s the mark of quality, that’s what\nproduces quality. And that is definitely the same between the two."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. In my head, I feel like they’re also similar, in both cases, I\noften want the end result to tell a story. I don’t want the code to\ntell a story because I on some artistic level want to tell a story,\nbut in some sense, there’s some architectural, structural story that\nis inherent in the software. And I want that story to be written out\nas clearly for the person who’s reading it as is possible. And so when\nI think about how I organize the code into pieces, how I name things,\nhow I write comments and documentation within there, part of what I\nwant to do is present the structure of the system in a way that’s\nlegible to someone, that they can sort of sit through and understand\nthe structure of the argument in some sense that the software\nrepresents. And the way I think about writing and the way I think\nabout coding, at least in that way, has a certain similarity."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:14"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. We’ve talked about this, you and I, several times, just the idea\nthat writing is really about the effect that it has on your brain as\nyou’re trying to accomplish something. I mean, it forces you to\norganize what you’re thinking. And facing down some reader, be it a\nreader of code or a reader of prose, is largely modeling that person\nin your head and the effect that that modeling has on the thing that\nyou’re trying to produce, basically what you said, but more\nconfusingly. See, that was the first draft."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, before you were talking about how sometimes when you’re trying to\nwrite something down, explaining some piece of code and you find\nyourself writing a lot of documentation, you start getting nervous and\nrealize that things are probably more complicated than they should\nbe. And in some sense, the need to write a lot of documentation is\nitself the sign of a problem. One of the discussions and disagreements\nI’ve gotten into with various developers over the years here and in\nother places is trying to argue to people that they should actually\nwrite documentation. And one of the arguments you sometimes hear as\nwell, the code should really be self-documenting. You should make it\nso it’s clear and concise enough that no comments are really\nnecessary. And that’s really the ideal state for a code to be in. And\nI find this deeply unbelievable. And I’m curious, what kind of\nresponse do you have to that perspective where someone says, “No, no,\nno, I just make the code so simple that no documentation is required”?"
+    },
+    {
+      "type": "ts",
+      "text": "00:22:39"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Well, maybe two things. One is that this is a big trope in Ruby world\nwhere I come from because Ruby’s metaprogramming enables this crazily\nexpressive API where it feels like you’re almost writing English as\nyou write the code. But people produce these beautiful DSLs, domain\nspecific languages, that allow you to write code in that very fluent\nway. And they’ll say, “To have a comment anywhere near here is a\nsmell. It’s a sign that I’ve done something wrong. That my DSL is not\nquite expressive enough or clear enough.” But then you go look at the\ncode supporting that API and it’s a total crazy disaster. And that’s\none place where comments might be useful is in explaining the\nundergirding of some clean API that’s self-documenting, so to\nspeak. But there are just things that don’t sit well in the code\nitself. So like, “What’s the runtime complexity of this function?”\nThat’s not really something that you’re expressing in code."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:37"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "And if you’re looking at a standard library and you’re looking at\nvarious different implementations of a data structure, what you want\nis some guidance as to how to make a decision about which of these\ndata structures to use. I mean just yesterday, I was coming across\nsome problem with concurrent writes to a file. And there was a module\nfor doing this file writing asynchronously, and there was a parameter\nthat just said, “Exclusive: true.” And if you hit the exclusive\nparameter, you supposedly have a lock on the file that you’re writing\nto. So that seemed like that solves it. But there was a five paragraph\nessay above this function saying, “Well, actually it’s more\ncomplicated.” And I think that’s a case where if I just read the type\nsignature and I just had this flag, there’s a million things going on\nthat are subtle properties of the operating system of my problem that\nrequires some kind of actual discussion. And I was very pleased to see\nan actual discussion that felt like somebody trying to guide me\nthrough these decisions in the comment."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. The idea that you could mark an API and say, “Oh, you get an\nexclusive lock,” and that’s the end. It’s like, “No, no, no. You said\nthere’s an exclusive lock.” There is a long and complicated\nstory. Gather around the fire, let’s discuss what locking is about."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:54"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Exactly."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. That’s an excellent point. Like in some sense, I feel like the\nidea that you can write software that’s so clear, that it doesn’t need\nany documentation, hinges upon some delusion about how clean you can\nmake the abstractions. I think you can always fantasize about having\nan extremely fancy type system which would capture more of the\nproperties. People work on type systems that capture performance\ncharacteristics so you could know some upper bound on the asymptotic\ncomplexity of the operations, just by the type signature. But that\nreally is a fantasy. There are no realistic type systems that do a\ngood job of this. And any type system that people use in a real\nlanguage that actually is practical has quite severe limitations on\nits expressiveness, on how much it can tell you about what’s actually\ngoing on in the code."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I feel like the thing that you described in Ruby land sounds like\na different kind of delusion. The complexity you mentioned there was\nthe complexity of the underlying implementation of the macro stuff. So\nthat’s one thing, but also it’s really hard to build macros that do a\nreally excellent job of hiding all of the complexity of the underlying\nimplementation. Just simple things like when there’s an error, does\nthe error come out in a nice clean way or does it somehow reference\nthe desugared representation? When you’re doing this kind of macro\nstuff, you’re like translating one thing that the person wrote into\nsome other representation, and then somewhere there’s an error that\nrefers to that. That translation can be weird and complicated, and\nthere’s a dozen things that can go wrong with macros. The idea that\nevery time you write a library, you do such a good job of creating a\nclean and simple abstraction that you don’t really have to tell a\nstory about it, I just haven’t seen very much software that looks like\nthat."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:33"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think this idea that code should be self-documenting is a good\nprod, a nudge in the direction of improving, especially in a language\nlike OCaml with a powerful type system, in packing as much into that\ntype system as it can handle. So, don’t have a function that’s, let’s\nsay, about a person’s vaccination status, that goes from a string to a\nstring, and say with a comment that the string input is a Social\nSecurity number, and the string output says what kind of vaccine they\ngot. In OCaml, we would never do that. I would often write so-called\nstringly typed functions early on here, and my reviewer would say,\n“Well, actually make a structure, like a Social Security number type\nthat has validation, has its own methods on it, and use that as the\ninput to this function.” Then, yeah, when you read that function, you\nget a much better idea of the universe of possible outcomes, the\nuniverse of computations that this thing can take. And yes, we should\nreally be encouraging people to do that. But it becomes a bit of a\nsilly, extreme argument to say that if you see a comment, it’s a\nsmell."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And your point about how it’s useful to categorize things and\ngive types to various different concepts in your code, I think that’s\nuseful even when there is no special functionality associated with\nthose, it just adds clarity to the system. You get this kind of flow\nanalysis throughout your program, that like, “All these values over\nthis place. That’s a Social Security number.” And you just know more\nabout the semantics because whenever someone constructed it, it was in\ntheir face when they were constructing the Social Security number, and\nwhenever it was passed around, it was clear what was being passed\naround. So it ties together, throughout your program, the handling of\nthis value, so that you now just have a much better grasp on what the\nvalue means. And so individual things like functions are clearer, your\ndata structures are easier to understand."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:22"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. There’s a really nice benefit of doing that, which is that when\nyou’re in your editor and you’re looking at some local variable whose\nscope you don’t really understand, you can ask the editor what type is\nit. And that often just tells you everything you need to know about\nwhat’s going on in that area of the code."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you’ve spent a bunch of years working in a dynamically typed\nenvironment. You’ve now spent a few years working in this somewhat\nobscure, precisely typed programming language, in OCaml. How do you\nthink that affects the culture of documentation?"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:55"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s an interesting question. I mean-"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’ll say, at first I thought you were going to say that in a language\nlike Ruby, people are more incentivized to write documentation, in the\nsame way that in dynamically typed languages, people tend to be more\nincentivized to write tests because types act as a proxy for both\ncertain kinds of documentation and certain kinds of tests. It’s\ninteresting to hear you suggest that macros in some ways can cut\nagainst that. And maybe there’s just unique things about the Ruby\nculture itself that push in that direction."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:23"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. My first job was at a Ruby on Rails – Rails is the Ruby web\nframework that’s very popular – consultancy and this place prided\nitself on test-driven development. And I think TDD as a kind of\nculture, or a cult, is a cult to which I happily belong, is maybe that\ncame out of Ruby, maybe that came out of a dynamic world. But I think\nit’s kind of too simple to say that one kind of language encourages\none kind of culture of documentation, because we have a culture around\ntesting for reasons that are kind of orthogonal to the language. If\nyou’re writing a trading system that could potentially blow up the\ncompany if it has an error in it, then you’re going to basically throw\nthe kitchen sink at making sure that it’s correct. And part of that is\ngoing to be the type system, and part of that is definitely going to\nbe tests."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:20"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "When you’re working on a web application that’s trying to grow as\nquickly as possible, and mostly what you’re concerned about is, will\npeople like this new feature, testing is kind of a dumb idea,\nespecially if you’re a small enough company. And so the fact that\nTwitter had its Fail Whale, it was constantly falling over, I think it\nmaybe has as much to do with the stage that they were at as a company\nand product, as it did with the language they were using. But of\ncourse, switching from Ruby or whatever it was to Scala or whatever it\nbecame probably helped too."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I think you’re totally right that people overestimate how\nimportant languages are for all sorts of different aspects. I think of\nhow software systems work and how organizations work. I think culture\nis a big deal. And I think architecture is actually incredibly\nimportant. I think there were a lot of things that changed when\nTwitter did its rewrite, and that caused the Fail Whale to become a\nthing of the past. But I think a lot of those changes were not\nspecifically about the language that was used, but were about all\nsorts of changes that people made to the architecture of the system at\nthe time."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It actually reminds me of my own experience here at Jane Street early\non, our early systems were VBA and some Java and some C#. And then we\ndid this big rewrite of the core systems into OCaml. And it’s easy to\nthink of that as an exercise in just changing the language. But I\nthink that’s not what it was like at all. A lot of things changed. I\nthink we improved lots of things, but we also had completely different\nsets of people, had new people coming in, grew the team that was\nworking on the software enormously. And there were lots of\nimprovements we made over that time because of that. And I think the\nlanguage was, actually in the end, a quite important part of that, but\nby no means the majority of the improvements."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:06"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, we have, in my own experience on those tools that I’ve worked on\nhere, it’s been OCaml the whole time, there’ve been terrible design\ndecisions, terrible architectures and fairly good ones. And the\ndifferences in the design language is being held constant, the\nprogrammers being held constant, so those things can make an enormous\ndifference."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Here’s a thing I’ve noticed about the culture I’ve seen around\ndocumenting OCaml code, both internally and on some external things,\nwhich is that the documentation on a lot of OCaml code tends to be\nvery concise and precise and designed for people who already have a\npretty good mental model and less discursive, less example-driven than\nI’ve seen in other places. I’m curious what you think about this. You\nobviously … Rather, I’ve seen you spend a lot of time building very\nexample-driven forms of documentation, and I kind of wonder what you\nthink about those two styles of how one might document something."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:03"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One is good and one is bad. No. The very first document I worked\non when I joined Jane Street was an example-driven guide to this tool\nwe have for querying S-expressions. S-expressions being just lists\nrecursively packed, it’s a way to store data like JSON, let’s say."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s like a version of XML that dates back to the mid-‘50s. Fewer\nangle brackets, more parentheses."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:30"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So we had this tool and somebody came to me and said, “I think\nwe need a better README.” Okay, I’ll take a look at this README. And\nnot to throw the author of this README under the bus because they\nproduced an incredibly valuable tool and many, many excellent\ndocuments, but this was not the best document. This was a formal\ngrammar, basically, that had been cleaned up a little bit for human\nconsumption. And the idea that that would be the README of a tool that\nwas basically like jq, some tool for query in JSON, was incredibly\nfrustrating. It was like, it made me angry. It made me really angry,\nin fact. It was one of the hardest documents to understand that I\ncould imagine. I almost didn’t have a sense for what the tool did and\nhow good the tool was and what the tool’s practical language was. What\nare the things that you would actually want to do and in what sequence\nand why? And that can only be gotten through, or it’s at least better\ngotten through, an example-driven guide."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:30"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "So that was my very first week at Jane Street was coming across a\nREADME that was a formal grammar. And I think it is something about\nthe language. People who self-select into the OCaml programming\ncommunity are, by their nature, more interested in programming\nlanguage theory, in formal languages, in pure mathematics, things like\nthat, than people who self-select into the web development\ncommunity. And there are good things about that. If you want to ask a\ndata structures question, maybe you’d prefer the group who has a\nstronger theoretical background. But it felt inhumane, frankly, that\ndocument. And I think that is something that is pervasive in the OCaml\nworld and maybe in the functional programming world."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s a really good example, but I’m not sure it’s an entirely\nfair example. I remember that document and to be entirely fair to the\nauthor, the author was fully aware that it was not a great piece of\ndocumentation and was happy to have it improved. And that was a case\nwhere he was a guy who came with a very strong theoretical PL\nbackground, and had built a little language, which was very useful and\nvery nicely arranged, and that echoed certain things he’d seen in\nother places. And so in some sense, for him, just writing down the\nbare skeleton of, “Here are the different operators and here’s the\ndefinition of what the operators do,” for him, that clicked in his\nhead. So I think that’s how the documentation came to be in that\nmode. And that’s the classic curse-of-knowledge thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But to argue the other side, I think there is a legitimate trade-off\nwhere if you write documentation that’s very full of examples and very\ndetail-driven, it can be a real slog to get through. It can just be\nlong. And there’s something lovely about documentation that just says\nthe absolute minimal thing that an educated, or at least a particular\nkind of educated consumer wants in order to understand what’s going\non. I often feel this way when I read the documentation about a new\nprogramming language or a new web framework or whatever. And I feel\nlike I understand this space pretty well. If I talked to the right\nperson, they could give me seven sentences and I would suddenly know\nexactly in what quadrant of the design space this thing was and how\nthey’re approaching it. And I would immediately get a lot of knowledge\nvery quickly and very efficiently. And it would be great for me, and\nfor other people it would be utterly useless. And so one of the things\nI struggle with when writing documentation is I think there is\nlegitimate tension. Concision is really good, at the same time meeting\nthe readers where they are is also really good. And one of the\nproblems with writing is you can’t meet all readers where they are\nwith the same piece of writing. So on some level I wonder how you\nthink about managing that trade-off."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:09"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think you just have many documents that serve all the\ndifferent people, and that say explicitly what kind of document they\nare. We saw this recently with one of those classes about a web\nframework that we’ve built here, kind of like React for OCaml. And\nhey, there’s a pretty concise way to locate the thing in design\nspace. Three words: React for OCaml. But there’s some people who come\nto this thing with basically no experience in web development. And so\nthey need a tutorial that explains, where does this thing fit into how\nyou use your browser, and what’s going on under the hood there. And\nthere’s some people who are very familiar with something like\nReact. And so what they need is just, “Here’s a transliteration from\nthe React API to our tool’s API.” And I think, ideally, you would have\nall of these things. And that’s what good documentation does, is it\ncontemplates the universe of readers upfront and presents a menu and\nsays, kind of, “Choose your own adventure. If you’re this kind of\nperson, start on page 42. If you’re this kind of person, start on page\n1.” And yeah, you can’t serve all of those people all at once in a\nsingle document, and I don’t think you should try."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:25"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "There’s a very popular thing about documentation, and I wish I\nremembered who the author was, that basically says there are four\nkinds of technical\ndocumentation. There’s\na guide, a tutorial, there are references, and then some other, I\nforget the fourth quadrant. But anyway, this kind of framework for\nthinking about, explicitly, what are the kinds of documentation that\nyour group, your library could produce is a very useful discipline for\nactually just trying to generate these different reader types in your\nhead."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It also reminds me a little bit of a thing my PhD advisor said to me\nmany years ago, which is when he talked about the writing of a paper,\nhe said you should assume that people are going to drop off in reading\nat various points of the document. And you want to optimize the\npresentation of the document so you can get as much information, as\nmuch useful information into people’s heads as early as possible. Most\npeople will just read the title. So make the title really clear. And\nthen some people will get all the way through the abstract, and to try\nand get your core ideas through there. And then a bunch of other\npeople will read the first section or the first couple of pages or\nwhatever. And each of those levels, try and get as much of the\nconceptual framework across as you can. And I wonder if that’s a good\nmodel. And I also wonder if there’s something one could do at the\nlevel of the tooling to make things more navigable."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "A thing that I often struggle with is when you look at some piece of\ncode that has a lot of documentation in it, you sometimes feel like\nyou’re missing the forest for the trees. I kind of want to just stand\nback and be like, “Can you just show me what the types are? Get rid of\nall these words and just show me the types.” And that will give me a\nbunch of information and be able to explore and say, “Oh, okay, let me\ngo from this to see some examples using this.” And so some more\ndynamic set of tools that let you see more of the documentation,\ndepending on what you’re doing, depending on what mode of exploration\nyou’re in, I think could help you construct better trade-offs."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:21"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And in some sense I think this is something that is learned both\nby the writer and reader in an exchange that takes place over time\nuntil you develop a thing called genre. And what we maybe don’t have\nso much of in technical documentation is genre. So when you open a\nnewspaper, it’s written in an inverted pyramid style where you have\nthe highest level of facts upfront, and then it slowly gets more and\nmore detailed. But once you figure out that’s the style that newspaper\narticles are written in, you can approach them depending on what kind\nof day you want to have with that kind of article. So if there’s some\ntopic you know nothing about, and you just want the facts, you might\njust read the headline. If there’s something you know a lot about, and\nyou want to get to the crux, the detail, then you go find that\nparagraph which you know is probably going to be about paragraph\nseven. I think that kind of convention that you’re talking about with\nacademic papers also exists, where people know to read the abstract\nmaybe a few lines from the end of the introduction, let’s say, the\nfigures and the results depending on what field they’re in. Probably\nthey might not read the conclusion because that often just\nrecapitulates the introduction. But I mean, reading a paper is really\nreading 12 sentences or something like that, at least as a first scan."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:41"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "When you talk about technical documentation, and I think about the\ndocuments that people produce here, they don’t fall into any kind of\nconventional form like that. And I think this idea of the four kinds\nof documentation, we have tutorials, how-to guides – I just looked\nthis up – reference, and the last is explanation. That’s a beginning\nof a template for how to produce things that do have a genre so that\nyou know, “Oh, this is a tutorial. This is how you read a\ntutorial. This is how you write a tutorial.” And tooling could\nabsolutely be kind of baked into that scheme or some other scheme. And\nyeah, maybe you start having a little more legible ecosystem."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I almost want to add one other genre of writing to those four, which\nis evangelism. When I think about the kind of things that I want to do\nwith writing, sometimes it’s about, “Let me explain the problem. Let\nme explain how this library works,” point out what the pitfalls\nare. And sometimes it’s just like, “I want to get you excited about an\nidea, excited about some tool that you could use, come to understand\nhow something could be useful for you.” Which, it’s not exactly a\ntutorial and it’s not a guide, it’s some other kind of persuasive form\nof writing, which I also think is really important, and I think is\nhard for people to do. I think it’s especially hard in Jane Street’s\nculture to do a good job of evangelism. Because evangelism requires\nyou to be expansive and excited and make big claims about things. And\nI feel like there’s a lot of cultural push towards being careful and\nprecise and not overstating and having a good understanding of what\nthe holes in your own tools are."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:18"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Right. And what happens is if nobody is selling their thing with the\nhard sell, you end up with a bunch of carefully qualified sales\npitches. And then you end up with people using a lot of different\ntools that basically do the same thing. And you wish one of them had\njust won, even if it wasn’t perfect for everybody."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So a somewhat different topic, have you ever played around with any of\nthe classic Literate Programming tools?"
+    },
+    {
+      "type": "ts",
+      "text": "00:43:44"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Actually, for a thing that is prizing legibility above all, I found\nthe explanation of what Literate\nProgramming was\nand what a literate program actually read like to itself be kind of\nillegible. Possibly, I just came at this fairly early in my life and\nprobably I would pick up The Art of Computer Programming, Volume 1\nthrough N, and find that pretty illegible too, and not any ding on the\nauthor. But I think I tried to read some of the\nTeX source code, which is written\nby Knuth in this literate style. And-"
+    },
+    {
+      "type": "ts",
+      "text": "00:44:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s maybe worth stopping and saying like Donald Knuth, a great early\nfigure in computer science, continues to work today, did a lot of\nimportant algorithmic, theoretical work, wrote a bunch of important\nbooks, and, insanely, at some point as he was starting to write The\nArt of Computer Programming, he looked around and was like, “There are\nno good-enough layout programs.” And so he stopped his entire life and\nsat down and wrote TeX, which is this foundational publishing system\nused in math and physics and computer science academia. He was like,\n“There aren’t really any great fonts.” So he created fonts and\nfont-design tools. He’s a very interesting, important and I think\ndeeply strange character. And one of the things he invented is this\nconcept of Literate Programming. Can you try and give a summary of\nwhat Literate Programming is?"
+    },
+    {
+      "type": "ts",
+      "text": "00:45:10"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "And I should say, I basically don’t get it, so how could my summary be\nany good? But I think it’s basically like really trying to make your\nsoftware read like a piece of prose. So it’s not that you have\ndocumentation that’s separate from the code, it’s that you have code\ninterleaved with documentation. And the order that you read the code\nin is the order that the document takes you in. So it’s very linear in\na way that reading code normally is very non-linear. So don’t imagine\njumping around having many buffers open in your editor at once,\nlooking at a bunch of different files. Imagine just being told a\nstory, once upon a time, all the way till happily ever after, where\nsomehow along that story, you end up encountering all of the code. And\nit’s basically impossible to imagine."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And weirdly part of what goes on with these tools is you write\nyour documentation interlaced with your code, but the ordering of the\ndocumentation is presented and the structure of the files is quite\nindependent. So you might somewhere deep inside, put in some section\nwhich is your opening introduction to the code and the full PDF that’s\ngenerated, as you said, walks through the entire code base. But in\nsome weird order that’s meant to optimize the presentation of it as a\npiece of prose, but can be arbitrarily different from the order in\nwhich it shows up in the actual code base."
+    },
+    {
+      "type": "ts",
+      "text": "00:46:34"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "My sense with this kind of thing is that in the hands of a master, in\nthe hands of a Knuth, it can be incredibly powerful. And clearly many,\nmany people have read the TeX source and have been able to build upon\nit. And I think it’s still sort of held up as one of the best pieces\nof software that we have. So obviously it worked really well. But it\njust seems like the kind of practice that is maybe best not attempted\nby us mortals."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I’ve often thought that Knuth is, in some sense, too smart for\nhis own good. He gives advice that is maybe not the best advice for\npeople whose brain is not quite capacious as his. There’s a great book\nby Peter Seibel called Coders at Work that has a bunch of interviews\nwith famous programmers. And one of them is an interview with\nKnuth. And the one with Knuth is really wild. One of the things he\ncomplains about, he’s like, “Ah, there’s all this kind of abstraction\nstuff,” but he’s not that interested in abstraction because he’s\nworking on some program and he wants to reach six levels down to\nadjust the behavior of something to make it work exactly the way that\nhe wants it to work and have exactly the performance that he’s going\nfor. And he just finds these layers of abstraction to be getting in\nthe way of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This is a guy who’s not having trouble understanding how his program\nworks, which I do not sympathize with. I desperately need layers of\nabstraction to have any sense of what’s going on in a large and\ncomplex program. And I think it worked up to a certain scale. I think\nTeX was an artifact, which is a quite big and complicated piece of\nsoftware, but it could basically fit in his head so he could get away\nwith it. But it’s hard to see how that advice scales up to larger\nprograms or to less smart people."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:10"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I think some programs that are the product of a single mind\nare just very different in nature and architecture than programs that\nare the product of a team. And often, where you see a lot of problems\nis in the transition from one to the other. So when an auteur-ed piece\nof software becomes a maintained piece of software, and there are\nmany, many maintainers, that is the real art of computer programming\nbeyond the algorithm stuff."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In the end, I think Knuth is a charming writer, but he just made\nidiosyncratic technical choices that I suspect fit his neural\narchitecture and do not fit others nearly as well."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:49"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And yet we still use TeX all day, every day."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Which makes me ask a different question, which is … So you\nspend a lot of time writing, all sorts of kinds of writing, purely\ntechnical writing, all various kinds of expository writing. How do you\napproach writing in terms of tools? What do you like to have in front\nof you when you’re writing?"
+    },
+    {
+      "type": "ts",
+      "text": "00:49:09"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I use, for taking notes, TextMate, which is just a text editor on the\nMac. One of the things about TextMate is it’s extensible like any good\ntext editor should be, and you can add your own syntax highlighting\nfor various kinds of markup. And so if I’m writing a piece of prose,\nfor instance, and I have a notes file, I kind of have a structured\nnotes file and a structure I invented where to-do items might be\nhighlighted differently in the editor. One thing I do is block quotes\nare highlighted differently, just so that I know, “Where is my thought\nand where is something that I’ve read.” It’s like very distinct. I\nused to pay more attention to this and had a highlighting for\nquotes. So anything that was in quotes was a different color. And so\nyou can kind of just like squint and look at a piece of writing and\nsay, “Okay, I’m quoting way too much.” People want to hear from\nyou. They don’t want to hear from your sources directly."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:05"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I’m reminded of John McPhee, who’s a kind of towering figure in\nnonfiction writing and journalism. McPhee, I think he’s like 80 years\nold now. And he’s such a classic figure that maybe you would think he\nuses a typewriter or something. But actually, he got a friend to\nbuild him an\nextension,\nbasically a mode, into an editor called KEDIT, which allows him to\ncollate notes and recursively organize notes into buckets and outline\nwith those buckets easily available. And it’s got cool things like you\nnever want to use a word that is kind of rare enough to be noticeable\nmore than once in a piece of writing. And he has a mode or a function\nthat runs, and it finds words like that, and it’ll say, “Hey, you’ve\nused the word ‘impassive’ twice in this article. And you only get one\n‘impassive’ per article.” And it’ll highlight it."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:08"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "So I think actually this is probably under done among writers who\nmostly get word processing software off the shelf, but software\nunfortunately is this thing that is kind of developed by the\ndevelopers and sold to everybody else. But yeah, I like being able to\nkind of hack on my editor. So I have a slightly hacked up TextMate in\nfront of me. And by the time I get to a final draft or a draft that\nwe’re editing with somebody else, it’s usually in Google Docs or\nsomething."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I have to say, I find it absolutely mind-bending that John McPhee uses\nKEDIT. Not to mention a custom McPhee mode made just for him. That is\nphenomenal."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:47"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. He writes about this in several articles in a book called Draft\nNo. 4, where he really gets into his process. But yeah, it’s very\ncool and I’m sort of surprised that more people aren’t doing something\nlike that."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I guess it highlights that there just aren’t a lot of people who\nare in this intersection of people who are technically comfortable\nenough to modify their editor and people whose primary job is writing."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:10"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think if it speaks to anything, it’s about how hard it is to\nmodify your editor. Or, these tools should not be so difficult that\nthey require fluency and whatever the hell KEDIT is written in, in\norder to make something that’s slightly custom for yourself, but\nthat’s a whole other discussion."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how much is your own writing process, when you’re doing something\nlike a tutorial around a piece of software, to what degree is it\nMcPhee-like in that way where you kind of prearrange the kind of\nstructural elements then fill in the prose to make it whole? And to\nwhat degree is it more like a stream of consciousness, you kind of\nwrite it from beginning to end?"
+    },
+    {
+      "type": "ts",
+      "text": "00:52:45"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I think it has to do with how much you are collecting from the\nbeginning. So like something that you don’t know that much about and\nare trying to kind of wrap your head around, maybe it’s more\nMcPhee-ish because you’re basically acting like a journalist. If I go\ninto a library that I’ve never used before, and my job is to write a\ntutorial for that library, I’m basically a reporter who doesn’t know\nanything and is trying to pretend like they do. And step one is you\ntalk to people, you read some stuff, you try some stuff. I think that\ncan be a thing that can be very valuable is actually trying to use\nthis library. And then yeah, you’re sort of collecting notes, putting\nthem in these envelopes, moving the envelopes around."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:27"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "I think there’s very few things that have no structure at all, or\nsometimes you spill onto the page because you sort of have these\npre-cached notions about what you want to say. You’ve done this in\nyour head already, the organizing, and then it comes out in one form,\nand then maybe you take another crack at it. I mean, that’s the thing\nabout all writing is that even if you write an email, I mean that\nemail can be losslessly compressed by like 70%. I mean, that’s just\nthe lesson that you learn when you have editors compressing stuff\nconstantly, is that the compression algorithm for lossless compression\nof a piece of writing is very efficient. It’s like gzip level\ngood. And so, if you write an email and you don’t gzip it with your\nbrain before you send it, you’re causing everybody a lot more pain."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s often better than lossless compression because I feel like when I\ntake a piece of writing and make it smaller and tighter, I’m often\nadding information in the process, making it clearer and simpler for\nthe person to understand what’s going on."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:31"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I just had an example of this the other day that I was sending\nan email and included in it was an error trace from some exception\nthat I had, and I just pasted in the exception. And there were like 14\nlines, and I found myself saying, “Okay, a lot of these lines aren’t\nimportant, just focus on this bit.” And I was like, “Why am I saying\nthis? And why am I pasting all 14 lines? Just cut the exception.”\nThere’s no rule about having to show the whole context and it wasn’t\ndoing anything useful. And I think that kind of thing just always\noccurs to you on the second read. And so if there’s one piece of\nadvice about how to do this better, it’s just never send, never\npublish, never assume that it’s done, a first draft. A first draft is\njust that."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I feel like I run into this all the time when sending\nemails. And in fact, I think a common pattern is I’ll have something I\nwant to send and I’ll compose an email and then I’ll read it over and\ntighten it up and read it over and tighten it up. And then sometimes\nthe best of all things happen, and I’m like, “I really shouldn’t send\nthis at all.” And then I delete the email."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:33"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Right, right."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I realize the world is better without it."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:36"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "We talk about technical writing as if we’re all sitting down and\nwriting some tutorial from scratch or writing a design document or\nsomething like that. But actually, the bulk of technical writing that\nwe do is emails to one another. And if I could get up on the pulpit\nand talk to the writers of the world, it would just be like, “Your\nemails are the thing that’s consuming everybody’s time all the\ntime. And taking a little extra care with them is going to go a long\nway.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:56:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Which I guess highlights the fact that technical writing is\nactually a very broad thing. With that lens, I’m actually curious\nwhether you have any technical writing or technical writers that you\nparticularly like or are excited about. Who do you like to read in the\nkind of space of writing about software and technology?"
+    },
+    {
+      "type": "ts",
+      "text": "00:56:21"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "That’s a good question. In terms of software, I don’t know if I have\nany particular author that comes to mind. There are a few things that\nI really liked. I’ve never used Rust, but I’m really impressed by\ntheir API documentation. It uses a million examples, it’s extremely\nconsistent. Every function links back to its place in the source and\nthings like that. And in a way it’s kind of authored by the\ncommunity. I like things like the TensorFlow\ndocumentation. I always point out\nthat their tutorial for just getting started is incredibly well\npresented. The thing where you basically write a program that can\nrecognize handwritten digits. But when I think about technical\nwriters, I’m often thinking in other domains."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:12"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "So in biology for instance, there’s this person named David\nGoodsell\nwho writes books that are incredibly well illustrated because in\naddition to being a molecular biologist, he’s an artist, and he draws\nproteins. And you can’t see proteins, so you have to kind of imagine\nthem based on data that comes out of various instruments. And he just\ndoes an incredibly good job imagining them. And because he’s not a\ncomputer, but rather a person, he can emphasize the things that are\nimportant. I think of a book called Defining the\nWind, which is about\nthe Beaufort scale for wind. So this is incredibly beautiful, written\nin kind of King James Bible-esque English, scale for saying how windy\nit is. So as an example, a wind of less than one knot is described as\n“calm smoke rises vertically.” And then a gentle breeze, which is a\nwind of seven to 10 knots is described as “leaves and small twigs\nconstantly moving, light flags extended.” There’s just like a kind of\npoetry to the language."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s lovely."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:24"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Anyway, there’s this book that talks about the scale. And one of the\nthings it kind of points out, that I remember from this book, is that\nBeaufort was doing land surveying, and I think he would go out in his\nship and he would look at coastlines and he would go onto the islands\nand so on and try to write up what they were all about. And if you\ntook a photograph from the shore and said to somebody, “This is the\ncoastline,” actually, it’d be a lot less legible than if you had them\ndraw a picture because the whole thing the brain is doing is\ndistorting reality and making things that are supposed to stand out or\nthat are unique, more salient, and that’s when illustration does."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:09"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "So I think the best kind of technical writing is doing this warping of\nreality into a space where the things that you should care about are\nmade more salient. And often shortening things, illustrating them,\nthinking carefully about… maybe the most important thing you can do\nis just trust your own judgment about what’s boring and what’s\ninteresting. And if you read a piece of code, if you read around a\nlibrary and just pay attention to what you’re thinking, what your\nreactions are, and you write those down, often it’s going to be less\nstuffy, less formal, maybe less comprehensive, but it’s going to bring\nout the things that matter most and most readers are maybe going to\nhave a similar reaction to you."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Which highlights that even technical writing is in many ways\nmore human than it is technical."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:57"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I hate the phrase “technical writing.” The title technical\nwriter sounds about like the most boring possible job you could\nimagine. And that’s not what I’ll necessarily say that I do at\nparties, but it’s no different than any other kind of writing. And\nit’s something that we all do constantly without thinking of ourselves\nas technical writers."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All right. Well, thank you so much. This has been really\nenjoyable. It’s been fun. I feel like documentation is a topic, and\nwriting in general as a topic, that I’m constantly thinking about and\nconstantly engaging in and very rarely get to talk about in this kind\nof meta way. Thanks for joining me. This was a lot of fun."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:36"
+    },
+    {
+      "type": "speaker",
+      "text": "James"
+    },
+    {
+      "type": "p",
+      "text": "Thank you so much."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find links to some of the things that we discussed, including\nsome of James’s writing, and some of the software that he’s worked on,\nat signalsandthreads.com. Along with a complete transcript of the\nepisode. Thanks for joining us, and we’ll see you next time."
+    }
+  ]
+}

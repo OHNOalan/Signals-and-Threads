@@ -1,0 +1,1555 @@
+{
+  "slug": "from-the-lab-to-the-trading-floor",
+  "title": "From the Lab to the Trading Floor with Erin Murphy",
+  "mp3_rel": "audio/from-the-lab-to-the-trading-floor.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Erin Murphy is a UX designer at Jane Street, and before that, she worked at NASA’s Jet\nPropulsion Laboratory building user interfaces for space missions.  She’s also an\nillustrator with her own quarterly journal. In this episode, Erin and Ron discuss the\nchallenge of doing user-centered design in an organization where experts are used to\nbuilding tools for themselves. How do you bring a command-line interface to the web\nwithout making it worse for power users? They also discuss how beauty in design is more\nabout utility than aesthetics; what Jane Street looks for in UX candidates; and how to\nhelp engineers discover what their users really want."
+    },
+    {
+      "type": "p",
+      "text": "Erin Murphy is a UX designer at Jane Street, and before that, she worked at NASA’s Jet\nPropulsion Laboratory building user interfaces for space missions.  She’s also an\nillustrator with her own quarterly journal. In this episode, Erin and Ron discuss the\nchallenge of doing user-centered design in an organization where experts are used to\nbuilding tools for themselves. How do you bring a command-line interface to the web\nwithout making it worse for power users? They also discuss how beauty in design is more\nabout utility than aesthetics; what Jane Street looks for in UX candidates; and how to\nhelp engineers discover what their users really want."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech\nstack. From Jane Street, I’m Ron Minsky. It’s my pleasure to introduce Erin Murphy, who’s\na UX designer here at Jane Street. Erin does a lot of interesting work here and also has a\nreally interesting and varied background. She’s worked at NASA’s Jet Propulsion\nLaboratory, which is not a place I knew hired UX designers. Worked as a design consultant\non her own, founded her own independent design studio. She’s also a talented illustrator\nwho has her own quarterly journal and has done a lot of exciting design work here. So,\nthanks for joining me."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Thank you so much for having me."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, I just love the fact that you worked for the JPL. It ties deeply into some of the\nthings that I think are interesting about the kind of UX projects we have here, because I\nimagine the JPL is a place that’s designing for experts of various kinds. And a lot of the\ndesign work, not quite all of it, but a lot of it here is also focused on various kinds of\nexperts. Anyway, I’m just super curious, how did you get to the JPL?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I mean, I had the same thought, I think, when I was in school, that in my head, those who\nwent to NASA’s Jet Propulsion Laboratory were engineers, they were scientists, they were\nroboticists. A designer was just something that did not seem like it fit into that\nsphere. And certainly, when I joined JPL, I feel in a lot of ways that I lucked out. There\nwas an individual who was working there that really wanted to bring human-centered design\nthinking to the way that we design spacecraft and the way that we think about operating\nspacecraft. And it was an early enough stage where there were not as many design schools\nat the time that were focused on interaction design and user experience, which was the\nthing that I was studying in school.  (00:01:41): And so, it happened that they reached\nout to the school. And at the time I was actually working with a professor at the\nUniversity of Washington, who was really interested in thinking about how design\nprinciples – and thinking, how do you test and iterate on user interfaces with a person –\nhow could that fit into more technical environments and not just consumer products? So,\nthere was already some exposure that I was getting, just working with that professor and\nworking on a project for cockpit designs with Boeing, where I was actually starting to see\na similarity of creating storyboards, thinking about what a person is thinking about when\nthey are navigating a digital system. That for me was like, oh, I see the way in. The way\nin was actually knowing the right individuals who are looking for that type of talent."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "When you talk about this process of building and designing things with humans involved in\nthat process, is that what you mean when you talk about human-centered design?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yes. I think there is this, instead of just going off of the idea of what kind of thing we\nwant to build out or thinking exclusively about the system itself, but actually talking\nwith an individual, and interviewing them, and having a one-on-one chance to discuss what\nthey’re trying to achieve with the tool, that’s what I typically find myself doing."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, when you got to JPL, what were the actual kind of projects you were working on? How\ndid JPL come around to thinking they needed someone to focus on design? You mentioned\nthere was someone there who championed the idea, but in what kind of context, what kind of\nprojects were being worked on?"
+    },
+    {
+      "type": "ts",
+      "text": "00:03:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think one of the first projects that I was working on, actually, was to help scientists\nactually access orbital data from Earth orbiting missions. There was an interest in\ncreating some web portal and doing it in a way where it’s not the standard, I guess,\ncatalog that a lot of scientists were used to, where you didn’t have as much insight into\nmaybe the metadata. It was a real laborious process to find the right kind of data. And\nyou’d have to go to all sorts of different sites, or know the right kind of people who had\nthat data available on some kind of USB or could send it to you directly on an email. And\nso, at the time, the very first project I had a chance to work on was trying to\nconsolidate into one data portal, all of the Earth-based information that JPL was\ncollecting and make it more accessible for a wider audience of researchers."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You said Earth-based data, is that geospatial information about the Earth itself, about\nthe moon? What’s the data sets?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Mostly Earth and specifically like CO₂ concentration and just understanding the\ncomposition of our atmosphere. And so there were different data products that were\navailable to people. And we wanted to create a workflow and experience for people to know\nwhat level of data. There’s some processing that might go into the actual data itself, and\nwe wanted to create a UI that displayed that level a lot more clearly. We wanted to\norganize it in a way that you knew exactly which satellite they were pulling data from or\nif there was an actual data center on Earth that was collecting information that they\ncould then maybe compare against."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, you wanted to surface, both the data and the provenance essentially of where the data\ncame from?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What were the challenges in figuring out how to put this all together? As you sit down\nwith scientists at JPL who are trying to do something, what were the things you learned\nthat surprised you and informed the kind of work you were doing?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think it was really hard to be a new designer and then also design for experts within a\ndomain I had absolutely no familiarity with."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Wait, you hadn’t previously studied astrophysics before going to JPL? (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I really hadn’t. I think the most that I got from my experience in school that prepared me\nfor this was probably working with a lot of the students within the engineering program,\nand just getting a sense of how they think about problems that are slightly different from\ndesigners. And the big takeaway from that is just how to ask questions and how to unpack\nan environment that I’m not familiar with. And I think that’s one of the sharpest tools\nthat JPL really equipped me with as a designer, was to be comfortable in spaces where the\ndomain is unclear or not as exactly relatable for someone like myself who’s not an\nexpert. And then have the tools to just be interested and ask questions without any fear\nof looking silly or maybe asking something that seems too basic."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "In retrospect, I think I can actually still go to this website for all this orbital\ndata. But to go back and look at the design now, it’s a pretty, I think, straightforward\nproblem space that I would do totally differently. But in addition to trying to think\nabout, “How do we make sense of all the data products that a scientist would want to have\naccess to and might want to look through and use for their research? How do you build a\ntool?” And that was just something at that time in my career I just did not have a lot of\ninsight into. And so, it was a lot of just giving it a try, asking a lot of questions. I\ndid a lot of interviews with different scientists."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "From what I remember, there was this convention where all these scientists who were\nstudying the Earth’s atmosphere actually came to kind of like a conference local to JPL at\nthe Caltech School. And I was able to just sit in the crowd, not really understanding what\nwas going on in the presentation slide deck, but I was able to take notes and follow up\nwith people in that group and just introduce myself as a UX designer trying to create this\nsort of data portal. And there were a lot of very interested and happy participants who\nwere willing to give me insight into their work. And I think it’s a thing that even beyond\nsome of the Earth-based work that I was doing at JPL, once I started getting into more of\nthe Mars Rover missions, that same level of how do you understand a domain and understand\nwhat a person’s trying to achieve within that domain."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "The skills I was picking up from just talking with these researchers really translated\nwell. And that’s, I think, something that – it’s really a key element to the way I do a\nlot of my design work at Jane Street as well – just really understanding what are people\ntrying to do, what is their actual domain, and not being too afraid to dig into some of\nthe technical details of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you talked a lot about ways in which you learned in the process, which it seems like\nyou’re really focused on yourself learning things, which seems really important. At the\nsame time, I’m sure that when you go into a room, and sit with someone, and walk through\nhow they access things, and you have maybe engineers who are working on the systems,\nthey’re paying attention, I imagine they get surprised and learn things too. Do you have\nexamples of the kinds of things that the colleagues you are working with learn from these\ninterview processes?"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I remember the feeling of having people get excited about storyboards. We’ve talked about\nthis I think in the past a little bit, the idea of just being able to showcase what you as\nthe designer sees as the experience of, say a rover planner or a scientist in their\nenvironment, looking at a very specific interface, reaching a breaking point or something\nthat the tool isn’t serving them in their challenge and then coming up with some kind of\nsolution in an actual new UI. I remember the storyboards just resonating, I guess, with\nthat audience, because they just hadn’t thought about their process from that kind of\nperspective. You get these things called bedsheets, which are huge workflow diagrams that\nreally just articulate how this system will be built out. And they’re really just a lot of\nboxes and arrows, and it’s very rich information that the designer should also be aware\nof.  (00:08:49): But there’s this other layer on top of it of just like, well, how does a\nperson navigate between these distributed systems? Do they have enough information on the\npage to feel confident that they’re navigating through that system efficiently? In the\ncase of the scientists that were working on this, how does input from that team, what kind\nof science intent that they have, how will that actually move through the system? That’s a\nlittle bit abstract. And I can totally talk a little bit more in detail on that, but that\nseemed to be the thing that resonated with people. We weren’t just looking at boxes and\narrows anymore. We were thinking about, “What is a person’s experience through those boxes\nand arrows?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:09:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So for someone who’s never seen one before, what is a storyboard?"
+    },
+    {
+      "type": "ts",
+      "text": "00:09:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "So, a storyboard typically looks like you have multi-panels that just highlight these\nsignificant events in a person’s workflow. So, the thing I was referring to is this idea\nof maybe a scientist who is working on a team that is trying to get data from the\nspacecraft. The storyboard could offer like, here are scientists that are able to use a\nparticular tool to articulate what science they’d like to do that day. The next panel\nmight show how that information goes to the rover planner to see if it’s even feasible to\ndo. Can you actually drive to this location? Can you actually extend the arm to do this\ntype of spectroscopy? And so, the storyboard is just outlining an actual panel, very much\nlike a comic strip, essentially, that helps people envision what you are seeing as the day\nin the life of that scientist, in collaboration with the rover planner, in collaboration\nwith the actual software tool."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What’s the workflow for you actually creating these comics, I guess? Is this like, you go\nand talk to them and get your sense of what the process is, and then you, on your own, go\nand draw it all out, and show it to them, and it’s your way of communicating to them what\nyou’ve captured about what their workflows are like?"
+    },
+    {
+      "type": "ts",
+      "text": "00:10:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Essentially, yeah. I would say that there is this process of, when I’m learning about a\nnew domain for the first time, being able to have a one-on-one conversation with a person\nand actually drawing in real time with them, is definitely a part of the process as\nwell. And just being able to put into some tangible state what they’re saying so that I\ncan reflect it back to them is my ultimate goal. Because what I want to do is actually\njust simulate what they’re doing, because a lot of these domains that I’ve worked within,\nthey’re not entirely relatable experiences. I’m not an engineer and I’m not a rover\nplanner, I’m not a scientist. Though, that would be cool. I’m none of these\nindividuals. So, in order for me to feel like I have a good intuition and judgment around\nwhat they’re trying to do, I need to re-create that experience."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ering"
+    },
+    {
+      "type": "p",
+      "text": "Storyboards for me help, because they are these visual aids that look like a comic\nstrip. They tell a story that’s sequential. And it’s a really great communication tool for\nwhen I do go back and follow up with that person to just understand if I am following\nalong with what they’re saying, and if it’s something I can continue to reference as I\nbuild out their system or as I design their system."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Are these storyboards actually always sequential? When I think about the user interface,\nthere’s a certain “choose your own adventure” part of it. There are lots of different\npaths you can take and different things that you can do. Do you sometimes include that in\nthe storyboards by having them fork and merge to illustrate different paths through the\nsystem?"
+    },
+    {
+      "type": "ts",
+      "text": "00:11:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yes. And I think when I’m actually in the mode where I’m translating something that a\nperson’s doing with maybe a series of tools and trying to consolidate into one nice\nsuccinct workflow, yeah, I’m definitely starting to branch out into, “You can go in so\nmany different directions if you land on this one page.” But I’m super methodical and I\ntend to create very linear patterns for these things, so… Again, I’m often working with\nthese complex workflows or there’s some elements to what an engineer is trying to do that\nI might not be as familiar with, so I do try to lay it out very linearly at first, but\naccount for that kind of complexity over time."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, in addition to being a designer, you’re also an illustrator. And it sounds like this\nactual physical process of drawing is a big part of how you approach the communication\naround it. How do you relate these two different parts of how you think? Are they just one\nwhole, or are these two different skills that you mix together sometimes, but not always?\nHow does that all fit?"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "That’s an interesting question. I think that it’s one whole, because I just don’t see them\nas different. I didn’t think that drawing was going to be this useful tool, I suppose, in\nmy career. I assumed that when I originally went to school – I really wanted to be an\narchitect. And that seemed like a complete one-to-one of the skills that I was passionate\nabout and having a practical application of them. But I didn’t see that in some of the\nwork that – especially in places like JPL or Jane Street, I didn’t see drawing as a tool\nthat would be helpful, at least at that point in my career. I see it as a way of just\nreflecting back to people and showing tangible evidence that I understand something. I\njust need to see things. And that’s probably why I find myself as a designer… I think that\na lot of times designers are offering the skills to bring what could be a future\nexperience for someone or a future reality into the present, so that we can interrogate it\nand think about, well, is this actually going to be useful?"
+    },
+    {
+      "type": "ts",
+      "text": "00:13:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Should we test it with some people? Are there other ways we can do this? Sometimes I just\nneed to be able to see what the future is, and drawing is my method for bringing that into\na present state, where I can actually make sense of it. So, for me it’s like\nsense-making. It’s not even an artistic expression. It’s just that there’s a lot of things\nthat I’m learning in these domains. And the best way to catch on to what I’m observing,\nwhat I’m hearing from conversations with engineers, what I’m seeing in just observing\nscientists that are looking at the recent download of data from a spacecraft – drawing\nmakes that real to me in a lot of ways."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How universal is this? Do other designers who are also in the human-oriented design space…\nis doing this in a very drawing-focused way a common approach?"
+    },
+    {
+      "type": "ts",
+      "text": "00:14:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I would say that drawing unfortunately gets a bad rap. I think that there’s a lot of\ndesigners that I’ve spoken with personally that are very insecure about their drawing\nskills. And they don’t want that to be the thing that makes or breaks their design\nprocess, and I certainly don’t think that it is. That’s my chosen method and has been\nhelpful for me. I tend to encourage everyone to draw, though. I think actually the more\nmessy the drawing, the more honest it is. And just the more like, “I’m trying to be in\nthis space where I don’t know what the answer is, but I need to create some signal for\nanother person to help or another person to add their opinion.” So, I feel like it’s a\nvery human method. I’ve seen it actually work quite well in these environments that aren’t\nentirely human. There’s engineers, there’s aerospace, there’s all these elements that\ndon’t really seem all that relatable. But if you can create some drawings, you can create\nan understanding of what you’re doing, and connect more with your colleagues, and\nunderstand what they’re trying to achieve."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And to be fair, engineers do a lot of drawing too. There’s lots of people standing in\nfront of whiteboards, trying to put up structures that represent things about designs and\nhow systems fit together. I guess it tends to be less human-oriented. You’re drawing\npictures of the human using the thing and we usually draw the thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And also our drawing skills are less good."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "There’s kind of like, layers, right? I think that it’s actually fun to draw with\nengineers, because they are often like, “Here’s the underlying system.” And I feel like I\noffer the layer on top of it, of, “If this is how we’ve built out the back end, and if\nthis is how the data’s supposed to behave, then there’s this top layer of what a person’s\ngoing to see.” And that’s the part that I know is part of my lane and what I’m trying to\nunderstand. And it’s interesting to draw with people and I try to encourage my engineering\ncolleagues to do that wherever we can."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, you’ve had a really interesting and varied career as a designer. How’d you get here?"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "So, honestly, the way I got here, I hadn’t heard of Jane Street before. It is not\nsomething that-"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We’re not really big in the design world? (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "We’re not… yet. Not yet. I hadn’t actually heard that they were looking for a designer,\nbut I did have a friend who knew someone who was working here. And she had told me, “Erin,\nthere’s a place that you should probably consider working for, because there’s a lot of\nnerds that are trying to build out these really complex systems. It’s perfect.” And she\nwas right."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:16:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) And so, I found out that they were trying to hire a UX designer. And I was really\nskeptical the entire time, to be honest. I just didn’t understand, what would a designer\ndo at a quantitative trading firm or prop trading firm? The design space felt very foreign\nto me."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And so, I took on the interview, one, because I wanted to work with some people that were\nvery smart and interested in making complex systems more manageable and useful. Certainly,\nthat was one part of it. But I was also just curious. I wanted to know more about: what\nwould a designer do in an environment that’s thinking about the dynamics of our economy?\nAnd what kind of products would those teams be building? And because I didn’t have words\nto describe it, even after researching it and just looking into what Jane Street is known\nfor, that made me even more interested, that I was not wrapping my head entirely around\nwhat the firm was trying to do."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And I knew I needed to talk to people who were working there to demystify all of that. And\nso, I certainly used my interview to basically understand that. And in so doing, I met the\nteam that I was on and really enjoyed the rapport, and the ways that they were envisioning\nbringing design into their work, and having a design culture."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, now that you’ve gone through that process, can you articulate that a little more\nclearly? Why does Jane Street want to hire UX designers?"
+    },
+    {
+      "type": "ts",
+      "text": "00:18:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think that we’re discovering that some of the older methods of building tools internally\nmight not scale well into the future. And what I mean by that is, we want to have better\nintegrated tools, and we want to have an experience for people where they don’t have to\nguess too much on what they’re doing when they land on a new internal tool. And I think\nthat that does start with: how are multiple people using it, not just one engineer who\ncreated the tool and will maybe create some documentation, people can train up on\nit. Maybe that worked at a certain point of maturity in the firm, but – I don’t think that\nat any point people were not aware of the user experience. The more I work with engineers\nand see their process, I was really pleasantly surprised when I started that there was\nalready an interest in following up with users, and there were dedicated channels to\ncollect feedback from people in the moment. But there was this awareness that maybe they\ncan do a better job."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think part of this is just a matter of scale. As you have more people, the leverage\nyou get from really improving and tuning the interface that you provide people, just gets\nbigger and bigger. When I started at Jane Street, there were 35 people or something like\nthat. Now there’s 2,600. And so, the amount of leverage that you get by making things\nsimpler to use, simpler to discover is big. There’s also just way more stuff to learn. And\nso, having more of the things that you come across and need to use as part of your job, be\nreally easy to pick up and use… When the firm was smaller, we just built much less\nstuff. So, you have a big complicated system with lots of interconnections between\ndifferent teams and you want to keep the cross terms down, the amount that you pay for all\nof these extra connections."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You want to get value from all the things that people build without it being as much\nfriction for people. You mentioned that people already cared about this kind of user\nexperience question, which I think is right. But another aspect of it is, it’s not just\nabout having someone who’s dedicated to it, but there’s a real expertise that comes\nin. And just understanding the approach, this whole idea of sitting down with end users\nand watching what they’re doing, is in some sense, just obvious that you should do it, but\nit also feels kind of silly and wasteful in time and stuff. And I think having talked to a\nbunch of people who’ve been through some of these processes with you, people are surprised\nby how much they learned through this and stuff that they thought was going to be super\nobvious. And of course, people will understand this. You look in actual life, what happens\nwhen people pick up the tool and realize, oh man, they’re holding it wrong. And I think\nthat’s one of the values that comes from having people who’ve just done this before."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "That was probably the very first month of Jane Street for me, not only learning about the\ndomain itself and learning “What do traders actually do?” For the first project that I\njumped into, there’s a tool that we’re using to ensure that we have the right settings for\nmeetings, and you’re able to have the appropriate audio setting, and the appropriate video\nconferencing tool. And we’re using a separate open source tool that helps people have the\npreferred low-latency audio experience that they want. There was this effort to really sit\ndown with people and actually watch them use this tool, encouraging them to create their\nown meeting and have me just shadow them as they go to a specific room, try and initiate\ntheir meeting from there, being able to see where in the UI did they get messed up or\ntripped on. What are the certain things on the UI that they felt like they were having\nissues in understanding? And seeing that in real time, documenting it, videotaping it, and\nthen sharing it with the Engineering team was really insightful for them."
+    },
+    {
+      "type": "ts",
+      "text": "00:21:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And the whole thing of having a meeting, it seems like such a simple thing. We just\nwant to go into a room and hit a button, and have a meeting, and have a meeting with some\npeople who are here in the New York office, and some people who are in London, and maybe\nsome people who are remote dialing in from their home office, and having that whole thing\nwork. It’s not nearly as simple as it should be. And we did a bunch of work on our\nside. We have different requirements than the average user of Zoom, both in the size of\nthe meetings, and the latency requirements, and the audio, and a bunch of other things,\nthat mean that a lot of the external solutions just weren’t a really good match here."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And from my perspective, I feel like over the years as we built this out and worked on it,\nI got to really experience how this thing that should be simple kind of wasn’t. It was\nhard to get all the pieces to work. And there was a lot of careful thought and effort that\nhappened over the course of years of machining that process down, and making it smoother,\nand simpler, until cute things like attaching things to the wall that you could scan with\nyour phone, so that your phone could know what room you’re in and actually dial in the\nright meeting in the right place. Now it’s just delightful. I feel like on a regular\nbasis, I walk in, I think, this stuff is so nice. I walk in, I hardly have to think. I hit\na single button and it basically does the thing that I want. And the thing that can be\nlost between that relatively simple experience is how much work is required to make the\nthing actually simple."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely. I think that was the tricky thing for me when I started, which is: where do we\nneed to simplify it? When I first saw the mobile UI, I had immediate assumptions on what\nwere the things that needed to be improved. I think one of the things specifically was\nthere were so many different ways that you could start your meeting. It wasn’t just one\nsimple button, which we’ve evolved into now, or a very easy way to find other options. But\nat the time, everything on the UI was just the same hierarchy, and the same color and\norganization on the page. And for a person who had never done this before and was maybe\nused to some of these external tools, it was hard to know where they needed to start."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And it was hard to engage them in a way that they felt pretty confident that they were\ngoing to make it to a very important meeting or be able to have the ability to hear their\ncolleagues and see them at the same time. And so, these things that do seem simple and\nhave been resolved in the past are made. We are integrating a little bit of complexity\nwith this kind of low latency tooling that fits for our very specific use case of allowing\ntraders to feel like they’re actually on the same trading floor together. And to do that,\nit did require actually meeting with people and not just coming up with designs that were\njust adopting the same patterns that we had seen in other tools or have experienced with\nother tools."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, I expect part of the process of doing all of this was teaching people within the team\nthat you were working on how to approach these problems with a new set of intellectual\ntools. And I’m curious, how did that go? There’s a lot of teaching people how to do new\nthings, convincing them it’s worthwhile to spend time on this. And you’re coming into a\ndomain where they already know how to build software or they feel like they know how to\nbuild these tools. What was the process like of getting the engineers around you to take\npart in a full way in this kind of design process?"
+    },
+    {
+      "type": "ts",
+      "text": "00:24:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I feel like I was lucky, because I feel like the engineers just recognized that there is a\nwhole other dimension to their system that they maybe didn’t have as much expertise or\nexperience building out, which is the UX. That’s something that comes at the end, from\nwhat I gather, for a lot of engineers, where it’s like, you think deeply about how the\nsystem should work, how it should function. And then, “Oh yeah, we should probably make a\nUI so that people can use it.” Now, that’s kind of like a gross oversimplification, but I\nthink that it seemed as though, and from what I’ve experienced even elsewhere, knowing how\nto integrate that collaboration between building a functional product, but that also\npeople want to use and find useful, is always something that we have to adapt and figure\nout as a team. I feel lucky, because I think people were very receptive to it. And they\nwere very interested to know, “What do you need to do to make something more\nuser-friendly?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:25:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yes, it was very much, oh, whenever we were presenting new features or we were identifying\nthe tool for the conferencing, there were a lot of things on their roadmap that people\nwere interested in building out – new functionality that they wanted to see. And through\nasking questions around like … Well, do people need this? Have you received a lot of\ninsight from our help channels of people requesting this feature? What does the tool do\nnow and how do people navigate through that today? We should maybe have some kind of\ninsight into, “What are people doing?” before we actually assign any kind of priority on\nwhat we want to build out next… I felt like by asking those questions, that reminded the\nteam that there’s going to be people using the tool who are not in this room and actively\nhearing some of our reasoning for adding this feature. Those people exist, and we should\ntry and think about what they would want, is the first step, just like generating\nawareness of it."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some sense, that all sounds like a much better experience than I would’ve expected."
+    },
+    {
+      "type": "ts",
+      "text": "00:26:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "One thing I could say, I think this is actually more recent, I’ve actually noticed that\nI’ve had to adapt some of my own research methods to the ways that we are building out\nthese tools. So, I’m used to setting up these meetings with people where we can sit down\nand look at the tool together, and just go through a set of tasks and see in real time how\nthey are able to use the latest build of our tool together. And I will take notes\ndiligently on what it is that is breaking in the UI, what is not very understandable. I’m\nused to this very methodical process where you are sitting with a person in that\nmoment. And what I’ve noticed in some of the projects that I’ve done recently is that\nthose methods have worked. And there’s an interest in the Engineering team to continue\nthose discussions, but they’ve actually wanted to have more discussions with users."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I’ve had to break out of some of my more methodical approaches to research and actually\nadapt some of the cultural elements of Jane Street into the research. And what I mean by\nthat is going up to people in the moment and asking them like, “Oh, we’ve noticed that you\nlogged in to this product. And I’m just kind of curious what your experience has been\nlike.” And asking them in real time as they’re working through the latest build to talk\nabout their methods, versus the more organized research efforts that I would do. It feels\nnow like we’re actually trying to find even more lightweight ways to gather information as\nthe person’s using the tool."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how does that tie into what you see as the culture of the firm? Why culturally does\nthat more ad hoc lightweight stuff seem more preferable?"
+    },
+    {
+      "type": "ts",
+      "text": "00:27:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "It all depends, I guess also on the state of that product. I would say that. When we’re\nfirst building out something in its green field, it’s good to just meet with people\none-on-one. But what I was noting with this cultural element is that there is this\nenvironment at Jane Street that I’ve noticed as I’m working through designing internal\ntools, where people are really receptive to communication and having these casual moments\nwhere we catch one another in the hall or we are able to stop by one another’s desk. I’m\nused to environments where it’s a little bit more formal in some ways, where you need to\nset up actual meetings or establish these very distinct points of communication. But I\nthink that there’s actually an opportunity to learn even more about what people are doing\nwhen you’re able to see them in context, and actually meet with them and establish a\nrelationship of who that person is, what they’re trying to do with the tool, and where\nthey might be running into some kind of issue."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And I felt like that was more of a cultural thing. And it makes it almost even more\napproachable for designers to enter into this space. There’s this environment that’s\nactually quite welcoming to talking about the domain and showing what they’re trying to do\nwith their software. Which I think ensures that a designer who’s coming completely from\nthe outside is able to practice that domain, and learn the language, and feel empowered to\nconnect with their end users. So, that’s a Jane Street experience that I’ve had and I’ve\nbeen wanting to adapt my approach to research around it."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s interesting. I think of that as a cultural thing, this very free flowing\ncommunication style, but it’s also a cultural thing that’s reinforced by architecture. The\nway we lay out the people is – we have these big trading floors with lots of people all\npretty physically close to each other. And I think the reason we’ve wanted that from the\nbeginning is all about communication, about making it really cheap to talk to someone\nwho’s next to you. And I think that’s the thing that I’ve noticed over many years is that\nit’s really surprising how big of an effect small differences in ease of communication is\nto how people behave. We periodically reorganize where people sit and move groups around,\nand some of that’s because we have to. The firm is growing, you need to move things. And\nsometimes it’s just good to mix things up, because you move two groups closer to each\nother, and two other groups farther away, and it just changes the communication pattern in\na really surprising way."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Oh, absolutely. Yeah. And there’s actually this new feature that we had added to our help\nSlack channel. There’s a channel that’s just alerting us when a person logs into the\ntool. And we get their username, and we can easily find where they are in the office, and\nwe can go up and talk to them. One of the engineers on the team added a very rough\nestimation of how close they are to you. So, it’ll tell you, “Oh, this person’s right\naround the corner. This person is 54 meters away from you, or this person is two floors\nabove you.” And so, I don’t know, even just knowing where they’re located and having an\nawareness of, “Oh, I just walked by,” there is a lot of connection you can build. And I\nfeel like the design itself becomes just stronger by having that constant iteration that\nis informed by these discussions with real users."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, tools for meetings are a good example of a tool that’s used very broadly. No one is an\nexpert in having meetings. Sometimes I feel like I’m an expert in having meetings, but\nthat’s my own problem. But there are lots of tools that we’re building that are tools that\nare really focused for experts. And in many ways I think a lot of what we need from the UX\nside of things is, like you were doing at Boeing, building cockpits. Building systems\ndesigned for people who are experts in the field that are often focused on presenting\ninformation in a really dense and efficient way, and pretty different from what you might\nexpect from a consumer software kind of environment. Can you say a little bit more about\nsome of the projects that you’ve worked on that are a little bit more in that space?"
+    },
+    {
+      "type": "ts",
+      "text": "00:31:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "There’s a few projects that I’m working on. The one that I actually just mentioned, that\nhas the ability to know who’s logged in is a tool called Blueprint, which is a tool that’s\nallowing people to manage and provision their applications in a more standard consolidated\nsystem. So, that’s one of the things that I’m designing for. Another is a tool called\nAppd, which is helping people basically run apps and jobs, like automated procedures that\nmaintain the functionality of their systems. And then we have a lot of the observability\nwork. So, we’re thinking about these distributed systems that we’re building out. And we\nwant to have a solution internally that allows us to have better visibility into the\nperformance across all of the different systems that your app might be interfacing\nwith. Those are some of the main tools that are outside of the realm of relatable\nworkflows."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I feel like there are experiences that I’ve had remotely that have been cumbersome with\nsome of our own video conferencing tools. So, I can pull from that working schema of\nmine. But when it comes to things like, maybe automating a certain job or to run at a very\nspecific time of the day, these experiences are outside of my realm of what I tend to do\nand what I do as a designer. And that does require interfacing a lot more with the actual\nengineers who are using the tools to understand what they’re trying to achieve and how the\ncurrent systems are not serving their needs."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think, actually, this has been a lot of how I think about the development of how we’ve\nbuilt tools for people over time. Early on we were all able to rely on the fact that we’re\nessentially building tools for ourselves. You’d build a tool and you would use it and\nother people would use it, but you were always very close to the use case. And then as the\norganization grows and there’s a wider diversity of different kinds of things you need to\ndo and there’s just more expertise in different corners, you end up designing things for\npeople whose jobs aren’t that much like yours. That’s a whole different discipline of,\n“How do you figure out what some other person wants?” and you can’t anymore rely on the\nstuff that’s just in your head. It just changes everything dramatically."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it definitely takes you out of your comfort zone, I suppose."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, are there ways in which the designs and the principles behind the designs are\ndifferent when you think about these, kind of, focused expert tools, versus when you think\nabout building tools for more occasional casual use? I’m thinking a little bit about, I\nlook out at consumer tools and there’s a certain sameness, I feel like, to lots of\ndifferent broadly focused, of like – a certain airy prettiness and distance between the\ndifferent UI components and stuff that shows up there. And it feels like there’s a set of\nthings that people are optimizing for about stickiness and making it really easy for\npeople to get into new things, that all feels very different from what you want to\noptimize for when you’re building a tool for someone who, every day they’re coming in and\ndoing their job deeply integrated with this tool. How does that difference in goals affect\nthe way the designs work out?"
+    },
+    {
+      "type": "ts",
+      "text": "00:34:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "The airiness of our consumer products is definitely something that I’ve certainly designed\nsystems around in the past. It is all about being very thoughtful about how you introduce\ninformation to the end user over the course of their full experience with a tool. It’s so\ndifferent at a place where I’m working with people that are used to information-rich tools\nor things that are just you want to have an awareness of all the information you have\naccess to all at one time. And I think the principles I’m still calibrating in a lot of\nways. It has been a culture shock in a lot of ways to hear people say, like, “Oh, I\nactually want to see everything on my screen. This font is far too big.” Or, “I don’t like\nthat there’s so much white space in this area. This actually makes me nervous. We could\nfill that with more information.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:35:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "That is a very common piece of feedback that I get. And a lot of individuals, when I come\nto them with a Figma prototype of potential direction that we might take, I have a lot of\nmemories of some of my initial conversations with people just wanting to make things more\ncompact, wanting to know, “Is there any more information that I could see for this state\nof this job or this app? I want to know what I have access to. And I’d also like it to be\nresponsive, because I’m going to make it super small on my screen and push it off to the\nleft-hand side of one of four monitors that I’m using. So, their environment is very\ndifferent from what I think I would design for if I was creating an experience for an\naverage consumer."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s maybe worth painting a picture of what a typical workstation looks like\nhere. There’s almost a bare human rights minimum. You have to have at least two\nmonitors. Someone on a trading desk might have four or six, and people who are doing jobs\nthat involve intense live monitoring of things typically have these monitors painted over\nwith many little boxes. Each is a different view into a different system that they’re\nwatching and there are all blinking lights and noises going on."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Lots of noises, infinite noises. Traders moved to our floor, and now I get to hear the\ncacophony of things happening. I’m always curious what they mean, but yeah."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And when I think of what are the prototypical user interfaces that people really dive into\nand use a lot, there are things like a spreadsheet, which is dense grids full of\nconstantly changing numbers. There are text editors. People vary a little bit on exactly\nhow intensely they feel this way, but certainly there are lots of people who are like,\n“Get rid of all the Chrome. I just want as many lines of code that I can get on my screen\nat the same time.” And then the other one is the terminal, where again, the terminal is\nsimple and functional and lots of very dense presentation of data. And I love all of those\nthings and I think they’re all very useful, but for a long time Jane Street operated, this\nwhole web thing had never happened."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "It just doesn’t exist."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. We didn’t know how to use it and we mostly didn’t try. And I think there’s a\nlot of virtues to the kind of tools that I was just talking about, but there are also\nprofound limitations. At some point in our evolution, we had, I don’t know, 5 million\nlines of code in our code base, but not the ability to draw a straight line."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "No. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:37:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, very limited ability to do visualizations, certainly in a programmatic way. And\nanother way in which I think these user interfaces tend to be impoverished is, they’re not\nvery good at providing you with help. Just the basic affordance of a tooltip is\nmagic. It’s just like an incredibly simple and useful way to provide people information at\nthe place exactly where they need it. I love Emacs, but it’s not good at that kind of\nthing. And so, in some sense, I think those affordances are why we cared so much about\nputting more and more stuff into web UIs as a way of delivering user interfaces. You also\ngive something up. There’s something valuable about the spreadsheet and text editor, and\nterminal world. I’m kind of curious how you think about the trade-offs between those\ndifferent ways of building experiences for end users. I know you are not primarily a\ncommand-line denizen."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "No, but I feel like I’ve had more experience learning to navigate through the command\nline. The Appd tool is a command-line interface right now. The goal is to actually take\nwhat exists and turn it into a web experience that provides people better integration with\nother web applications that can help you build some context around, “Is your app\nfunctioning correctly?” That’s probably not a good description of it, but yeah, for me,\nI’m following you. Appd feels kind of like the tool that’s related to some of the\ntrade-offs that we have to think about between a command line and a web experience."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, one of the nice things about terminals as a way to surface UIs, is they give you very\nfew choices, which is a weird thing to think is good. Isn’t it good to have more choices?\nBut one of the nice things, especially inside of an organization that’s really bad on\naverage at visual design, is that you can’t spend a lot of time deciding which font you\nwant to use, and what is the size of the font, and what’s the width of the bevel. You have\nno choice of fonts and there is no bevel. You’re forced to only think about, “How am I\ngoing to put together this array of characters in order to get across the thing I want to\nget across?” And there’s a degree to which constraining the design space gets better\nthings out the other end. I think if you give people who aren’t really good at free-range\ndesign web UIs, you’re going to get a lot of eye-bleeding bad designs that are confusing\nand hard to use."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "What I’ve seen from some translation away from a CLI to the web experience is you just\ntake the command line at the bottom and you bring it into a web experience, and that is\njust the one place that you go for navigation. Things just behave as if you were in a CLI,\nbut you’re actually in a browser, in a web browser itself. That’s a way to go."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:5"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "00:39:5"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "It’s not really taking full advantage, I guess, of some of the other things you can do."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’ve definitely seen, I know we have some UIs that operate that way, and there are parts\nof that where I look and see, it’s like, I think that looks like a command line. I’m like,\noh, now I feel comfortable."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Being able to just maintain your hands on the keyboard at all times is just like another\nuser behavior, I suppose, that I’ve also just become a lot more cognizant of as I’m\ndesigning things. So, in addition to if you are finding yourself translating away from a\ncommand-line interface where you can really just navigate the entire thing through key\nbindings and just using your keyboard, being able to have a UI that’s a web UI,\nspecifically, that has very clear direction on which key bindings you can use and an ease\nof use from the keyboard. It’s something that is now very much a part of my approach now\nor a set of principles, I suppose, that I refer back to as I design more experiences\nwithin Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And I sometimes look back at even some of the things that I made in my first six months at\nthe firm. And I’m aware now of how complicated they could potentially be for someone who’s\njust used to using their keyboard. I’m already starting to build a slightly more in-tune\nawareness around, “What does it mean to have a good user experience for this population of\nusers?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:41:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And maybe it’s worth saying, the reason why we care so much about keyboard\ninterfaces is because they’re just dramatically faster. You look at someone using a\nspreadsheet or an editor, they reach to touch their mouse and you want to slap their hand,\nit’s like, don’t do that, because it’s just so much lighter in the end. You get the set of\nsequences of keystrokes wired into your neurons and it just makes things go in a much\nsmoother way. Again, for an expert, for someone who has been using the tool for a long\ntime, they can be in that state of flow where they can just almost effortlessly move\nreally quickly through the user interface. And that’s really great."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think that’s one of the bigger challenges that I’ve had with working with a user\ncommunity that predominantly works just on the keyboard is, how do you still translate\nthat ease of use that they have right now with their command-line interfaces to a web\napplication? There’s some things that are going to be completely different with the web\nUIs. But for the things that are standard, if you’re going to change the status of\nsomething, if there’s a set of actions that people are used to doing and they have the\ncritical impact on your system, those need to behave in the way that they expect and that\nthey’ve experienced already in their command-line interface."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think the stakes are high when we’re trying to offer a web experience in lieu of a known\ncommand-line interface. Making sure that there is an accurate interpretation of what\npeople actually need to take action on via their keyboard and making sure that’s reflected\nproperly in the web UI is incredibly important. And if we don’t do it right, that just\nleads people to not want to adopt that tool. And so, I feel like there’s a lot of\nadditional work that I feel I need to do in the very beginning stages to prioritize that\ntranslation of critical key binding to the web UI, so that there isn’t a drop-off of users\nfrom feeling like they’ll just continue to tolerate maybe a system that’s not scaling well\nto their evolving workflows and what they need as a team."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I feel like you would learn a lot about how people think about keyboard interfaces if you\nstudied the three editors we support. There’s Vim, Emacs and VS Code, and each of them\nhave dramatically different philosophies. It’s a very interesting space. The other thing\nthat I think is interesting about the editor space, text editors in particular, are tools\nfor experts by experts. These tools were designed in the ’70s, many of them, and in many\nways aren’t that different from the original versions that were in the ’70s. I mean,\nthey’ve grown in lots of ways, but a lot of the core idioms around which they’re built are\npreserved from those early designs. It was the opposite of human-oriented design or\nsomething. It was just some engineers who wanted something and they built the things that\nthey wanted, and that is a different way of getting humans in the mix."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But there’s this interesting question of when you think about designing tools for\nexperts. This whole thing of interviewing people and trying to understand their workflow\nseems very important, but at the same time, this expert insight into, “What are the\nworkflows and how do you design ways of interacting that really match those workflows\ntightly,” one of the questions I’m interested in is how do we effectively integrate those\ntwo kinds of insights together to build really excellent tools for experts that both\ncapture what’s unique about the domain, and also leverage these broader insights about how\nto design things?"
+    },
+    {
+      "type": "ts",
+      "text": "00:44:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think about that as being one of the bigger challenges of my design career at Jane\nStreet, for sure. I have an awareness that there are a lot of tools that we’ve been able\nto build out because enough people found existing systems to be problematic. And so, they\njust created a new one. Enough people have trained up on it, and enough people learned how\nto use the tool, and they’re content. And I think that for me, I know I’ll never be an\nengineer. I’ll never be a trader. That is not the scope of work that I can provide. But\nthe big challenge for me is how can you actually still understand their domain enough to\nhave that kind of intuition or build up a little bit more of that empathy around what\nthese experts are experiencing."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I can’t say that I’ve figured out how to do that. I will say that the experiences I’ve had\nat JPL, this first year at Jane Street, it does feel like being immersed in that\nenvironment and having these conversations with people where I’m able to observe in real\ntime what they’re actually doing and see exactly how they’re trying to integrate these\ndifferent tools into their workflow. That’s the thing I’m most interested in learning more\nabout."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s hard stuff. So, you’ve obviously spent your time working on a bunch of concrete\ndesign projects, but another thing that you’re thinking about is how to build out design\nas a discipline here and growing that team. You are a UX designer here. You’re also\ncurrently the only UX designer here. And we’re actively\nlooking to add more\npeople to that team. And I’m curious, how are you thinking about this process of trying to\nfind people?  What do you think we should be looking for in finding people who would be a\ngood match for these kinds of problems and would be excited about working here?"
+    },
+    {
+      "type": "ts",
+      "text": "00:45:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. We’re actively looking for another user experience designer that’s excited about\nlearning about this particular domain, and has already the skillset and experience of\nbuilding out and shipping products for people, and they’ve already started to use some of\ntheir designs. They have that experience of making decisions on a tool, putting it out\ninto the world, and seeing what kind of response from their user community they can use to\nimprove their system. So, I feel like the individuals that we’re looking for, we’re\ncertainly interested in people with user experience design background, but we’re looking\nfor a lot of designers who have demonstrated an ability to be in a domain that’s not as\nfamiliar. So, certainly, a number of people that we’ve had conversations with have had\nexperience in the FinTech world. There are people who have maybe worked in\naerospace. There’s a couple of individuals that I’ve spoken to that are familiar with\nrobotics and are going through that same kind of process of, “How do you partner with\nexperts to build complex tools?”"
+    },
+    {
+      "type": "ts",
+      "text": "00:47:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, essentially, are you looking for people who’ve had the experience of building for\npeople who are experts in things that they themselves are not experts in?"
+    },
+    {
+      "type": "ts",
+      "text": "00:47:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I would say so. We see a future where there’s actually a lot more diversity of designers\nfrom all sorts of different disciplines. I think that’s the ideal situation, is just to\nhave a variety of perspectives to inform what people are trying to do, and build out\ndesigns in collaboration with our engineers and traders. But for now, we are looking to\nsee if there are individuals who are able to jump into a really difficult and complex\ndomain, and clarify what needs to get designed, and clarify exactly what the challenges\nare for people that are working on these types of tools."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, that’s what you’re looking for in the people that you want to find. What do you think\nshould make Jane Street an exciting place for a designer to come work at? What’s the\nunique opportunity here?"
+    },
+    {
+      "type": "ts",
+      "text": "00:47:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "My sense is that you get to just go a lot deeper into what an experience is like for an\nindividual who’s going to use your end product. I think that this is the one place where\nI’ve had the most latitude to just go up to individuals, talk with them about the tools\nthat they’re working on, understand more on how tools that I’m designing for can be\nimproved. And subsequently, I’ve just learned a lot about systems we’ve built out. And I\nfound myself navigating through those systems on a command-line interface, which I never\nthought I would have to do in my career. I always thought that I would just live in this\ndesign research space and think at a high level on what things need to happen and never\nwould I venture into the depths of how it was built out."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "But in creating these relationships with my colleagues and learning what people actually\nneed from their tools, I see it as this need for designers to go even deeper in their\nunderstanding of what they’re actually building. And there are times at other firms, other\nagencies, places that I’ve worked at in the past, where you don’t get that much\ncollaboration with your engineering counterparts. And you do have to just live in this\nplace in the product life cycle where you don’t really know how this thing is going to get\nbuilt out and you just inform what a person would need. And I think that I’ve had much\nmore exposure to this more holistic process of how we actually make a functional tool and\nwhat are some of the things that people will run into, what challenges people will run\ninto with that new system."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I just feel like I have a lot more access to that than I have in any other place. And\nthere’s almost a culture here that’s excited to help you navigate that space. Some of the\nthings that I’ve done, especially like the command-line interface or learning a little bit\nmore on how we architect these distributed systems, all of those things are pretty foreign\nand just outside of my scope of knowledge. But there are a lot of individuals here that\nare very happy to sit, and talk through that, and share their knowledge in a way that\ndoesn’t feel at all judgmental and it doesn’t feel like it has this negative impact on\ntheir productivity. They see it as an opportunity to make another team member more\ninformed of what they’re building, and in so doing, have a deeper empathy into what they\ncan produce, what they can implement versus what are some of the things that we can’t do\nyet. I don’t have that kind of reach when I’m just a designer either working on my own\nthing or on some of these other past teams."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It sounds like to me there’s two things you’re pointing out here. One is you get a chance\nto go deep in the domain. So, if you’re the kind of person who really likes geeking out\nand understanding the details of stuff you wouldn’t normally get a chance to dig into,\nthat’s an exciting thing. And the other thing is just highly collaborative with the\nEngineering team. You’re not making a design on the outside and saying, “Here are some\nspecifications of things to do.” You’re working back and forth with the people who are\nbuilding the system. On that latter point, I wonder how you even do it the other way. It\nseems really hard to design a thing where you’re not working closely with the Engineering\nteam, because I feel like if you’re just designing what you want the thing to be, the\nworld seems very wide open."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s lots of, “This is what the ideal user flow would look like.” There are lots of\nconstraints about what’s easier and harder to do, and I feel like a lot of the art of\ndesigning great software is figuring out a thing which is simultaneously simple for the\nend user and also simple to implement. Simplicity is a profound value, both in design and\nin software engineering. Finding that middle point where you can be simple on both\ndimensions at once, I feel like requires a lot of collaboration and understanding. You\nsaid a lot of nice things about what it’s been like working here and doing design here,\nbut what has been the hardest part of adapting to the kind of work we do here?"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I think the hardest thing that I’ve had to deal with is maybe just accepting some of the\nlimitations that I have as a person that’s not deeply embedded in a domain to the same\ndegree as the end users that I’m designing for. I feel like I have experienced this in\nother very technical complex domains that I’ve worked with, but there is something about\nbeing in an environment at this point. This particular point in Jane Street is just\ninteresting, because I feel like people are still used to creating tools when they need\nthem, and having a shared knowledge across other engineers that they work with to just\ntrain up and use that tool. There’s sort of an ease to making sense of these domains, that\nI think for myself, it can actually be quite challenging."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I don’t write code, I don’t build out my prototypes I use. All of that is done for me in\nFigma. And I think that the hardest part for me is being in a world that’s transitioning\naway from what they’re used to, which is being able to spin up tools as they need, and\nthen going towards a world that actually there’s holistic user experience for tools, and\nthere’s an understanding that the end users have very different expectations for a web\nexperience, and maybe sometimes even a preference to have a web experience over something\nlike an existing CLI."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although my hope is that we don’t totally give up on that flexibility of just spinning\nthings up. We’ve been using command-line tools for a long time. I don’t expect that to\nactually stop. One of the things I think is one of the big, quite open challenges in\nbuilding graphical user interfaces, is how do you share some of the benefits that you get\nfrom more traditional, more language-oriented tools? I think the thing that’s great about\ncommand-line tools is they’re organized around words rather than pictures. And there’s a\nkind of composability to language, a grammar that you have for how you can construct\nthings. On the Unix command line, the nicest part of it is this pipe operator, the ability\nto run a bunch of commands and pipe output from one to the other."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the whole system has been engineered so that there’s a standard way in which you\nrepresent data or a few standard ways in which you represent data. And it’s just easy and\nlight and natural to take a bunch of different tools that were built, not necessarily\nexplicitly to work with each other, but with a shared set of idioms and values. And then\nyou can just put them all together and make something new in a pretty simple and pretty\nlightweight way. And there are limits to how well those user experiences work. You don’t\nget tooltips, but you get this profound composability. And I’d love to see a world where\nwe had graphical user interfaces that retained some of that composability. And I don’t\nquite know how to do it. I think it’s actually a hard problem."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Something about having this linguistic aspect not be totally lost is something that I’d\nlike to see there. And I don’t know. I’m curious if you’ve thought about this kind of\ncomposability question as you start stepping into tools like Blueprint and Appd that are\nmore about connecting lots of technical pieces together, this kind of extensibility, how\ndo you retain that?"
+    },
+    {
+      "type": "ts",
+      "text": "00:54:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "I haven’t really thought as extensively about this. I guess the way that I approach\nbuilding out these tools for Appd and Blueprint right now, is there are things that you\ncan communicate through consistent navigation, consistent layout of a page, that can help\na person make sense of the information in front of them graphically, without having to\nread through… Again, I don’t really use that much of these command-line interfaces, so I\ndon’t entirely always know what it feels like to have something that you can actually read\nout and understand what the program is going to do. But there are certain patterns and\nelements of consistency that I’m trying to infuse in the designs that I’m building out\nfor, not just like Appd and Blueprint, but even for some of the newer tools that we’re\nseeing emerge for some of our observability platform applications."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And I think that maybe that is the way of having some… I don’t know if you can really\nspin up things and have your own applications, but if people are trying to build out user\ninterfaces or extend maybe from something that’s already been built out, there could be\nuser patterns that we’ve already identified as being helpful and we’ve utilized across\nAppd and Blueprint, that maybe someone else could use for their own tooling and reuse, I\nguess. There is an interest in taking a lot of the design system work that we had done\nearly on of creating these consistent components, consistent buttons, the right kind of\ncoloring. And when you have a certain button state, there’s consistent states that you\nwould see. All of that can actually be packaged up into something that can be reused. If\nyou were interested in building out your own web application, ideally in the future, you\nwould have all of these components ready for you to pull in and actually build out your\nexperience."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, for sure. There’s some important composability that comes roughly at the level of\nwidgets, where you build a widget that has not just the right visual presentation, but the\nright behavior baked into it in a way that you can then hook that into other pieces. And\nthere’s a lot of work we’ve done on the web programming side to make that kind of\ncomponent stuff really good. The thing that I feel like is hard to do is this cross-tool\ncompatibility of like – you built a tool, and you built a tool, and you built a tool, and\nnow you want to hook all those tools together. I’ve seen some patterns that I think work\nreasonably well. One of the things that some of the trading desks have done is they might\nhave one tool that decides where their focus is, what’s the particular security that\nthey’re paying attention to, and then maybe a bunch of other tools in the back end."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That tool will publish that information and the other tools can watch it, and then\nsomething changes. And all of your tools, even though they were implemented independently,\nwill all change focus at the same time to pay attention to the new thing you’re doing. So,\nthat’s one way of getting things to hook together. Another thing I feel like I’ve seen\ndone, but I don’t know if I’ve ever seen it done well, is there are some kinds of tools\nwhere you try and have a dual life to the UI. So, there’s these cool dashboarding apps\nwhere you can click some buttons, and create some views, and create some buttons, and\ncreate some sources of data that pull different sources of data, and create a\nvisualization that then people can watch and interact with."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And it’s a really easy way to get started up, but then you might want to be like, okay,\nbut now what if I want to turn that into a textual representation that I can edit in a\ndifferent way and commit to a source code repository? And so, having this dynamically\nconstructed structure of the UI can live a double life, where you can flip it from a\npurely graphical specification into like, “Oh, yeah, here are the five components you have\ncombined, here’s the definition of those components.” And then you could go in, edit and\ntransform it, or even programmatically generate those. So, I feel like that’s a kind of\nthing, that you see little versions of that."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Another actually good example is you have all sorts of UIs for doing filtering. Your issue\ntracker or whatever has some way of filtering. And sometimes you can have something where\nthere’s a SQL-like query language that lets you do it. And sometimes there are UIs where\nyou can click buttons to say, filter down to this, filter down to that, or whatever. And\none thing you can do is you can have the set of buttons that you do, could behind the\nscenes be constructing the SQL query that represents the filter, and then have this way of\nflipping back and forth between the two representations. So, you’re both a UX designer and\nan artist. And I’m curious, how do you think about the role of beauty in UX design?"
+    },
+    {
+      "type": "ts",
+      "text": "00:58:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Oh, God.  (both laugh) I mean that’s probably the best response to it. I’m always trying\nto avoid the concept that the designer has come to the Engineering team and their role is\nto help make the UI pretty. I think that’s a shorthand for a lot of people that – it’s not\nentirely dismissive. I think that for people, “pretty” is actually a term that means it’s\nclear, it makes sense, it makes a person feel confident that they know what to do when\nthey arrive at the landing page of an interface. I do sometimes feel like it’s also a\nshorthand for you as a designer can come in at the end and not have any insight into the\ndomain and still do your job, I’m sure. You can come in at the end and put a nicer polish\nto everything and it will all work out. This is something that the designer doesn’t need\nto be embedded in any way into the thinking, and the functionality, and what this tool\nshould do for a person."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And so, beauty has just been this really tricky element to my design process. I don’t\nthink that this is the case for a lot of other designers. I’ve had conversations with\npeople about the idea of making things “pretty” – that quote or that term – and it doesn’t\nseem to bother people as much. I think that for me, it just erases a very important\nelement to the design process, where you can’t get to something that’s clear and beautiful\nwithout really understanding what it should be and having an awareness of the complexities\nof it. I don’t think that you can just be brought into building out a tool and just polish\nit. You need to actually understand the mechanics of what it is, what environment it\nexists within."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s almost something dismissive about talking about things being pretty, because it’s\njust like putting a fresh coat of paint on a thing."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "And I think that it can really limit what you build out and the kind of collaboration you\ncan really have with a person, like a designer who’s coming onto your team to codify what\nit is a person’s trying to do into something that we can actually interact with on a\nscreen."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "[inaudible].  But there’s something about picking the right clear and simple way of\npresenting data and presenting your options and doing it in a way that… I don’t know,\nsomething about the visual appeal does matter at a functional level. The way in which\nhumans see and interact with things I think makes some kind of difference, but it’s\ncomplicated and very subjective, I think."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "So subjective. I think that’s probably the thing that makes it hard a lot of the time for\nme to actually think about beauty as its own isolated thing when I am designing\ninterfaces. There are patterns and best practices for color treatments and font sizes that\nyou’ll see on a screen, but I very rarely am prioritizing it. It’s almost like I’ll just\ntake those patterns that already exist and really put a lot more of my effort into making\nsure I’ve fully understood what people are trying to do and how you can use all those\npieces to orchestrate that desired experience."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s not the primary thing that you’re thinking about?"
+    },
+    {
+      "type": "ts",
+      "text": "01:02:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "It’s not even a compliment at times. A lot of people are always like, “Oh, wow, this\ninterface is so much prettier now.” Or like, “Oh, I just really enjoy using this\ntool. It’s pretty.” If they don’t mention the usability part, that’s usually where I’m\nlike, “Oh, you say it’s pretty, but tell me more about whether or not it’s actually\nhelping you.” The problem that I’m most interested in is whether or not it’s actually\nuseful and if it’s actually something that people care about incorporating into their\nday-to-day work. For me, that would be the beautiful thing – like, “Oh, this once really\ntedious and problematic workflow that a person has tolerated for years is now made much\nmore approachable or it’s so much easier to just pick up and use.”"
+    },
+    {
+      "type": "ts",
+      "text": "01:02:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "That is, I think, the definition of beauty for me, but I often feel like beauty comes in\nthis aesthetic sort of interpretation or what we see is the only thing that designers are\nable to produce. But I think to even get to that point where it’s clear, and engaging, and\nsomething that people want to use, and actually is transformative to their workflow,\nthere’s a lot of work that goes into that, that you can’t do without being able to dive\ninto that domain. Pretty is very much, for me, this byproduct of really understanding what\nyou’re building."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, that seems like a great note to end on. Thank you so much for joining me."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Erin"
+    },
+    {
+      "type": "p",
+      "text": "Thank you so much. This was great."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with links to some of the things\nthat we discussed at signalsandthreads.com. Thanks for joining us, and see you next time."
+    }
+  ]
+}

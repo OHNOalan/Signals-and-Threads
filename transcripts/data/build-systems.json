@@ -1,0 +1,1147 @@
+{
+  "slug": "build-systems",
+  "title": "Build systems with Andrey Mokhov",
+  "mp3_rel": "audio/build-systems.mp3",
+  "transcript": [
+    {
+      "type": "ts",
+      "text": "0:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals & Threads, in-depth conversations about every layer of the tech stack, from Jane Street. I’m Ron Minsky.  Today, I’m going to have a conversation with Andrey Mokhov about build systems. Build systems are an important but I think poorly understood and often unloved part of programming. Developers often end up with only a hazy understanding of what’s going on with their build system learning just enough to figure out what arcane invocation they need to get the damn thing working and then stop thinking about it at that point, and that’s a shame because build systems matter a lot to our experience as developers.  A lot of what underlies a good developer experience really comes out of the build system that you use and also there’s a lot of beautiful ideas and structure inside of build systems. Sadly, a lot of that beauty is obscured by a complex thicket of messy systems of different kinds and a complicated ecosystem of different build systems for different purposes, and I’m hoping that Andrey can help us see through some of that thicket down to some of the elegance of all of this underneath.  Andrey is a great person to have that conversation with because he’s had a long and interesting experience with build systems having done some work on Hadrian, which is the build system for the Glasgow Haskell Compiler and having written a few important papers that try and analyze and break down the ecosystem of build systems and help you understand kind of what’s going on fundamentally underneath, and finally, in the last few years, Andrey has been working here working on Jane Street build systems.  So, thanks Andrey for joining me, and maybe to start with, you can start by explaining to us a little bit about what a build system is."
+    },
+    {
+      "type": "ts",
+      "text": "1:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Hi, Ron. It’s great to be on the podcast. So what is a build system?  Build systems automate the execution of various tasks of individual developers like me and whole companies like Jane Street. So, as a software developer, what are the kind of tasks that I need to do every day? I need to compile and recompile source files. I need to run some tests. I need to keep my documentation up to date. There are lots of tasks like this.  Every task is pretty simple and straightforward on its own, but there are a lot of them, and they are tedious and I need to remember to do them in the right order, so it’s great to have some automation that does it for me. In the old days, like, how would you do this without automation, you would just write a script, and the script was your build system. And that’s how I worked myself when I used to work on projects with just a few files. And it works perfectly fine in those settings."
+    },
+    {
+      "type": "ts",
+      "text": "2:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Beyond just using simple scripts, what’s the next step up available to developers in terms of automation?"
+    },
+    {
+      "type": "ts",
+      "text": "2:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Well, before, I don’t know, 1976 when Make was developed, there was nothing else and people were just writing scripts. And projects were getting bigger and bigger, it became difficult and at some point Make was developed to automate this. So Make was a huge breakthrough. It’s very simple. It allows you to write down the tasks that you need to execute and each task has some inputs and some outputs and the task itself, so what kind of command line you need to run to execute this task.  And this very simple approach worked very well and it’s still being used these days. So these days I would say Make is still the most popular build system out there. If you go to a random open source project you will find a Makefile there."
+    },
+    {
+      "type": "ts",
+      "text": "3:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which on some level is kind of astonishing, just given how old Make is."
+    },
+    {
+      "type": "ts",
+      "text": "3:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "I’m amazed at how successful Make was and still is."
+    },
+    {
+      "type": "ts",
+      "text": "3:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What was the thing that made Make such a big step forward?"
+    },
+    {
+      "type": "ts",
+      "text": "3:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Well, it was easy to use, right? You just write a few rules and the format for specifying those rules is pretty straightforward. It’s just a text file. And Make is available to you on pretty much any system. You type Make and it works. I guess it’s that kind of conceptual simplicity which attracted a lot of people to it, and of course also the pain that they had experienced before when they had to run all those tasks manually and they kept forgetting to run things in the right order. And I think this was one of the direct motivations of creating Make."
+    },
+    {
+      "type": "ts",
+      "text": "3:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, you talk about having a simple conceptual model, and what is that model on some level when you configure a job in Make, what you’re doing is specifying a collection of rules. Each rule says what you do, what’s the command you run to execute that rule, what it depends on and what it produces, and now Make has what is essentially a graph like model representing what are the things you need to do and what are the dependencies. Given that simple model, what are the services that Make now provides to you that you didn’t have before?"
+    },
+    {
+      "type": "ts",
+      "text": "4:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "The main benefit of using Make compared to a script is that Make only reruns the tasks that need to be rerun. So how does it figure it out?  When you have like 1000 files in your project and you edit a single source file, if you run the script, it will basically recompile all 1000 files and then maybe relink some executables and rerun all the tests. And obviously that’s very wasteful. If you’ve only edited one file, only one file need to be recompiled.  Make figures this out by just looking at timestamps. So, it just looks at the time of the file that you’ve just edited and it’s newer than the file that depends on it, so that files that depends on it needs to be recompiled and then its timestamp is updated, and so this wave of changes propagates through the build graph that you have and at the end for every task that you have in your description, you have the simple rule that everything that all the inputs of the task produced before the task, the outputs of the task have reproduced. This is before/after relationship is enforced everywhere in the build graph."
+    },
+    {
+      "type": "ts",
+      "text": "5:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Service number one that’s provided is incrementality. Small changes require small amounts of work in response to them."
+    },
+    {
+      "type": "ts",
+      "text": "5:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "5:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this is important to developers kind of for obvious reasons, which is to say a key thing you want from your tools is responsiveness. You want to do something, see the results, think about whether that was the right thing to do and go back and make other changes, and so having tools that are responsive is enormously helpful. There’s a couple of the things that come to mind for me in terms of what Make helps out with. One of them is, it helps get the build right. One of the tricks with rebuilding your software is making sure that you’ve done all the things that you need to do. Like you could imagine that you changed a file and then you remember to rebuild that but you didn’t remember to rebuild everything that depended on it.  And so having a simple language where you can express the dependencies and then once you get it right, you have a system that takes care of running things in the right order. There’s just a whole class of errors that you can make either in manual construction of a script or a manual kicking off of build tasks that just go away. I guess another thing is parallelism. There’s the incrementality of only having to do a small amount of work, but having this graph structured representation of the build also helps you kick off things in parallel."
+    },
+    {
+      "type": "ts",
+      "text": "6:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Absolutely. Like trying to maintain this parallelism by hand in a build script would be pretty annoying, right? You add a new file and suddenly you have a new dependency and need to rearrange the parallelism. Having some automation here is great as well."
+    },
+    {
+      "type": "ts",
+      "text": "6:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. This all sounds like a very short story. We had this problem, how to build things. A nice system like Make came out. It has a clean way of expressing dependencies and giving you some services off the back of that specification. All done, problem solved. What’s missing?  Why is the story of Make from 1976 not enough?"
+    },
+    {
+      "type": "ts",
+      "text": "6:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "There are few things that are missing in Make. One of them as I mentioned, the way Make determines that a task needs to be rebuilt, is by looking at timestamps but very often this is too limiting. Let me give you a common example. You edit a source file by just adding a comment and as a result, you recompile that file and the result doesn’t change, but the timestamp does change anyway.  It means that everything that depended on that file needs to be recompiled if you’re using Make. This is one of the problems that basically sometimes you want what we call “early cutoff” in build systems. If you recompile a file and the result is the same, you don’t want to recompile everything else that depends on it, so this is one feature that was missing."
+    },
+    {
+      "type": "ts",
+      "text": "7:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Essentially the problem is that the heuristic that Make uses for figuring out what needs to be redone is overly conservative, right? It will refire when it doesn’t strictly speaking need to refire."
+    },
+    {
+      "type": "ts",
+      "text": "7:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. It’s overly conservative, at the same time I like it a lot because it basically just repurposes existing information. It’s just the information that is out there. The file system records modification times. Make itself doesn’t store anything at all, which is a very nice property to have. But if you want to support things like early cutoff you now need to start storing some information."
+    },
+    {
+      "type": "ts",
+      "text": "7:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I guess in addition Make’s timestamp-based recomputation is, as you say, overly conservative. It’s also under conservative, isn’t it?  I.e., it will fail to rebuild in some cases where it should."
+    },
+    {
+      "type": "ts",
+      "text": "8:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah and it’s fairly common for example, that various like backup software, for example, would mess up modification times, which would basically cause your project not to compile correctly and then you would have to go for the so-called “clean build” to just get around that limitation. Yes. Make’s reliance on timestamps is problematic."
+    },
+    {
+      "type": "ts",
+      "text": "8:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Something goes wrong with Make, the answer to this is never to figure out what happened. It is always just throw away all your state, throw away all incrementality and restart it. It’s like on a computer, like something doesn’t work. Why don’t you reboot? The build system equivalent of this is make clean. So that’s one class of problems. What else is missing in Make?"
+    },
+    {
+      "type": "ts",
+      "text": "8:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Make works very well for an individual developer, but one example where it starts to become too slow is when many people develop software. In a company like Jane Street we have hundreds of developers and they all work essentially on the same code base. What it means is that when the person checks out the sources from the central repository, we need to run Make to build everything and then another developer does it and then another developer needs to build everything again.  You start realizing that all of them are just building exactly the same files all the time and it makes sense to somehow share this work and the way modern build systems do it is by uploading build results to the central cloud repository where they can be downloaded and reused by other developers. It means that you aim for the very same task not to be executed more than once. You compile it on one machine and then you share the results with everybody else. This is something that Make can’t do and many modern build systems have to do."
+    },
+    {
+      "type": "ts",
+      "text": "9:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some sense, you’re pointing at a scalability limitation with Make, it’s a pretty deep limitation: Make is limited to just the things on your machine and that limits how effective it can be because there’s sharing that you could have between different people on different machines, but I think Make has more scalability problems than that.  Doing large builds in Make can be quite expensive for a few reasons. One of them is just the thing we talked about before about make clean is a serious problem because the fact that Make doesn’t always get it right and sometimes you have to be like, “oh, that didn’t work. I’m just going to throw away my state and redo everything.” Redoing everything in a really large code base is a disaster. It can be a huge amount of time, maybe like, “oh, now I have to wait 40 minutes for this thing to build.”  I think there are also scalability problems in Make in the direction of complexity. What are the limitations on Make trying to specify large complex builds?"
+    },
+    {
+      "type": "ts",
+      "text": "10:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and this is something that I learned about five years ago when I started to work on Hadrian build system for the Glasgow Haskell Compiler. GHC was built using Make, and there were a lot of Makefiles. So the very first problem I faced: GHC is an old project and that means that the build rules are complicated."
+    },
+    {
+      "type": "ts",
+      "text": "10:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Just to give us a sense, roughly how big is GHC?"
+    },
+    {
+      "type": "ts",
+      "text": "10:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "GHC, well, is I think is a million line of code. It’s pretty big. The Makefiles themselves are pretty big as well. At least like 20-30, biggish Makefiles in GHC that take care of compiling it, and a lot of smaller ones scattered around the code base. Once you start going beyond a single Makefile, let’s say 100 lines long, you start facing the limitations of the programming language itself.  Make is a language of specifying dependencies. You can also think of it as some form of programming language because it has variables, it has some conditional structures. You’re developing a collection of build rules using this language and this language is not very good. It’s a single namespace of string variables. They’re all mutable. The way that the most complex bits of logic have to be done is macros so you have to splice strings into other strings. You have to take care of not using special characters in splicing because otherwise things go terribly wrong. So this is not a very good programming model to use for large projects."
+    },
+    {
+      "type": "ts",
+      "text": "11:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think the problem you’re pointing out here is essentially that Make isn’t great from a composability perspective. We want to be able to take a piece of code and reason about it locally and from that, be able to predict how that code will behave when it’s embedded in some larger context.  But the fact that Make has a single global namespace gets in the way of that, since now, any two parts of my build specification that just happen to use the same name for a variable for different purposes, well, those two parts of the build specification are going to interfere with each other and that more or less destroys the ability to reason locally about the build. The other thing you talk about being a problem is macros, which is interesting, because macros are also supposed to be a solution to a different problem, which is the problem that Make’s build language is not terribly expressive.  So Make’s core build language is relatively simple. It’s got the simple dependencies that you express with some set of inputs and some sort of outputs in a command that you invoke to construct the outputs from the inputs but that simplicity means that when you have a really complex build, you can end up having to write really quite a lot of these rules, and a way to avoid this is to extend the expressiveness of language and macros are a way of doing that.  Macros are essentially code that generates more code or in the context of Make, build rules that generate more build rules, which really does help. It lets you write down your intent more compactly, but macros can be incredibly hard to reason about and it gets really bad when you have macros that generate macros that generate macros."
+    },
+    {
+      "type": "ts",
+      "text": "13:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "You mentioned generating macros and this is one other limitation of Make: Make fundamentally requires you to specify your build tasks upfront, to specify inputs and outputs and all of the build tasks. And if for some reason, some of the tasks are not known initially, for example, maybe you might want to generate some files and then maybe those programs that are built are going to generate more files and then as soon as you start having these multiple stages of file generation, Makefiles start to crumble in a new way, right?  Now on top of macros, you have to generate those macros. When I was looking at the code base of GHC, I was coming across lines where you had… the lines were maybe like 50 characters long but they contained like 20 dollars in them and all those dollars were indirections because of macros. Completely impenetrable and nobody knew how they worked, but they worked and they somehow had to be migrated to a new build system and that was my goal, which is still ongoing. Five years later, that project is still not finished."
+    },
+    {
+      "type": "ts",
+      "text": "14:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The project here is again Hadrian, which is a new build system for GHC. What actually is the status of Hadrian? Is it functional at all?  Is it deployed in any way? How far along has it gotten?"
+    },
+    {
+      "type": "ts",
+      "text": "14:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "It is functional. I’m happy to see that many people are using it, but the difficulty in switching from one build system to another is that the build system that has been alive for many years, accumulates a lot of cruft that supports various unusual use cases. Maybe five years ago, somebody added a special conditional that takes care of compiling GHC on that particular architecture.  Just to understand how that works requires perhaps talking to that person who added it because nobody else understands why that is needed… if you just blindly convert it to the new build system you might miss out some special trick that you need to do, so it’s just that taking care of all of this long tail of various features that have been added to the build system over the years just takes a lot of effort. It requires involving many people into this communication."
+    },
+    {
+      "type": "ts",
+      "text": "14:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think of this as an example of a more general problem of dealing with legacy systems, which is… I feel like the kind of enthusiastic idealistic programmer perspective is: there’s a problem that needs to be solved, I’m going to think hard about it and understand what the right solution is and then I’ll write a piece of software that solves the problem. There’s a bad old build system, I’ll write a new one that does the right thing.  But the problem is that the old software is not someone’s idea of the right answer converted into code. It is a knowledge base which has accumulated 25 years of various different people’s ideas about how to get this or that problem solved. And migrating to a new thing isn’t just about building the new thing, it’s an archaeology expedition where you have to go in and dig deep and extract that knowledge or re-solve the problems from scratch and that’s why these projects that seem relatively straightforward can take years."
+    },
+    {
+      "type": "ts",
+      "text": "15:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Archaeology is a very good analogy. I felt that I was doing archaeology five years ago. It was just basically talking to people and trying to figure out why that line is here and what does that file do? It’s still going on and I feel like in some sense, the best way to make progress is just to switch over and then maybe the whole project will go down for a few months until everybody figures out how to use it and to fix all the remaining bugs but otherwise, right now we just maintain two build systems in GHC and this is of course far from ideal."
+    },
+    {
+      "type": "ts",
+      "text": "16:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It sounds like you solved the first 90% of the problem and now you have to solve the next 90% and then maybe the 90% after that. Hadrian was your first foray into working on build systems, and you learned a lot about the problem from there and you ended up writing a few interesting papers about how build systems work more generally. Could you tell us a little bit more about those papers and what the core lessons were from them?"
+    },
+    {
+      "type": "ts",
+      "text": "16:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, sure. The first paper was about the limitations that we encountered in Make and why we decided to rewrite that build system using Shake. Shake is a Haskell library for developing build systems. It’s a modern tool. It supports various features that we need, for example, early cutoff and sharing builds in the cloud and dynamic dependencies, so being able to generate new build rules as you go. It supports all that. That’s why we wanted to rewrite in it and also on top of that, it comes with a sensible programming model. You just write your build rules in Haskell and Haskell has a lot of abstractions that are missing in Make.  The first paper basically just goes through this project and describes it in detail and show some of the abstractions that we built on top of Shake. Shake is a low-level library, but we built a lot of high-level abstructions for building Haskell packages. We described these abstractions in the earlier paper which is called, “Non-recursive Make Considered Harmful,” which is a pun on an earlier paper, which was called “Recursive Make Considered Harmful.” In some sense we’re saying, well, don’t use Make for big projects at all. After we finished that paper, we also wanted to look at the wider context of build systems. There are a lot of build systems out there, and in some sense it feels a bit sad that every community has to redevelop their own build system. We were trying to figure out what were the differences and commonalities in all the major build systems out there, so we wrote another paper called, “Build Systems à la Carte,” where our goal was to look at these systems and distill their differences, at least the differences in their algorithmic core, to simple models, maybe 20-30 lines of code so that they become comprehensible to a human being unlike looking at a million line project.  By looking at these small models of every build system that we looked at, we figured out that there are two main components in build systems. One takes care of figuring out the right order in which the tasks should be executed and we call that component a “scheduler”, and the second component just takes care of exhibiting a single task. It’s where all the caching happens. It’s where the communication with the cloud happens. It’s where the timestamp manipulation happens in Make.  The second component is called “rebuilder”. These two components, scheduler and rebuilder can be combined together to form a build system. We discovered or rediscovered four different schedulers and three different rebuilders. And you can combine and mix them in various ways, so this is explains the title of the paper. You have a menu and you can pick a combination of these two things and out pops a build system.  Some of these combinations were known before, but some combinations were new and we were excited because we thought that maybe this can lead to new build systems and to better understanding of the whole design space."
+    },
+    {
+      "type": "ts",
+      "text": "19:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can you give us an example of a combination that doesn’t, or at least at the time didn’t exist?"
+    },
+    {
+      "type": "ts",
+      "text": "19:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "So one such new combination is Cloud Shake. This combination comes from combining Shake, the build system that was developed by Neil Mitchell who was the coauthor of the paper, and Bazel. Bazel provides a cloud build functionality. Neil wanted to extend Shake with cloud build functionality for a long time but it wasn’t clear how to do it. While writing this paper, we realized that the cloud build functionality only touches the rebuilder part of the build system and it can be combined with the scheduler part that comes from Shake in a very clean and simple way.  What the paper does, it basically describes the scheduler of Shake. It describes a rebuilder of Bazel, and it shows that by combining them, we get Cloud Shake, which is a new point in the design space which wasn’t known before. Cloud Shake uses a so-called suspending scheduler. It supports dynamic dependencies. This essentially just… this suspends tasks as soon as a new dependency is discovered that needs to be built.  It’s a bit more complicated than just the depth-first traversal, because we need to take into account the parallelism so you cannot just go ahead and build a single task all the way down, because it would be too slow. There is some extra complexity there. This is a scheduler of Cloud Shake and the rebuilder well… how does Cloud Shake determine whether a task needs to be rebuilt? This rebuilder, we call it the “constructive traces rebuilder”, actually comes from Bazel. It has a task that needs to be executed. It looks at the inputs of the task and the task itself, and it creates what’s called the task hash or rule hash.  It basically accumulates everything there is about this task, and then once you have this rule hash, you can make a request in the cloud storage and ask whether somebody else has run that task before. Since this hash identifies the task uniquely, it allows you to make this request and receive the result without doing the computation yourself.  If you don’t have the result, you don’t have to execute the task yourself. You can just get the results from the cloud and use the files directly."
+    },
+    {
+      "type": "ts",
+      "text": "21:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what you’re essentially in this case depending on is having some big lookup table in the sky, which indexes by the hash on the rule that says what to do and pulls up the artifact and that’s the key extra bit of infrastructure you need. You just kind of plug that rebuilder in to the Shake-style scheduler, and poof, you have a new kind of build system."
+    },
+    {
+      "type": "ts",
+      "text": "21:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Of course it’s much easier to say than do. In our model was just the combination of the scheduler and the rebuilder, but Neil Mitchell who is the lead developer of Shake, actually spent quite a lot of time to make it all work. Now it works, but at least the paper gave him a very nice blueprint of what to do. Before writing that paper, it was like a very vague task about how to do it wasn’t entirely clear, but after studying all the build systems and figuring out that this is exactly what Bazel does, it was much easier to follow through this blueprint."
+    },
+    {
+      "type": "ts",
+      "text": "21:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One thing that strikes me about the world of build systems is just how many of them there are. Not only are there lots of successor systems to Make, but these systems are broken off into different organizations and communities. Lots of companies have their own build systems. There’s Bazel, which is an open source build system, but it’s actually a successor to an older internal one from Google called Blaze and then Twitter and Facebook built similar systems called Pants and Buck and then there’s a ton of different language specific build systems.  Rust has a build system integrated into Cargo and Haskell has a build system integrated into Cabal and OCaml has several build systems, which I expect we’ll talk more about a little later and there are even build systems that started out as being specific to an individual open source project. Ninja is a build system that was built for Google’s Chrome browser. Again, totally separate from Blaze, which was Google’s internal build system at the time.  So I just wonder why. Why is there this wild collection of incompatible systems where each different organization or community has felt the need to create their own? Like the whole thing’s not just a ridiculous amount of work, but it also gets in the way of some natural things you’d like to do. For example, if you want to build a project that has some Rust and some Haskell and say some Java in it, how do you do that when each of those communities has their own build system?"
+    },
+    {
+      "type": "ts",
+      "text": "23:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "I guess this all comes from the fact that different communities have different infrastructures, have different requirements in terms of the kind of tasks they need to execute and they also speak different languages, different programming languages. For example, for developers in OCaml, it’s much easier to describe all this build logic, which gets fairly complex, using OCaml because this is the language we speak. Of course we could have taken an existing build system like Bazel and write some build rules that are needed for OCaml in Java and Python.  So, it would be possible and we would have to maintain a lot of code written in languages that are not very common in the community, which would probably make it difficult to iterate and improve those build rules but it would be possible. I’m actually pretty happy that we have a lot of build systems out there that keep exploring the design space. Every now and then some new idea comes up and I think it’s good that many different people are looking at the same problem from many different angles."
+    },
+    {
+      "type": "ts",
+      "text": "23:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I agree with that but on some level, the fact that programming language is a thing that fractures the space of build systems seems really regrettable. It’s obviously good that there’s freedom to create new build systems that solve problems in new ways, but the idea that every language community ends up creating their own build system just so that they can write build rules in their own language, that really seems like a shame. Have you thought about the question of whether there’s a way of architecting these systems to make them more language-independent?"
+    },
+    {
+      "type": "ts",
+      "text": "24:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Some build systems were designed with that in mind. It’s pretty common to come across projects that instead of using a build system directly they generate build scripts from higher level specifications. For example, you might take a build system like Make or a build system like Ninja and you would generate these low level descriptions of what needs to be built from a higher level description that can be written in your own language of choice. This does happen and I’ve seen a few examples like that.  I guess one problem that is not fully solved here is that… again, we’re coming back to the code generation problem. Very often you don’t know all the build rules upfront before you start your build. You want to be able to support some kind of back and forth communication between the build system and the higher level build generating logic. The build systems that I know of, I don’t think they provide anything like this. They typically require to generate build rules upfront and then the build system goes ahead and builds stuff, but there is no feedback mechanism which allows you to say, “please produce me results so far and I will generate more rules after I see them.”  Maybe there’s a scope for kind of a build engine, which is completely language-agnostic, which only provides this interface where you can specify some initial collection of rules, get some feedback, generate more rules and iterate until they get to some kind of fixed point."
+    },
+    {
+      "type": "ts",
+      "text": "25:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I feel like on the face of it, it might seem like using one of these language-agnostic build systems like Ninja wouldn’t be so bad in the sense that your dependencies don’t change nearly as often as your code does, so you might imagine you can get away without explicitly handling the dependencies and having to do the occasional build and then build again in order to deal with it, but I feel like in practice that often turns out poorly because you end up compromising on the correctness of the build because you don’t always know when the build is up-to-date and if you do have a rule for figuring out when you need to rebuild that rule is often very conservative, which is to say, every time you discover that the rules aren’t up to date, you’re like, “Oh, now I have no idea what’s going on.” And you have to rebuild everything.  And in a really large system, rebuilding everything is a disaster. It’s pretty bad for us at Jane Street where our code base is… I don’t know, 15 million lines or 20 million lines in our primary repository and the whole thing on a big parallel machine takes maybe an hour to build, but if you look at a Google scale system, it would be madness, right? They have billions of lines of code and I think… like I have no idea even how long it would take to do a full rebuild but I’m sure it’s really quite a lot of CPU resources that would need to be thrown at it.  The very simple model of something like Ninja is in some ways very appealing, but it’s just not powerful enough to provide the full set of services you want to make a build that really scales."
+    },
+    {
+      "type": "ts",
+      "text": "26:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "I’ve seen a few projects in this space where even trying to parse all the build descriptions in your repository takes so much that you actually want to incrementalize that step as well. For example, I think there are some open source build tools from Microsoft that have been released recently like BuildXL and AnyBuild. They actually take some extra steps to make this kind of parsing of build descriptions incremental. I’m sure there’s a lot of development work and also research work to be done in this area."
+    },
+    {
+      "type": "ts",
+      "text": "27:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Now let’s switch gears and talk about what you’ve been doing most recently since in the last year you’ve joined Jane Street and are working on our build systems team. Maybe you can start by giving us a thumbnail sketch of how Jane Street’s build system works now."
+    },
+    {
+      "type": "ts",
+      "text": "27:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "The current build system is called Jenga and has been in production for a long time and it’s a build system that is tailored for a monorepo. We have a mono repository at Jane Street. A monorepo is when you put all the projects that you work on in a single repository, which really simplifies problems with versioning. The opposite of a monorepo is when every project lives in its own repository and then it’s much easier to iterate on individual projects, but then if your project depends on some other project, now you start having problems because you might depend on some particular version of the project but that project might move ahead and there is a newer version of the project available and you might want to switch to that newer project but another dependency that you have actually depends on an older version of the project and you start getting into the so-called versioning dependency hell."
+    },
+    {
+      "type": "ts",
+      "text": "28:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The joy of the monorepo is you get to build your code without ever having to say the words “constraint solver.” When you say Jenga is oriented towards monorepos, what do you mean? In what way is Jenga specialized towards that use case?"
+    },
+    {
+      "type": "ts",
+      "text": "28:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "One way it is specialized to this use case is that the language that we use to describe the tasks that need to be built in the monorepo is not versioned. So essentially you have to describe all the rules of all the projects that you need to build in exactly the same version of the language. Which would be very difficult to do if you had multiple repositories and each project would be most likely using its own version of the configuration language. It would be pretty hard to synchronize.  And the second build system that I’m working on is called Dune. This is also an OCaml build system and that build system is different in this respect. In Dune, the language we use to describe build goals is versioned which allows you to have multiple projects developed independently in the OCaml community. Each of these projects has its own description of build tasks that need to be done. It uses its own particular version of this language, and those projects can live together happily and the Dune build system itself can develop without fearing of breaking all those projects that depend on it."
+    },
+    {
+      "type": "ts",
+      "text": "29:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I want to talk more about Dune and in particular, the kind of shocking and embarrassing question of how it is that Jane Street had the ill fate to write not one but two build systems. But before we do, let’s talk a little bit more about Jenga. Can you give a sense how you actually work with Jenga? You talked a little bit about what the build language is, but before you were talking about the build language being OCaml, I think. Can you explain, like what are the different ways in which you write build rules and how are they specified and all of that?"
+    },
+    {
+      "type": "ts",
+      "text": "29:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "In Jenga, we have two different levels at which things can be described. At the front-end, developers describe build tasks in a very limited, constrained and also simple language, which allows somebody to describe the name of the library that they want to build, the dependencies of the library, and a few various configuration flags, but that’s it. That is parsed and analyzed by the build system itself, which is written in Ocaml. It has access to all the powerful OCaml features which allows us to analyze those build specifications and execute them as efficiently as possible.  This front-end language is very limited because you want to be able to analyze it and you also want to safeguard users from various errors they can make. If they had access to the low level language that we are using, they could accidentally make the build non-deterministic or make it slow or make it cyclic and various other things that could go wrong if they had all the freedom, but we constrain them so that they don’t make those mistakes and we can execute the build descriptions as efficiently as possible."
+    },
+    {
+      "type": "ts",
+      "text": "30:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The basic structure here where you have two languages that you use for constructing build rules is actually pretty common, right? You typically have some kind of user facing language, which is simple and constrained, and that’s what the vast majority of users use to set up their builds, but then you can also write build rules in a full-fledged programming language. Typically the same language that the build system itself is written in.  Not every build system works this way. Make in particular does not. No one specifies their build in Make by extending Make’s implementation in C. You always just add build rules by writing them in Make’s build language, but that’s actually a real problem. One of the things you run into with Make is that as you put more and more pressure on Make’s build language, it becomes clearer and clearer that it’s just not up to the job. So, if you look at systems like Jenga or Hadrian or Bazel, you end up with this two-layer structure.  In Jenga, the inner language is OCaml and the outer language is the simple data oriented configuration language we’ve been discussing. I’m curious how Bazel compares. The inner language for Bazel is Java since that’s what Bazel is implemented in and the outer language is this language called Skylark, which is a language that on the surface looks a lot like Python but it’s considerably more limited than Python. Can you say a little bit more about what the actual limitations on Skylark are?"
+    },
+    {
+      "type": "ts",
+      "text": "32:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It is pretty limited, and you want it to be limited. Like, what are the reasons why you want it to be limited? Because we want, for example, our builds to be deterministic. You don’t want to have a library that depends on a random number generator. So you don’t want random numbers to be available in your language that you use to describe the top level configuration build rules. You also very often don’t want to have any form of recursion in that language because that makes it difficult to reason about.  You typically limit that language to just description of data, and perhaps occasionally some conditionals, because you might want to say that on this architecture, I want to pass this flag, which is unavailable on different architecture. Although users often demand more power and if you look at the GitHub repository of Bazel you will see a lot of issues where users are requesting “while loops” to be added to the language or the ability to be able to describe in some form dynamic dependencies right in that user-facing language.  There’s a constant battle between the users demanding more and more power and the build system developers who try to restrict the users because like one reason is because they want to be able to schedule builds efficiently and if the language is restricted, it allows you a lot of static analysis opportunities so you can actually produce very fast builds, but also if you give users a lot of power, they will undoubtedly start shooting themselves in the foot and you will basically have a lot of broken builds because of non-determinism, for example, and you don’t want that."
+    },
+    {
+      "type": "ts",
+      "text": "33:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s maybe not obvious, but determinism is really important for a bunch of the other things we talked about before. If you don’t have determinism, then the whole notion of doing cloud builds is very compromised because if you want to share artifacts from different builds you have to know when the artifacts are supposed to be equivalent and if you have non-deterministic things that are feeding into the construction of these build artifacts, it’s very hard to tell if anything is correct at that point. Can you also say something about where Jenga fits in, in the kind of “Build Systems à la Carte” taxonomy?"
+    },
+    {
+      "type": "ts",
+      "text": "33:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Right now I’m actually working on moving Jenga along one of the axes in the paper. I’m working on adding support for cloud builds. Jenga right now is still in the world where every software developer has to build everything from scratch on their machine, which is of course not ideal. So my recent project was on adding functionality where it’s possible for developers to exchange their build results via a central repository and that project is still ongoing.  Jenga will be in the same box as Bazel and as Shake, which will support cloud builds or as we say in the paper, it will have this constructive trace rebuilder."
+    },
+    {
+      "type": "ts",
+      "text": "34:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How about in terms of the dynamic/static axis?"
+    },
+    {
+      "type": "ts",
+      "text": "34:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "So Jenga supports dynamic dependencies and it uses a suspending scheduler as well. So basically it initiates build tasks and as they discover more and more dependencies, these tasks can be suspended until those dependencies are built."
+    },
+    {
+      "type": "ts",
+      "text": "34:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It very much looks a lot like Shake does pre-cloud builds."
+    },
+    {
+      "type": "ts",
+      "text": "34:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "34:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That sounds like a nice build system to have. Why does Jane Street have two build systems?"
+    },
+    {
+      "type": "ts",
+      "text": "34:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "In some sense this is an accident. OCaml ecosystem was using many different tools to build their projects. Jane Street used Jenga internally, but external developers were using tools like OCamlbuild and Make to build their own projects. So we decided to automate the release of our projects to the external world by making it easy to build our projects and the way we did it, so Jérémie Dimino, which is the manager of the build systems team at Jane Street wrote a very simple tool. That tool was simply building a project from scratch without any incrementality or caching to produce, for example, a library that everybody else can link against.  A lot of people outside Jane Street started to use it to build their own projects. Even without support for incremental rebuilds, it was so fast that many people started to use it, which was very surprising."
+    },
+    {
+      "type": "ts",
+      "text": "35:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It was fast when you wanted to build your project from scratch, but if you wanted an efficient incremental build, the initial version of Dune did not help you?"
+    },
+    {
+      "type": "ts",
+      "text": "35:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right."
+    },
+    {
+      "type": "ts",
+      "text": "35:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But it was a hell of a lot faster. A lot of work was put into the efficiency of parallel builds. Another thing that Dune got right from the get-go was portability. But yeah, I think the primary feature that got people excited was speed, it was something like five to ten times faster than other available solutions?"
+    },
+    {
+      "type": "ts",
+      "text": "36:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. As this build system got more and more popular, Jérémie started to improve it bit by bit. For example, it added incrementality, started supporting more and more build rules, and everybody using Dune was contributing to making Dune better and at some point it just got even more features than Jenga. Right now, for example, Dune has some rudimentary support for cloud builds whereas Jenga is still working on that.  Now our plan is to eventually switch to Dune. So we want this new shiny build system that everybody else uses. It also happens to be faster than Jenga, which is another reason why we want to switch. We are in the process of doing this and yeah, this project has already been underway for a long time and it’s still going to take some time."
+    },
+    {
+      "type": "ts",
+      "text": "36:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Highlighting the point that migration is difficult. I think it’s getting close to being true that Dune has strictly more features than Jenga, but it’s not quite there yet, is it? I think there are a lot of features associated with doing things at scale that aren’t totally worked out. For example, it’s not clear to me that Dune is yet faster than Jenga on very large builds. Maybe that’s changed recently, but at least for a while that was true."
+    },
+    {
+      "type": "ts",
+      "text": "37:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, absolutely. I think maybe for any two build systems, you just can never compare them. No build system is fully worse than any other build system, because there’s always some features that a build system has that nobody else has. It’s just like so many features it’s difficult to compare them."
+    },
+    {
+      "type": "ts",
+      "text": "37:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the hard parts about doing a migration like this, you’re trying to change out the wheels on a car while the car is driving. How do you guys make forward progress on the transition while not stopping the entire organization from getting improvements as things move on?"
+    },
+    {
+      "type": "ts",
+      "text": "37:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Whenever we implement a new feature in Jenga, we know that we will actually have to implement something similar in Dune as well. It means we have to do double work, which slows down the process of migration. What helps is that we have a lot of external contributors in Dune, so workload can be shared quite efficiently. So we have a very good community. Community helps a lot."
+    },
+    {
+      "type": "ts",
+      "text": "37:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is there anything that you guys are doing to try and reduce the amount of dual work going forward?"
+    },
+    {
+      "type": "ts",
+      "text": "37:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Right now at least we would like to stage some of this work in the sense that we are splitting Dune into two components where we have the back-end, which is the incremental computation engine itself and the front-end, which describes all the rules for combining OCaml and also like various other rules, which are specific to external projects. So we want to disentangle these two parts, the front-end and the back-end and then once it’s in place, we’ll be able to, for example, swap Jenga’s front-end to use a Dune front-end, maybe keeping the back-end still.  So we will be able to stage the process of switching from one build system to the other by just swapping various parts of these build systems one by one."
+    },
+    {
+      "type": "ts",
+      "text": "38:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. I guess one of the key pieces there is getting it so that you don’t have to maintain two sets of rules. This goes back to your point about Hadrian, is that one of the things that was hard about migrating the Makefiles over to Hadrian is there’s a huge amount of knowledge about how GHC needed to be built in all of these different contexts. The same exact thing is true about Jane Street and about all of our build rules. There’s a huge amount of knowledge about how Jane Street operates on the software side that’s essentially embedded in… I don’t know what it is, 20,000? 40,000? lines of build rules.  And so, getting to the point where you can share those between the two systems, seems like it’s a pretty critical step to avoiding having to redo things over and over on the two sides."
+    },
+    {
+      "type": "ts",
+      "text": "39:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "This is exactly what we are trying to do. We would like to start sharing some code as soon as possible, and this sharing of this knowledge is probably the hardest part because we keep generating this knowledge every day and maintaining it in two different systems is a nightmare."
+    },
+    {
+      "type": "ts",
+      "text": "39:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "At least the two systems are in the same language. That simplifies it a little bit."
+    },
+    {
+      "type": "ts",
+      "text": "39:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "39:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So when you’ve talked about the ways in which build systems have evolved over time, a lot of the points you’re making are about scale. Scale in terms of the complexity of the build to deal with large projects and large organizations and scale in terms of performance, of just being able to do large builds with large numbers of people who are constantly interacting with and changing the code.  But there are other ways in which modern development environments have changed that also play into this, which is there’s more and more integration between the development environments that we work in and the build tools. It seems like build systems play a pretty key part in that integration. Can you say a little bit about how this plays out and how it influences the features that build systems need to provide?"
+    },
+    {
+      "type": "ts",
+      "text": "40:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "I’ll probably go back to that example of everyday tasks that a software developer needs to do. As you work on a software project, you keep editing source files and you keep running the build system, and the simplest way of doing this is: you edit the file, you save the file, you go to the terminal, you run the build. It succeeds or it fails with an error. Much more common case, it fails with an error.  You look up the line where the error is and you go back to your editor and you change that line.  So that’s a fairly long cycle. It may take seconds just to switch between the different windows and looking up the line. So a very natural idea is to start integrating them somehow. Maybe you start calling the build system when you click Ctrl-S in your editor. As you do it, the build system is called and the error message is displayed right in the editor and you can click on it and immediately jump to the right line and start fixing that line. So this shortens the iteration loop from multiple seconds to a second, to maybe even below a second and this dramatically increases the productivity of software developers.  This is a very simple integration. It’s just with the editor, but there are various other integrations. So you want to integrate the build system with the continuous integration system of the whole company, right? As we push commits to the monorepo, we would like to make sure that the whole monorepo still builds. That all tests still pass so you want to integrate the build system with that infrastructure too. You also want to integrate the build system with various documentation and code search infrastructure.  So if there is some front-end where you can type a query about a function you are trying to find, right? Of course, that that index that you are going to search is probably going to be generated by the build system because the build system will need to process all the files and like spit out some indexed representation of all the sources. So you start integrating all these various tools and this list keeps growing."
+    },
+    {
+      "type": "ts",
+      "text": "42:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I feel like some of those integrations you described are pretty different from others. So the integration of, “Oh, and we need to do documentation generation.” On some level, it just feels like another kind of build target and another kind of rule that you need to generate. On the other hand, the kind of editor integration feels significantly more fraught because there you want finer grained incrementality than you usually get.  Like, one of the great features of modern IDEs is as you type, you get auto-completion. So you get suggestions based on where you are in your program, which requires the program being partially compiled. It might not even parse, but you still want to be able to get feedback from the IDE. All of which means that your IDE becomes kind of specialized pseudo-compiler that needs to be able to run something like the ordinary compilation on a file as it’s being edited. And to do that correctly, it needs configuration information about the build, which means there’s a new integration point where the build system needs some mechanism for surfacing information to the IDE rather than to the ordinary compiler toolchain."
+    },
+    {
+      "type": "ts",
+      "text": "43:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "43:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So there’s another kind of integration, which I haven’t actually seen happen in a general purpose build system, but I’m wondering whether it’s a direction that one should expect. The example I’m thinking of is the compiler for a language called Hack. Hack is this programming language that’s used at Facebook, which is essentially an extended version of PHP with its own type system that was added on top to make PHP a more reliable language to engineer in, and I remember already many years ago, seeing an awesome demo where the primary author of the system showed how the whole system had extremely fast incremental compilation times because users demanded it.  People who use PHP were not used to using a compiler, so their expectation is you write your program and then it runs and everything works immediately, and they’re not okay with the idea that they write their program and hit refresh on their browser and they get anything other than the latest thing. They wanted really fast updates and he showed me how he could do a git rebase and thousands of files would change and the compiler would just kind of keep up and then from the time that Git finished doing the rebase, it was 10 milliseconds until the compilation was complete. And I was astonished. It was a very impressive demo.  And this demo is done on the back of a custom compiler and a whole parallel programming system that keeps track of dependencies down to the function level so that like, if I modify something in a file in just one function, it will know just what depends on that function only recompile the bare minimum of things that need to be recompiled. To be fair there’s only type checking rather than compilation, but still there’s an impressive amount of engineering required to get that to happen.  Have you seen any movement in the build system world to provide this kind of functionality that you have in a system like Hack, but on a more general purpose basis so that you don’t have to rebuild the entirety of that infrastructure for every language that supports that kind of fine-grained incrementality?"
+    },
+    {
+      "type": "ts",
+      "text": "44:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "In some sense, we start moving from automating tasks of developers to automating tasks of a compiler and maybe of some other tools. So a compiler also needs to do a lot of tasks. It needs to type check a lot of functions and needs to generate code. So these tasks in many cases are exactly the same, because the file has changed in just a few lines, right? Between different commits? So you don’t want to repeat type checking of all the functions because we just need to type check one single function that changed.  So why don’t we use build systems to automate that too? It sounds like a perfectly sensible approach, and I’ve seen already a few projects like this. You mentioned Hack. Yeah, that’s a very good example but I have seen, for example, the Shake build system also used in this context for improving the incremental compilation of Haskell projects.  And so what needs to be done to support this is basically to provide some kind of APIs where various tools can integrate with the build system by declaring tasks that are not only file system kind of granularity. Maybe you want to declare tasks whose granularity is just a single line of code that you need to compile, for example.  We go down in terms of granularity of the build tasks, and we need a way to describe these tasks in some way and present those tasks to the build system and get the results back. So I’ve seen a few examples where the build system is integrated with the compiler in this way where you would like to automate some tasks of the compiler, but I haven’t seen a complete well thought through API that lists everything that there is to do for the compiler and presents it in a way that’s kind of extensible for other tools.  So basically right now, I think we are at the stage where multiple groups are trying to do the same thing. They are doing it in their own ad hoc way, but the general approach is not yet thought through."
+    },
+    {
+      "type": "ts",
+      "text": "46:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I also think one of the challenges there is that as you try and drive the granularity of the operations down, you’re going to have to abandon some of the standard structure that’s pervasive amongst pretty much all build systems. Which is to say, build systems normally assume that they can do their tasks by invoking a program and having it run kind of like a function. You present it some inputs, you get some outputs, and poof, you’re done, but that just doesn’t work when you’re talking about very fine-grained parallelism, and fine-grained incrementality because the tasks are so small that the work it takes to deserialize all the state that you need in order to do that computation is going to very soon start dwarfing the amount of work that’s required to actually do the computation and then you just can’t profitably reduce the granularity anymore once you hit that boundary.  So I feel like build systems are going to have to come to grip with some kind of story around like shared memory for keeping data structures around or persistent build servers or something. So it’s not just that you’re going to need cooperation with a compiler, but you’re going to need quite different models for how compilers operate. I think the technical challenges there are not small. There’s a lot to get, but I think it’s going to take a while probably to figure out how that all shakes out."
+    },
+    {
+      "type": "ts",
+      "text": "48:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. For integrating with the compiler, I think at some point we will reach the point where the build system becomes just another standard component in the compiler. Like we have a parser, we have type checker, we have code generation. All of these components are fairly well known. There are like dozens of hundreds of papers written about each of them, but the build system is often an afterthought and you add it just to make things work not because it’s designed to be there from the very start.  And I think someday this is going to change and we will start treating build system as just another key component of a compiler."
+    },
+    {
+      "type": "ts",
+      "text": "48:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Although the painful part about that is I worry, it will drive things even more to be language specific, right? We understand there’s lots of good theory around parsers, but we don’t have cross-language parsers. Every language implements its own little parser, and this maybe sadly pushes even more in the direction of every language building its own little build system, which is sort of sad for the amount of duplication of work but also makes the story when you do want to do cross-language development even more complicated.  It’s sort of ironic that this whole system, a big part of its job is to avoid duplicating work, is achieved by an enormous amount of duplication of work. So let me go back to “Build Systems à la Carte,” one of the things that really struck me about the paper when I first saw it, is that in addition to describing things that are clearly, everyone would agree are build systems like Make and Bazel and Shake. It also describes Excel. One doesn’t traditionally think of Excel as a build system. So can you say a few words about how you think Excel fits into this build system model?"
+    },
+    {
+      "type": "ts",
+      "text": "49:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So Excel superficially might look very different, but it’s also an incremental computation engine, right? You have formulas in the cells and these formulas have dependencies. They depend on values in other cells. If you change a value in one cell, you want to recompute all values that depend on it and hopefully efficiently without recomputing every cell, because that would just take too much time. Many big companies, especially in financial world, there are Excel spreadsheets that are so huge that you wouldn’t be able to recompile everything from scratch so you need a lot of incrementality there."
+    },
+    {
+      "type": "ts",
+      "text": "50:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I should say that this for sure includes us. We have a ton of massive spreadsheets and recomputing everything from scratch would be a total non-starter. It’s an especially big deal because in a financial context, you often use spreadsheets as effectively monitoring tools. You have data that’s streaming in and your inputs are constantly changing, and if you redo the entire computation every time you’re just going to lock your computer up. It’s not going to work at all. So incrementality is really critical in the way that we use spreadsheets and in general, the way that financial firms tend to use them."
+    },
+    {
+      "type": "ts",
+      "text": "50:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "So I guess the main difference is that like Excel and other incremental computational systems that don’t operate on the level of files like build systems do, and there is a lot of complexity of dealing with files and file systems and various architectures which Excel doesn’t need to think about. And of course Excel has its own sources of complexity. For example, in Excel, it’s okay to describe cells that can depend on each other in a circular way. You can tell Excel, “Okay, I know that there’s a cycle here, please repeat the cycle up to 50 times until it converges to a fixed point.” And this is something that typically build systems don’t need to deal with."
+    },
+    {
+      "type": "ts",
+      "text": "51:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one of the interesting things about including Excel in that paper is I feel like it opens a certain kind of Pandora’s box, because you’ve now said, “Well, this thing which isn’t exactly a build system, we’re going to kind of describe it in the same language.” But suddenly you’re talking about a big and wild universe of incremental computation where there’s a huge number of different kinds of systems that support incremental computation. Lots of hand-grown stuff and lots of frameworks for making it easier to construct incremental computations.  So an example that we have used for a lot of things internally at Jane Street, and in fact, have talked about and blogged about over the years is a library called Incremental, which lets you construct… In fact, using a language which is a little bit similar to the languages in things like Jenga and Shake, construct graph structured incremental computations. That’s kind of one direction you open up and there are certain kinds of things that those systems do and ways in which they operate, which are actually somewhat different from how build systems tend to work.  So that’s one direction it opens up, but another direction it opens up is there are other kinds of incremental computation tasks that people have that don’t look like builds. One that we also run into at Jane Street is essentially scientific computation workloads where you have huge datasets and various stages of computations you want to do on those datasets. Again, there are tasks, you’d like to have caching of the tasks so that if two people want the same computation they don’t have to redo it. You’d like to be able to dispatch things in parallel.  I’m wondering how you think about the way in which these kinds of distributed computation, scientific workflows, but we see this in a finance context – it also shows up a lot in bioinformatics where people are doing enormous multi-day genomic computations and stuff in similar ways. To what degree do you think this nestles in neatly with build systems and to what degree is it really its own independent problem?"
+    },
+    {
+      "type": "ts",
+      "text": "52:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "I think it’s easy to say that conceptually all these things are the same as we do in our paper, but of course there are also important practical differences that need to be considered. If we talk about scientific computation pipelines, typically they operate on huge data sets, as you say, and it’s just not feasible to run them on a single machine. Whereas we typically run builds on a single machine. Typically when you run a build, all your inputs are there. You just run a command and it produces an output on the same machine. This is just not the case with many scientific computation workflows.  You have one database here, another database may be in a different city. You need to somehow orchestrate the computation. It means you probably are not going to send a lot of data between these two locations, you’re probably going to exchange programs. These programs are going to run in different locations. You’re probably going to scale not in terms of the jobs on a single processor, but in terms of like how many hundreds of computers you’re going to take in the cloud. There are various questions like this that you need to start answering, which you don’t need to answer in the context of build systems. Of course there is a lot of complexity because of that."
+    },
+    {
+      "type": "ts",
+      "text": "53:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And even when we do extend beyond a single machine in the context of ordinary build systems, you still don’t typically have to think about data locality in the same way. You’ll have some kind of distributed storage system for build artifacts, which you can allow everyone to access uniformly without having to migrate the build to be closer to the data. You can get away with this, because there isn’t that much data because builds, by and large, derive from files written by programmers and that just limits the amount of data that’s going to be there in the first place."
+    },
+    {
+      "type": "ts",
+      "text": "54:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yes, one other example of a difference that shows up in scientific computations is that those computations are typically much more long running so they can be running for months, which makes it very important to catch all possible errors up front. If you have some kind of a misconfiguration error, you ideally want this to be detected when the build or computation starts rather than like a few weeks later when they actually need to save that result on a disk that doesn’t exist or something like that."
+    },
+    {
+      "type": "ts",
+      "text": "54:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s funny. It reminds me of the way we used to write programs. My father was a computer scientist and he would tell me stories of how when he was first learning how to program and first using it for (actually he was studying physics at the time) for doing physics simulations. He would get an hour a week to run his program, so he would spend a long time thinking very hard about getting it exactly right and there, there was nothing to help him, he just had to think hard about getting it right. And so people got very good at writing programs very carefully and debugging them and then when your time slice arrived, well, then you had your hour and you had better get it right or you had to wait another week.  In some sense, at the two ends of this conversation, we’re talking about the kind of most modern of modern development workflows where we try and get interactivity to be as good as it can be and give information back to the developer in a fraction of a second on one end, and on the other end, the scientific computing end, we’re talking about computations that might take weeks and trying to optimize for those, and I guess it makes sense that the decisions that you make in optimizing for one case are very different than what you make for the other."
+    },
+    {
+      "type": "ts",
+      "text": "55:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Scientific computation is like on the one side of the range where we have the longest running jobs and the largest items of data then build systems are somewhere in the middle and then we have this incremental in-memory computation frameworks, like the Incremental library that you mentioned: They already operate on much faster timescales and on much lighter-weight inputs and outputs so you have additions there, multiplications right that you might want to execute.  And I feel like in this domain, what’s also interesting is that you start to see various interesting incremental data structures, not just algorithms but you’ll start coming across things like, hey, how do I represent an incremental map from keys to values? That if I add a key to that map, how do I get the map efficiently? How do I efficiently sort a list incrementally? So if only a single input changed, how do I get the sorted list back efficiently? So questions like this rarely show up in build systems, but I think they show up pretty frequently in the world of incremental computation."
+    },
+    {
+      "type": "ts",
+      "text": "56:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Build systems, you normally get down to some fairly coarse grained graph representation and you don’t worry so much about incrementality within the computation of each individual node, but the things we were talking about before, in some sense, are pushing in that direction. Once you want to keep a compute server around and have it be faster by dint of remembering what it did last time, you’re starting to operate in very similar spaces.  You do see a lot of these ideas converge together as you start trying to do better and better versions of the problem, and give more performant and more capable build systems.  Anyway, thank you so much Andrey. This was a lot of fun and I feel like I learned a lot."
+    },
+    {
+      "type": "ts",
+      "text": "57:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andrey"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Thanks. That was a lot of fun, I agree, and I’ll be tuning into the other podcasts that you have in the pipeline."
+    },
+    {
+      "type": "ts",
+      "text": "57:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You can find links to a bunch of the things we talked about, including Andrey’s papers on build systems, as well as a full transcript of the episode, at signalsandthreads.com. Thanks for joining us, and see you next week."
+    }
+  ]
+}

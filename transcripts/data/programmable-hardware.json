@@ -1,0 +1,1027 @@
+{
+  "slug": "programmable-hardware",
+  "title": "Programmable hardware with Andy Ray",
+  "mp3_rel": "audio/programmable-hardware.mp3",
+  "transcript": [
+    {
+      "type": "ts",
+      "text": "0:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Yaron Minsky"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech stack from Jane Street. I’m Ron Minsky. Today, we’re going to have a conversation about hardware, and in particular about how you can take the tools that come out of the world of chip design and apply them to a much broader space of problems than people typically think they can be applied to. And I’m joined in this conversation by Andy Ray."
+    },
+    {
+      "type": "ts",
+      "text": "0:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy Ray"
+    },
+    {
+      "type": "p",
+      "text": "Hello, Ron, good to be chatting with you."
+    },
+    {
+      "type": "ts",
+      "text": "0:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Andy is a longtime veteran of the hardware industry. He spent over a decade building real shippable hardware designs, working on things like modems and video codecs. And along that time, he also did a lot of interesting work exploring and eventually designing his own alternative languages for expressing hardware designs. The final one was called Hardcaml, which is a hardware design language embedded inside OCaml, which itself is the primary programming language we use here at Jane Street. And that work actually led him to us. And today he works here and leads Jane Street’s hardware design team. And so, to start with Andy, maybe you can tell us a little bit about why hardware is useful for a technology organization and an organization like ours, and what advantages it has over traditional software-style approaches?"
+    },
+    {
+      "type": "ts",
+      "text": "1:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Sure. So hardware allows you to build customized architectures for a specific problem, which can be tuned to trade off, at a very fine level, lots of things like performance, and cost and power usage. That lets you design a range of different products. Whereas with a CPU, you’re very much more limited in the software world to the CPU design that can meet the performance of the problem domain. I think the sorts of problems that it can solve are very, very broad. And you can see that just because well, a CPU is a hardware design, in fact. And you can create all sorts of hybrid designs with multiple CPUs or digital signal processors or custom hardware blocks that make up your final solution. So I think that’s why hardware exists, why it will always exist. It’s the fact that you can build architectures entirely suited to your problem domain that optimize along these sort of areas."
+    },
+    {
+      "type": "ts",
+      "text": "2:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That description on the face of it sounds awesome. And in fact, it sounds from what you said so far, strictly superior to writing software. I don’t think that’s quite true. Can you see more about what the downsides are of operating inside of a hardware context?"
+    },
+    {
+      "type": "ts",
+      "text": "2:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Oh, my goodness, yes, there are a lot. So it is fundamentally this: hardware designs are much, much more difficult to write than equivalent software. So all that flexibility in choosing, you know, the architecture for your problem domain, you actually have to implement that. In software, you have reams and reams of support libraries that either your organization has developed or that you can pull in from open source or that you can go and purchase. To some extent that infrastructure works in hardware with the idea of intellectual property suppliers. They’re basically just companies who supply a hardware design for you to integrate into your system. That’s actually the job I used to do when we were developing video codecs."
+    },
+    {
+      "type": "ts",
+      "text": "3:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And just to interrupt for a second though, that was a bit of terminology that really confused me when I first encountered the hardware world. When people in hardware say, “IP,” they mean something like when a software person says “library.”"
+    },
+    {
+      "type": "ts",
+      "text": "3:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Correct."
+    },
+    {
+      "type": "ts",
+      "text": "3:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is to say some component that somebody else wrote that you get to integrate. Except in this case, the component is a bundle of wires that you kind of plop into your design rather than something that looks more like a module or library."
+    },
+    {
+      "type": "ts",
+      "text": "3:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right. I don’t know why that terminology came about, but it’s just always been called IP when you buy hardware library design. There’s some sort of infrastructure there for buying external blocks to integrate with your hardware. It’s a vastly smaller ecosystem than we have in software. It’s vastly more expensive. There is in the last maybe ten years more of an open source community around providing hardware blocks that you can integrate. But it’s still absolutely miniscule compared to software. And then just the process of writing hardware is slow and detailed. And I’m gonna say difficult. I’m not so sure it is really technically that difficult. It’s just that it’s so detailed, and you’re dealing with such big systems that it becomes a real problem trying to manage the complexity of all these very simple bits that sit together."
+    },
+    {
+      "type": "ts",
+      "text": "4:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, I think of that as one of the paradoxes of hardware: hardware is in the micro, in many different ways, simpler than software."
+    },
+    {
+      "type": "ts",
+      "text": "4:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "4:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The thing that you’re generating in a hardware design is essentially some layout of the circuit, the individual gates and wires that connect them. And it’s some kind of fairly static graph that represents the structure of the computation, and is converted into, when you actually get one of these fabricated, actual bits of material laid out on a physical surface. And understanding how those individual pieces work, at least logically how they work, leaving the physics aside, is relatively simple. But then having a big design that does a lot of these things, is enormously hard to reason about."
+    },
+    {
+      "type": "ts",
+      "text": "5:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "It is and unfortunately, the abstraction tools we have, they take us some way. So you know, you talked about a chip design, which you can think of as a layout of just two things really, lots of lots of NAND gates (a Boolean AND function with the output NOTed) and metal wires that connect them together. And it’s interesting because NAND is a universal Boolean function. Any other Boolean function can be computed with the NAND function. That’s not true of AND, for example, you can’t create an OR with an AND, but you can create it with a NAND. And they are like, I think sixteen Boolean functions, and four of them are universal. I think NAND and NOR are quite often like the basis of technology (NOR being an OR gate with the output inverted). We don’t actually think about writing circuits at the level of just interconnected NAND gates. An interesting aside, I believe the first ARM processor was basically designed that way. But actually even lower, they were drawing the transistors for the NAND gates in like just a graphics package. That’s how they created the very first ARM processor. But that’s not how they do it now. So we’re a little bit above that: we work with a tool called a synthesizer, and it takes a slightly more abstract notion of a hardware design in which we can think about components like adders and multiplexers. And the job of the synthesizer will be to turn those components into the actual low level hardware components for the chip, which might be NAND gates if you’re doing an ASIC, it might be look-up tables for an FPGA. But that being said, it’s not massively above building it with NAND gates. But really a lot of the industry just works at this sort of level of putting together these macros, which represent adders and multiplexers, and multipliers and registers and just wiring them together and getting them to form some function."
+    },
+    {
+      "type": "ts",
+      "text": "7:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you were talking there about ASICS and FPGAs. Can you just quickly explain what those are."
+    },
+    {
+      "type": "ts",
+      "text": "7:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "An ASIC is a custom-made chip that can perform a single function. In contrast, an FPGA is a reprogrammable chip that can be programmed to perform many different functions."
+    },
+    {
+      "type": "ts",
+      "text": "7:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So when you talked about what the advantages are of hardware, you talked about how by having much more control, you get to really optimize the things you care about via power consumption or performance or latency or whatever it is of the, of the, system. Can you put a little bit of meat on the bones of that? What is the scale of the improvements that you can get by taking something that you might do in software and moving it into a hardware design?"
+    },
+    {
+      "type": "ts",
+      "text": "8:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "It’s obviously going to depend on the sort of problem you’re trying to solve. But you know, an area I know really well, video coding. I used to work on H.264 a lot and there was just a really good software implementation called x264, which was almost entirely written in assembly, using the SSE instructions, which is a vector instruction set on the x86 processor. And it could just about manage like real-time 1080p on modern Intel processors of the time, which were like four gigahertz processors. In order for it to achieve that sort of performance, you had to turn off lots of lots and lots of codec features. If you’re willing to go non-real-time, you could turn on all sorts of features that would compress it better. There’s an extremely large standard for H.264 that I used to read a lot, and there’s a lot of features on that thing, but you just can’t do them all. And so we used to target different markets, there was like, a sort of low-end video codec, which could fit in smaller FPGAs, could be used for like internet based communication. And there was like really high-end video codecs, which were built over multiple FPGAs, and had a really high end feature set, and was used for professional-grade encoding. So that’s the sort of video that you get over your satellite link or over your cable link. That bitstream is compressed as much as it possibly can be so they can fit more channels into that link. We didn’t have to compromise so much on the features to do that with hardware, we could pick the features that made the difference that got us to the bit rate, and they could run in real time. And you just couldn’t do that real time in software. You know, in that world, you’re looking at an order of magnitude more computation being done by these FPGAs. But these sort of things can scale massively. They’re like chips, which do packet processing, for example. So the idea here is you’ve got a switch and you want to do packet processing to detect threats in those packets to route these packets, all that sort of thing."
+    },
+    {
+      "type": "ts",
+      "text": "10:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, so-called “deep packet inspection” is the term of art here?"
+    },
+    {
+      "type": "ts",
+      "text": "10:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yep. And you know, there are absolutely gigantic hardware designs which ingress hundreds of network ports, process all this through one chip, clean up the network packets, and pass them on into big organizations. Can you imagine just how many x86’s you would need to do that job? Seems to me like a lot."
+    },
+    {
+      "type": "ts",
+      "text": "10:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Part of the advantage is there’s like an order of magnitude or more improvement in the bulk throughput of the system that you get there. There’s also a big improvement in latency, the time in and out of these things is much lower, and I think another thing that’s interesting is that it’s much more deterministic."
+    },
+    {
+      "type": "ts",
+      "text": "11:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "11:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is to say, you can build one of these designs, such that it can simply consume everything that is presented to it over a 10 Gbps network. And you know, in advance that if your design essentially compiles, if you can lay it out on the chip, that it just works, which means the whole thing is simpler. In a software design, you get much less predictability, which means you essentially have to improve the reliability by adding layers of buffering, so that you can like hold on to packets for a while if you can’t quite get to them in time."
+    },
+    {
+      "type": "ts",
+      "text": "11:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "That’s true, and I think there’s a problem that we have to deal with here at Jane Street a lot, and that’s the nondeterminism of our software processing systems. And there’s really very little you can do about it. That’s sort of not true, there are some drastic solutions to this with processes where you strip out your operating system. But you know, there’s an awful lot of infrastructure you’d have to build to do that. Whereas, you know, designing a hardware architecture that’s specifically for a particular task, you get some really nice graphs out of this when you compare an equivalent hardware system to a software system like latencies dropped right down. And then determinism – you know, we have wonderful ones where we like to the 10th percentile, the 20th percentile up to the 99th percentile, and the latency variants for the hardware system will be like 20 nanoseconds across the entire range. Whereas in software, you know, it’s really good up to the 99th percentile, and then it goes into the microseconds. And there just tends not to be anything you can do about that in software."
+    },
+    {
+      "type": "ts",
+      "text": "12:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You mentioned that some of the ways of getting rid of the nondeterminism involve tweaking your operating system and things like that, but there’s also some aspect of nondeterminism, which is just fundamental to the tradeoff between hardware and software, I think that a thing I just didn’t appreciate about ordinary software, as it were, is what a bizarre magic trick a modern CPU is playing. Which is to say, CPUs are fundamentally parallel machines, they have all these circuits that can fire up to power constraints at the same time. So you can do lots and lots of things in parallel. And then somehow we feed it, this incredibly sequential programming language, the machine language of the architecture that you’re in, and then the chip is doing a lot of work to execute that as quickly as possible, and essentially trying to leverage all of these parallel resources that it has.  And some of that is done by doing speculation, where you essentially make guesses as to what the software is going to decide to do in the future, so you can dispatch operations ahead of time in parallel, and some of that is done by prefetching information. But this is essentially an enormously complicated pile of heuristics, which means that you really don’t have a good tool set for reasoning ahead of time about the performance. Whereas a hardware design, like if it works, it does every clock cycle exactly the thing that you expect it to do in that clock cycle."
+    },
+    {
+      "type": "ts",
+      "text": "14:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s generally true. I mean I should say that there is nondeterminism possible in hardware designs. So we’ve done a few designs here where there basically has been, basically, no nondeterminism in the system. That’s not quite true. There’s a tiny bit around interaction between clocks in the design, a tiny bit around how like 10 Gbps Ethernet data is packed at the lowest electrical layer, but that adds up to like plus or minus 10 nanoseconds or something. So one way to think about what’s happening in hardware is you’ve got this enormously massively threaded system, where each thread just does one very simple operation. And when I say enormous, I mean like millions of these threads. But unlike software, they update in a very simple way, which is they all have their current value, which they send to each other as necessary depending on how they’re connected, and a clock tick happens. And on that clock tick, all the threads will read the old values of everything else, compute new values, and then the thing steps again and again and again. And so there’s just this much simpler sequencing of all these parallel operations happening within hardware. That is like a massive simplification because we have multiple clock domains and other horrible things to deal with in reality, but locally, that is kind of how it is. That being said, we’re now starting to look at designs which use DDR memory, and there you start to introduce a small amount of nondeterminism because there’s a bunch of rules necessary to access memory these days. We model them in our mind as just this 2D array, and you go and get one cell, it’ll take this long, go get another cell, it’ll take this long, it’s all equal, and we just don’t worry about it too much. But that’s just not true. That’s not how these things work at all. They’re little chip designs themselves, which you have to send commands to; you say like, go and open the address range over there, and there are rules about how many of these address ranges you can have open at one time and a big banking structure around it. And so ordering your accesses to RAM – to these memories – is really, really important. It could be the difference between getting like 80% of the potential bandwidth out of them compared to like 5% the potential bandwidth out of them. And the other thing they do is they just occasionally shut off and do this operation called refresh. And you just can’t access it then. And so we got to hit these sort of nondeterminism, they’re gonna start adding variance to our numbers, but I still think it’s gonna be immensely more manageable than the numbers we get out of operating systems which have so much more nondeterminism than just accessing memory, like switching processes, switching cores, all that sort of thing."
+    },
+    {
+      "type": "ts",
+      "text": "17:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some sense, it’s an issue of what the defaults are, the core language that you’re working in when you’re building hardware is a deterministic language. And then in various places, you have to interact with other systems, and and weirdly, we think of the RAM in the same box that the FPGA is as another system, like you have to reach out over the network inside the computer, essentially, to interact with it, and that thing might be nondeterministic, and that adds nondeterminism to your system. And also, you might on purpose as an optimization, add nondeterminism to a design. But the core language that you’re starting with is deterministic at its heart. Whereas running on a CPU in the presence of other things running on that CPU is nondeterministic, and hard to reason about the timing in a way that is to some degree just unavoidable."
+    },
+    {
+      "type": "ts",
+      "text": "17:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right."
+    },
+    {
+      "type": "ts",
+      "text": "17:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this overall story of why hardware is different and why it’s useful and why it lets you achieve goals that are really hard to achieve in software seems, in many ways, very compelling. But I think if you’ve never heard of this world before, there’s one enormous problem that sounds like it comes up, which is: Do you actually have to fabricate custom hardware every time you want to make a change? One of the great things about software is you write it and then when you change your mind about how it works, you update the code, you compile your build a new version, and poof, you have a modified version of the system. And it turns out, you can get some of this in the hardware world through various forms of what are called reconfigurable hardware. Can you tell us a little bit about that and I guess in particular FPGAs, which are the kind of most common form of this and the one that we use?"
+    },
+    {
+      "type": "ts",
+      "text": "18:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yes. So let’s start with an FPGA. It stands for field programmable gate array. An FPGA consists of a matrix of elements called LUTs, which stands for lookup table. And each of these LUTs can implement an arbitrary Boolean function. Alongside that is what’s called programmable routing, which allows these LUTs to be connected together in an almost completely arbitrary way. And so an FPGA design is effectively a static configuration of these LUTs wired together to perform some function. Now, it’s actually a bit more complicated than that there are other components involved. But roughly speaking, they work kind of the same way. They’re laid out on the chip in a grid fashion and they’re wired together with the programmable routing. It’s kind of a chip platform for emulating circuit designs. By that I mean, they’re programmed in the same way that a proper fabricated, application specific circuit would be done. So, you know, you start with a hardware design, you’d go through this extremely complicated set of tools that creates some sort of technology representation of your input circuit. And, in the ASIC world, that would get sent off to a fab, where it would be cooked and immersed in acid, and lasers fired at it, and magic would happen, and you’d get back this chip. That whole process could take anywhere from, you know, a few weeks if you’re in mass production to six months to get your first example chip back. FPGAs, the big advantage is, you can just reset the FPGA and load a new design and then reset it again and load another new design and that’s what the field programmable part of its name means. It means you can deploy this thing and then maybe you find a bug, maybe you do a version two and you can just deploy a new version of your chip, and it can be running in the field the next day. Whereas with an ASIC, you would have to go and refabricate an entirely different chip, you’d have to pull back the old hardware and send out new hardware."
+    },
+    {
+      "type": "ts",
+      "text": "21:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And, by the way, you’ve been using the term, ASIC."
+    },
+    {
+      "type": "ts",
+      "text": "21:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "So, it stands for application specific integrated circuit. It’s the term we tend to use for hardware designs that have gone to a foundry. Now foundry is just an enormous factory, which takes customer initiated designs and puts them through, as I say, lots of complicated chemical and physical processes to embed a hardware design on a piece of silicon."
+    },
+    {
+      "type": "ts",
+      "text": "21:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it sounds like the key advantage of FPGAs is that they are reconfigurable."
+    },
+    {
+      "type": "ts",
+      "text": "21:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "They are."
+    },
+    {
+      "type": "ts",
+      "text": "21:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What do you lose for that? In what way are ASICs better than FPGAs?"
+    },
+    {
+      "type": "ts",
+      "text": "21:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "On basically every performance front ASICs are superior. Like the power that an ASIC will use could be like three to ten times less for the same design. The amount of area that we use will be an order of magnitude less. The frequency that you can run your design at will be significantly higher. ASICs are really good if you could, first of all, afford to make them, you don’t want to upgrade your design, and you’ve got decent volume for them. You’re not gonna get like 40 ASICs made that would be utterly ridiculous. You need to be thinking of like forty million ASICs being made for it to start making commercial sense."
+    },
+    {
+      "type": "ts",
+      "text": "22:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, and then the economics are in your favor, and that the cost per unit is much, much smaller than the FPGA."
+    },
+    {
+      "type": "ts",
+      "text": "22:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Oh, yeah, yeah."
+    },
+    {
+      "type": "ts",
+      "text": "22:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The economics of this is all very interesting in the sense that, like, one thing one can be struck by is how big the gap is between FPGAs and ASICs. The thing that has always struck me is how small the gap is. There’s this borderline ridiculous thing of I’m just going to lay down a bunch of stuff on a chip in advance, and then have it configure itself to look like some circuit – the fact that you can get anywhere near what a real fabricated ASIC can do [is astounding]. I think part of it is this economic point you were making: the FPGAs are one of these very high volume things, so they can be built with the absolute best technology. They cost a lot more, they cost quite a lot per unit."
+    },
+    {
+      "type": "ts",
+      "text": "23:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "They really do."
+    },
+    {
+      "type": "ts",
+      "text": "23:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "But if you want to have a small number of them, there’s no comparison, it’s way better to get a small number of FPGAs, which you individually make them do whatever you want, change them whenever you feel like changing them. It’s a kind of threshold issue. It’s transformative. Without this kind of flexibility, you essentially couldn’t use hardware designs for a wide variety of technology problems. And with them, you can."
+    },
+    {
+      "type": "ts",
+      "text": "23:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Even, like, the economics of just FPGAs is really interesting, actually. If I went to try and buy the chips that we’re using currently in the office, it would cost me maybe eight grand. But if you go and set up a deal with Xilinx that says you will take this many chips a month for the next two years, that thing would cost you five hundred bucks."
+    },
+    {
+      "type": "ts",
+      "text": "23:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Wow."
+    },
+    {
+      "type": "ts",
+      "text": "23:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "An absolutely outrageous difference. It’s all built into them, you know, because they’re their customers are foundries as well. They’re buying time at foundries six months in advance. And the more they know about the volumes they have to produce, like, the FPGA to produce is probably not that expensive, you know, maybe at the end of the day, tens of dollars, something like that. But I guess it’s very expensive for them to sit in warehouses doing nothing."
+    },
+    {
+      "type": "ts",
+      "text": "24:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So let’s switch gears a little, I’d like to actually just understand a little bit more about your own background, and talk about how you got involved in hardware in the first place. So can you give us a kind of capsule summary of your involvement in the field?"
+    },
+    {
+      "type": "ts",
+      "text": "24:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "So the first time I was ever introduced to hardware was at university, I did a computer science and physics degree. And in my final year, one of the elective courses I could take on the CS side was about hardware design, and it was only like a 12 week course I think. We did a couple of projects which were in VHDL. I think one was designing a multiplier. The other was designing like this micro digital signal processor. And I’m not sure I enjoyed the course so much, but I really enjoyed the project work. I really, really liked that. And so after university I had a set of career goals, and I listed the things I wanted to work in, and one of them was actually hardware design. So I promptly left University, went off and did games programming instead. Didn’t like that so much. And then after a couple of years, I ended up getting a job at an absolutely tiny embedded software and hardware IP company. And I had joined as a fourth employee, and I did some work there on a C++ video codec for a few months. And then when we were going off to lunch, I mentioned to my boss that I was kind of interested in this hardware design stuff. He was like, “Oh, yeah, that’s good. Yeah, we’d like to do all of that, yeah.” And then I found a couple of weeks later, he’d gone out and got a contract for me to write a JPEG encoder and decoder on Xilinx Virtex XCV800. The first range of Xilinx FPGAs. And I was young, I was stupid, so I was like, yeah, this is gonna be fun. And it turned out it was. I enjoyed it. I’m not entirely proud of the code I wrote there, but it met all the design goals. It hit the frequencies and the performance that it needed. So the customer couldn’t complain. And I just kept doing that. I really, really loved doing that. I still remember the first time we took this thing and put it on an FPGA, which I think, I think this was a card with an FPGA that actually sat on an ISA bus if you remember them. And just brought this thing up, and it, well it didn’t work properly, properly, but it was doing like real stuff that we expected. It was just like, wow, that is incredible. Months of work just sitting there thinking about how to build this thing and then it’s actually live on an FPGA. That is some feeling, and I still love that. I love designing FPGAs. I love bringing them up into real systems and seeing them work."
+    },
+    {
+      "type": "ts",
+      "text": "26:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So there’s, there’s obvious delight in your voice describing this work, and I’m curious, what is it about hardware that that you find so engaging as opposed to software work?"
+    },
+    {
+      "type": "ts",
+      "text": "27:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I should say, I enjoy writing software as well. But I do prefer writing hardware. And I think it’s the satisfaction you get when you have a working system. I think it’s a function of the amount of effort you have to put in upfront. And so there’s just, like, this big long time of coding and potential frustration of fixing stuff and doing simulations, and finally, you’ve got something that you can put on hardware. It’s like, there aren’t many shortcuts in hardware design. It’s like, with software, you can maybe get a bit of it written and do a bunch of testing, and check it into your repository, and have a little library for other people to use. There’s none of that in FPGA design. Like, not until you basically got the whole thing written, can you get any sort of payoff for this project. I don’t know. That, that works for me. I like it. I get a big buzz from getting FPGA design working. I think there’s just another aspect to it. I find that I have to build these mental models of what I’m creating. So I’m writing it in code, but the code is an expression of like, a mental model I have of individual pieces of hardware design, and then the system’s sort of scaled out and viewed as a whole. And that’s something I just enjoy, a way I like thinking."
+    },
+    {
+      "type": "ts",
+      "text": "28:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, it’s like this kind of graph structured computation that you have floating around in your head."
+    },
+    {
+      "type": "ts",
+      "text": "28:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, something like that. Something like that. The models are kind of interesting. So as you sort of scale out, you’re thinking about how components fit together. You’re not thinking about the hundreds of individual signals, that are connecting them. You’re thinking about, right, there’s a data bus. It’s that wide, this end’s running at this clock speed, that end’s running at that clock speed. What is the bandwidth I’m getting across there? And then you scale out with other components, and you’re trying to hit your constraints of the clock speeds of the RAM and of the PCIe bus and making this thing such that data could flow in the front end and out to the back end with nothing stalling. But using just the right amount of resources. And that’s like system level modeling, and it’s all done in my head. And Visio occasionally."
+    },
+    {
+      "type": "ts",
+      "text": "29:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s how you got into this business of doing hardware. So what led you from there to start experimenting with alternative hardware design languages?"
+    },
+    {
+      "type": "ts",
+      "text": "29:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "It was frustration with the tools that we were using to build hardware, in particular, testing stuff. And so languages like Verilog, and VHDL, which are these hardware design languages that most chips in the world are built with. There are a few other options. I guess these days really Verilog is the dominant hardware design language. And you do two tasks in this language. The first one is you write down the hardware design that you want. The second thing you do is build little tests harnesses for that hardware design. And we have to do it in hardware. We do this at every level of abstraction of the design or every layer of the design from the smallest components all the way up through the hierarchy to the biggest components. We’re writing these test benches all the time and testing the corner cases of bits of hardware, then testing how multiple bits fit together and what happens. And that was hard work in Verilog. It’s not like a real programming language. The writing of test benches is a software task, but Verilog does not have a software core. And I think they’ve kind of improved this a little bit with languages like SystemVerilog. But I still think fundamentally, it’s like, not a very good software language. And yet, over half your job is testing, and it’s trying to build these little software frameworks to test your hardware design. And I just got very frustrated with that. I thought there must be a better way, so I started looking around seeing what was out there. I came across actually, I think this must be about 2003, this guy had written a compiler in OCaml for a language he called Confluence, which was a new style RTL, or hardware design language, which was based on functional concepts. And because this is the hardware design world, almost nobody looked at it. He tried to sell it as a business. It was clearly better in many respects than the stuff that was there. Nobody bought it. And I think out frustration, after a while, he gave up on that, and he threw together this little OCaml package and stuck it on the internet, and that was called HDCaml. And I saw that come out and something clicked in my head. I was like, I really liked the concept of Confluence. This is the same thing in a real programming language that is amazing. I was like straight on there, like, I want to do it this way. So I started digging into that thing, and I produced a bunch of external libraries for it. I added wires into HDCaml. And then after a while, I just basically rewrote it. That was in OCaml still, and then I did a version in F# that was largely just a work related thing – We used Windows systems and OCaml, to this day, is not the most friendly Windows based compiler in the world."
+    },
+    {
+      "type": "ts",
+      "text": "32:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That is a true fact. Although people are working on this now."
+    },
+    {
+      "type": "ts",
+      "text": "32:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I know they are. So I used F#, I liked F# actually. And then I managed to get switched over to Linux again at work and then I started writing in earnest I guess what is Hardcaml today and that was basically the third version of it I’ve worked on, and I think by far the best designed version of it. So yeah, what did Hardcaml give me? Well, I love writing hardware in it. I think it provides some really nice abstractions for designing stuff. But that’s not primarily why I love it. I really love it because I can write my test benches in OCaml. And I find OCaml an extremely pleasant language to write stuff in for a number of reasons. It gives great abstractions. It’s actually incredibly simple. It’s like the core of OCaml is put together by just a few really, really orthogonal concepts that you can stick together and do really powerful stuff with. And I think I’m massively more productive in writing and testing hardware using OCaml than I was in Verilog."
+    },
+    {
+      "type": "ts",
+      "text": "33:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So it sounds like part of the advantage there is just having the same functionality in some ways available in a really good general purpose programming language. Another thing that has struck me about Hardcaml is that it does a really good job of giving a point around which to coordinate lots of different kinds of tooling. How is Hardcaml structured? And what are the kind of flows that you can build on top of it?"
+    },
+    {
+      "type": "ts",
+      "text": "34:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Hardcaml is basically an OCaml library. Now, technically, computer scientists would call it an embedded domain specific language, which it is, but at the end of the day, that doesn’t really matter. It’s a library, which exposes a bunch of functions for describing hardware designs. And those functions are things like hardware adders of 4-bits, a ten input multiplexer, 32-bit register, that sort of thing. And then we basically use the host language, which is OCaml to take these individual components, and wire them together into a graph. So fundamentally, the design API of Hardcaml produces this graph. We then supply a bunch of tools which can work on this graph and do some interesting things. The most important one is we can produce a simulation model of the hardware. So this is basically instantaneous, we need to be able to model the design while we’re developing. So Hardcaml provides its own simulator and a wider toolset including a waveform viewer. So, waveforms are a kind of graphical way of showing what the hardware is doing over multiple clock steps. So you monitor like multiple, what we tend to call signals within the design. A signal can be 1-bit, it can be 32-bits, and these signals will be drawn out horizontally, and within a waveform, you might be able to see like 100 clock cycles worth of transitions for that signal, and also what that signal is doing relative to other ones. So one of the things that has been interesting at Jane Street is taking that flow and trying to make it fit in with the way we actually just develop software, generally at Jane Street. So yes, the design work in the way we’re thinking about hardware architectures is kind of different. But we’ve leveraged the very good build system technology at Jane Street, and the editor integration that comes along with the testing framework at Jane Street. We write nearly all our tests using a framework called expect tests. So you write a little test module, you put this bit of syntax around it, and you write a little test that prints out some results. And then the framework will take that results and paste it back into your test code. And then you can check your test and its result into the repository, and our continuous integration systems will constantly rebuild all our code all the time. The really useful thing about this is if some, something somewhere changes, and it happens to break your test, you know about this immediately. In fact, the person who broke it gets to fix your test, which is even better. I think this is really interesting, because it really does feel like writing normal OCaml software at Jane Street when you’re writing hardware."
+    },
+    {
+      "type": "ts",
+      "text": "37:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think this is actually part of a more general phenomenon, which is, there are areas of technology which have a kind of software mindset, maybe you’d call it, where things like continuous integration, build systems, integrated testing, code review, all of that is just part of the warp and weft of how you operate. And there are areas where it’s not like that, and hardware is one of these areas where that’s just not the culture. It’s not how people approach the problems. And this totally fits into the tools like the existing tools are often GUI-based. And they let you do all of these things. You can look at waveforms and run test benches and all of that. But it’s not designed for this kind of thoroughly integrated, quality control process that is relatively common in the software world. Another totally different area that I think has the same problem is networks. When you think about how networks are set up, basically, in most places, networks are managed by dint of having extremely careful network engineers who go in and just reconfigure the damn devices, and try and do it right almost every time. And they’re amazingly good at it. But oh my God that is not a way I would want to live. And there’s in fact, a whole movement in the direction of software defined networks, which is essentially the same idea of trying to take the configuration and management of networks and apply to it, more or less, the regular tool chain that we are used to applying to software. So I think it’s a very powerful, and I think, in many ways, under applied way of improving various kinds of technological flows."
+    },
+    {
+      "type": "ts",
+      "text": "38:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I should give some of these like high-end hardware design tools their due. Languages like SystemVerilog and tools like ModelSim, if you spend enough money, they start piling features on you with like code coverage and checkerboards for simulation coverage and automated tools for generating constrained random inputs. But I kind of mean like, you can specify the sort of shape of inputs you want to put into your system, and a solver in the tool will go away and generate this for you. And that’s all very cool. It’s all very, very expensive. And I still don’t think it’s as good as just having a decent software language in the first place."
+    },
+    {
+      "type": "ts",
+      "text": "39:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another thing that strikes me about the way in which you talk about Hardcaml and the advantages of Hardcaml and of embedding in a language like OCaml is you talk almost entirely about testing, as opposed to the advantages of the level of the actual hardware design. Can you say more about why that is? Like why, why is the advantage so focused on the testing side?"
+    },
+    {
+      "type": "ts",
+      "text": "39:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I think it’s because I consider the abstraction level of designing hardware in Hardcaml to be the same as the abstraction level of designing hardware in Verilog. We are working with the same sorts of components. There is, however, a very big difference, which is with Verilog, we just have a couple of primitives like what are called parameters, which are just basically numbers you can use to configure your circuit, and special for loops, which can be used to generate multiple copies of some part of your circuit, perhaps based on parameters, and special ifs which can conditionally generate parts of your circuit. And you can get surprisingly far with those primitives for creating configurable logic. You certainly can go way further with Hardcaml. That being said, there are parts of the design where configuration doesn’t really matter. So I think, like, the overall point was more, what is the abstraction level of designing circuits in Hardcaml? I kind of don’t focus on Hardcaml as being especially better than Verilog because the abstraction level is basically the same. It’s a really interesting problem, though. I mean, trying to raise the abstraction level of hardware design has been on academia’s mind since the ‘70s. They’ve been trying to do it for like fifty years. And there are only really two successful outcomes from all that work, I would say. One is high level synthesis, which I’m not sure identified as particularly successful, but the other is a language called Bluespec, which has a whole new model for writing hardware, which I think is an absolutely fascinating and brilliant idea, and they tried for like fifteen years to get people to use this thing. And they finally just gave it away for free, which I think reflects really poorly actually on hardware designers in general. It’s like, here’s new good ideas, if this was software we would be all over them, right? Why aren’t we using these good ideas when they come up?"
+    },
+    {
+      "type": "ts",
+      "text": "41:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In defense of hardware engineers, I feel like there are lots of great ideas in software that take an abominably long time to be picked up. I think my favorite example of this is garbage collection, which was invented in the mid ‘50s, and hit the mainstream in say, 1995 with Java. So that’s a good forty year gap. So perhaps we should give the hardware engineers a break."
+    },
+    {
+      "type": "ts",
+      "text": "42:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Maybe, you’re right. Maybe we’re all just not trying hard enough."
+    },
+    {
+      "type": "ts",
+      "text": "42:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the problem of coming up with these languages for hardware is a harder problem and has taken longer to achieve, kind of reasonable things to point at."
+    },
+    {
+      "type": "ts",
+      "text": "42:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I’ll describe a little bit about how these systems work. So high level synthesis, basically what it does that takes C code, and then creates parallel hardware designs from that C code. I just fundamentally think that’s a bad idea. It’s analyzing a serial instruction stream and trying to extract parallelism from it. But why would you choose C to do that with? There is one reason why it’s taken off, it’s that the hardware design engineers will tend to know C, and so you’re giving them a language they can actually use to create hardware designs with. And while I knock it, I think in its domain, it can be incredibly good: streaming DSP-style designs, things where you’re doing a lot of operations like additions within for loops. The fact that this can be turned into hardware is still very, very cool. And you can put all sorts of compiler hints within your input C code, so that you can achieve different sets of performance targets from the same input code. And I think that is actually quite powerful, the fact that for certain types of designs, it can create a range of architectures for you for free. It’s just that it’s not clear that there are that many sort of design domains it’s that good at. On the other hand, you’ve got Bluespec, which is based on this notion of atomic actions. An atomic action is basically a rule which has a predicate and a function which reads the current state and updates it. And this rule will fire when its predicate is true. And the entire system is basically a big long list of these rules. And the model it follows is that it will nondeterministically choose one of the rules that can currently fire and execute it. Once that’s done, it will nondeterministically choose another rule, execute it and go back. The compiler is super smart. And it knows dependencies between the rules and will create a scheduler which can fire these rules in blocks, so you get the hardware parallelism. That’s sort of the basic underlying set of technology for executing Bluespec style circuits. What they’ve done is built something that looks like an object-orientated programming model for different modules within your design to interact with each other. So in Hardcaml, we basically have signals that we send to and from modules. Quite often signals are related to each other, you might have a valid signal that is related to a data bus, and it’s really important that those signals align properly. In Bluespec, you can just call a method on a module, and it does all the wiring for you. Underneath it’s still gonna produce a hardware architecture at the level of Hardcaml. But when you’re programming with it, you can just like call functions, and that’s just incredibly powerful. Your function might be “add this data to the FIFO.” Well, what you don’t have to care about when you do that is whether the FIFO is full. The hardware will deal with all that stuff for you. It’ll just hold off the rule until it can actually be executed."
+    },
+    {
+      "type": "ts",
+      "text": "45:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So maybe a way of describing the difference is that Hardcaml is built around a little core calculus in the middle of it, which is this thing that kind of represents the heart of something like Verilog, or VHDL, which more or less has the core circuit design. And then you write a bunch of OCaml code for generating stuff in this language, in this underlying calculus, and the code for doing the generation can be very modular and generic, so for example, we have protocol specification languages where we write down, in a different domain specific language, some specification for some hardware packet we want to parse, and then we emit OCaml code for interfacing with that data off of the back end of that. And then we can take that same specification that we used in a software context and use it to emit hardware. So that’s like a highly leveraged, very generic thing that you can do. But the things that you emit in the end are not composable. You can generate them using a modular and composable system, but the thing at the bottom is this kind of messy circuit thing. And then something like Bluespec, you have essentially a higher level of representation that’s more abstraction friendly. It’s easier to build components that can be combined together, but there’s still some extra computation that has to be done that takes that kind of representation and converts it down to essentially the wire level representation that you need to really generate an FPGA, which is equivalent to the representation that Hardcaml uses natively. So one thing that makes me nervous about this whole story is the thing that you said at the heart of this description of these atomic guarded actions is nondeterminism, right? They nondeterministically apply rules. Does that mean that when you design something in a Bluespec-style system, you end up with something that has fewer deterministic guarantees?"
+    },
+    {
+      "type": "ts",
+      "text": "47:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I’m guessing here a little bit. I have not written a lot of Bluespec. I’ve mainly read papers on it. But it tends to be that it doesn’t have to make many nondeterministic choices. The model is “one rule fires at a time and you choose it nondeterministically.” The reality is hundreds of rules fire at a time, all the ones that are currently enabled, and then it builds schedulers, which guarantee fairness among rules. So it will like the same circuit, you can’t really have nondeterminism in an FPGA, right? It’s gotta be deterministic at some level. And the compiler will make it deterministic. And then you have pragmas, which will apply in your source code, to guide the compiler to make the right choices when it’s picking amongst rules. So when there was like a nondeterministic choice for it, it’ll either pick a fair schedule or you can guide it to make certain rules more important than other ones. It’s where actually the practical reality of BlueSpec is not quite as beautiful as the core calculus suggests. There are like these little hacks that have to go on to make it work in reality, but then everything’s a compromise right? Nothing new there."
+    },
+    {
+      "type": "ts",
+      "text": "48:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So are they any advantages that you see of the approach that Hardcaml takes over the Bluespec approach? It seems like there are clear benefits to the Bluespec-style system. Is there anything I mean, one obvious advantage of Hardcaml is it’s embedded in OCaml and that makes for very smooth integration with the rest of our software stack. But I’m wondering if at that, just at that kind of more abstract design level if there are any benefits of the Hardcaml style approach."
+    },
+    {
+      "type": "ts",
+      "text": "48:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "I think even designers using Bluespec would have a language like Verilog or Hardcaml for the cases where they need absolutely precise control over the function of a bit of logic. So it seems to me the only way that you can improve on the standard model of hardware design where you have absolutely full control is to hand some control to the compiler. And what that tends to mean is you no longer control precisely the wiggling of the signals. And there were cases where you have to control it like when you’re interfacing with DDR memory, for example. It is the case that Hardcaml is at a level where it’s like what you design is what you get. It’s exact, you control everything. Yeah, I think you need that ability, and you give up some of that when you go to a higher level of abstraction for sure. But for a lot of logic inside the design, I think, generally we will end up using Bluespec at Jane Street, because of the abstraction. Whether that’s directly using Bluespec, the open source compiler, or trying to build some model of that technology ourselves, I’m not too sure. But I think like we really do care about abstractions here, and the fact we have none in hardware is just annoying. Everyone else has them, I want them too."
+    },
+    {
+      "type": "ts",
+      "text": "50:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Here’s another language related question about all of this. If you look at the world of hardware design, we are not unique in having something that looks sort of like Hardcaml."
+    },
+    {
+      "type": "ts",
+      "text": "50:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "No."
+    },
+    {
+      "type": "ts",
+      "text": "50:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So there’s a library in Scala called Chisel which has similar goals and aspirations. There’s also a bunch of work on doing similar things in Python. And Scala is a language which is in any case, relatively similar to OCaml, but I’m kind of curious what you think about the trade-off between using OCaml for a system like this and using Python."
+    },
+    {
+      "type": "ts",
+      "text": "50:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "They’re both software systems. Both, I think, are better approaches to designing hardware than trying to use VHDL or Verilog, I think. The frameworks I’ve seen, there’s MyHDL, that’s a useful system, I’ve seen it more used in the test space than in the actual design space. There’s a new one called PyMTL. They’ve actually done something quite interesting, sort of building a framework in which you can plug models at different levels of abstraction into your system. So you could start with basically a high level Python implementation of a system and refine parts of it but not all of it at once. You can work on one part down to the gates level and then work on another part, move it down three levels of abstraction. I think that’s actually quite interesting. It’s something we can also do in Hardcaml although we haven’t kind of formalized doing that with an API, but we have all the sort of hooks that we would need to do something like that. Chisel is another example, which is a system that’s very like Hardcaml, but written in Scala as the host language. One of the big advantages of Chisel is that it’s actually taught at a university at Berkeley. And there’s quite a lot of IP around Chisel, especially to do with RISC-V CPU designs. I think there’s another area where functional programming particularly shines for hardware design. Actually, a lot of the problem in designing is creating what’s called combinational logic and that is basically functional logic. When you write it, all you’re doing is take a function which takes some inputs, does something with them, transforms them to some outputs, and you compose them all together. And OCaml is extremely elegant, expressing that sort of thing."
+    },
+    {
+      "type": "ts",
+      "text": "52:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So a thing you mentioned along the way there is that there’s not yet a university churning out Hardcaml engineers. Hardcaml is an open source project. There’s some amount of public communication and discussion that you’ve done over the years about it. We continue to release new versions of it reflecting the work that we’ve done here. What are your hopes and aspirations about Hardcaml as an open source project?"
+    },
+    {
+      "type": "ts",
+      "text": "52:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Well, I would like people to use it for sure. I think it’s gonna be hard to get people to use it. Over the years, there have been, maybe, three people who have come along, looked at it, thought well, that’s cool, and actually used it in anger and contributed stuff back. But, yeah I’d like more people to use it, but I think we’re lacking well, we’re lacking a couple of things. First of all, we haven’t put out enough of our libraries, although that should be changing. Like literally this week. I’ve just opened about eleven new Hardcaml libraries, which gets basically our internal tooling for Hardcaml out into the real world. But where we’re still lacking a little bit is actually realistic designs built with Hardcaml. They’re sitting out there for people to learn from to make decisions as to whether they think the framework is worthwhile using. And we would like to release a lot more of this stuff. But it becomes a bit harder to sort of unwind what code we want to open source, what code we don’t want to open source, but we will try and do that. So yeah, I think like the onus is really on me to provide a bit better open source set of libraries so that people can really come along and use it in anger. Chisel does better than us since they’ve got this enormous RISC V hardware design framework that they’ve released open source. So if you want to go and learn how Chisel works as there’s an enormous body of code for you to go out and do that."
+    },
+    {
+      "type": "ts",
+      "text": "54:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And most of the stuff that we build internally is just not stuff that’s of general interest."
+    },
+    {
+      "type": "ts",
+      "text": "54:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, unfortunately, I think that’s true."
+    },
+    {
+      "type": "ts",
+      "text": "54:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We’ve talked some about how hardware can be useful more generally. How does hardware come up, and what kind of problems do you see us addressing in the kind of financial and trading context in which we operate?"
+    },
+    {
+      "type": "ts",
+      "text": "54:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "So really, the focus for us is around network packet processing. I’d be surprised if we end up writing an FPGA design that isn’t at some fundamental level, connected to a 10 or 25 Gbps network and processing packets. A platform that we’ve been working with the last year or so is basically like a special network interface card with an FPGA on it, and the packets flow into it, they could flow up to the host. We’ve got full standard driver layers for this card, but we can also put our custom logic in it. Now what do you think about like a generic network interface card, all it can really know about are the generic protocols of networking. So the IP4 protocol, the TCP protocol, the Ethernet layer, and they can do some work for you here. They’ll insert checksums for you. They might route packets or filter packets based on IP4 field. But when you get into the actual data within the packet, they can’t do anything generic with it, because it can be anything.  However, we can write designs, which can look into that data because we know what we’re connected to. And one example of that is for a specific exchange with a specific packet format, we can actually ingress their market data, pull it apart, not just the IP level, but actually all the way into the packet data, and then do some filtering or splitting or reconstruction of that data in various different ways.  One is like, we split it into different groups and send it out of different interfaces, which means that downstream systems have to see less data. Another way we could do that is like, conditionally sending parts of packets up through the PCIe bus to some host software. which reduces the load on both the bus and on the software and the amount of data it has to look at. And there are a number of other sort of similar styles of system where we can, because because we can customize it for the specific link, we get to choose what we do with the data in there."
+    },
+    {
+      "type": "ts",
+      "text": "56:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think the background fact about trading that justifies all this is that trading systems have to consume an enormous amount of market data that comes from a bunch of different exchanges at shockingly high rates. The US markets will peak at several million messages per second, at the busiest moment in the day. And you want to be able to chew through those messages quite quickly. And being able to have different processes that see different subsets of the data and have some of that transformation happen off of the CPU and on more specialized and more efficient hardware is just a big step up in the kind of performance miracles that you can reasonably achieve."
+    },
+    {
+      "type": "ts",
+      "text": "57:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and the problem’s worse than that, right? Because you’re not connected to one of these data sources, you want to be connected to eight of these data sources. And you know, there are issues there with eight data sources, well, that’s multiple cards for a start, you’ve got to have. You got to pass all these things in software, that’s like 100 Gbps of data, near enough. And it’s just so easy to see CPUs getting behind in that case, and they do, and it’s annoying, because it always happens when the market’s busiest, which is when you do your best trading. So hardware, yeah, definitely can make a real difference there because it can chew through 100 Gbps of data. It doesn’t care. You just put eight calls down there, one each for each of the connections, and they’re just gonna chew through it. They won’t slow down. They’ll just do their job."
+    },
+    {
+      "type": "ts",
+      "text": "58:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the magic tricks here of hardware is that the determinism is such that if you understand the size of your problem, you can just know that your design will be able to successfully get through all that data, no matter what they throw at you. There’s just an upper limit of how much information can come across a 10 Gbps NIC. There is a bound, and you can be confident that you can chew through all that data at line rate, and so you’re just not going to be surprised. You’re just not going to fall over when things get busy, at least at the hardware level itself."
+    },
+    {
+      "type": "ts",
+      "text": "58:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So like when we build our tests for these systems, we basically test them always at line rate, just back to back packets all the time. I wonder if we could be doing a better job of actually stress testing our software systems to really see where they start to fall over."
+    },
+    {
+      "type": "ts",
+      "text": "58:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I guess at this point I just want to thank you for joining me. This has been a really fun conversation."
+    },
+    {
+      "type": "ts",
+      "text": "59:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Andy"
+    },
+    {
+      "type": "p",
+      "text": "My pleasure."
+    },
+    {
+      "type": "ts",
+      "text": "59:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You can find links to some of the things we talked about, as well as a full transcript of the episode at signalsandthreads.com. You can also find some blog posts that Andy has written about Hardcaml on blog.janestreet.com, and the core libraries and tools are open source and available for you to try out on GitHub. Thanks for joining us, and see you next week."
+    }
+  ]
+}

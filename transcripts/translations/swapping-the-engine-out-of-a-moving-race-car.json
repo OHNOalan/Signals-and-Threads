@@ -1,0 +1,780 @@
+{
+  "slug": "swapping-the-engine-out-of-a-moving-race-car",
+  "paragraphs": [
+    {
+      "idx": 0,
+      "en": "Ella Ehrlich has been a developer at Jane Street for close to a\ndecade. During much of that time, she’s worked on Gord, one of Jane\nStreet’s oldest and most critical systems, which is responsible for\nnormalizing and distributing the firm’s trading data. Ella and Ron\ntalk about how to grow and modernize a legacy system without\ncompromising uptime, why game developers are the “musicians of\nsoftware,” and some of the work Jane Street has done to try to hire a\nmore diverse set of software engineers.",
+      "zh": "Ella Ehrlich 在 Jane Street 做开发将近十年了。在这段时间里，她大部分时间都在负责 Gord 这个系统——Jane Street 最古老、也最核心的系统之一，专门负责对公司的交易数据进行归一化处理和分发。Ella 和 Ron 聊了聊怎么在不影响正常运行的前提下发展和升级一个遗留系统，为什么游戏开发者是软件行业的「音乐家」，以及 Jane Street 为了招募更多元化的软件工程师所做的一些努力。"
+    },
+    {
+      "idx": 1,
+      "en": "Ella Ehrlich has been a developer at Jane Street for close to a\ndecade. During much of that time, she’s worked on Gord, one of Jane\nStreet’s oldest and most critical systems, which is responsible for\nnormalizing and distributing the firm’s trading data. Ella and Ron\ntalk about how to grow and modernize a legacy system without\ncompromising uptime, why game developers are the “musicians of\nsoftware,” and some of the work Jane Street has done to try to hire a\nmore diverse set of software engineers.",
+      "zh": "Ella Ehrlich 在 Jane Street 做开发将近十年了。在这段时间里，她大部分时间都在负责 Gord 这个系统——Jane Street 最古老、也最核心的系统之一，专门负责对公司的交易数据进行归一化处理和分发。Ella 和 Ron 聊了聊怎么在不影响正常运行的前提下发展和升级一个遗留系统，为什么游戏开发者是软件行业的「音乐家」，以及 Jane Street 为了招募更多元化的软件工程师所做的一些努力。"
+    },
+    {
+      "idx": 2,
+      "en": "Some links to topics that came up in the discussion:",
+      "zh": "以下是本期讨论中提到的一些相关链接："
+    },
+    {
+      "idx": 3,
+      "en": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack from Jane Street. I’m Ron Minsky. It is my\npleasure to introduce Ella Ehrlich, who is a software engineer here at\nJane Street, and who’s a real Jane Street lifer, she’s been here for\nabout a decade. And we’re gonna talk today about the task of\nengineering legacy systems and a particular system that Ella has\nworked on for a long time called Gord, which has been here for about\nfive years longer than she has. And we’re gonna talk about some of the\nchallenges and interesting work that comes out of all of that.",
+      "zh": "欢迎收听《Signals and Threads》，这是来自 Jane Street 的深度对话节目，涵盖技术栈的每一个层面。我是 Ron Minsky。今天非常荣幸请到了 Ella Ehrlich，她是 Jane Street 的软件工程师，可以说是 Jane Street 的「元老级」员工，已经在这里工作了大约十年。我们今天要聊的是如何对遗留系统进行工程改造，以及 Ella 长期负责的一个叫 Gord 的系统——这个系统比她入职还早了大概五年。我们会聊聊这其中的种种挑战和有趣的工作。"
+    },
+    {
+      "idx": 4,
+      "en": "But to start with, Ella, can you tell us a little bit about how you\ncame here?",
+      "zh": "不过先说说你是怎么来到 Jane Street 的吧，Ella？"
+    },
+    {
+      "idx": 5,
+      "en": "Hi. Yeah, I actually took an internship at Jane Street after my junior\nsummer. I had no interest in finance. I did not think I was going to\ncome here full-time. I thought I wanted to do game design. And I was\ndeciding on my internship between Jane Street and going to EA Games,\nand a combination of two things happened. One, is I was like, “Well,\nI’m definitely gonna be in the Bay Area after I graduate from college,\nso let’s spend the summer in New York and I’ll go to some Broadway\nshows, I’ll eat at some good restaurants.” Like, “This Jane Street\nthing, whatever.” And I came and I had such a great summer, and I\nlearned so much. And I felt like I grew so much during that summer\nthat I decided, “You know what? This seems like a cool place to start\nmy career, and, you know, maybe in a couple of years I’ll go out and\ndo some game design stuff. But, like, that’s fine, I’ll go back to\nschool and get a master’s.” And then, uh, you know, 10 years later.",
+      "zh": "嗨。嗯，我大三那年暑假在 Jane Street 实习。当时我对金融完全没兴趣，也完全没想过会全职来这里。我那时候想做游戏设计，在选实习的时候，一边是 Jane Street，一边是 EA Games，结果两件事凑到了一起。第一，我当时想的是，「反正我毕业之后肯定去湾区，那就趁这个暑假去纽约，看几场百老汇，吃点好的嘛。」就觉得，「这个 Jane Street 嘛，随便。」结果来了之后，那个夏天过得特别好，学到了超多东西，感觉自己也成长了很多，于是我就想，「好吧，这地方看起来挺不错的，先在这里开始职业生涯，过几年再去做游戏设计也不迟，大不了回去读个硕士。」然后呢……就这样过了十年。"
+    },
+    {
+      "idx": 6,
+      "en": "Do you still spend real time on games these days?",
+      "zh": "你现在还会花时间玩游戏吗？"
+    },
+    {
+      "idx": 7,
+      "en": "I spend a lot of time playing games, and thinking about games, and\nwatching games. I am a big pro-League of Legends fan. Go EG! But it’s\nnow, I think, a thing that I’ve learned is that I’m very happy that it\nis my hobby, and I think the more I’ve learned about the gaming\nindustry, the more I’m like, “Jane Street is the right job for me.” It\nis the place I’m very, very happy to have spent the past decade of my\ncareer, and a place I continue to be happy to come to work every\nday. And I think that gaming is a great hobby, but I wouldn’t want to\ndo that full-time because, you know, I think to some extent, based on\ntalking to friends who are in game development and in that space, to\nsome extent I think game developers are a little bit the musicians of\nsoftware. Most places at software companies, like, it’s, like, you\nknow, a nice, cushy job. And game development is such a competitive\nenvironment where there are so many companies and they work long\nhours. The amount of growth and investment that Jane Street has been\nwilling to put into me, and the people in Jane Street have been\nwilling to put into me, I think it is harder to find that in the\ngaming industry. Again, based on the experience of talking to my\nfriends who are in that space.",
+      "zh": "我花了很多时间玩游戏、研究游戏、看游戏比赛。我是《英雄联盟》职业赛事的忠实粉丝，EG 加油！不过现在嘛，我觉得我想通了一件事——我很庆幸游戏是我的爱好。而且我对游戏行业了解越多，就越觉得，「Jane Street 才是最适合我的工作。」我非常非常庆幸在过去十年里一直在这里工作，每天来上班也依然是件开心的事。我觉得游戏作为爱好挺好的，但要全职做这个，我不太想，因为嘛，跟在游戏行业做开发的朋友聊过之后，我有种感觉——游戏开发者某种程度上有点像软件行业的音乐家。大多数软件公司的工作，都是那种，呃，舒适稳定的工作。但游戏开发的竞争太激烈了，公司那么多，工作时间又长。Jane Street 愿意在我身上投入那么多资源去培养我，公司里的人也是这样，这种东西在游戏行业恐怕很难找到。当然，这都是基于跟那些圈子里的朋友聊天所得出的感受。"
+    },
+    {
+      "idx": 8,
+      "en": "Yeah. Hopefully people in the gaming world aren’t too angry at\nus. I’ve heard similar things, that I feel like being a game developer\nis a little bit like being a violinist. It’s a hard thing and lots of\npeople love it and want to do it, so it can be very competitive.",
+      "zh": "嗯，希望游戏圈的朋友们别太生气。我也听说过类似的话，感觉做游戏开发有点像拉小提琴——又难，又有超多人热爱、想去做，所以竞争非常激烈。"
+    },
+    {
+      "idx": 9,
+      "en": "That being said, they make amazing things and I am so grateful that so\nmany people are passionate about that because I benefit from it.",
+      "zh": "话虽如此，他们做出来的东西真的太厉害了，我特别感谢那么多人对这件事充满热情，因为我也是受益者。"
+    },
+    {
+      "idx": 10,
+      "en": "It is indeed very impressive. Okay, so let’s talk a little bit more\nabout your actual work life here at Jane Street. I mentioned the\nsystem Gord before, can you tell us a little more about Gord and what\nit does and how it fits into Jane Street’s ecosystem?",
+      "zh": "确实令人叹为观止。好，那我们多聊聊你在 Jane Street 的实际工作吧。我之前提到了 Gord 这个系统，你能跟我们多介绍一下 Gord 是什么、它做什么，以及它在 Jane Street 整个系统生态里扮演什么角色吗？"
+    },
+    {
+      "idx": 11,
+      "en": "Yeah. Gord is the system that takes in all of the trading data of our\nfirm’s activity that we do on trading on platforms and exchanges all\naround the world, normalizes it, and then distributes it as a service\nwithin the firm so that we can do things like calculate our positions,\nupload our trades to clearing firms, settle our trades and make sure,\nyou know, that the money and stuff actually change hands at some point\nin the future.",
+      "zh": "好的。Gord 这个系统呢，是把我们公司在全球各大交易平台和交易所进行交易所产生的所有交易数据都收进来，做归一化处理，然后作为一个内部服务在公司里进行分发，这样我们就能做各种事情，比如计算持仓、把成交记录上传给清算公司、进行交易结算，确保资金和资产在未来某个时间点真正完成交割。"
+    },
+    {
+      "idx": 12,
+      "en": "So you just said a bunch of words that are probably unfamiliar to\npeople. Just to explain one of them, what do you mean when you say\nposition?",
+      "zh": "你刚才说了一堆大家可能不太熟悉的词。先解释一下，「持仓」是什么意思？"
+    },
+    {
+      "idx": 13,
+      "en": "Yeah. So the idea is, right, suppose that you buy a hundred shares of\nApple, you can think of it now instead of having some number of\ndollars you make out, you have that hundred shares. And it’s important\nto know that because you need to be able to understand, like, the\nvalue of all the stuff you’re holding, which means you need to know\nall the stuff you’re holding. If you buy a hundred shares of Apple,\nyou’d say your position is a hundred shares. And if you sell 20, your\nposition is 80. So it’s just tracking all of the stuff that we’re\nholding that’s, like, not just the money.",
+      "zh": "嗯，这个概念就是说，比如你买了一百股苹果公司的股票，你可以这样理解：你手里不再是那些钱了，而是换成了那一百股。知道这个很重要，因为你需要了解自己手里所有东西的价值，而要搞清楚价值，就得先知道自己手里有什么。如果你买了一百股苹果，那你的持仓就是一百股。如果你卖掉二十股，持仓就变成八十股。所以持仓就是在追踪我们手里持有的所有东西，不只是钱。"
+    },
+    {
+      "idx": 14,
+      "en": "Right. And maybe a thing that’s not obvious to someone who isn’t in\nthis world is there are many different things that you need to do with\nthis data. So you might in real-time on a trading desk want to know,\nlike, what your positions are, what your risks are, how much money you\nhave made, all of that, as you’re going throughout the day. At the\nsame time, you might want to do firm-oriented worst case risk\nanalysis, based on the same data. Also, you need to make regulatory\ndecisions. It turns out, for example, a common one is that when we\nsell something, a weird thing that maybe people don’t realize is —\nsometimes you sell things you have, sometimes you sell things mainly\nthat you’ve borrowed, and that latter thing is called a “short sale.”\nAnd you have to know what your positions are to know whether a given\nsale is a regular sale or a short sale. And there are regulatory\nmarking requirements.",
+      "zh": "对。还有一点对圈外人来说可能不太直观，就是这些数据有很多不同的用途。比如你在交易台上，可能需要实时知道当前的持仓、风险敞口、今天赚了多少钱，诸如此类，而且要贯穿整个交易日。同时，基于同样的数据，你可能还需要做公司层面的最坏情况风险分析。另外还有监管层面的要求。举个常见的例子——当我们卖出某个东西的时候，有一个很多人可能没意识到的奇特之处：有时候卖的是自己持有的东西，有时候卖的主要是借来的东西，后者叫做「卖空」。你必须知道自己的持仓，才能判断某笔卖出是普通卖出还是卖空，而这是有监管标注要求的。"
+    },
+    {
+      "idx": 15,
+      "en": "So your moment-to-moment, real-time interactions with the exchange are\ndriven by and affected by this data because you have to change what\nyou say to the exchange based on positions. And then, there’s all this\noften end-of-the-day reporting, uploading, synchronizing your\ninformation with various other players in the market. And all of these\nthings are driven off of this one central source of data.",
+      "zh": "所以你跟交易所之间每时每刻的实时互动，都受到这些数据的驱动和影响，因为你必须根据持仓来调整向交易所报告的内容。另外还有大量通常在每天结束时需要做的报告、上传、以及与市场上其他参与方进行信息同步的工作。而所有这些，都依赖于这一个核心数据源。"
+    },
+    {
+      "idx": 16,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 17,
+      "en": "Okay. So that’s what it does. From an engineering perspective, like,\nwhat are the requirements out of that system?",
+      "zh": "好。那它大概就是干这个的。从工程角度来看，这个系统有哪些要求？"
+    },
+    {
+      "idx": 18,
+      "en": "So it has a bunch of interesting requirements that other systems might\nnot have. So one of the ones that obviously matters is performance. We\nare very actively trading all of the time. And it’s very important for\nGord to be performing to its peaks because when trading is the\nbusiest, that is when it is most important for us to have accurate\ninformation to make good decisions. And so we need to make sure that\nwe are able to perform to, you know, 2 or 3×. And what we’ve seen on\nthe most recent busiest day ever, because the next time it comes\nalong, our busiest days tend to blow our previous busiest day out of\nthe water by large margins, rather than an occasional, like, you know,\n“Oh, we get a little bit bigger, and a little big bigger, and a little\nbit bigger over time.” It tends to be the case that busy days are\nsignificantly busier than what we’ve seen in the past, and so we need\nto be always thinking about how much overhead we have in the system,\nand can we keep up with much busier than what we’ve currently seen.",
+      "zh": "它有一些其他系统可能没有的有趣要求。其中最显而易见的一点当然是性能。我们一直在非常活跃地交易，所以 Gord 必须保持峰值性能，因为交易最繁忙的时候，恰恰也是我们最需要准确信息来做出正确决策的时候。因此我们需要确保系统能够应对两到三倍的压力。而且从我们经历的最近几次史上最繁忙的交易日来看，每次新的最忙日出现，都会把之前的记录甩出一大截，而不是像那种慢慢地、一点一点增长的感觉。繁忙日往往比我们此前见过的要忙得多，所以我们必须时刻考虑系统的余量，以及能否应对比目前所见更繁忙得多的情况。"
+    },
+    {
+      "idx": 19,
+      "en": "And what’s, like, the rough multiplier between a regular day and,\nlike, the busiest day of a year?",
+      "zh": "那大概来说，普通的一天和一年里最忙的一天，差距有多少倍？"
+    },
+    {
+      "idx": 20,
+      "en": "I think that it could be as much as, you know, 5× is pretty\nreasonable. I’m trying to think back to some historical ones. One of\nthe things that’s interesting is over the last five years, our\nstandard days have become what our busiest day ever was when I started\nat the firm, or something like that. Even probably more than that. And\nso the most recent busiest day ever we saw was about two X, but also\nprevious comparison points have done five X or sometimes more than\nthat. And so we are always waiting with bated breath for what the next\nmultiplier will be, but we try and keep in mind at least two X and\nprobably more than that as a regular thing.",
+      "zh": "我觉得能差到五倍是完全合理的。我在回想一些历史数据。有一件有意思的事是，过去五年里，我们普通交易日的量，已经相当于我刚入职时史上最繁忙的一天，甚至可能还不止。而我们最近经历的史上最繁忙的一天大概是两倍，但之前也有过五倍甚至更高的情况。所以我们每次都屏息等待下一次的倍数会是多少，但我们努力保持至少能应对两倍、而且很可能更高的准备。"
+    },
+    {
+      "idx": 21,
+      "en": "2× more than the worst thing you’ve ever seen is something you want to\nbe able to tolerate gracefully.",
+      "zh": "在你见过的最糟糕情况的基础上再翻一倍，这是你需要能够优雅应对的。"
+    },
+    {
+      "idx": 22,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 23,
+      "en": "And maybe a thing just to keep in mind is, like, all of these services\nthat are back-ended off of Gord means if Gord is down, the firm isn’t\ntrading.",
+      "zh": "还有一点要记住，就是所有这些依托 Gord 的服务都意味着，如果 Gord 宕机，整个公司就停止交易了。"
+    },
+    {
+      "idx": 24,
+      "en": "Yeah. And in addition to that, or, I guess, as a result of that, we\nhave very hard uptime guarantees. As you said, if Gord goes down, the\nentire firm stops trading automatically because we can’t make good\ndecisions if we have no idea what trading we’ve done. So we work\nincredibly hard to make sure that does not happen basically ever. The\nsystem is designed to be able to fail in pieces in constrained ways\nthat will hopefully avoid, you know, any sort of catastrophic\nfailure. An individual exchange might have problems, but the system is\ndesigned to make it so that if that exchange were to have problems, it\nwould not affect the rest of our trading.",
+      "zh": "嗯。除此之外，或者说正因如此，我们有非常严格的正常运行时间保障。正如你所说，Gord 一旦宕机，整个公司会自动停止交易，因为如果不知道做了哪些交易，我们就无法做出正确决策。所以我们付出了极大的努力，确保这种情况基本上永远不会发生。这个系统被设计成能够以受控的方式分块故障，从而尽量避免任何灾难性的崩溃。某个交易所可能会出问题，但系统被设计成，即使那个交易所出了问题，也不会影响我们其他的交易。"
+    },
+    {
+      "idx": 25,
+      "en": "In addition to that, whenever we’re rolling the system, we have\nextensive and somewhat arduous testing procedures that we go through\nto ensure that we haven’t made any of these sort of fatal flaws that\nmight cause a catastrophic outage. We also always run, in addition to\nhaving the sort of real production version of the system called the\nprimary, we have a standby which we also consider production and is\njust processing all the same activity and, you know, keeping up with\neverything in real-time, but is in an entirely different data center\nand on, you know, fully separate as much as we can make them, so that\nif we were to have a network partition and lose a data center, or just\nlose a box, which with the number of actual physical machines we have,\nhappens with a surprising frequency, we could gracefully failover as\nquickly as possible to continue trading and be ready to go, you know,\nand keep things up and running.",
+      "zh": "另外，每次我们对系统进行升级部署时，我们都要走一套非常严格、有点繁琐的测试流程，来确保我们没有引入那种可能导致灾难性故障的致命缺陷。我们除了有所谓的正式生产环境版本（也就是主系统）之外，还始终运行着一套备用系统，我们也把它视为生产环境，它实时处理所有相同的交易活动，与主系统保持同步，但位于完全不同的数据中心，并且尽我们所能地在完全独立的基础设施上运行。这样，如果我们遭遇网络分区、丢失一个数据中心，或者某台物理机器出问题——考虑到我们实际拥有的物理机器数量，这种情况发生的频率还挺让人意外的——我们就可以尽快优雅地进行故障切换，继续交易，保持系统正常运转。"
+    },
+    {
+      "idx": 26,
+      "en": "So when I think about Gord, one of the things that I think makes it\nchallenging is that the system is old, right? As I said, you’ve been\nhere about a decade, it’s been here for five years longer than that,\nand it’s, you know, to say kind of frankly, it was written when we\nwere less good at writing software and knew less what we were\ndoing. And it’s kind of a sign of that. Like, I was involved in a\nbunch of the early design decisions around Gord, some of which I\ncontinue to regret to this day, and so a lot of the kind of story of\nthe last few years of working on Gord has been about extending, and\ngrowing, and hardening the system and figuring out how to engineer out\nof problems that were built in and baked into the original design. So\nmaybe as a kind of way of looking at that, it’s worth talking about\nwhat Gord looked like when you first came to the project.",
+      "zh": "说到 Gord，我觉得让它具有挑战性的一点是，这个系统很老了。正如我说的，你在这里大概十年了，它比你入职还早了五年，说实话，它是在我们对软件开发还不够擅长、还不太知道自己在做什么的时候写的，这个系统多少能反映出那个时期的状况。我当时参与了 Gord 早期的一些设计决策，有些直到今天我仍然感到遗憾。所以过去几年围绕 Gord 的工作，很大程度上就是在扩展、发展、强化这个系统，同时想办法从原始设计中遗留下来的、已经根深蒂固的问题里走出来。也许作为一个切入点，值得聊聊你刚接手这个项目时 Gord 是什么样子的。"
+    },
+    {
+      "idx": 27,
+      "en": "When I started, Gord was…sort of the core of what it is is very\nsimilar. So the pipeline we have is there are sort of sources in the\nworld which are, like, a data feed from an exchange. And there’s a\nprocess called a parser that gets a data feed by SSHing to the box and\ntailing a file on disk that is in a pipe separated number equals value\nformat. Maybe someday we’ll change that. But, uh, that’s not one we’ve\nhad, uh, actually a huge amount of success changing thus far, though\nwe do have some plans on that front.",
+      "zh": "我刚开始的时候，Gord 的……核心部分其实和现在很相似。我们的处理流水线大概是这样的：世界上有各种数据源，比如来自某个交易所的数据流。然后有一个叫做解析器的进程，它通过 SSH 登录到那台机器上，用 tail 命令跟踪磁盘上的一个文件，那个文件是管道分隔的「名称等于值」格式。也许有一天我们会改掉这个……但，呃，这是我们目前还没怎么成功改掉的东西，不过我们在这方面确实有一些计划。"
+    },
+    {
+      "idx": 28,
+      "en": "But…so we SSH to the boxes, we tail files. And then we need to take\nthat data. And one of the things that I was I think a decision that\nwas made early on was that Gord would deliver, quote unquote, correct\ndata, all the time. And what this means is that Gord actually does a\nlot of making up of data when we get bad data from exchanges. So for\ninstance, there was a promise that was made that Gord would deliver an\norder before it saw a fill. A fill is another word that we might use\nfor trade. You might also hear me use exec interchangeably. I will try\nto be consistent. But, uh, we use fill and exec very interchangeably\nwithin the team, and so sometimes you may hear that.",
+      "zh": "但……所以我们 SSH 上去，然后 tail 文件。然后我们需要处理这些数据。我觉得当初做的一个决策是，Gord 要始终输出所谓「正确」的数据。这意味着 Gord 实际上会在收到交易所的错误数据时进行大量的「补造」。比如有一个承诺是，Gord 会在推送成交之前先推送订单。成交是我们对交易的另一种叫法，你也可能听到我用「exec」这个词，我会尽量保持一致。但我们团队内部「fill」和「exec」用得非常混用，所以有时候你可能会听到两种说法。"
+    },
+    {
+      "idx": 29,
+      "en": "So when we get a fill, if we have not seen an order, Gord makes one\nup. We think, in retrospect, this was a mistake. But this is baked\ninto a ton of things, and a lot of things assume that when they see a\nfill from Gord they will have previously seen an order. So we’ve been\nsort of dealing with the process of unwinding all sorts of legacy\ndecisions like this.",
+      "zh": "所以当我们收到一笔成交，如果我们之前没有见过对应的订单，Gord 就会凭空造一个出来。回过头来看，我们认为这是个错误。但这个设定已经深入到太多东西里了，很多系统都假设当它们从 Gord 收到一笔成交时，之前一定已经看到过对应的订单。所以我们一直在处理解开这类历史遗留决策的过程。"
+    },
+    {
+      "idx": 30,
+      "en": "In addition to that, Gord is going to always deliver normalized\nsymbology. And so maybe you have the stock Apple US, and you’re\ntrading that on the New York Stock Exchange. The way they represent\nthat might be something called a Reuters code, which is something that\nmight look like “AAPL.P” or some other thing, depending on the\nextension they need. You might be trading this on an exchange that\nuses Bloomberg, which will look something like “AAPL US”. Bloomberg,\nwhen I say Bloomberg, I mean, like, Bloomberg symbol, one of the\nstandard symbology formats in the industry.",
+      "zh": "除此之外，Gord 还要始终输出归一化的代码体系。比如说你在交易美国苹果公司的股票，在纽约证券交易所交易。他们表示这只股票的方式可能是一种叫路透代码的东西，看起来可能像「AAPL.P」或者别的什么，取决于他们需要用什么后缀。如果你在使用 Bloomberg 代码的交易所交易，那看起来就像「AAPL US」。我说的 Bloomberg，指的是 Bloomberg 符号，是行业内标准代码体系格式之一。"
+    },
+    {
+      "idx": 31,
+      "en": "Yeah. And it’s maybe worth saying, Bloomberg, not just the Mayor of\nNew York, also this company that makes an extremely pervasive terminal\nthat all sorts of financial professionals, including us, use to access\nall sorts of data. And they’re kind of an excellent data provider of\nlast resort. Like, you might want to get direct data from a particular\nexchange to get, like, the most granular or most timely version of\nsomething, but Bloomberg has everything. And so they’re a kind of\nfoundational data supplier. And they have their own symbology. And,\nlike, actually this is, like…I think summarizes a kind of terrible\nthing about this whole financial world that’s a big and weird source\nof complexity, is that just understanding what the names of things are\nis actually incredibly complicated because you have different sources\nof different names from different places. The exchange names things\none way, data providers name things other ways. And actually, the US\nis relatively tame, US equities markets in particular are relatively\ntame in this regard. But if you look at foreign exchanges, you look at\nall sorts of different asset classes, it gets exponentially more\ncomplicated. The task of just figuring out what things are called is a\nsurprisingly complicated normalization job that Gord is involved in.",
+      "zh": "嗯，值得补充一下，Bloomberg 不只是纽约市的前市长，它还是一家公司，做了一款非常普及的终端，各类金融从业者——包括我们——都用它来获取各种数据。它在某种程度上是一个极好的「兜底」数据提供商。你可能想直接从某个特定交易所获取数据，以得到最细粒度或最及时的信息，但 Bloomberg 什么都有。所以它是一种基础性的数据供应商。而且它有自己的代码体系。其实这一点……我觉得很能概括整个金融世界里一个挺糟糕的现象——也是一个很大、很奇特的复杂性来源——就是光搞清楚各种东西叫什么名字，就已经非常复杂了。不同的数据源有不同的命名方式。交易所有它的叫法，数据提供商有他们的叫法。而且美国市场其实相对还好处理，美国股票市场尤其如此。但如果你看境外交易所，再加上各种不同的资产类别，复杂度就会呈指数级上升。光是弄清楚各种东西叫什么名字，就是一件复杂得出人意料的归一化工作，而 Gord 就参与其中。"
+    },
+    {
+      "idx": 32,
+      "en": "Yeah. It’s one of those standards problems that everyone has some way\nof describing a thing, and they look at all of the ways people\ndescribe symbology in the past and they say, “Oh, I’m gonna do\nsomething better.” And then you have, you know, 18 million standards\nand every one of them is bespoke, and every one of them has edge cases\nand corner cases that are weird and hard to deal with.",
+      "zh": "对，这就是那种标准问题——每个人都有自己描述某样东西的方式，他们看了过去所有描述代码体系的方式之后说，「哦，我来做一个更好的。」然后你就有了一千八百万种标准，每一种都是定制化的，每一种都有各种奇奇怪怪、难以处理的边缘情况。"
+    },
+    {
+      "idx": 33,
+      "en": "But yes. So, one of the things we have to do is normalize\nsymbology. We also normalize a ton of other information, like\nusernames are an easy thing where you probably want to know which\ntrader at Jane Street was the person who did the trade. And if they’re\ntrading on a different platform, it might, you know, represent that\nwith their email address. Or they might have a specialized log in. So\nwe need to take all of those different bits of information, have a\nmapping that turns them into the actual Jane Street username that we\nuse internally, and do this for a really large number of fields.",
+      "zh": "但是，嗯。所以我们要做的事情之一就是归一化代码体系。我们还要对大量其他信息进行归一化，比如用户名就是个简单的例子——你大概想知道 Jane Street 内部是哪位交易员做了这笔交易。但如果他们在不同的平台上交易，平台可能用他们的邮件地址来标识，或者他们可能有专属的登录账号。所以我们需要把所有这些不同的信息，通过一个映射表转换成我们内部使用的 Jane Street 用户名，而且要对非常多的字段都这样做。"
+    },
+    {
+      "idx": 34,
+      "en": "One of the things that we’ve been sort of working towards over the\nyears is moving more of this normalization into the sources where it\nis…that information is more naturally contained, but this is still a\nproblem that we absolutely have to deal with. And, as with sort of all\nof the things, because it’s a legacy system which has a lot of\nreliability guarantees, a common thread will be we’re moving slowly in\nthis direction, but it’s difficult to make progress because you can’t\nbreak the system out from under anybody.",
+      "zh": "这些年来我们一直在努力推进的一件事，是把更多这类归一化工作移到数据源那一侧去处理，因为在那里，相关信息更自然地存在。但这仍然是我们必须面对的问题。而且和所有其他问题一样，因为这是一个有着很多可靠性保障的遗留系统，有一个贯穿始终的主题就是：我们在朝着这个方向缓慢推进，但很难取得进展，因为你不能把任何人的系统给搞垮了。"
+    },
+    {
+      "idx": 35,
+      "en": "And this…by the way, this particular bit of complexity is very old\nbecause it goes back to the original design and purpose of Gord, where\nyou said, “Oh, we have all these data sources that we’re changing so\nthat they do the normalization first, and Gord doesn’t have to.” But\nwhen Gord was first written, that was not an option because the\noriginal version of Gord was just reading out…like, we would get\ndata that we just, morally speaking, just downloaded from exchanges\nand brokers, and dumped into a file. And then the task of Gord was to\nslurp all this data up together and normalize it. And there was no\nother intermediary that could do that.",
+      "zh": "顺便说一下，这个特定的复杂性其实非常古老，因为它可以追溯到 Gord 最初的设计和用途。当时的想法是，「我们有这些数据源，我们在改造它们，让它们先做归一化，这样 Gord 就不用做了。」但当 Gord 最初被写出来的时候，这还不是一个选项，因为当时 Gord 就是直接读……就是说，我们收到的数据从道义上讲，就是直接从交易所和经纪商下载下来，然后丢进一个文件里的。而 Gord 的任务就是把所有这些数据一口气吸进来进行归一化。当时没有其他任何中间环节可以来做这件事。"
+    },
+    {
+      "idx": 36,
+      "en": "Now, today, most of the trading activity we get is not something that\ncomes from some third-party system. We have some system that’s\ndirectly interfacing with and understands the details of the\nparticular place that’s being traded with. And the software developers\nand people who are working with that system are well-positioned to\nunderstand what’s going on and think about the normalization. So,\nthat’s a kind of shift that you’re talking about, of going from one\nsystem in the middle that has to get everything right, to a kind of\nmore distributed thing where people in different parts of the\norganization understand what they’re doing and can solve the\nnormalization problem locally, rather than, like, shoving all this\ncrazy normalization on one small harried team.",
+      "zh": "而如今，我们收到的大多数交易活动，不再是来自某个第三方系统的东西。我们有自己的系统，直接与特定的交易对手接口，深入理解那个交易场所的细节。负责那个系统的软件开发人员，天然处于理解相关情况、考虑归一化问题的最佳位置。这就是你说的那种转变——从一个处于中间、必须把所有事情都搞对的单一系统，转向一种更分布式的方式，让组织中不同部分的人各自理解自己在做什么，能够在本地解决归一化问题，而不是把所有这些疯狂的归一化工作都压给一个小小的、疲于奔命的团队。"
+    },
+    {
+      "idx": 37,
+      "en": "Yes. There is still a surprising amount of trading that we do that\ncomes from these sort of weird direct third-party sources, but the\nmajority of our trading is now done through systems we write. And\nwe’ve introduced another step that sits in the process between just\nthat direct download of data from the weird third-party place that can\nalso add in a normalization layer there that can, and hopefully, get\nthat, you know, specialization into a better spot for it.",
+      "zh": "对。确实还有相当数量的交易是来自这些奇奇怪怪的直连第三方来源，但我们现在大多数交易是通过我们自己写的系统来完成的。我们还在流程中引入了另一个中间步骤，它坐在直接从那些奇怪第三方下载数据和 Gord 之间，也可以在那里加一层归一化，这样有望把那些专门化的处理放到更合适的地方去做。"
+    },
+    {
+      "idx": 38,
+      "en": "Got it. So it sounds like one of the core responsibilities of Gord is\nnormalization, and some of that normalization is what you might call\nkind of field normalization. Of, like, there is some piece of data and\nwe have to say it in the right language. And some of it is kind of\nmore almost, like, protocol-level enforcing of invariants. Making sure\nthat messages come in the right order and have the right meanings, and\ntranslating the transactions you see from the other side into a single\nconsistent language of transactions.",
+      "zh": "明白了。听起来 Gord 的核心职责之一是归一化，这种归一化有一部分可以说是字段级的归一化——就是有某条数据，我们需要用「正确的语言」来表达它。还有一部分则更像是协议层面的、对不变量的强制保证——确保消息以正确的顺序到来，具有正确的含义，并把你从对方那侧看到的交易记录翻译成一种统一一致的交易语言。"
+    },
+    {
+      "idx": 39,
+      "en": "Yeah. And I think a number of choices that were made on that second\none especially, are ones that we’re trying to unwind or avoid, or fix\ngoing forward. Easy example of this is, like, the sort of core types\nthat Gord knew about when I joined the team. There were orders, there\nwere outs, which is basically we’re saying an order’s closed, and\nthere were fills. And if we wanted to encode anything else, we had to\nshove it into one of these types, often in ways that didn’t fit\nwell. So for instance, maybe you send a message to an exchange, and\nrather than getting filled, you get a reject. Rather than adding a\nfirst-class reject type to represent what just happened, this was\nrepresented in Gord by making up an order when we saw a reject, and\nthen making up a closed message. And so there was a field inside the\norder that was like, “It’s a synthesized from a reject,” and to figure\nout, you know, “Are we getting a lot of rejects?” You had to go look\nat the internals of the fields, as opposed to having a first-class\ntype that represented this.",
+      "zh": "是的。而且我觉得在第二点上所做的很多选择，都是我们正在试图解开、规避或者在未来修正的。一个简单的例子是，我加入团队时 Gord 所了解的核心类型：有订单，有出局（基本上就是说一个订单已经关闭），还有成交。如果我们想编码任何其他东西，就必须把它硬塞进这些类型之一，而且往往并不合适。比如说，你向交易所发送了一条消息，结果不是成交，而是收到了一个拒绝。当时不是给拒绝添加一个一等公民类型来表示这件事，而是在 Gord 里通过在看到拒绝时凭空造一个订单，然后再造一个关闭消息来表示。所以订单里有一个字段是「这是从拒绝合成出来的」，而如果你想知道「我们是不是收到了很多拒绝？」就必须去翻数据的内部字段，而不是有一个能直接表示这件事的一等公民类型。"
+    },
+    {
+      "idx": 40,
+      "en": "And this sort of thing happened over and over, where it was, “Oh, we\nneed to represent a new thing, let’s just figure out how we can kind\nof shove it into the existing data model.” And one of the reasons that\nwe had to do it this way is because the original way that clients\nconnected to Gord was directly over TCP, and so the thing that we did\nis we had basically a type that represented our messages, and we used\na protocol called bin_io, which just turned it into a binary\nformat. And they had to be able to read that on the other side.",
+      "zh": "这种情况反复出现，每次都是，「哦，我们需要表示一个新的东西，就想想怎么把它塞进现有的数据模型里吧。」之所以不得不这样做，一个原因是当时客户端连接 Gord 的方式是直接通过 TCP，我们有一个基本的类型来表示消息，使用了一种叫做 bin_io 的协议，把它序列化成二进制格式，对方必须能够在另一端读取。"
+    },
+    {
+      "idx": 41,
+      "en": "And the versioning story for this was: there wasn’t one. The way that\nyou added fields to Gord was we had a string map of fields because if\nyou wanted to add a new field at the sort of top level type here, you\nwould actually need to make all clients roll their system forward to\nbe able to understand that.",
+      "zh": "而这套东西的版本管理策略嘛：没有。当时往 Gord 添加字段的方式是，我们有一个字符串映射表来存放字段，因为如果你想在顶层类型里添加一个新字段，实际上需要让所有客户端都升级它们的系统，才能理解那个新字段。"
+    },
+    {
+      "idx": 42,
+      "en": "Just to jump in there, when you say a string map, what you’re saying\nis the basic data representation, instead of being something that has\na fixed clear type, it was just like a bag of fields. Key value pairs,\nand you threw them together so you could freely add new fields, and\ntake away fields, and change the composition of fields without having\nto change the format. On the face of it, what that description sounds\nlike, “Ah, this is great.” You want to evolve the schema, you want to\nevolve the way in which you represent the data. There’s nothing in the\ndata format that gets in your way, so what got in your way?",
+      "zh": "先打断一下，你说「字符串映射表」，意思是基础的数据表示，不是有固定明确类型的那种，而只是一个字段的集合。键值对，把它们堆在一起，这样你就可以自由地添加新字段、删除字段、改变字段的组成，而不需要改变格式。从表面上听起来，这感觉是，「啊，这太棒了。」你想演进 schema，想改变数据的表示方式，数据格式本身对你没有任何阻碍，那到底是什么阻碍了你？"
+    },
+    {
+      "idx": 43,
+      "en": "Yeah. So, first of all, things that are difficult here are, it makes\nit harder for people who are using things to know what fields they\nshould be using and how they should be using them. Again, we were able\nto represent new things by being like, “Well, here are more things we\ncan put into our bag of fields,” but we couldn’t actually change the\ntop-level representation. So when we wanted to do something new, we\nhad to simply figure out how to represent it as just more fields\nattached to a thing that was increasingly less representative of what\nthe original design of, like, an order was. When you see something\nthat’s an order, surely that’s an order. And the answer is, “No,\nsometimes it’s a reject,”which is a confusing one to explain to\npeople.",
+      "zh": "嗯。首先，这里面有些困难的地方是，它让使用数据的人更难知道该用哪些字段、该怎么用。另外，我们确实可以通过往我们的字段集合里塞更多东西来表示新的内容，但实际上没有办法改变顶层的表示。所以当我们想做新的事情时，只能想方设法把它表示成更多附加在某个东西上的字段，而那个东西越来越不能真正代表原始设计中一个「订单」应该是什么样子。当你看到一个「订单」，应该肯定是个订单嘛。结果答案是，「不，有时候它其实是个拒绝」——这个就很难向别人解释了。"
+    },
+    {
+      "idx": 44,
+      "en": "Another example of this is when you see a fill. A thing that might\nhappen to your fill is it might be corrected or you might get\nsomething called an allocation, which is basically when we do the\ntrade initially we don’t necessarily know what account it’s going into\nfor some complicated reasons. And later you get a message saying, “Put\nthat in this account,” and that’s called an allocation. And, again,\nall of these things were just represented as adjustments to the fill\nby sending the full fill message again, so you would say, “cancel this\nfill and rebook it.” You had no ability to do, like, smaller\nadjustments on top of your data in any way.",
+      "zh": "另一个例子是当你看到一笔成交。可能发生的情况是，这笔成交可能被更正，或者你可能收到一个叫做「分配」的东西——大概意思是，当我们最初做成交的时候，由于一些复杂的原因，我们不一定知道它应该进哪个账户。之后你会收到一条消息说「把那笔交易放进这个账户」，这就叫做分配。同样地，所有这些东西都只是被表示为通过再次发送完整的成交消息来对成交进行调整，也就是说你会说「取消这笔成交，重新入账」。你完全没有办法在你的数据上做任何较小的调整。"
+    },
+    {
+      "idx": 45,
+      "en": "Got it. So, in some sense, there was this, like, gooey, extremely\nflexible dynamic representation of the data. Which you might think\nwould free you up, but actually it locked you down because what\nhappened was people on the other side who were consuming the data just\nimplicitly in their code depended on the structure that was embedded\nin there. And so, despite the fact that the file format, or the\nmessage format, lets you change things however you want, in practice,\nyou couldn’t change things without breaking your clients.",
+      "zh": "明白了。所以从某种意义上说，存在这种黏糊糊的、极其灵活的动态数据表示方式。你可能以为这会给你很大的自由度，但实际上它把你锁死了，因为另一侧消费数据的人，只是在他们的代码里隐式地依赖了那个嵌入其中的结构。所以，尽管文件格式或者消息格式在理论上允许你随意更改，实际上你一改就会把客户端搞坏。"
+    },
+    {
+      "idx": 46,
+      "en": "That’s right. And because of where Gord sits in the firm and the role\nthat we play, we have hundreds of clients and many of them are\nincredibly critical to trading, and so breaking our clients is not\nreally an option for us. A thing that we used to do in the previous\nversion, which I’ll explain what we do now, but when we wanted to do a\nfundamental change to the version protocol, we had to basically add\nupgrading or downgrading inside of Gord and know the version our\nclients were connected to, and then do the downgrading ourselves for\nthem. And this is actually just kind of expensive. It turns out, one\nof the most expensive parts of Gord is serializing information. And\nwhen you’re sort of downgrading things for clients, again, the way\nthis was initially done was clients would open up a direct TCP\nconnection to Gord, and they would get the messages sent to them. And\nthe downgrading would happen server-side. And there was some stuff\nbaked in to try and make it, you know, reuse stuff appropriately. But\nif you had four versions of your clients, you’re now serializing the\nmessage four times. And then when you’re doing this and trying to send\ndata to hundreds of clients, this actually gets very expensive.",
+      "zh": "正是这样。而且因为 Gord 在公司里所处的位置和我们扮演的角色，我们有数百个客户端，其中很多对于交易来说都是极其关键的，所以让我们的客户端出问题，对我们来说根本不是一个选项。在上一个版本里我们曾经做过一件事——我等会儿会说我们现在是怎么做的——当我们想对版本协议做根本性的变更时，我们基本上必须在 Gord 内部加上升级或降级的逻辑，知道客户端连接的是哪个版本，然后替它们做降级处理。这实际上代价相当高。序列化信息是 Gord 最耗资源的操作之一。当你在替客户端做降级时，再加上数据最初的发送方式——客户端直接建立 TCP 连接到 Gord，消息就直接推送给它们，降级在服务端进行——里面确实有一些机制试图合理地复用内容。但如果你有四个版本的客户端，你现在就要把同一条消息序列化四次。而当你在做这件事、同时还要向数百个客户端发送数据时，这实际上代价非常高。"
+    },
+    {
+      "idx": 47,
+      "en": "So we avoided this by trying to make the type as gooey and flexible as\npossible, and not really having the ability to change it at all. And\nthis, to be fair, worked for a very long time. But as it expanded to\ncover more things, and as we, as a firm, have gotten into more new and\ndifferent kinds of trading where we wanted to be able to represent\nmore interesting message types.",
+      "zh": "所以我们避免这个问题的方式是，尽量让数据类型足够黏糊、足够灵活，然后实际上根本没有能力去改变它。说公平点，这套东西确实管用了很长时间。但随着它扩展到要覆盖越来越多的东西，以及我们公司进入了越来越多新的、不同类型的交易领域，我们希望能够表示更有趣的消息类型。"
+    },
+    {
+      "idx": 48,
+      "en": "One thing you said in there was that this gooey representation didn’t\nmake changes at all. But that’s not quite right, in the sense that\nthere are some kinds of changes that you can make freely, anything\nwhere you’re just like, “Here’s an extra optional piece of\ninformation, and I just want to add it on.” The gooey, I just have a\ncollection of key value pairs. Yeah, you can just add a new key value\npair, and anyone who didn’t know about it will continue to not know\nabout it, and anyone who wants to see the data can and can interpret\nit. So some kinds of changes were easy. And I guess some kinds of\nchanges were hard. And maybe an example of the kind of change is if\nyou want to add a new kind of transaction, well, that’s a thing that\neveryone who consumes the feed needs to understand, and that’s the\nkind of thing that has to be one of these breaking changes.",
+      "zh": "你刚才说这种黏糊的表示方式根本没法做任何改变。但这说得不完全准确，因为有些类型的改变是可以自由进行的——任何时候你只是想说「这里有一条额外的可选信息，我只是想加上去」，用这种键值对集合的黏糊格式，你完全可以加一个新的键值对，不知道这个字段的人还是不知道，想看这条数据的人也可以看到并解读它。所以某些类型的改变是容易的，而某些类型的改变是困难的。困难的那种改变的例子大概是——如果你想添加一种新的交易类型，那就是每个消费这个数据流的人都需要理解的事情，而这就是那种必须进行破坏性变更的情况。"
+    },
+    {
+      "idx": 49,
+      "en": "Yeah. That’s true. And the sort of core types we were representing\nthings with were relatively large. And so, one of the things that’s\nexpensive about Gord is serializing all this information. And so, as\nwe were starting to do new kinds of trading that required many more\nmessages, but most of the information in them was very, very small, we\ndid not want to encode that in our existing types because it would be\nvery, very wasteful, in terms of the amount of overhead we would have\nto include. So we made a new format that we used to represent things.",
+      "zh": "对，确实是这样。而且我们用来表示东西的核心类型相对比较大。序列化所有这些信息是 Gord 的开销之一。所以，当我们开始做一些新类型的交易，这些交易需要更多消息，但其中大多数消息包含的信息量非常非常小，我们不想用现有的类型来编码这些，因为那样会非常非常浪费，产生大量不必要的开销。于是我们制定了一种新的格式来表示这些内容。"
+    },
+    {
+      "idx": 50,
+      "en": "We’ve talked a lot about the data and kind of at a…in some sense,\nwhat was Gord’s responsibility, in terms of getting, and normalizing,\nand distributing that data? But what was the system architecture\nitself like? You said this was…Gord is like a…the global order\ndatabase, which isn’t exactly an order database, though it is\nglobal. But what is it? How is data distributed in Gord?",
+      "zh": "我们已经聊了很多关于数据的事，从某种意义上说是关于 Gord 在获取、归一化和分发数据方面的职责。但系统架构本身是什么样的呢？你说 Gord 是一个……全局订单数据库，虽然它并不完全是一个订单数据库，虽然它确实是全局性的。但它到底是什么？数据在 Gord 里是怎么分发的？"
+    },
+    {
+      "idx": 51,
+      "en": "Yeah. So I mentioned we had a parser, and then there was a system\ncalled the DB that basically collected the information from the\nparser, maybe made up some more extra fake information around if we\nhad a fill without an order, add in that information. Then, it would\ndistribute it to a normalizer in each office over TCP. And the\nnormalizer’s job was to apply all of those normalization passes, in\nterms of, you know, fixing symbology, fixing the users, all the things\nwe kind of mentioned there. And then, it would distribute it to\nclients, again, directly over TCP. And so one of the biggest problems\nthat Gord had at the time was fan-out because we had hundreds of\nclients, and so we were sending the same messages for our full data\nstream out to all of them. And that was a pretty expensive process.",
+      "zh": "嗯。所以我提到我们有一个解析器，然后还有一个叫 DB 的系统，基本上负责收集解析器传来的信息，有时候还会补充一些额外的假数据——比如我们收到了一笔成交但没有对应订单，就把那部分信息补进去。然后，它会通过 TCP 把数据分发给每个办公室的归一化处理器。归一化处理器的工作就是执行所有那些归一化处理，比如修正代码体系、修正用户信息，诸如此类我们之前提到的那些事情。然后，它再直接通过 TCP 把数据分发给客户端。所以当时 Gord 面临的最大问题之一就是扇出——因为我们有几百个客户端，要把完整数据流的相同消息发送给所有人，这个开销相当大。"
+    },
+    {
+      "idx": 52,
+      "en": "So you talked before about the contract that Gord had with its\nclients, i.e. the things that were consuming data from it. What did\nthe contract between Gord and the data sources it had, the things that\nwere feeding data into it, the exchange connections and things like\nthat, what did that contract look like?",
+      "zh": "你之前说到 Gord 和它的客户端——也就是消费它数据的那些系统——之间的契约。那 Gord 和它的数据来源之间，也就是那些向它输送数据的系统，比如交易所连接之类的，它们之间的契约是什么样的？"
+    },
+    {
+      "idx": 53,
+      "en": "That contract was mostly, “You will give us things, and we will keep\nup, and we will never fail.” Um… (laughs).",
+      "zh": "那个契约基本上就是，「你们给我们数据，我们保证跟上，而且永不挂掉。」呃……（笑）。"
+    },
+    {
+      "idx": 54,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 55,
+      "en": "…it was a hard contract to maintain. So, yeah, we didn’t actually\nhave a spelled out contract with our sources of, like, how fast it\ncould give us information. We had things that, you know, hand waves,\nlike, maybe a Gord dev had agreed with a friend dev when they first\nwrote it. Friend being one of the automated systems that writes\nactivity to Gord. But maybe two developers had at some point agreed to\nsome value, but that was certainly not written down anywhere and there\nwas nothing that enforced it in any way. And if Gord ever fell behind,\nagain, we would halt things, so our policy was we didn’t fall\nbehind. This was obviously kind of an impossible thing to maintain as\nwe grew, especially with a lot of the parts of the architecture.",
+      "zh": "……这个契约真的很难维持。所以，嗯，我们其实没有和数据来源方签任何明确的契约，比如它们能以多快的速度给我们数据。有些东西是靠口头约定的，比如某个 Gord 开发者和某个 Friend 开发者在最初写代码的时候达成了某种约定——Friend 是指那些往 Gord 写入活动数据的自动化系统。但也许两个开发者曾经在某个时候就某个数值达成了共识，但那肯定没有写下来，也没有任何机制来约束它。而如果 Gord 一旦跟不上，我们还是会暂停交易，所以我们的策略就是不允许跟不上。随着我们规模扩大，这显然是一件不可能长期维持的事，尤其是架构里有很多这样的问题。"
+    },
+    {
+      "idx": 56,
+      "en": "So we had to figure out, like…when I started on the team, there was\nno performance testing that we did on a regular basis. I had to build\nperformance tests to know what our maximum rates were and how close to\nthem we were. We were lucky at the time that the firm’s activity was\nsmall enough that we could keep up with it on a regular basis, but we\nhad to learn, like, at what point do we require our upstream sources\nto shard their activity into multiple sources. Because one of the\nthings that is really nice about Gord’s architecture is it\nparallelizes incredibly well. A single pipeline of parser DB\nnormalizer can keep up with about…it can do 50,000 messages per\nsecond, but there’s some things on the end now that cause that to be\nslower, for good reasons. So we’re gonna say 25,000 messages per\nsecond is, like, allowable.",
+      "zh": "所以我们得想清楚……我刚加入团队的时候，我们没有定期的性能测试。我得自己写性能测试，来搞清楚我们的最大处理速率是多少，以及我们离上限有多近。那时候还算幸运，公司的交易量还不大，平时能跟得上，但我们得搞清楚：到什么时候需要让上游数据源把活动分片成多路来源。因为 Gord 架构有个很好的特性，就是它的并行扩展性极强。一条单独的解析器-DB-归一化处理器流水线大概能处理……大约每秒五万条消息，不过现在后端有些东西会让它慢下来，有合理的原因。所以我们姑且说每秒两万五千条消息是合理的上限。"
+    },
+    {
+      "idx": 57,
+      "en": "But, we can parallelize that across many boxes and many copies of this\npipeline, so the actual throughput rate of Gord scales arbitrarily.\nAnd we have not run into real issues with, you know, just kind of\ncontinuing to expand horizontally. But understanding what our sort of\none single-source pipe throughput was a thing we did not know, and\nwe’d had no promises about at the time.",
+      "zh": "但我们可以把这个流水线并行部署在多台机器上，跑多个副本，所以 Gord 实际的吞吐量是可以任意横向扩展的。在靠持续横向扩展这件事上，我们还没真正碰到什么问题。但当时我们不知道单路数据源的流水线吞吐量是多少，也没有对此做过任何承诺。"
+    },
+    {
+      "idx": 58,
+      "en": "I guess one of the things that backs this is that the basic\narchitecture is what you might call another context eventually\nconsistent, meaning you have all these data sources that are providing\ndata, and the ordering guarantee when you consume data is that the\ndata from a particular source will come in the order that it was\nentered into the system. But you can get a kind of shearing between\ndifferent data sources. Things might come in different orders for\ndifferent consumers, and that allows you to build a system where there\naren’t a lot of tight dependencies by, in some sense…in exchange for\nhaving lighter guarantees that you provide to the users. You make the\nscaling story simpler and easier.",
+      "zh": "我觉得支撑这一切的一个基本点在于，这个基础架构可以称为另一种语境下的最终一致性——意思是说，你有这么多数据来源在不断提供数据，而你消费数据时的顺序保证只有一个：来自某个特定来源的数据，会按照它进入系统的顺序到达。但不同数据来源之间可能会出现撕裂——也就是说，同样的消息到达不同消费者的顺序可能不一样。这让你可以构建一个没有太多强依赖的系统，某种程度上，代价是你对用户提供的保证弱了一些，但换来的是更简单、更容易的扩展。"
+    },
+    {
+      "idx": 59,
+      "en": "Yes, that is a fundamental thing that we kind of can’t build the\nsystem without because trying to keep up with the actual full\nthroughput of Gord in a single thread or a single process would be\nwell beyond what especially our architecture of OCaml at the time\ncould handle. Even now that we have put a lot more work into\nunderstanding how to make OCaml, it would still be a very difficult\ntask to handle the sort of entire stream in one single thread or in\none single process, or even on one single box. But, it is the case\nthat because basically none of our users actually care about the hard\nordering guarantees between things that happen at different exchanges,\nbecause, frankly, you kind of can’t care about that because, again,\nthey happen on different exchanges, so maybe there’s a delay from the\nexchange sending it to us, rather than from our own internals, you\ncan’t actually guarantee that you’re going to see every event in the\norder that happened in the real world, ‘cause that’s kind of not a\nmeaningful statement. So we just make promises within a single\nupstream flow through.",
+      "zh": "对，这是一个基本前提，没有它这个系统根本没法建——因为如果想用单线程或单进程来处理 Gord 的全部吞吐量，那对当时我们用 OCaml 的架构来说完全超出能力范围。即使现在我们已经花了大量精力研究如何优化 OCaml，要在单线程、单进程、甚至单台机器上处理整个数据流，依然是一件极其困难的事。但现实情况是，我们的用户基本上没有人真正关心不同交易所之间事件的严格顺序——说白了，你也没法关心，因为它们发生在不同的交易所，从交易所发到我们这里本来就有延迟，而不只是我们内部的延迟，所以你根本无法保证看到的事件顺序就是现实世界中发生的顺序，因为这个说法本身就没有意义。所以我们只承诺单条上游数据流内部的顺序。"
+    },
+    {
+      "idx": 60,
+      "en": "Even if, like, the ordering isn’t externally meaningful, you could\nhave a thing where the system agrees upon a single ordering and\neveryone always sees things in the same order. And I think that has\nsome upside. It lets you do replication and things like that in a\nsimpler way. But it also has a massive downside because it limits the\nability to which you can recover. Like, one thing that I remember us\nthinking about a lot is, well, it turns out we are a distributed\noperation, we have offices in New York, and London, and Hong Kong. And\nif we lose a connection or have a degraded connection between two\ndifferent offices, we might want to be able to kind of continue\noperation concurrently in both of those offices, even though the\ninformation from the other office is somewhat degraded, right?",
+      "zh": "即使说顺序在外部没有实质意义，你也可以让系统对一个统一的顺序达成一致，让所有人都看到相同的顺序。我觉得这有一定好处，比如可以用更简单的方式做复制之类的事情。但它也有一个巨大的缺点，就是会严重限制你恢复的能力。比如我记得我们当时反复讨论的一个问题是：我们本来就是分布式运营，在纽约、伦敦、香港都有办公室。如果两个办公室之间的连接断掉或者变差，我们可能希望两个办公室能同时继续独立运转，即使来自对方办公室的信息有些降级，对吧？"
+    },
+    {
+      "idx": 61,
+      "en": "Yeah.",
+      "zh": "嗯。"
+    },
+    {
+      "idx": 62,
+      "en": "And so that’s the example where you, in some sense, are relying on the\nfact that you have this kind of softer guarantee to give you better\navailability than you could get otherwise.",
+      "zh": "所以这就是一个例子，某种意义上，你就是依赖这种较软的保证，才能获得比其他方式更好的可用性。"
+    },
+    {
+      "idx": 63,
+      "en": "Yeah. Like I said, very, very, very useful for us. If we gave up on\nthat guarantee, we would be very sad. Or, that lack of guarantee,\nperhaps.",
+      "zh": "对。就像我说的，对我们来说非常非常非常有用。如果我们放弃那个保证——或者说，那个没有保证——我们会很惨的。"
+    },
+    {
+      "idx": 64,
+      "en": "Okay. That’s kind of a tour of what Gord was like when you first came\nto it. What are the things that you’ve worked on since then to kind of\ngrow the system and kind of repair some of the problems that were\nthere in the original design as you saw it?",
+      "zh": "好。这算是给我们讲了你刚接触 Gord 时它是什么样子。那从那之后，你做了哪些工作来扩展这个系统，以及修复你当时看到的原有设计里的一些问题？"
+    },
+    {
+      "idx": 65,
+      "en": "One of the big things that was being worked on when I joined the team\nwas trying to change this process of all of our clients connecting to\nus directly over TCP. This was a very difficult scaling problem for us\nthat was causing real problems because every time you added a new\nclient, you had to serialize the data to them. And so the amount of\nwork you had to do as the sort of Gord service scaled with the number\nof clients. And as the firm was doing more things and getting bigger,\nthis was just unsustainable. So what we did is we actually looked\nexternally. We saw Kafka, which is a thing developed by LinkedIn,\nwhich is a distributed message queue that has really good properties\nfor scalability. And in addition to that, one of the properties that\nwas really, really nice is rather than being a push-based system, it\nis a pull-based system for clients.",
+      "zh": "我刚加入团队的时候，有一件大事正在推进，就是想改掉所有客户端直接通过 TCP 连接到我们的方式。这对我们来说是一个很棘手的扩展性问题，已经造成了真实的麻烦——因为每增加一个客户端，你就得把数据序列化给他们。所以 Gord 服务这边需要做的工作量是随客户端数量线性增长的。随着公司做的事情越来越多、规模越来越大，这条路走不通。于是我们往外看，发现了 Kafka——这是 LinkedIn 开发的一个分布式消息队列，在扩展性方面有非常好的特性。除此之外，它还有一个特别好的特性，就是对客户端来说不是推模式，而是拉模式。"
+    },
+    {
+      "idx": 66,
+      "en": "So one of the things is when Gord was delivering activity to its users\nover TCP, it had to basically just, like…clients would open up a\npipe, and then Gord would just send them messages whenever it had\nthem. And if the client was slow, Gord would have to buffer data\nbecause it has to get buffered somewhere. And so because we did not\nwant to hold arbitrary amounts of messages and memory per client, if a\nclient was too slow, we would just kick them off. And, it turns out,\nwhile many systems do care about being highly performant, there are a\nlot of other systems where their performance just doesn’t have to be\nthat high. For instance, if you’re an end of the day regulatory\nreporting thing, you don’t actually need to keep up with Gord at its\nbusiest. You just need to make sure that by the end of the day, you’ve\nbeen able to process everything.",
+      "zh": "之前 Gord 通过 TCP 向用户推送活动数据的方式，基本上就是……客户端打开一条管道，Gord 一有消息就推过去。如果客户端处理慢了，Gord 就得缓冲数据，因为数据得在某个地方缓冲。由于我们不想为每个客户端在内存里保存任意数量的消息，如果某个客户端太慢，我们就直接把它踢掉。但实际上，虽然很多系统确实对性能要求很高，也有很多系统根本不需要那么高的性能。比如，如果你是一个日终监管报告系统，你根本不需要在 Gord 最繁忙的时候跟得上它，你只需要保证在一天结束之前把所有数据都处理完就行。"
+    },
+    {
+      "idx": 67,
+      "en": "And so, this notion of people having to be able to perform to Gord’s\npeaks to write a Gord client was very painful. And so, Kafka has the\nproperty that clients ask for messages when they’re ready for them,\nand it just stores them in memory and can give you an arbitrary\nmessage out of the stream that you want if you have the right sort of\npointer to it. And so, this allowed us to sort of change the dynamic,\nwhich meant that if a client was slow, they would fall behind the tip\nof the stream, and we might be able to monitor and alert them about\nthat, but we wouldn’t actually make them die. And, again, if you’re a\nprocess that has to actually process every message and you can’t keep\nup, well, when you die, all you’re gonna be able to do is restart and\njust be sad. So —",
+      "zh": "所以，要写一个 Gord 客户端就必须能跟上 Gord 的峰值性能，这个要求非常痛苦。而 Kafka 的特性是客户端在准备好的时候才去拉消息，Kafka 只要把消息存在内存里，然后你给一个正确的指针，它就能把你想要的流中的任意一条消息给你。这就让我们能改变这种动态关系——如果客户端处理慢，它就会落后于流的末端，我们可能会监控并告警，但不会真的让它挂掉。而且，如果你是一个必须处理每一条消息但又跟不上的进程，那挂掉之后你能做的也只是重启，然后继续痛苦。所以——"
+    },
+    {
+      "idx": 68,
+      "en": "And make the upstream service sad again.",
+      "zh": "然后又让上游服务跟着痛苦。"
+    },
+    {
+      "idx": 69,
+      "en": "And make the upstream service sad again.",
+      "zh": "然后又让上游服务跟着痛苦。"
+    },
+    {
+      "idx": 70,
+      "en": "You’re just creating more work.",
+      "zh": "你只是在制造更多工作而已。"
+    },
+    {
+      "idx": 71,
+      "en": "Yeah.",
+      "zh": "嗯。"
+    },
+    {
+      "idx": 72,
+      "en": "There’s something confusing you said before, where you said, “Ah, we\nhad this problem where we opened all these TCP/IP connections, we had\nto do a bunch of work per client as a result of that, of sending the\ndata to them over TCP/IP, and then we switched to Kafka, and that made\nthings better.” But Kafka also uses TCP. So, like, where’s the magic?",
+      "zh": "你之前说的有个地方有点让人困惑。你说，「啊，我们有这个问题，开了一堆 TCP/IP 连接，要向每个客户端通过 TCP/IP 发送数据，这带来了很多额外工作，然后我们换成了 Kafka，情况就好多了。」但 Kafka 底层也用 TCP 啊。那魔法在哪里？"
+    },
+    {
+      "idx": 73,
+      "en": "Yeah. Really what was going on before is not just that we were using\nTCP, but that we were doing a very naïve thing with our use of TCP. So\nwhen a client connected to us, we would simply buffer the data for\nthem, and if they fell behind, we would just continue buffering the\ndata in memory.",
+      "zh": "对。之前真正的问题不只是我们在用 TCP，而是我们用 TCP 的方式非常朴素。客户端连上来之后，我们就直接把数据给它们缓冲着，如果它们落后了，就继续往内存里堆。"
+    },
+    {
+      "idx": 74,
+      "en": "And just to interrupt for a second, when you said, “We would,” right?\nBecause this is…like, a part of Gord that is a very old mistake, we\njust, you know, like morons, picked up the operating system APIs and\nused them without thinking very hard. Until we said, “Ah, there’s a\nclient, they have a TCP connection. We send them a message, we send\nthem a message, we send them a message.” And the buffering is then\ndone by, like, some combination of the operating system and the\nlow-level systems code that manages the individual TCP/IP\nconnection. So, in some sense, separated from what you think of as the\napplication layer of Gord itself, there’s all this behind the scenes\nwork in buffering that occurs.",
+      "zh": "打断一下，你说「我们会」——因为这是……Gord 里一个非常古老的错误，我们就像傻瓜一样，直接拿起操作系统的 API 就用，根本没动脑子。就是，「啊，有个客户端，有一条 TCP 连接，给它发消息，再发，再发。」缓冲这件事是由操作系统加上管理那条 TCP/IP 连接的底层系统代码共同完成的。某种意义上，这些缓冲工作隐藏在你认为的 Gord 应用层背后，在幕后悄悄进行。"
+    },
+    {
+      "idx": 75,
+      "en": "Yeah. And we weren’t really thinking about that. We did think a little\nbit about the fact that serialization is expensive, so we tried to\nserialize only once, but there was still a lot of stuff with this\nbuffering that we were just accepting what the operating system did\nand not really thinking about it. And this turned out to get just, you\nknow, more and more expensive as we had more clients.",
+      "zh": "对。我们当时根本没有认真想这件事。我们确实稍微考虑过序列化是很贵的，所以我们尝试只序列化一次，但关于缓冲的很多事情，我们基本上就是接受操作系统的默认行为，完全没有思考。随着客户端越来越多，这个代价就越来越高。"
+    },
+    {
+      "idx": 76,
+      "en": "Kafka solves this problem a lot more intelligently because it’s in the\nsort of architecture of the system. So when you write the message into\nKafka, it, like, stores it on disk, and when a client is connected,\nthey ask for messages when they’re ready to handle them, rather than\nbeing push messages. And so if a client is not keeping up, then Kafka\nis not trying to buffer the messages in memory that they’re going to\nneed eventually. They’re there on disk if the client wants to ask for\nthem, but it’s not holding them and trying to be ready and also give\nthem to the client actively.",
+      "zh": "Kafka 在架构层面更聪明地解决了这个问题。你把消息写入 Kafka，它存到磁盘上；客户端连上之后，是在它们准备好的时候主动来拉消息，而不是被动接受推送。所以如果客户端跟不上，Kafka 不会试图把它们将来需要的消息都缓冲在内存里。那些消息在磁盘上，客户端需要的时候去拿就行，Kafka 不会主动抱着它们等着给客户端。"
+    },
+    {
+      "idx": 77,
+      "en": "As we were saying, this question of what’s push and what’s pull is\nkinda subtle. At a low level, TCP is kind of doing something like\nthis, where there’s, like…there are receive buffers that the\noperating system can end when the receive buffer is full, it is in\nfact going to stop pulling data in. But, at least from the APIs that\nwe surface to programmers, we gave people an API, we’re like, “Oh,\nhere’s a TCP/IP connection. Just send data that you want to get there,\nand eventually we’ll make sure it gets there.” From the point of view\nof the sending program, it was push oriented. And we kind of weren’t\nkeeping track and weren’t thinking intelligently about, like, how the\nresources and buffering of data was happening in between in that case.",
+      "zh": "就像我们说的，推和拉的问题其实挺微妙的。在底层，TCP 其实也在做类似的事——有接收缓冲区，操作系统在接收缓冲区满的时候实际上会停止拉取数据。但至少从我们暴露给开发者的 API 来看，我们给了大家一个接口，说，「这是一条 TCP/IP 连接，把你想发的数据扔进去，最终我们会保证它到达。」从发送方程序的角度来看，这是推导向的。我们没有追踪，也没有认真思考数据在中间是怎么占用资源、怎么被缓冲的。"
+    },
+    {
+      "idx": 78,
+      "en": "And at the level of the TCP/IP connection, it’s kind of too low-level\nto do anything smart. Like, it can’t understand that they’re sharing\nat that level without having something that’s explicitly binding all\nthose things together and understanding them as a kind of single\nlogical message queue.",
+      "zh": "而在 TCP/IP 连接这个层面，它太底层了，没办法做什么聪明的事。它无法理解那个层面上的共享关系，除非有某个东西明确地把所有这些连接绑在一起，把它们理解为一个逻辑上统一的消息队列。"
+    },
+    {
+      "idx": 79,
+      "en": "Yeah. One of the other things that was really expensive when a client\nconnected to Gord that I haven’t really touched on here, but also\nKafka made much better for us, was the idea that when someone connects\nto Gord, they often want to know everything that had happened up until\nthat point. So we would generate a snapshot for them of all of the\nactivity. And that generation of a snapshot had to happen per client\nbecause, you know, people connect with it at random times. And so,\nagain, Kafka allowed us to basically just have a sidealong process\nthat was consuming the stream and occasionally snapshotting, because\nit is nice for people to be able to catch up more quickly. But, again\nthere, the snapshots could be stored in a ready-to-go format, and then\nyou would just read from the latest snapshot and then pick up some\npoint in the pipe after that. As opposed to snapshotting per client\nthat connected.",
+      "zh": "对。还有一件事在客户端连接 Gord 时代价很高，我之前没有提到，Kafka 也帮我们解决得更好了——就是当有人连上 Gord 的时候，他们往往想知道到那个时间点为止发生过的所有事情。所以我们会为他们生成一份快照，包含所有的活动数据。而这个快照的生成必须针对每个客户端单独做，因为大家连上来的时间是随机的。然后 Kafka 让我们可以只跑一个旁路进程来消费数据流并定期做快照——因为让大家能更快地追上进度确实很有价值——而且快照可以存成随时可用的格式，然后你只需要从最新的快照开始读，再从流水线的对应位置接上就行，而不用针对每个连上来的客户端单独生成快照。"
+    },
+    {
+      "idx": 80,
+      "en": "In some sense, the answer to my question of where is the magic, is\nthere is no magic. There’s just a bunch of engineering that you need\nto do in order to build a message queue. And rather than have this\nkind of message queue functionality be sitting in a deadly embrace\nwith the rest of the functionality of Gord, what you did was separate\nthem out. Use some standard, well-engineered, already existing piece\nof infrastructure for doing the message queue part of the work. And\nthen, focusing the work that we did on Gord on the actual part where\nthere was a unique value-add, which is the core part of the pipeline\nof, like, consuming and normalizing all of this data.",
+      "zh": "某种意义上，我问「魔法在哪里」这个问题的答案是：没有魔法。就是需要做一堆工程工作来构建一个消息队列。与其让这种消息队列功能和 Gord 其他功能搅在一起，你们做的是把它们拆开，用一个已有的、标准的、工程质量好的基础设施来承担消息队列这部分工作，然后把精力集中在 Gord 真正有独特价值的地方，也就是那条核心流水线——消费和归一化所有这些数据。"
+    },
+    {
+      "idx": 81,
+      "en": "Yes.",
+      "zh": "对。"
+    },
+    {
+      "idx": 82,
+      "en": "So that’s, like, one big move you guys made to improve the\narchitecture of the system. What else have you done?",
+      "zh": "好，这算是你们为改善系统架构做的一个大动作。还做了什么？"
+    },
+    {
+      "idx": 83,
+      "en": "One of the other ones that was a pretty big deal I mentioned\nbriefly. So, the way that our upstream sources wrote us messages was\nusing this protocol called FIX, which is how we represent internally\nfor the files that Gord was consuming as a, like, tag equals value\npipe-separated thing. And there were no constraints on this. So a\ncommon problem that we ran into is someone wanted to write a new\nsource to Gord, and they would have to contact us and be like, “So,\nthere’s, like, a hundred different fields I could provide, what ones\ndo you need to provide, and why, and how, and, you know, what’s\nrelevant?” And we, as Gord devs, kinda had to know, “Oh, you know,\ntransaction time is required for all execs. And for bonds execs, you\nmust provide a settlement date. But for other kinds of execs, that’s\nactually an optional field.” And there were a number of these\ninvariants in how our upstream sources had to write us information to\ndeliver that information in the way Gord would interpret properly that\nwere not anywhere and we sort of provided no help in people creating\nthese.",
+      "zh": "还有一件挺重要的事我之前简单提过。我们的上游数据源向我们写消息用的是一个叫 FIX 协议的协议，Gord 消费的文件在内部表示为一种标签等于值、竖线分隔的格式。这没有任何约束。所以我们经常遇到的问题是：有人想往 Gord 写一个新的数据源，就得来找我们，问，「大概有一百个字段可以填，你们需要哪些，为什么，怎么填，有什么相关的？」而我们作为 Gord 的开发者得知道，「嗯，交易时间对所有成交记录都是必填的。债券成交还必须提供结算日期，但对于其他类型的成交，这个字段是可选的。」这样的约束有很多，规定上游数据源必须怎么写才能让 Gord 正确解读，但这些约束没有记录在任何地方，我们也没有给大家提供任何帮助。"
+    },
+    {
+      "idx": 84,
+      "en": "So, we’ve made a new library that we are currently in the process of\nworking on and continuing to iterate on. This is a slow process to get\nit into a polished state where if someone wants to write us a message\nto Gord, they have a library where they can say, like, “Here’s the\ntype I want to fill out,” which is, you know, a record with all the\nfields that are required for a bond exec, or a wholesaling fill, or,\nyou know, a different kind of message that they might care about, and\nwe tell them what fields they need to provide to us. And then, they\ndon’t have to think about the translation into how Gord is actually\ngoing to consume it, which also gives us the ability to hopefully\nsomeday change that format from being this, you know, a files on disk\nthing. Which, you know, we have some stuff in the process we’re hoping\nto do there. But, that’s a big one where it’s, like, making it easier\nfor people to write correct data to Gord with less iteration on our\npart.",
+      "zh": "所以，我们做了一个新的库，目前还在推进中，持续迭代。这是一个慢工出细活的过程。如果有人想给 Gord 写一条消息，他们有一个库可以说，「我想填这个类型」——就是一个有所有必填字段的记录体，比如债券成交、批发成交，或者其他他们关心的消息类型——然后我们告诉他们需要提供哪些字段。他们不用再去想怎么翻译成 Gord 实际消费的格式，这也给了我们机会，希望有一天能把这个格式从磁盘文件的形式换掉。我们在这方面有一些计划正在推进。但这是一件很重要的事：让大家更容易地往 Gord 写入正确的数据，而不需要在我们这边反复迭代。"
+    },
+    {
+      "idx": 85,
+      "en": "So when we are thinking about that, in some sense the lack of types or\nschemas, or something like that, in the story, right? Both when people\nare handing it over to you and when people are consuming. Gord is\nacting as this very complicated rendezvous point. There’s all these\npeople who are handing data over to it, there’s all these different\nsets of people and hundreds of applications, hundreds of code bases\nthat are consuming and reacting to that data. And the Gord team is\nsitting in the middle, needing to understand important things about\nall consumers and all the producers, and try and guide all of those\npieces together. And you’re kind of in this middle step where what\nyou’re doing is providing a library which is at least a place where\nGord devs and the people who are providing data can collaborate and\nthink at the level of logical and highly structured transactions,\nright? The other can say, “Here is the type that represents the thing\nthat’s happening.” And then, the Gord dev team can think about how to\ntranslate that into the, like…the gooey internal representation and\nthink about its place in the rest of the pipeline.",
+      "zh": "从这个角度来想，某种意义上缺的是类型或者 schema 之类的东西，对吧——无论是在数据交给你的时候，还是在人们消费的时候。Gord 是一个非常复杂的汇聚点，有那么多人在往里送数据，有那么多不同的系统、几百个应用、几百个代码库在消费和响应这些数据。Gord 团队坐在中间，需要理解所有消费者和所有生产者的关键信息，并尝试把所有这些部分协调在一起。你们现在正处于这样一个中间阶段——提供一个库，至少给了一个地方，让 Gord 的开发者和数据提供方可以在逻辑层面、高度结构化的交易层面上进行协作，对吧？提供方可以说，「这是代表这件事的类型。」然后 Gord 开发团队可以考虑怎么把它翻译成内部的……那个黏糊糊的内部表示，并考虑它在整条流水线中的位置。"
+    },
+    {
+      "idx": 86,
+      "en": "And the longer term game plan is to actually get rid of the gooey\ninternal representation and go to something that has more structure\nthe whole way through. Because the amazing thing about type systems,\nin some sense, and there are type systems that sit inside of\nprograming languages, and there are type systems that you have that\nare on message types that span across different applications, but they\nhave this lovely property of, like, locking systems together and\ntranslating force across them. If someone wants to make a change and\nthey need to modify the types, and you see how those type changes flow\nthrough, you can understand by that process of flowing the type\nchanges through the effect on a broad set of the infrastructure. And\nit helps that we have everything in this big monorepo world where all\nof the different pieces of code, at least the most up to date versions\nthat you would get if you rolled a new one, are all sitting together\nand compiled together. And you can have these invariants that cross\nwidely separated systems. In some sense, the world you’re moving\ntowards is one where you get to leverage types kind of more\nconsistently in the way that you build systems.",
+      "zh": "而长期的规划是真正把那个黏糊糊的内部表示干掉，换成一个全程都有更多结构的东西。因为类型系统的神奇之处——某种意义上——无论是编程语言内部的类型系统，还是跨不同应用的消息类型的类型系统，都有一个很好的特性：把系统锁定在一起，强制传递变化。如果有人想做一个改动，需要修改类型，然后看着这些类型变化怎么流动，你就能通过这个流动过程理解它对大量基础设施的影响。还有一个好处是我们把所有东西都放在一个大型单体仓库里，所有不同部分的代码——至少是你新上线时会拿到的最新版本——都放在一起，一起编译。你可以拥有跨越广泛分散的系统的不变量。某种意义上，你正在迈向的世界，是能更一致地把类型系统的优势用到构建系统的整个过程中。"
+    },
+    {
+      "idx": 87,
+      "en": "Yeah, yeah, for sure. Another big one that we’ve been, again, working\ntowards over the course of many years, is when I first started on the\nteam, you could consume the entire Gord stream. Or you could consume\njust the fills. And those were kind of your two options. Around when I\nwas joining the team, we added a new stream called monitoring, which\nwas a place where people could put sources that didn’t affect our\nbookings and our positions. But, like, it turns out this process Gord\nwas providing of normalizing data was more useful than just for the\nthings that we were making sure we had to actually track in our\nposition to upload to clearing firms. There were more use cases people\nmight want to have for it, so we introduced the monitoring stream.",
+      "zh": "对对，确实。另一件我们花了很多年在推进的大事是——我刚加入团队的时候，你可以消费整个 Gord 数据流，或者只消费成交数据，基本上就这两个选项。大概在我加入前后，我们新增了一个叫 monitoring 的流，用来放那些不影响我们账务和持仓的数据源。但后来发现，Gord 提供的这个归一化数据的过程，比我们实际需要追踪并上报给清算机构的那些东西有更广泛的用途。大家有更多的使用场景，所以我们引入了 monitoring 流。"
+    },
+    {
+      "idx": 88,
+      "en": "And it turned out two things. Either the real thing, (or sort of all\nof the real thing), or all of the fake thing — which were actually\ninsufficient as we continued to grow and do more things. It was useful\nfor people to be able to subscribe to all of the information about\njust options, or all of the information about some of our\nclient-facing trading, and some of other things like that. And so\nwe’ve been starting to be able to express meaningful subunits of\nactivity people might want to subscribe to, and give people pointers\nto options data or other things like that. Rather than, if you want\nthe options data, you have to subscribe to the full stream and just\nfilter out the stuff you care about.",
+      "zh": "后来发现有两种情况：要么是真实数据（或者说全量真实数据），要么是全量模拟数据——随着我们持续成长和做更多事情，这两个选项已经不够用了。让大家能订阅所有关于期权的信息，或者所有关于我们面向客户交易的信息之类的，会很有价值。所以我们开始能够表达大家可能想订阅的有意义的活动子集，给大家提供指向期权数据或其他数据的入口。而不是说：如果你想要期权数据，你得订阅完整数据流，然后自己把你关心的过滤出来。"
+    },
+    {
+      "idx": 89,
+      "en": "So is this a kind of static segmentation of the flow? Or a more\ndynamic system where you get to express, “Here’s, like, a predicate\nthat represents the data that I want,” or, “Here’s some kind of\nlogical specification that I want,” and you get that? Or is it just,\nlike, a kind of physical breakdown of it into different sub-streams?",
+      "zh": "那这是一种静态的分流方式？还是一个更动态的系统，可以表达「给我满足这个条件的数据」，或者某种逻辑规范，然后就能得到对应的数据？还是说只是把它在物理上拆成不同的子流？"
+    },
+    {
+      "idx": 90,
+      "en": "It is currently relatively static, in that we have to know ahead of\ntime where these things are going to end up. However, we have some\ndreams about making that a little bit more dynamic over time. But that\nis something that is still quite a ways out. But even so, the\npre-ordained breakdown still provides a lot of value to people and\nstill makes it much easier for people to consume parts of the\ninformation in smaller subsets. But obviously we’d like to get to a\nworld where you could be like, “Give me information about things with\nthis symbol,” which would be very nice. But that is still a ways out.",
+      "zh": "目前相对来说还是比较静态的，我们得提前知道这些数据最终会去哪里。不过我们有一些想法，希望随着时间推移让它更动态一些，但那还有相当长的路要走。即便如此，预先定义好的分流方式已经给大家带来了很多价值，让大家能更方便地消费更小范围的数据子集。但显然我们希望最终能做到那种程度——你可以说，「给我这个代码的相关信息」——那会非常棒。但那还有很长的路要走。"
+    },
+    {
+      "idx": 91,
+      "en": "So you’ve talked a bunch about ways in which you’ve worked on\nextending Gord, in some sense kind of at, like, the core functional\nlevel. Changing the APIs and changing the way data flies around. Are\nthere things that you have had to do at the engineering process level\nto deal with just the extreme combination of growth and criticality of\nthe system, right? As it grows in complexity in the number of things\nyou have to support and the amount of data, and yet still the thing\nthat the entire firm depends on for all of its trading. What have you\ndone at the level of trying to build a process that lets you reliably\nmake changes and officially make changes?",
+      "zh": "你讲了很多在某种程度上扩展 Gord 的工作——从核心功能层面，改变 API，改变数据流动的方式。但在工程流程层面，为了应对系统极度增长和极度关键性的双重压力，你们做了什么？随着支持的东西越来越多、数据量越来越大，而整个公司所有交易都依赖于它——在构建一个能可靠地、高效地进行变更的流程这个层面，你们做了什么？"
+    },
+    {
+      "idx": 92,
+      "en": "When I started, there were no in-code tests. Not quite none. There\nwas, like, maybe one or two files of very small amounts of things, but\nthere were virtually no in-code tests for anything in the system. In\naddition to that, the way that we verified that we had not broken\nanything was we would roll our system to dev and we would just look at\nthe diffs in the output from production and the thing we were testing\nover the course of many days, to just try and make sure we had seen\nenough variety of things that we’d confident that weren’t going to,\nlike, fundamentally break anything.",
+      "zh": "我刚加入的时候，代码里没有任何测试。也不是完全没有，大概有一两个文件，有一点点很小的东西，但系统里基本上什么都没有测试。除此之外，我们验证没有破坏东西的方式，是把系统上线到开发环境，然后就对比生产环境和测试环境的输出 diff，连续看好多天，试着确保我们见过足够多的情况，可以有把握不会造成什么根本性的破坏。"
+    },
+    {
+      "idx": 93,
+      "en": "In addition to that, there was a really wide range of testing\nprocedures that we did, and many of them we still do, when we’re\nrolling production, to ensure that we don’t break the system in ways\nthat we…breaking the system would, again, halt all the trading. We\ndon’t want to do that. So we had a lot of arduous procedures. When I\njoined the team, we rolled the system a few times a year.",
+      "zh": "除此之外，我们在上线生产环境的时候，还有一套范围很广的测试流程——很多我们现在还在做——来确保不会以某种方式把系统搞坏，因为一旦搞坏，就会暂停所有交易，这是我们不想看到的。所以我们有很多繁琐的流程。我刚加入的时候，我们一年上线几次。"
+    },
+    {
+      "idx": 94,
+      "en": "(laughs).",
+      "zh": "（笑）。"
+    },
+    {
+      "idx": 95,
+      "en": "Yes. One of the things that we are now at is we roll about once a\nmonth, which is still quite slow. And indeed, for a firm that does as\nmany new things as Jane Street, and on such a frequent basis, this can\nbe a pain point. We work really hard to try and make sure we know\nwhat’s coming in advance and that we’re well-prepared so we get things\nout in time, but it is still a painful thing. And we would love to get\nto a spot where we can roll the system more frequently. And we’re\ndoing a lot of work in that direction, and have done a lot of work.",
+      "zh": "对。我们现在大概是每月上线一次，依然相当慢。对于一个像 Jane Street 这样频繁推出新东西的公司来说，这是个痛点。我们很努力地提前弄清楚要上什么，做好充分准备，争取按时把东西发出去，但还是很痛苦。我们很希望能做到更频繁地上线。我们在这个方向上做了很多工作，也已经做了很多工作。"
+    },
+    {
+      "idx": 96,
+      "en": "One of the early things I did, I mentioned a…we had no performance\ntest. I added a performance test so that we could measure performance\nof the system every time we rolled, to make sure we hadn’t introduced\na concern in performance regression. In addition to that, we built an\nin-unit test that tested the entire architecture of the system so that\nwe could, you know, have our input message types all the way through\nto our output types. The way that we tested things when I started was\nyou would literally spin up an entire dev version of the system, and\nthen you would manually construct the activity that you wanted to run\nthrough it, and then you would run it through. And this process was,\nlike, slow and pretty painful to set up. So you basically just had to\ntrust that all the other developers on the team were following the\nprocedure and were doing all the things appropriately. And you would\nlook at, like, a few sketch notes in their testing of the feature. You\nknow, they checked all the right things. Once we had in-unit in-code\ntests, we could actually add a test for the behavior change you\nintended and demonstrate that it had the effect you intended. This\nallowed you to make changes a lot more confidentially and faster on\nthat note.",
+      "zh": "我做的早期工作之一——我之前提到过——是我们没有性能测试，我加了一个性能测试，这样每次上线都能衡量系统性能，确保我们没有引入性能回归。除此之外，我们构建了一个覆盖整个系统架构的集成单元测试，这样就可以从输入消息类型一路测到输出类型。我刚加入的时候，测试的方式是：你字面上要启动一套完整的开发版系统，然后手动构造你想跑的活动数据，再把它跑一遍。这个过程既慢又痛苦。所以你基本上只能信任团队里其他开发者都在遵守流程，做了所有该做的事，然后看一下他们功能测试的一些草率的笔记——你知道，他们检查了所有该检查的点。有了代码内的单元测试之后，你可以真正为你要做的行为变更添加测试，并证明它达到了预期效果。这让你能更有把握、更快地做出改动。"
+    },
+    {
+      "idx": 97,
+      "en": "There are a number of things about how we roll that were relatively\npainful processes that we have done a lot of work as a team to\nimprove. When I started, the way that we rolled Gord was there was a\nsymlink in basically our virtual file system that pointed to the\nbinary of the current production, Gord. And so the way that you\nflipped Gord to make a new version primary was you went in and you\nmanually changed that symlink. Honestly, there are things that\nare…could be worse with that. But the thing that made this really\npainful was Gord is global, so today is not today everywhere. So what\nwould happen is around 3:00 PM New York time, which is around 3:00 AM\nHong Kong time, Gord would start up for tomorrow. So you had to change\nthe symlink for Hong Kong between when Hong Kong Gord shutdown, which\nwas 9:00 AM, and 3:00 PM when it started up again in New York. And\nthen, at around 5:00 PM New York time, which is around 10:00 PM in\nLondon, and you’d have to change the symlink in London at 5:00 PM\nbefore London Gord started up. And then, when Gord shut down at 9:00\nPM, you had to go in and change the symlink in New York.",
+      "zh": "我们上线流程里有很多相当痛苦的环节，团队花了很多功夫去改善。我刚加入的时候，上线 Gord 的方式是：在我们的虚拟文件系统里有一个符号链接，指向当前生产环境 Gord 二进制文件。要把 Gord 切换到新版本作为主节点，你就得进去手动改那个符号链接。说实话，这还算不上最糟糕的方式。但让这件事真正痛苦的是：Gord 是全球性的，所以今天在哪里并不总是同一天。具体来说，纽约时间下午三点，也就是香港时间凌晨三点，Gord 会为明天启动。所以你得在香港 Gord 关闭（上午九点）和纽约时间下午三点它重新启动之间这段时间里，改好香港的符号链接。然后，纽约时间下午五点，也就是伦敦时间晚上十点，你得在伦敦 Gord 启动之前的下午五点改好伦敦的符号链接。然后，等 Gord 在晚上九点关闭，你还得去改纽约的符号链接。"
+    },
+    {
+      "idx": 98,
+      "en": "And if you failed to do any of these things, then Gord would be\nconsidering different Gords primary in different offices. And so\nclients would be getting weird data, and, like, this would cost many,\nmany major problems. And, indeed, this was a thing that had survived\nbecause the people on the team were excessively careful and\nthoughtful, and, like, it was, you know, a thing that survived right\nup until my second roll.",
+      "zh": "如果你有任何一步没做到，不同办公室的 Gord 就会把不同版本的 Gord 当成主节点，客户端就会收到奇怪的数据，这会造成各种各样的重大问题。而且这件事之所以能一直维持下来，就是因为团队里的人都格外小心和认真，这个状态一直持续到了我第二次上线。"
+    },
+    {
+      "idx": 99,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 100,
+      "en": "(laughs) Um, I have ADHD, and remembering to do specific tasks at very\ncontrolled time windows is a thing that I am bad at. And so, I think\nthis was actually my second roll on the team that I was doing. I\nrolled Hong Kong at 10:00 AM, and then I went home for the day, and at\n8:00 PM realized in a moment of horror that I had not changed the\nsymlink for London. And so, at 8:00 PM, London had already started\nup. So we then had to do a relatively painful rollback procedure, and\nit turned into a relatively large production incident all over,\nforgetting to change a symlink in a particular two-hour window. So we\nfixed that.",
+      "zh": "（笑）呃，我有 ADHD，在特定的受控时间窗口内记住要做特定的任务，是我不擅长的事情。所以，我想这大概是我在团队里做的第二次上线。我在上午十点改好了香港的符号链接，然后就下班回家了。晚上八点，突然一阵恐慌，意识到我忘记改伦敦的符号链接了。而那时候已经是晚上八点了，伦敦早就启动了。于是我们不得不走一套相当痛苦的回滚流程，就这样因为在一个两小时的窗口里忘记改一个符号链接，演变成了一起相当大的生产环境故障。所以我们修了这个问题。"
+    },
+    {
+      "idx": 101,
+      "en": "Now, it is the case you basically can stage a change and none of the\nsymlink stuff is used anymore. There’s a process that tracks which\nGord is primary on which day. And it’s just a config file that you can\nchange in advance. You can say, “I would like Gord to flip three days\nfrom now,” and it will just do it for you. Everything is fine. It’s\nvery automated. There’s none of this sort of…it understands a notion\nof date, and then Gords just figure out what date they’re currently\nrunning on and use, “Am I primary or not?” As opposed to the thing we\nhad before, which was not awesome (laughs).",
+      "zh": "现在，你基本上可以分阶段部署变更，不再需要用到任何符号链接的东西了。有一个进程会追踪哪个 Gord 在哪天是主节点。这只是一个配置文件，你可以提前修改。你可以说，「我希望 Gord 在三天后切换，」它就会自动帮你完成。一切都没问题，非常自动化，完全不需要那些……它理解日期的概念，然后各个 Gord 只需要弄清楚自己当前运行在哪一天，判断「我现在是主节点吗？」完全不像我们之前那套方案——那个真的不太好用（笑）。"
+    },
+    {
+      "idx": 102,
+      "en": "Right. Any time you have something that depends on people just being\nrepeatedly careful over and over, you’re eventually gonna run into a\nproblem. The story also highlights just a weird thing about our\ninfrastructure, and I think, in some sense, about the trading world,\nwhich is the notion of day, right? Like, you have a trading day, and\nlots and lots of applications start up at the beginning of the trading\nday and shut down at the end of the trading day. And that’s\nhistorically, early on, how we did kind of everything. And the\ncomplexity of Gord is it was kind of straddling those two worlds of,\nlike, we have basically three regions in which we operate, centered in\nNew York, and London, and Hong Kong for North America, and Europe, and\nAsia. And each one of those Gord instances had its own trading day,\nand it would start at one point and end at another point. But also,\nthey communicated with each other and shared information, and so you\nended up with this kind of weird handoff and overlap, and shutting\ndown and bringing back up. And this is increasingly not how we\noperate.",
+      "zh": "对。只要有什么东西依赖于人们一遍又一遍地小心翼翼，你迟早都会出问题。这个故事也揭示了我们基础设施里一个挺奇特的地方，某种程度上也是整个交易世界的特点，就是「交易日」这个概念。很多很多应用会在交易日开始时启动，在交易日结束时关闭。这在历史上、早期的时候，基本上是我们做所有事情的方式。Gord 的复杂性就在于，它同时横跨了两个世界——我们在三个区域运营，分别以纽约、伦敦和香港为中心，覆盖北美、欧洲和亚洲。每个 Gord 实例都有自己的交易日，在某个时间点启动，在另一个时间点结束。但同时，它们之间还要互相通信、共享信息，于是就出现了这种很奇怪的交接和重叠，关了又启动，启动了又关。而这越来越不是我们现在的运作方式了。"
+    },
+    {
+      "idx": 103,
+      "en": "More and more, Jane Street just operates 24 hours a day. And more of\nour systems have moved over to this model. But it’s just kind of a\ngood example of the kind of complexities that are, like, somewhat\nunique to the historical story about how the system evolved.",
+      "zh": "Jane Street 越来越多地实现了 24 小时运营，我们越来越多的系统都迁移到了这种模式。但这只是一个很好的例子，展示了那种复杂性——某种程度上，它是这个系统演进历史上独有的东西。"
+    },
+    {
+      "idx": 104,
+      "en": "Yeah. One of the things that we want to do is make it so that Gord is\nmore 24/7 available. But there’s also a lot of really nice things that\ncome out of being able to shut your system down, like having to reboot\nwindows and being able to archive things at a clean time when nothing\nnew is being written into the system. We are working towards a world\nwhere we will be able to set up our boxes dynamically and fold boxes\nsort of in and out of being used on a dynamic basis. And then\neventually hopefully get to a point where we actually can have Gord be\n24/7 without all of these sort of pain points. But because Gord wasn’t\ninitially architected with this as the plan, it is, again, a\nrelatively arduous process with many steps along the way to get from\npoint A to B.",
+      "zh": "嗯。我们想做的事情之一，是让 Gord 能够更接近 7×24 小时可用。但能够关闭系统这件事本身也带来很多好处，比如可以重启一些东西，可以在没有新数据写入系统的干净时刻做归档。我们正在努力朝着一个方向推进——能够动态地搭建我们的节点，动态地把节点纳入或移出使用。最终希望能达到一个状态，让 Gord 真正实现 7×24 小时运行，不再有这些痛点。但因为 Gord 最初设计时就没把这个当成目标，所以，这又是一个步骤繁多、相当费力的过程，从 A 点到 B 点要经历很多阶段。"
+    },
+    {
+      "idx": 105,
+      "en": "Okay, so let’s switch gears. We spent a lot of time talking about\nsoftware engineering, which is the core role that you have. You also\ndo a lot of other things at Jane Street. And one thing you’ve been\ninvolved a lot in over the years is with recruiting and with our\ninternship program, and a lot of things surrounding that. And you’ve\nalso done a lot of work specifically on recruiting of underrepresented\ngroups of various kinds. I’d be curious if you could tell me a little\nbit more about, like, the kind of efforts you’ve been involved in in\nthat part of the world?",
+      "zh": "好，我们换个话题。我们花了很长时间谈软件工程，这是你的核心职责。你在 Jane Street 还做很多其他事情。这些年你参与了很多招聘工作，包括我们的实习项目，还有很多相关的事情。你也为招募代表性不足的群体做了很多专项工作。我很好奇，你能不能给我讲讲，你在这方面都参与了哪些努力？"
+    },
+    {
+      "idx": 106,
+      "en": "Yeah. When I started at Jane Street, I was the second female developer\nat the firm. Jane Street had already been around for many years, and\nso this is kind of sad. And people recognized that this was sad, but\nthey didn’t really know what to do about it. And so I, uh, relatively\nearly on, got involved in helping us figure out how to solve that\nproblem.",
+      "zh": "嗯。我刚加入 Jane Street 的时候，我是公司的第二位女性开发者。那时 Jane Street 已经运营了很多年，所以这其实挺令人难过的。大家也意识到这很遗憾，但都不太知道该怎么办。所以我，呃，很早就参与进来，帮助大家想办法解决这个问题。"
+    },
+    {
+      "idx": 107,
+      "en": "One of the things that was a big issue is that there is a view in the\nworld that finance is a pretty bro-ey and unpleasant place to work as\na woman. And while I have not found this to be true at Jane Street, I\nthink the culture is excellent and I’ve had really great experiences\nwith all of my colleagues. As I mentioned at the very beginning, I had\nno plans on working in finance when I graduated. And had I not done an\ninternship at Jane Street, there’s no way I would have even considered\nit. So a big part of what we’ve done is we’ve done a ton of outreach\nprograms aimed at finding folks that might be actually a really good\nfit here and might really enjoy their time at Jane Street, and giving\nthem little tastes of what it’s like to work with us. What the culture\nis like. Getting them to meet a bunch of people.",
+      "zh": "有一个很大的问题，就是外界普遍觉得金融行业对女性来说是个很「兄弟会」、很不友好的工作环境。虽然我在 Jane Street 并没有这种感受——我认为这里的文化非常好，我和所有同事都有非常愉快的合作经历——但就像我一开始提到的，我毕业的时候根本没打算去金融行业工作。如果不是因为在 Jane Street 实习过，我根本不会考虑这个选择。所以我们做了大量的推广项目，专门去寻找那些可能真的很适合这里、可能真的会在 Jane Street 过得很好的人，给他们一点点体验在这里工作是什么感觉——了解这里的文化，认识一些同事。"
+    },
+    {
+      "idx": 108,
+      "en": "A lot of the way we’ve done this is through a bunch of external\nrecruiting programs we’ve built. One of the first ones of these that\nwas created was actually happened the year after I was an intern, I\nstarted helping out with it relatively early on when I came back, this\nwas called Women in STEM, which was aimed at bringing a bunch of folks\nbetween their senior year of high school and freshman year of college\njust to come see Jane Street and meet some of the people, and hear a\nlittle bit about what we do. And put it in people’s brains that this\nwas, you know, maybe a thing to consider when they were applying for\ninternships down the road.",
+      "zh": "我们做这件事的方式，很大程度上是通过我们自己建立的一系列外部招募项目。其中最早创立的一个，其实是在我实习的第二年——我回来之后很早就开始参与帮忙了——这个项目叫做 Women in STEM，面向的是高中高年级和大学新生之间的学生，邀请他们来 Jane Street 参观，认识一些员工，了解一点我们做什么。就是想在他们脑子里种下一颗种子，让他们知道这也许是一个值得考虑的选项，等他们以后申请实习的时候能想到我们。"
+    },
+    {
+      "idx": 109,
+      "en": "Indeed, my very first intern was someone that we found through Women\nin STEM, a woman named Haohang who now helps me run a bunch of the\nprograms that I’m going to further describe. But it really was the\ncase a lot of this is about finding folks that just would never have\napplied to us in the first place and getting them kind of into our\npipeline.",
+      "zh": "事实上，我带过的第一个实习生，就是我们通过 Women in STEM 找到的一位女生，叫 Haohang，她现在帮我负责运营很多我接下来要介绍的项目。但真的，很多时候，这件事的核心就是找到那些根本不会主动来投简历的人，把他们引入我们的招聘渠道。"
+    },
+    {
+      "idx": 110,
+      "en": "One of the things that really struck me about Women in STEM when we\nstarted doing it is it was a good example of playing the long\ngame. Trying to put together a program and tell them about us, but\nalso tell them about finance and teach them interesting things about\ntechnology. But this was planning out pretty far in advance, right?\nThese are people who were seniors, or in high school who were about to\ngo to college. And it was gonna be some time before they were people\nwho might apply for jobs here. But we’ve seen it work out, like there\nare plenty of people who went through that program who ended up\neventually coming here. And it’s also…it sort of worked I think\ndirectly on people who we’re trying to recruit, and also has, like, a\nlarger brand-building effect.",
+      "zh": "Women in STEM 刚开始做的时候，有一点让我印象特别深，就是它是一个典型的「打长期牌」的例子。我们搭建这个项目，向他们介绍我们，同时也介绍金融，教他们有意思的科技知识。但这其实是一个规划相当长远的事，对吧？这些人还是高中生，刚要去上大学，要过一段时间才可能来我们这里应聘。但我们已经看到它发挥作用了——有很多经历过这个项目的人，最终都来到了这里。而且它也……我觉得它直接作用于我们想要招募的人，同时也有更大范围的品牌建设效果。"
+    },
+    {
+      "idx": 111,
+      "en": "Yeah. One of the things is a lot of the folks that we might be really\nexcited to have come to Jane Street, if they have a friend who does an\ninternship in finance and has a bad experience, if they haven’t had\nsort of something good to put against it, they just won’t even\nnecessarily consider a place like us. We found starting early and also\nhaving stuff, again, spanning sort of all of folks’ college years has\nbeen really effective at getting people in the door as often as\npossible.",
+      "zh": "嗯。有很多我们很希望来 Jane Street 的人，如果他们有个朋友在金融公司实习体验很差，而他们又没有什么正面的参照，那他们就根本不会考虑像我们这样的地方。我们发现，从早期开始介入，而且覆盖学生大学几乎所有年级，在吸引人才方面真的很有效。"
+    },
+    {
+      "idx": 112,
+      "en": "So one of the programs that we built relatively early on that has been\none of our most effective is called INSIGHT. And what this program is,\nis we bring a bunch of sophomore women to Jane Street for a week, we\nteach them a bit about finance, we teach them some OCaml, we just have\nthem spend a lot of time interacting with full-time Jane\nStreeters. And through this, we are able to get a lot of those folks\nto apply to our internship, and then hopefully, you know, people come\nas interns, and then come back full-time, and the whole pipeline goes\nfrom there.",
+      "zh": "所以，我们相对早期建立的一个项目，也是我们最有成效的项目之一，叫做 INSIGHT。这个项目的内容是，我们把一批大二女生带到 Jane Street 待一周，教她们一点金融知识，教她们一些 OCaml，让她们花很多时间和全职的 Jane Street 员工互动。通过这种方式，我们能让很多人去申请我们的实习，然后希望她们以实习生身份来，再回来做全职，整个招聘通道就这样建立起来了。"
+    },
+    {
+      "idx": 113,
+      "en": "INSIGHT has been sort of so successful we’ve actually expanded it. We\nhave expanded this because the number of women at Jane Street has\ngrown a ton since I’ve been here. I went from being developer number\ntwo, to having so many female developers, I no longer know them all. I\ndon’t even know the number anymore, which is, like, again-",
+      "zh": "INSIGHT 已经非常成功，我们实际上已经把它扩展了。我们之所以扩展，是因为 Jane Street 的女性开发者数量从我来到现在增长了非常多。我从第二位女性开发者，到现在女性开发者多到我已经不认识她们所有人了。我甚至不知道具体数字了，这个，就像，又一次——"
+    },
+    {
+      "idx": 114,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 115,
+      "en": "… a thing I was tracking for so long ‘cause, you know, it was like,\n“Okay, we’re at two. Okay, we got another female developer,\namazing. We’re at three. We’re at five. We’re at eight.” And, like,\nyou know, I cared about the individual numbers so much. And now, it\nreally does feel like the case that we are actually pretty good at\nrecruiting women into our internship.",
+      "zh": "……一件我追了好久的事，因为，你知道，那时候是「好，我们到两个了。又来了一位女性开发者，太棒了，到三个了。到五个了。到八个了。」你知道，我非常在意每一个具体的数字。而现在，我真的感觉我们在招募女性实习生这件事上，已经做得相当不错了。"
+    },
+    {
+      "idx": 116,
+      "en": "Our dev intern class this summer is about 25% women, which is,\nfrankly, not where I’d want it to be. I’d really love that number to\nbe higher. But at the same time, compared to where we started, it’s a\nmassive improvement. And I really want to celebrate the progress that\nwe’ve made, but we’re also not satisfied. We’re going to continue\ndoing more programs, and more events, and trying to recruit more women\nto Jane Street, and make sure that Jane Street continues to be an\nexcellent place for women to work.",
+      "zh": "我们这个夏天的开发者实习生班，大约 25% 是女性。坦率地说，这不是我想要的数字，我真的希望这个比例更高。但与此同时，和我们起步时相比，这已经是巨大的进步了。我非常想为我们取得的进步庆祝，但我们也并不满足。我们会继续推进更多项目、更多活动，不断招募更多女性来 Jane Street，确保 Jane Street 始终是一个对女性来说优秀的工作场所。"
+    },
+    {
+      "idx": 117,
+      "en": "Yeah. Even if it’s not perfect, we’ve made a lot of progress.",
+      "zh": "嗯。就算还不完美，我们已经取得了很大的进步。"
+    },
+    {
+      "idx": 118,
+      "en": "That’s right.",
+      "zh": "确实是这样。"
+    },
+    {
+      "idx": 119,
+      "en": "So when you run a program like INSIGHT, how do you think about the\nkind of dual problem of how to attract people, how to get people to\napply to it? And then also, among the people who apply, how do you\npick people who in a way, they’ll maximize the likelihood of success?",
+      "zh": "那么在运营 INSIGHT 这样的项目时，你怎么看待这样一个双重问题：一方面是如何吸引人、让人来申请；另一方面是在申请者中，怎么挑选出那些成功可能性最大的人？"
+    },
+    {
+      "idx": 120,
+      "en": "Yeah. A lot of this is amazing work done by our recruiting team to\nbuild connections on campus with women in CS groups, and building\nconnections with some of the bigger women in tech organizations like\nthe Anita Borg Foundation. So many years I went to Grace Hopper, I had\na booth, and, like, just would grab anyone walking by and be like,\n“Hey, let me talk about Jane Street and come hear about this thing.”\nAnd so a lot of it was done through sort of the work of the recruiting\nteam of finding people and getting our name on to campuses.",
+      "zh": "嗯。很大程度上，这都是我们招聘团队做的出色工作——在校园里和女性计算机科学社团建立联系，和 Anita Borg Foundation 这样的大型女性科技组织建立联系。好多年，我都会去 Grace Hopper 大会，我们有一个展位，就是逮住每一个经过的人，跟他们说，「嘿，来听我聊聊 Jane Street，来了解一下这个。」所以很大程度上，都是招聘团队在各个学校找人、把我们的名字传出去。"
+    },
+    {
+      "idx": 121,
+      "en": "And the thing that we’ve found very effective is once we kind of get\nour foot in the door to school, like, we can get our reputation to\nspread there reasonably effectively. So a lot of it is figuring out\nwhat club we need to reach out to, or how we kind of find an avenue\ninto a school. And this is one of the things that our recruiting team\nis really, really excellent at. They are excellent at many things, but\nthis is one.",
+      "zh": "我们发现一件非常有效的事，就是一旦我们在一所学校打开了局面，我们的口碑就能在那里相当有效地传播开来。所以很多时候，关键是搞清楚需要联系哪个社团，或者怎样找到进入一所学校的切入点。这是我们招聘团队真的非常非常擅长的事情，他们很多事情都做得很好，但这一点尤其突出。"
+    },
+    {
+      "idx": 122,
+      "en": "That points at another problem, which is maybe a different kind of\ndiversity, which is diversity in terms of the schools that you reach\nout to. Can you talk about how you get in and you get a reputation at\na school, and suddenly now you have access to a really interesting\nstream of candidates, but that requires specific investment in a\nparticular school. And there’s a ton of schools, and there are great\npeople scattered across all of these schools. Is there anything that\nwe’ve done in this to try and reach out to, like, people in the long\ntail of schools that we don’t have time to build particular\nrelationships with that school, but would still be interested in\nseeing at least some subset of the people there?",
+      "zh": "这又指向了另一个问题，也许是另一种类型的多样性——就是你所接触的学校的多样性。你进入一所学校、建立起口碑，突然间你就有了一个很有意思的候选人来源，但这需要对某所特定学校进行专门的投入。而学校有很多，优秀的人遍布所有这些学校。对于那些我们没时间与之建立专门关系的学校，我们有没有做过什么尝试，去接触那些长尾学校里的人？这些人未必多，但至少有一部分人是我们会有兴趣见一见的？"
+    },
+    {
+      "idx": 123,
+      "en": "I think the answer is the recruiting team does a lot of stuff here,\nbut I don’t actually know.",
+      "zh": "我觉得答案是招聘团队在这方面做了很多事，但我其实不太清楚具体情况。"
+    },
+    {
+      "idx": 124,
+      "en": "I don’t know what the answer is in the context of INSIGHT. I know in\ngeneral we try to do all sort…I mean, just to give a dumb example,\nlike this podcast, is a way of trying —",
+      "zh": "就 INSIGHT 这个项目而言，我不清楚答案是什么。我知道总体上我们会尝试各种各样的……我是说，举个最简单的例子，就像这个播客，也是一种尝试——"
+    },
+    {
+      "idx": 125,
+      "en": "Yeah.",
+      "zh": "是啊。"
+    },
+    {
+      "idx": 126,
+      "en": "…to reach out in a way that’s orthogonal to the particular efforts\nat school. And also, for that matter, reaches out to people who\nalready have jobs and are already employed in places.",
+      "zh": "……以一种和针对具体学校的推广工作完全不同的方式去触达更多人。而且，说到这里，这也能触达那些已经有工作、已经在某个地方就业的人。"
+    },
+    {
+      "idx": 127,
+      "en": "Yes. I mentioned the recruiting pipeline for our interns, being things\nlike INSIGHT, and some of the other programs in that space. But one of\nthe things that we are still working on trying to make better is our\nrecruiting pipeline for lateral women. Our intern class is 25% women,\nbut only about half of dev hiring is done through the internship, and\nthe other half is done through laterals, which are, you know, folks\nwho have been in the industry working at places. And the number of\nlateral women we hire is significantly lower, in terms of\npercentages. And this is a thing that we’re very actively working\non. We’ve been trying lots of different things in this space. I would\nsay we haven’t found a single silver bullet that works, but we’ve\ntried lots of different things, and some of them had some success, and\nsome we’re sort of still iterating on.",
+      "zh": "是的。我提到了我们实习生招募渠道，比如 INSIGHT 和这个领域里的其他一些项目。但有一件事我们仍然在努力做得更好，就是针对女性的侧招渠道。我们实习生班有 25% 是女性，但开发者招聘里大约只有一半是通过实习项目，另一半是通过侧招，也就是那些已经在业内其他地方工作过的人。我们通过侧招录用的女性，在比例上要低很多。这是我们正在非常积极推进的事情。我们一直在这方面尝试各种不同的方法。我得说，我们还没找到什么万能的解决方案，但我们试了很多东西，有些有一定成效，有些还在持续迭代中。"
+    },
+    {
+      "idx": 128,
+      "en": "One of the ones that is my favorite that we put together, and I really\nhope that we can now bring back as the pandemic recedes, is shortly\nbefore the pandemic we started hosting brunches for women in tech in\nthe city, just to hang out with a bunch of Jane Street developers and\nhave brunch. Because what happened was we were throwing out ideas for\nhow we might do some reach outs to women across the city who might be\ninterested in a job at Jane Street. And we were like…people were\ntalking about doing a tech talk, or doing a day where we brought\npeople to Jane Street. And I told them at the end… Casey, another\nfemale developer, and I were like, “We wouldn’t go to that. What would\nwe go to? We’d go to brunch.” (laughs) So —",
+      "zh": "其中我最喜欢的一个，也是我们自己搭建的，我真心希望疫情消退后能重新启动，就是在疫情前不久，我们开始在城里为科技行业的女性举办早午餐聚会，就是大家聚在一起，和一些 Jane Street 的开发者一起吃个早午餐。事情的起因是，我们在头脑风暴，想找方法接触城里那些可能对 Jane Street 工作感兴趣的女性。大家在讨论做一个技术分享，或者搞一个让大家来 Jane Street 参观的活动。然后我说出了我心里的想法……Casey，另一位女性开发者，还有我，我们都觉得：「我们自己才不会去那种活动。那我们会去什么？我们会去吃早午餐。」（笑）所以——"
+    },
+    {
+      "idx": 129,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 130,
+      "en": "…so we tried that. And things like that, where it’s just kind of\nreputation building, we didn’t think we would want to go to something\nthat was incredibly sponsored and, like, you know, very pitchy and\nwhatever. And so we were like, “Let’s actually just approach this from\na relatively altruistic angle. Let’s try and help women in tech in the\ncity, build a community, and approach that as the angle. And then, if\nit is the case that, great, maybe they’re not looking for a job, but\nthey have a friend who they know who is, this now might be a thing\nthat they might consider being like, ‘Oh, have you heard of this\nplace?’” Again, playing the long game of, like, we’re not doing this\nas a, “Oh, you have to be looking for a job,” or, “Oh, you have to be,\nyou know, uh, having this thing.” It’s like, “Actually, let’s just try\nand do a thing that we think would be fun for women in the city in\ntech. And hopefully, there are good knock-on effects from that over\nthe long haul.”",
+      "zh": "……我们就试了这个。类似这样的事情，其实本质上就是在建立口碑。我们觉得，那种非常官方赞助的、很「推销味」的东西，我们自己都不想去。所以我们就说，「我们换个思路，从一个相对真诚的角度来做这件事。我们试着帮助城里的科技女性，建立一个社群，就从这个角度切入。然后，也许她们当下并不在找工作，但她们有个朋友正在找，这件事或许会变成她们可能会说「哦，你听说过这家公司吗？」的一个契机。」还是那句话，打长期牌——我们不是要做一个「你必须在找工作」或者「你必须怎样怎样」的活动，而是「我们就是想做一件对城里科技女性来说真正有意思的事，希望从长远来看能带来好的连锁反应。」"
+    },
+    {
+      "idx": 131,
+      "en": "And, you know, frankly, I just really enjoy meeting a bunch of other\nfemale software developers around the city. That was a really fun part\nof the brunches, and I think was achieving the goal of helping build\ncommunity, helping build connection. And I think that is a thing that\nI hope that we get to bring back now that people are maybe willing to\nbe indoors at a brunch again. Or maybe we’ll do them outdoors.",
+      "zh": "而且，说真的，我自己就很享受在城里认识其他女性软件开发者这件事。早午餐聚会的那段时间对我来说真的很有趣，我觉得也确实在实现帮助建立社群、建立连接这个目标。这是我希望能重新启动的事情——现在大家也许又愿意在室内一起吃早午餐了。或者我们也可以搞成户外的。"
+    },
+    {
+      "idx": 132,
+      "en": "(laughs)",
+      "zh": "（笑）"
+    },
+    {
+      "idx": 133,
+      "en": "I don’t know.",
+      "zh": "还不知道呢。"
+    },
+    {
+      "idx": 134,
+      "en": "That’s amazing. Yeah, I actually hadn’t heard about these brunches at\nall. Sounds like a great idea and something we should totally start up\nagain. And I think your point about trying to generate something\nthat’s legitimately helpful to the people involved is, like, a really\nimportant thing and a thing that showed up in a lot of the recruiting\nprograms that we do. Like, we have a tech blog. And it’s obviously,\nlike…the subterranean purpose behind all of that is, like, we want\nto hire great people, but we also try really hard to make the things\nthat we write and publish, like, legitimately interesting and provide\nreal value for those who are reading.",
+      "zh": "太棒了。嗯，我之前完全不知道这些早午餐的事。听起来真是个好主意，我们绝对应该重新搞起来。而且我觉得你说的那个点很重要——要创造一些对参与者来说真正有价值的东西，这在我们做的很多招募项目里都有体现。比如我们有技术博客，虽然明眼人都能看出来，背后当然是希望招到优秀的人，但我们也真的很努力地让我们写的、发布的东西，实实在在地有趣，对读者有真正的价值。"
+    },
+    {
+      "idx": 135,
+      "en": "And I think that’s kind of a thing we’ve done in general. Like, Women\nin STEM similarly, like, we had this program where the long-term goal\nis hiring people, but we also tried to make sure it was legitimately\nhelpful and taught people things that would be useful to them, whether\nor not they came. That kind of playing the long game and trying to\nmake investments that are gonna pay off down the line, and do it in a\nway that feels legitimate, and connected, and useful to the people\ninvolved is core to how we approach this for a long time.",
+      "zh": "我觉得这是我们一贯的做法。就像 Women in STEM，我们有这个项目，长期目标是招聘，但我们同时也努力确保它真的有帮助，能教给学生一些有用的东西，不管他们最后有没有来 Jane Street。这种打长期牌的思路，做那些从长远来看能带来回报的投入，而且要以一种对参与者来说真诚、有连接感、有实际价值的方式去做——这是我们长期以来的核心做法。"
+    },
+    {
+      "idx": 136,
+      "en": "Yeah. One of the things sort of in this vein that I’m incredibly\nexcited about, that we’re running this summer for the first time —\nI’ve talked a lot about our recruiting of women to Jane Street —\nanother area I’m involved in is trying to recruit more\nunderrepresented minorities in tech in general to Jane Street. This is\nalso an area where we are woefully underrepresented and we want to get\nbetter.",
+      "zh": "嗯。有一件事让我非常兴奋，我们这个夏天第一次在运行——我前面讲了很多关于招募女性来 Jane Street 的事——我还参与的另一个方向，是努力招募更多科技行业的代表性不足的少数群体来 Jane Street。这也是一个我们严重代表性不足、非常想改善的领域。"
+    },
+    {
+      "idx": 137,
+      "en": "So a program that we’re running this summer is for folks who are from\nunderrepresented backgrounds in tech between their freshman and\nsophomore year. And we built a program that was designed to be purely\neducational. Part of the thinking about this was how to help people\nwho come from a place where Jane Street does have a strong recruiting\npipeline to begin with. Schools where Jane Street already does a lot\nof recruiting, we have people who have gone through our internship or\nour interview process, they know how to prep for that and know how to\nprepare for the interviews. And that just does give you a leg up in\nthe interview process. So our goal was to build something that could\nhelp level the playing field a little bit for folks coming from places\nwhere they just don’t have that preparation. We’re trying to find a\nwhole group of folks who are relatively early in their careers, and\nbuild a program that is designed to be 100% educational.",
+      "zh": "我们这个夏天运行的一个项目，面向的是大一和大二之间、来自科技行业代表性不足背景的学生。我们建立了一个设计上纯粹以教育为目标的项目。背后的一个考量是，怎样帮助那些来自 Jane Street 招聘渠道本就相对薄弱的地方的学生。在 Jane Street 已经大量招聘的学校，那里的学生经历过我们的实习或面试流程，知道怎么准备，知道怎么备考，这在面试中本身就是一个优势。所以我们的目标，是建立一种东西，能帮助那些来自没有这种积累的地方的学生，在某种程度上拉平起点。我们希望找到一批职业生涯相对早期的学生，建立一个 100% 以教育为目标的项目。"
+    },
+    {
+      "idx": 138,
+      "en": "We’re gonna teach them OCaml for the first several weeks of the\nprogram, and then we’re gonna work with them on an opensource project\nso that they’ll have something they can put on their resume. Because,\nagain, it is often hard to get an internship if you haven’t had\nsomething on your resume, like an internship, already. So kind of\nbuilding a thing aimed to both hopefully help these folks in their\nsort of… furthering their CS education, and also getting them\nprepared to be able to get internships during their sophomore and\njunior years, hopefully a bunch of them with us. But also just in\ngeneral, our aim of the program is to provide a service and provide a\nprogram that will hopefully help all of these folks. And, you know,\nagain, we always have the sort of long game of, like, hopefully some\nof those people become Jane Street developers. But our aim in building\nthe program is hopefully they’ll get something out of it, whether they\ncome to Jane Street in the long term or not.",
+      "zh": "我们会在项目的前几周教他们 OCaml，然后让他们参与一个开源项目，这样他们简历上就有东西可以写了。因为现实就是，如果简历上还没有实习经历，往往很难拿到实习。所以我们是想做一个东西，既能帮助他们推进计算机科学的学习，也能帮他们准备好在大二、大三的时候拿到实习机会——希望有很多是来我们这里的。但我们的目标也是提供一种服务，一个能真正帮到这些学生的项目。我们当然还是有那个长期目标，希望其中一些人最终成为 Jane Street 的开发者。但我们在设计这个项目的时候，出发点是：不管他们最终有没有来 Jane Street，我们希望他们都能从中得到一些东西。"
+    },
+    {
+      "idx": 139,
+      "en": "One of the interesting things about that program is it’s really\nconnected to opensource work that we do, right?",
+      "zh": "这个项目有一点很有意思，就是它和我们做的开源工作密切相关，对吧？"
+    },
+    {
+      "idx": 140,
+      "en": "Yeah.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 141,
+      "en": "Because one of the ways we’re making that happen is by having them do\nprojects where they don’t have to, like, come inside Jane Street’s\nwalls. They can work on stuff that we’ve open sourced already, and\nthat simplifies and smooths out that story.",
+      "zh": "因为实现这一点的方式之一，是让他们做不需要进入 Jane Street 内部的项目。他们可以在我们已经开源的代码上做事，这样整个事情就更简单、更顺畅了。"
+    },
+    {
+      "idx": 142,
+      "en": "Yeah. And it makes it much easier. Again, if the goal is kind of\nhelping them have something that they can talk with the world about,\nit’s much easier for something they can point to. One of the things\nthat is interesting about Jane Street is we don’t have a product that\nyou can, like, point to and show to your mom. You can’t be like, “I\ndid this thing.” And, you know, maybe looking at a bunch of opensource\ncode is not necessarily something everyone’s mom would understand, but\nit is a thing that, like, you can put on your resume and a recruiter\ncan look at and be like, “Oh, there’s a GitHub link. Okay, cool, I can\nsee a thing that this person did.” And I think those things are\nhopefully really helpful in helping them, again, as they’re\nprogressing in their CS education, and also in their careers.",
+      "zh": "对，而且也简单多了。还是那句话，如果目标是帮他们有东西可以对外展示，有一个能指给别人看的东西就容易多了。Jane Street 有一个有意思的地方，就是我们没有一个具体的产品，可以对你妈妈说「你看，我做了这个东西。」你没办法那样展示。嗯，看一堆开源代码也不一定是每个人的妈妈都能看懂的，但这是一个可以放在简历上、让招聘者能看到的东西，他们会说，「哦，有个 GitHub 链接，好的，我可以看到这个人做了什么。」我觉得这些东西对他们都很有帮助，不管是在推进计算机科学学习上，还是在职业发展上。"
+    },
+    {
+      "idx": 143,
+      "en": "Do you have any kind of feedback or a sense of how effective these\nprograms have been?",
+      "zh": "你有没有收到任何反馈，或者有没有感受到这些项目的实际成效？"
+    },
+    {
+      "idx": 144,
+      "en": "So I think for, um, INSIGHT and then also the version of it we run for\nunderrepresented minorities in tech, called IN FOCUS, they have been\nincredibly effective. The percentage of women who go through this\nprogram who then end up in one of our internships or then come back\nfull-time is something like 20%, which is, for a one-week program\nwe’re running, quite high. If we could have our interviews be 20%\neffective, that would be awesome.",
+      "zh": "我觉得，对于 INSIGHT，还有我们针对科技行业代表性不足群体运行的版本——叫做 IN FOCUS——它们的成效非常显著。经历过这个项目的女生，最终进入我们实习或者回来做全职的比例，大概是 20%。对于一个为期一周的项目来说，这个比例相当高。如果我们的面试能有 20% 的转化率，那就太了不起了。"
+    },
+    {
+      "idx": 145,
+      "en": "Are you saying 20% of the people who go through the program eventually\ncome to the Jane Street internship?",
+      "zh": "你是说，经历过这个项目的人，最终有 20% 来参加了 Jane Street 的实习？"
+    },
+    {
+      "idx": 146,
+      "en": "Something like that.",
+      "zh": "大概是这样的。"
+    },
+    {
+      "idx": 147,
+      "en": "That is astonishing.",
+      "zh": "这太惊人了。"
+    },
+    {
+      "idx": 148,
+      "en": "Yeah. One of the things that’s amazing is a group of people who are\nnot me who have taken over the program since I was involved…so I’m\nnot sure what the all-in numbers are these days, but at least when we\nwere involved in the program I think from our very first one, I think\nit was 25 students, and five of them ended up in the Jane Street\ninternship over the next few years.",
+      "zh": "嗯。有一点很厉害，就是现在有一群不是我的人接手了这个项目……所以我不太确定现在的整体数字是多少，但至少在我们负责这个项目的时候，我记得从我们第一届开始，大概有 25 个学生，其中有五个人在接下来几年里进入了 Jane Street 的实习。"
+    },
+    {
+      "idx": 149,
+      "en": "That’s amazing. That’s really a lot of impact to have on the firm’s\nhiring.",
+      "zh": "太棒了。这对公司招聘的影响真的很大。"
+    },
+    {
+      "idx": 150,
+      "en": "It’s nuts. From the very first IN FOCUS we ran, we had, I think,\nsomething like 15 students, and three of them ended up at Jane Street\nthat next summer. Again, we were running this for the first time in\nthe fall, so a lot of people who came to it already had\ninternships. So our hope is that some of those people will be in,\nlike, this year’s internship and next year’s. So getting from just one\nyear of turnaround, it’s been awesome. And, again, we would love all\nof these numbers to be larger, and we’re, we’re hoping to continue to\nmake them so. But the impact of these things is really large. And the\nnumber of people who come through these programs who say, “I never\nwould have considered applying to Jane Street if not for them,” is\nalso very large.",
+      "zh": "真的挺不可思议的。从我们运行的第一届 IN FOCUS 开始，我记得大概有 15 个学生，其中三个人在第二年夏天就来了 Jane Street。当然，我们是在秋天第一次举办的，所以很多来参加的人当时已经有暑期实习了。我们希望其中一些人能在今年或者明年的实习班里出现。就仅仅一年的时间，效果就已经非常好了。当然，我们希望所有这些数字都能更大，我们也在努力实现这一点。但这些项目的影响真的很大。而且，经历过这些项目之后说「如果没有这个项目，我根本不会考虑申请 Jane Street」的人数，也非常多。"
+    },
+    {
+      "idx": 151,
+      "en": "You know, I think one of the women who helps run the programs now is\nGrace Zhang, who was actually in that first class of INSIGHTers. And,\nyeah, she said when she was applying, like, “Yeah, like, this isn’t a\nthing that I would have done before.” And, like, I’m so grateful we\nhave her ‘cause she is amazing. I think the best selling point Jane\nStreet has is just introducing full-time Jane Streeters to people\nbecause we are, in general, a very inclusive, welcoming, and friendly\nplace to work. And I think that the people here are fantastic. When\npeople are, you know, asked in interviews, “What is your favorite\nthing about the place?” People have to struggle to come up with an\nanswer that isn’t, “The people,” because everyone’s answer is, “The\npeople.” And so, that gets a little repetitive, but it’s just so true.",
+      "zh": "你知道，现在帮我们运营这些项目的女生之一是 Grace Zhang，她实际上就是第一届 INSIGHT 学员。她说当时申请的时候，「是啊，这不是我之前会去做的事。」我真的很庆幸我们有她，因为她太厉害了。我觉得 Jane Street 最好的宣传，就是让全职的 Jane Street 员工直接和人们接触，因为我们整体上是一个非常包容、热情和友善的工作场所。我觉得这里的人太棒了。当大家在面试中被问到「你最喜欢这里的什么」时，大家都很难想出一个不是「同事」的答案，因为每个人的答案都是「同事」。这个答案显得有点千篇一律，但真的就是这样。"
+    },
+    {
+      "idx": 152,
+      "en": "All right. Thanks so much for coming and joining me. This has been\ngreat.",
+      "zh": "好了。非常感谢你来和我聊这些，这次真的太棒了。"
+    },
+    {
+      "idx": 153,
+      "en": "Yeah, it’s been awesome. Thank you.",
+      "zh": "嗯，真的很开心。谢谢你。"
+    },
+    {
+      "idx": 154,
+      "en": "You’ll find a complete transcript of the episode, along with show\nnotes and links at signalsandthreads.com. One thing I wanted to\nmention is that, as you may have noticed, the pace of releasing new\nepisodes has slowed down a bit. Don’t worry, we’re not going\nanywhere. In fact, we’ve got a bunch of episodes planned that I’m\nreally excited about. But things have been busy and I do expect the\npace to be a bit slower going forward. Anyway, thanks for joining us,\nand see you next time.",
+      "zh": "你可以在 signalsandthreads.com 找到本期节目的完整文字稿，以及节目说明和相关链接。我想提一件事，就是你可能已经注意到，我们发布新节目的频率最近慢了一些。别担心，我们不会停的。实际上，我们已经规划了一批让我非常期待的节目。只是最近比较忙，我预计未来的更新频率会慢一些。不管怎样，感谢收听，下期再见。"
+    }
+  ]
+}

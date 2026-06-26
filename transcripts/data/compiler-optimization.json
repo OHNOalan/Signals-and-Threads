@@ -1,0 +1,811 @@
+{
+  "slug": "compiler-optimization",
+  "title": "Compiler optimization with Greta Yorsh",
+  "mp3_rel": "audio/compiler-optimization.mp3",
+  "transcript": [
+    {
+      "type": "ts",
+      "text": "00:00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals & Threads, in-depth conversations about every layer of the tech stack from Jane Street. I’m Ron Minsky. So, it’s my pleasure today to have a conversation with Greta Yorsh. Greta is a compiler engineer in our compilers team in the London office, and she also has a rich and interesting background in compilers and programming languages and program analysis and verification, and we’re going to talk about all that. She’s also had a lot of experience in both industry and academia, and since 2018, Great has worked with us working on the OCaml compiler. So, Greta, to start with, can you talk about how you got interested in compiler optimization?"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I studied in Israel. I did my undergraduate studies in computer science and economics. I found that I don’t cope well with uncertainty, so the interesting mathematical bits of economics were not the right choice for me. So, I decided to do a PhD in computer science in the area of software verification where a lot of the concerns are about ensuring things, so that fits well with my approach to certainties. And after my PhD, I worked for a few years at IBM Watson Research Center in New York working on program analysis and verification problems.\n After that, I moved to Cambridge in England, and I joined an amazing company, ARM, that makes processors, and I worked there in the compilers team working on the GCC compiler backend for ARM, and after that, I worked at Queen Mary University of London as an assistant professor, or lecturer it’s called in England, where I did research and teaching in the area of compilers, and then recently, a year and a half ago, I joined Jane Street. At Jane Street, I work on the compilers team on the OCaml compiler."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Tell us a little bit more about how that fits into the arc of your research."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I started my research working on the problem of software verification or certain aspects of this problem, proving that software satisfies certain good properties, correctness properties that users expect from it, and that research involved a lot of reasoning about the source code of the program rather than executing it and then using certain formal methods and logical reasoning techniques, decision procedures, in order to prove properties of the program.\n I worked on that for a while, and there’s this ultimate goal of proving that the software behaves just the way it should be so that real-world executions of their program don’t cause terrible failures, and I was very excited about it for a while, but it is an undecidable problem, a problem that is very hard to solve in general, and that becomes a bit frustrating after a while, and I was interested in what is it that real programmers and users of software want to prove about their programs, and how I can help them using the techniques that I know and the logic that I know.\n So I worked on that, and in the process of that, I’ve discovered that it’s really fun to work with real users and have people who care about certain things. I don’t know what they care about, but if I talk to them, maybe I’ll find out, and maybe one of the tools I have in my toolbox will help me to give users a tool, and I found it very exciting. I think the first time it happened, it was at IBM, and I was really excited about it, but what I also realized is that not everyone really cares about correctness, that sometimes it’s okay to have bugs in their programs.\n There are other important aspects of software, like performance. That made a big change to my understanding, because I could now put these very formal techniques together with something practical and try to combine the two. And then when I had the chance to work at ARM on the GCC compiler backend for ARM, I’ve discovered how important it is, the performance and how exciting it is to work on this micro-optimization, CPU-specific, machine-specific optimization, how much difference they make to the behavior of the program, to the performance behavior from these characteristics of the program, and at the same time, working on the compiler, you just can’t have bugs. An important property of the compiler is that so much else in our system is built on top of it. That was a tool that combines correctness and performance. It’s an optimization function that is very clear and measurable, as opposed to what properties do users want to have for their programs, and that’s how I came to work in compilers."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s interesting, you’re starting off by focusing on verification, because I think verification is this very shiny and attractive goal, because there’s this basic fact about programming, which is that we’re all terrible at it. Humans are bad at writing programs. Program languages are things that, at their best, do, infuriatingly, only the very specific things you ask them to do and not what you intended, and so trying to close that gap between the thing you tried to do and the terrible thing that you actually wrote down is an attractive goal.\n You were talking about one of the problems of verification, and just to be clear, by verification, formal methods (lots of terms here), we basically mean coming up with the moral equivalent of a proof that a program matches some specification. So you write in some precise, higher-level way what the program is supposed to do, and then there’s the actual program that you’ve written, and some kind of proof of the program does what it’s intended to do. You mentioned undecidability – an undecidable problem is one where you can show that there is no general technique that solves it all the time, and you mention that as a sign of how difficult the problem is. But, it’s a funny thing, in some sense almost everything that we do is undecidable, right? You can’t answer almost any interesting question about a program in full generality, the classic result being the halting program: You can’t even tell whether a given problem is going to ever finish executing in a general way. But that normally doesn’t stop us. The way we deal with this is we tend to provide people not with fully automated systems that solve all of their problems, but instead, tools that they can use while they write programs. They can maybe do some extra work along the side to help ensure the correctness of those programs, and those tools might be in the form of testing systems, and they might be in the forms of something that looks more like formal methods, things that, essentially, along with the program, develop some aspect of the proof of correctness of the program. So, I’m curious what you think about the kind of practicality and ergonomics of formal methods as a thing that can be layered into the programming process to make it easier for people to write programs that do the right thing."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "The kind of verification, proving properties of programs, that I think of when I say software verification (traditional methods) involve writing a program in one language and then providing specification of its behavior, telling what properties should hold about the program in a different language, in logic of some kind that describes it, and then proving that the specification and the implementation are conformed. That is very different from the type system approach that OCaml takes where the types are the specification of the program, and that is something I’m learning as I become better at programming in OCaml. But the kind of verification I’m talking about, the idea of specifying these properties on the side somewhere or even in the program, but in a different syntax, I think is a big problem for adopting this kind of technology. It’s possible to specify something about the library, but keeping it up to date as the code evolves is very hard. Same problem with documentation, but as you try to reason about it, and you have a tool that runs together with the specification and the code and checks them against each other as you do the development, there is some hope to keep the code and the spec aligned, but still, the programmer needs to write both of them. So, there is opportunity for automation to save some work for the programmer and keep the two aligned.\n I also wanted to mention, when you were talking about verification, so different people think of verification as different things. To me, it is what you said. It’s the more formal proof about the source code of the program and its properties, but for most of the development process, it is testing. It’s running the program on some inputs and checking that the outputs behave as we expect. So, after working a bit and trying to find the right logics that are expressive enough to describe the properties we want and at the same time, allow us to prove automatically that the program conforms to these properties, you find, “oh, this is very restrictive.” Then you look, but testing is so much better. “I’ve been working on this for two years, but I could’ve found this bug with a simple test.” So how do we find tests that are good tests, or do we have good tests? So, this problem has been worked on by many people, and what I find exciting is that taking the testing approach, finding test cases, and the formal proof approach, and combining them helps us build better tools. So, there are many ways in which each side can help the other, and I worked on exploring some of these ways, and I found it very interesting. And I think this shows up in the verification, but there are also similar combinations of static and dynamic information or execution time and compile time information that are useful for compilers during compilations."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s interesting for you to say this thing about the way in which tests and formal proofs mix together. I feel like this is a thing that I’ve noticed informally on my own in programming, which is the OCaml type system, and in general type systems, are a kind of lightweight formal method. Types only capture some fairly limited properties of what your program can do, and some type systems are better at this – OCaml has a relatively capable one; languages like Java, comparatively simpler ones – but you can capture a bunch of useful properties in your type system, and the properties you capture in your type system are universally quantified. You know those properties are ensured all the time for all executions without compromise. And then tests let you kind of test out what’s going on at particular points. You can say for this particular run, for that particular run, you can check that certain properties hold, and there’s a nice thing that happens, a kind of virtuous combination of the two, which is when you have a well typed program, one finds that testing does more to help you bring it into place. It’s easy to write a well typed program that’s wrong, and it’s easy to write a program that you’ve written a few tests for where the tests pass but it doesn’t really work all the time. But there’s a way in which you have a well typed program and you test it in just a few places, it tends to snap into place, and you get much better results in terms of the correctness of the result than either one alone. So that’s like a very informal programmer experience point of view on this. I’m curious, from more research perspective, what are the ways that you found in your research to combine testing and formal verification?"
+    },
+    {
+      "type": "ts",
+      "text": "00:11:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, one of the ways that I think is quite… in its own, it gives understanding of the formal reasoning methods, via examples of executions. The way to think about it is you execute your program. You get some program states. You collect some information about them, they satisfy the property you need. Then you take and abstract these states. So, you find some more general way of describing that state and similar states, and that describes more than the states that you’ve explored during execution. So, the idea is you execute the program and collect the states that you observed in that execution, and then you apply some abstraction function that’s somehow related to the property you want to prove, and this gives you a bigger set of states that you have explored that satisfy the property. And then you can go back into the formal world and say what are all the possible states, and how much of that have I covered? So, you could use logical tools, like decision procedures, to find how much of that have I covered? If I have not covered everything, give me an example state that was not covered, and then take that and say can I cover it in my real execution? Can I get to it? What happens if I start running from that state? So that’s one combination."
+    },
+    {
+      "type": "ts",
+      "text": "00:12:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, let me see if I understand this correctly. It sounds like what you’re doing is you start with an example run. That example run essentially explores some part of the shape of how the program might execute, and then you kind of execute that symbolically where you sort of aren’t keeping exactly all the details, but you’re taking that one run through the program and generalizing it so that you think about it as covering not just a single run, but some bounded, but very large subset of possible executions? Am I getting in the right direction of understanding how the technique you’re talking about works?"
+    },
+    {
+      "type": "ts",
+      "text": "00:13:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "It’s not one technique. There are many techniques, but this is the general way in which I think they help each other. Yes. So, you execute down one path with one example, and it says, okay, you’ve covered all possible states that go down that path, but you have not covered different path, so let’s now go down a different path, and try to find states that take us there and to find states you can use more formal verification techniques.\n So that’s one way in which formal verification can help increase coverage of testing, but there’s also the other way that tests help. By running these tests, you have a fast way to cover a certain area, and it spits out the verification of the rest, because one of the problems with verification is that if you want to prove expressive properties about your program, it becomes very expensive, even if it succeeds at the end. There is a way to use concrete execution to speed up verification, or there is a way to use information gathered from testing to speed up execution."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So, these are essentially all ways of kind of popping back and forth between the formal method style, larger-scale analysis, and examples as a way of digging into the program, and the tools can help you move back and forth between these two and more efficiently do both tasks, essentially?"
+    },
+    {
+      "type": "ts",
+      "text": "00:14:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "And more precisely. This combination, I think it’s beautiful mathematically, but there are so many ways in which it helps in practice, and that’s why I find it really fun to work on it."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "To step back for a moment, it sounds like some of your frustration with working on this verification style approach, despite the fact that you clearly love a lot of the techniques and ideas there, is that it felt to you like, in practice, verification often wasn’t serving the actual needs of developers, in part because correctness wasn’t quite as high on their list of requirements for them to put the amount of effort required to use these formal techniques."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This leads me to ask about something that you’ve worked on, which is superoptimization, which is an example of a compiler technique where correctness becomes incredibly critical. So maybe you could tell us a little bit about what superoptimization is and the role that verification plays in it."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, let me tell you a story first. So, when I worked at ARM on the ARM compiler backend, there is interaction between the hardware and the compiler backend. In order to generate the efficient code for a particular architecture, you need to understand about the costs of each instruction and the combination of these instructions and which registers to use, how to store memory. And then the compiler has some limited information about these properties of the hardware that the program is going to run on, and the compiler is trying to produce good code, but doesn’t provide any guarantees about how well the code will perform, and there is a tradeoff there. There is the reason for that. Even if we could provide guarantees, it would be very long compilation time. It would be very costly to generate code that’s efficient, but often, we can’t provide the guarantees because we don’t know everything that’s going on in the system.\n So, the way the compiler approaches it is that we have some internal representation in the compiler of what the source program was, and the compiler transforms, it applies transformations to the program, and each transformation has a particular goal. For example, one transformation could take one intermediate representation and generate a simpler intermediate representation that’s closer to the instructions that hardware understands, so instruction selection. Another pass will choose which values to store where, whether to store values in registers or on the stack. Another pass would choose in which order to execute instructions that are not dependent on each other and so on. And these decisions, they are made as separate passes on the intermediate representation that the compiler holds for the program, and even if you make each pass optimal with respect to knowledge that that pass holds – invariants – there are dependencies between choices made in one pass and another pass. And you can repeat that on and on and maybe keep improving the code, maybe not, depending on the properties of these passes, but it is very hard to make an improvement to the compiler because you know what you want to generate, but you change this pass and there are internal dependencies between them, and it’s very hard to improve the compiler in order to get the code that you know will be better than what the compiler generates currently. Again, changing the compiler is a difficult process because of the correctness requirements on it.\n So, when I worked at ARM and I was doing this kind of transformation and trying to change the compiler to emit better code for a new microarchitecture, for some improved aspect, to take advantage of some improved aspect of the microarchitecture, it is actually very hard to convince the compiler to generate the code you want because of this interaction between passes and the limited way in which we can change them in compilation.\n And so, this made me think about the technique of superoptimization where the technique says, well, just give me a solution for the whole thing. Don’t apply passes one by one. Give me the best solution possible for all of these constraints together. Maybe that’s how I think about it, and that’s why it’s related to my research in verification. So, I should define the superoptimization properly, though."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, a little more mechanically, if you could just describe how superoptimization works?"
+    },
+    {
+      "type": "ts",
+      "text": "00:18:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "In superoptimization, you have an instruction sequence, and the goal is to find another instruction sequence that is optimal, but has the same behavior as the given instruction sequence. So, the goal of superoptimization is to generate, for example, the shortest instruction sequence that has the same behavior.\n That is originally, but it’s been taken over the years and extended, sort of. This word is applied in a more general context of give me an intermediate representation of the program, and I will generate an instruction sequence for it that’s the optimal one, with respect to some measurement of what optimal is. So, initially, optimal meant the shortest instruction sequence because there was a close correspondence between the length of the instruction sequence and the time that it takes to execute, but now it’s not true anymore, there are other metrics. So sometimes you have more expensive instructions that take longer to execute that can be replaced with longer instruction sequence that will end up faster.\n So, this was the problem, and the solution that was proposed has to do, again, with verification. So, you have two instruction sequences, candidate instruction sequences for what the optimal must be, and then you need to show that they have the same behavior. Now, what does it mean to have the same behavior? It means, basically, the first instruction, given an input, returns some output. So, the second instruction needs to return the same output for the same inputs. So, it computes the same function. To do that, we now need to prove equivalence between two arbitrary programs, and of course, that’s very hard. We can’t do it in general, it’s undecidable again. So what people did initially, they said, okay, let’s not look at arbitrary programs. Let’s just look at straight-line instruction sequences, instruction sequences with no branches and no loops. Can we do that then? And then, initially, people also didn’t know how to do that. So, there was a form of testing between the two sequences that was applied in the first paper on superoptimization, which is in 1982 by Massalin. So, after that, people who have worked on the verification, they came, oh, we have tools that can prove equivalence of two straight-line instruction sequences, so let’s now try to formulate these instruction sequences, their meaning, as a set of constraints or as a logical formula, and then prove that the constraints are satisfied or the formula is satisfied.\n It’s a very interesting connection from compilation to verification, but it brings in all the costs of verification with it. How expensive is it to run this decision procedure? Can we run this kind of generation process every time for every basic block in our program? That would be too expensive. Can we do it at compile time and prepare a few more of these instruction sequences that we know are optimal and then use them whenever we need?"
+    },
+    {
+      "type": "ts",
+      "text": "00:21:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It sounds like this all connects to two very different models of how you think about building a compiler, right? There’s the classic…I don’t remember who this is attributed to, but there’s an old comment of “you end up with a seven-pass compiler when you have seven teams working on the compiler.” Which is to say, the traditional structure of a compiler, where you have a sequence of what are called IRs, or intermediate representations, essentially little languages that, at each layer, represents some different way of viewing the program. And then you work on what you were talking about called passes, which are transformations, either moving from one IR to another IR or transformations within the same IR, and this is all, in some sense, a way of modularizing the program. So, you could have a way of thinking about what you’re doing, so you don’t have to think about the entire compiler all at the same time, and you were highlighting it’s not quite as modular as you might imagine because there are actually invariants that spread across the entire stack. And the modularity itself gets in the way of some things, in the sense that if you want to make certain changes to the output, it’s hard to know where to do it, and the things you might do in one phase doesn’t necessarily transfer the way through to the other phrase and getting the actual outcome you want is hard, and then superoptimization treats compilers I guess kind of as a search problem where it says, well, let’s just have a criterion for what it means to be good and what it means to be right, and let’s just search. We’ll do, in some sense, the stupidest possible thing. We’ll look over all the possible instruction sequences that look better and just find the ones that are provably the same, and we’ll pick those.\n So, it’s interesting because it’s both a concrete technique of how to make things faster, but also just a very different mental frame to use for thinking about what a compiler is doing and how a compiler is structured. So, with all that about superoptimization, I’m curious, as a practical matter, what do you think is a good role for superoptimization to play in a modern compiler, given all the costs you mention about how expensive verification can be?"
+    },
+    {
+      "type": "ts",
+      "text": "00:23:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "It’s a really interesting question. I would like to see it used more. I think it depends on how fast the different engines get for checking, for searching through this space of possible candidate solutions and finding the correct ones, and there is a lot of research in that area. Obviously, right now, where it stands, we can’t use it for compilation on daily basis for our builds on the developer’s desktop, and I don’t think it will get there ever. Maybe. I don’t know. I don’t see how. There are inherent costs I don’t know how to overcome.\n But I think that the way it stands, technology, right now, is that it would be a very valuable tool to help build compilers and to help optimize code that is incredibly critical for performance. That’s, again, something that, in the real world, as it’s called in academia, it’s so important to understand we have a compiler that needs to compile vastly different styles of code, even in the same language, with different performance requirements and characteristics. Why do we use the same backend for all of them?\n Maybe the more critical code should be compiled separately with different backend, different optimization, maybe even superoptimization when it goes on to production. So that’s one way in which superoptimization could help, and the exciting aspect in what I believe is really the power of this superoptimization approach is: it takes as input logical representation of what the semantics of the hardware, underlying hardware architecture is, and if you take that as a parameter of the system, then when you have new hardware, a design with different costs or maybe different specification, then you can just plug it into that system and get very good code out of it, and after a while, after it finishes the code generation, get new code without having to rewrite all these very intricate passes and redesign them or without having to write a new backend because it gives new backend for free in some utopic world. This is very important in the world where hardware changes and develops in so many different ways than it used to be before.\n That’s, again, something I learned at ARM where I got to work close to hardware designers. There is such a close interaction between the way that hardware is designed and the way the compilers are designed, and with every new hardware microarchitecture design, to get the full, the best performance out of it, to get the maximum benefit from it, we would want to generate different code. So why do we invest so much in hardware and developing new hardware when we can’t extract the best performance out of it?"
+    },
+    {
+      "type": "ts",
+      "text": "00:26:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So is your point that superoptimization improves the collaboration cycle between the hardware engineer and the compiler engineer in the sense that, like, hardware engineer proposes new change to the hardware to make things faster, and then superoptimization gives you a way which is computationally expensive, but cheap in terms of human resources to see, well, how good is this hardware if we actually compiled it in a way that took advantage of the hardware? What would that look like? How good could we get at that? Even if that doesn’t lead to a compiler that you can really ship to people, that’s really useful in the end, it lets you learn more efficiently, what are the possibilities by finding, essentially, the best possibilities for you?"
+    },
+    {
+      "type": "ts",
+      "text": "00:27:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So that’s one of the ways in which superoptimization already, today, can help, I think. It can help compiler designers and can help hardware designers, but I think if these tools, when they reach maturity, maybe they are very close now, they can also help users outside of the compiler and hardware developer because it will make it easier for users to just plug in new architectures that come in and use them and take the best advantage of them."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The idea of superoptimization as a way of helping people who are building the core infrastructure seems to me very compelling, right? The idea of, among other things, being just a way of checking how close you are to getting the goals you want out of a compiler, right? You know, you have your practical compilation stack that runs in a reasonable time, and it generates some code. And you can now ask the question, okay, if I now apply a superoptimizer to it, how much better does it get? And that gives you a kind of loss function, a thing to optimize for. The other thing you describe, I worry about just because in terms of, like, saying, oh, you can have a cheap compiler for your domain-specific language than this way, a cheap, but very slow compiler. Which is to say, one of the things I think is critical to making the development experience work well for people, is having fast feedback time where they can make a change and see how it improves things.\n So, I wonder how you deal with the fact that the superoptimization step would add a big temporal gap? Every time you wanted to see how your program performs, you have to go through this maybe hours-long optimization process of going and trying to find the actual best code sequences. Do you think that compromises the practicality of the approach?"
+    },
+    {
+      "type": "ts",
+      "text": "00:28:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, I think when you decide on your DSL and your hardware, then you need to kind of make that expensive step once, but then perhaps there is a way to…I don’t know, I don’t want to call it partial evaluation, but partially evaluate that formula or that constraint system to get more efficient compilation when you decide on the pair of source language and target architecture once you have that pair, then you can reduce the costs. So, I agree, the most useful, at the moment, application of superoptimization, is the help it gives compiler developers and hardware designers, but I think it also opens up the possibility of a lot more flexible combinations of which hardware to use without losing the performance characteristics that that hardware was designed for."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, let’s switch gears. I want to talk a little bit about how you got to where you are now. You have spent a lot of time working in both industrial contexts and in research contexts, and when you joined us, you moved very much back into an industrial mode, and I’m curious about what you think about the tradeoff between these two and why you decided to make the move back into a more industrial, practically-focused role."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, I feel like, through the research, I because familiar with a set of powerful tools that can be combined in different ways, and in academia, there is time to think about carefully designing these tools without the time-to-market pressure that some industries have. Even in academia, it always feels a bit like sitting in a tower, and it’s hard to get to the users who really care about these tools.\n These people are very busy, and they are not very available always to test the tools or to try things out, on one hand. And on the other hand, I feel that there are a lot of tools in this toolbox that I can put to good use, but maybe it’s not very novel and exciting in terms of a research paper, but it is exciting to me because I can help developers do their job better maybe or improve the compiler that they use with these techniques that I am familiar with.\n But I don’t know what it is that is needed, and I don’t have any feedback of how these tools are suitable and what problems there should be. It feels like, in academia, there is more time, but there is more pressure to get novel ideas and results out of the existing tools, and I feel that there are a lot of low-hanging fruit there that can be picked up with tools that we already have or techniques that are almost close to what is needed. But the tradeoffs are different. The scale of code is different when you work on it in the industry. I’m very excited about this aspect of having people who actually care about what I produce and use it on a daily basis. At Jane Street, I sit in the compilers team, but the people who use the compiler are right there, and everyone communicates and talks about their problems and their ideas, what should be improved, and you get feedback so quickly when you’re there."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, part of what I’m hearing from you is that the thing that excites you about the industrial context is the connection with users, right? You get to actually build things which get picked up and used, and you get feedback, and that feedback helps drive the work, decide what’s important, build new things based on what is actually useful. So maybe you can talk about some of the projects that you’ve worked on at Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "One big project I was involved in at Jane Street is doing profile-guided optimizations in OCaml. We call them feedback-directed optimization these days, and the idea is to collect execution profiles during program execution and then use them to improve code generation. It was traditionally called profile-guided optimization, so profile-guided optimization, traditionally, uses instrumentation, so it changes the program that executes by inserting special points to keep track of the execution. And then uses the profile collected by that. More recently, a sampling-based approach was used to reduce the overhead running the instrumentation and also to improve the precision, because the sampling-based approach as opposed to the instrumentation approach doesn’t have to change the code that executes, and by changing the code, as I mentioned earlier, it may have effects that are not related to the code. So, feedback-directed optimizations were not used by OCaml compiler, but they’re actually traditionally used in other compilers, C and C++ compilers in particular, they’re used a lot to improve performance.\n One of the problems in the compiler – static compilation – is that we don’t know what inputs the program will get it when it is executed, down which path the program execution will go, and so the compiler doesn’t know where it’s worth optimizing more and where it’s not, but if we execute the program on inputs that are representative of the way the program is used in production, then we will get some idea of what paths in the program are hot, what paths are important. If this information can be communicated to the compiler, then the compiler can make better decisions or it can guide the compilation decisions, for example, where to inline more, or because the code is important, where to optimize more. So, the idea is to run some benchmarks and during execution, collect some information about the execution of where the hot paths are, and then create this profile that is then used by the compiler statically, and the way we would apply it in a OCaml compiler is to optimize the code layout.\n So, the order in which the functions are arranged in the final executable and the order in which, within the function, different basic blocks or different pieces of straight-line code are arranged. What it achieves is improvement in performance because when code that executes together, when two functions that call each other often, and they are hot, when they are laid out together in memory, very close to each other, then the cost of accessing each one of them is lower, so, the program runs faster."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I remember when we first started working on this and especially when you saw some of the early results, I was kind of shocked at the size of improvements, which were, like, 10, 15, 20% improvements to the run-time of various critical programs just for moving memory around. And not even moving the memory of the running program, which I’m already used to thinking of as a big deal, but the memory of just the instructions, and so the idea that it makes such a big impact on how fast your program runs, I found pretty astonishing at the time. Why it is it so slow to have things spread across your executable?"
+    },
+    {
+      "type": "ts",
+      "text": "00:35:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "When the functions that call each other often are far away, when the hardware executes the code, it needs to get the code from memory. And memory is arranged in layers. So, there’s the cache memory that is very fast to access, and there are multiple levels of cache that are each increasingly slower to access, but increasingly larger. When the code that we execute is not in cache, then it takes longer to access. So, by laying the two functions that frequently call each other together, they get into the cache faster, it increases the access, which means that the program can execute the code without needing to wait for loading the code from some lower cache level or from memory.\n When working on the FDO tool, I spent a lot of time trying to get the improved performance by reordering, and then it turned out that one of the valuable uses of this is just to stabilize the performance. So, one of the developers complained that their code suddenly got slower than before, and the only change was a library that was doing some test manipulation that was not related to the code that was executing, and they were trying to understand what changed. So, one of the people on the compilers team then suggested to run it with FDO. Running it with FDO removed the differences in performance, because what the FDO tool did is the code that was used was placed together so the changes in the library that were not affecting the executions that the benchmark was evaluating were not affecting the layout of the code. So, the benefit is not just improving the performance, but making it more predictable, and maybe slower, but usually faster. Sometimes slower, but predictable is better."
+    },
+    {
+      "type": "ts",
+      "text": "00:37:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, because if it’s predictable and you know whether or not your changes are real changes to the performance, that helps you guide your work and make changes that incrementally, like change after change, drive the program overall to be better performing, you know, a few percent at a time, and if every time you compile your program, it moves around by 3% just for no reason at all, then it’s extremely hard to do this kind of sequence of small-scale improvements.\n I assume the same problem hits in compiler development? Like, if every time you modify the compiler and it gets a little faster or a little slower, you don’t know whether it’s really gotten faster or it’s just mucked with the alignment a tiny bit. So, is there a hope to, more or less, do the same thing on the compiler side when you’re trying to evaluate compiler changes as a matter of course to apply FDO to reduce the amount of noise before and after?"
+    },
+    {
+      "type": "ts",
+      "text": "00:38:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, this, in fact, ties in with our previous discussion about benchmarks. So there are some people in the Tools and Compilers team who developed a benchmarking infrastructure to help us benchmark compiler versions and compiler improvements that we make, and one of the things that we’ve considered is to add FDO into the benchmarking infrastructure to help us level the results, and another way that this could be used is… actually, there is some interesting research recently about introducing random changes to the layout and then re-measuring the performance to see which transformations actually change performance and which transformations do not. That’s interesting work by Emery Berger at UMass."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s good. So, these are almost the opposite approach, right? One of them is to say let’s squish everything into a kind of canonical representation that has closer to the same behavior, and the other is to say let’s give up on this, getting a single artifact that’s predictable and instead, try and understand the distribution. So you’re randomly creating a bunch of them, and I guess the disadvantage of the latter one is your benchmarks are going to take a lot longer to run because every time you sample the distribution, you basically have to perturb the executable and rerun the benchmark and perturb the executable and rerun the benchmark. So, they might be orders of magnitude different in terms of how long it takes the benchmarks to run."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "It’s interesting. This research work I mentioned is a way to address this problem, in some sense, by using sophisticated statistical aggregation sampling. And my understanding is that one of the approaches they have has changed layout every few seconds."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "During the execution of the program?"
+    },
+    {
+      "type": "ts",
+      "text": "00:40:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "During the execution, yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, that’s awesome."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "Yes, I know."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Another thing to talk about here with FDO is FDO is an interesting kind of example on a spectrum, right? There are techniques for optimization that are very dynamic, and there are techniques that are very static ahead of time, and FDOs one way of trying to forget a compromise between these two, right, where you mostly do ahead-of-time compilation, but then you gather profile information that lets you go and redo some of the work there and further optimize.\n But there are lots of other places this comes up. Like, one that shows up more and more over time is various forms of just-in-time compilation. So already many years ago, Java had just-in-time compilation for its bytecode. Languages like JavaScript do an enormous amount of trace-based optimizations where you are running the program, monitoring it as it runs, observing things about what paths are hot and what are the likely paths to be taken, and what are things that need further optimization and applying further compilation there. And then it also happens in the actual hardware, right? The hardware itself is constantly gathering statistics and making guesses about how your program is going to behave based on how it behaved just recently. I wonder how much of the work that one does in FDO and similar kinds of techniques where you’re trying to take profile information and apply it to your static compilation process, how much that depends on what else is happening in the stream.\n If you to do something like some kind of feedback-directed optimization for a simpler architecture that does less in the way of branch prediction and prefetching and so on and so forth, would that change the amount of work that would be profitable to do in the form of feedback-directed optimization?"
+    },
+    {
+      "type": "ts",
+      "text": "00:41:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "There are many aspects of this, right? So, one is, if you switch to a different hardware, as you said before, that, say, doesn’t do as much prediction, then you would need to do more work on the compiler side to arrange the code in the best possible way for hardware to do it. That’s one aspect of who rearranges the code, but then there is the aspect of the feedback-directed or the profile, do we know what the hot paths in that program are? And for that, the hardware only knows the current execution, and it only knows the history of the current execution, and I think it has a pretty small window on that particular program’s execution. It doesn’t have enough information on where that execution came from and where it is going to. Whereas the compiler statically has more information about what will happen or what are all possible things that can happen through this execution in the future.\n So, there are some things that hardware probably do better at a cost, again, perhaps energy cost, and some things that the compiler has more information about, which is a completely different point in this whole spectrum, but related to the just-in-time compilation that you said before, because the just-in-time compilation, connected to it is what is the overhead of doing the optimization? If you put this optimization in the hardware, then the hardware will have to do it, but maybe there will be some overhead for doing it in hardware. If it’s possible to do it statically at compile time or at-load time or earlier, then that will give us better, faster code."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The core tradeoff being the compiler knows more about the structure and therefore, in some sense, about some aspects of the future behavior of the program and the hardware knows more about what’s happening right now. I guess there’s another tradeoff, which is any optimization you get in the hardware, from the point of view of a hardware vendor, has the nice property of applying to all the compilers. Whereas things that you do in a particular compiler benefits the particular community that uses that, but not everyone who uses the hardware in question, right? Which I guess affects the economics of which side of the line you want to do the improvement on. Intel surely wants their particular CPUs to be better than other people’s CPUs, whereas someone working on the OCaml compiler wants the OCaml compiler to work well in as broad a set of architectures as possible."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "But also, the same tradeoff. You take it one step back to the source, and again, there are different kinds of programs. Some of them, it matters more, these optimizations. Others, the cost of accessing memory and doing garbage collection just overpowers the micro-optimizations that we can get from reordering instructions and fitting them in because it’s so much more expensive to access memory.\n And then the data layout matters a lot, or the way that we access whatever we can learn from the way that the program accesses its data or its containers will matter more for optimization, which it not something currently compilers do, but I think there is some tooling, like the Spacetime and the memtrace tooling that people in the compilers team have been working on to identify access patterns and help that.\n It’s so exciting to be part of this team and seeing this work happening, and it’s a community of people who are so technical, so strong in what they do, and they sit right there, and I’m in the same room with them, and I can ask them a question and just listen to their conversations and learn from it and see how the development goes. It’s a great team, yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:45:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Always love visiting and hanging out with the compiler team because there’s a ton of exciting stuff going on all the time.\n So, we talked a little bit about what it was like moving to Jane Street in terms of the difference in interaction and the kind of feedback that you get and some about the concrete work that you’ve been doing. I wanted to ask about a different aspect, which is what has it been like switching languages? And you switched languages, really, in two ways, which is the optimization work that you did, say, at ARM was all about C and C++ compilers, and now you’re working on a compiler where the source language it’s trying to optimize is different, but also, you’re working in a different language, right? The compiler that you’re working on is written also in OCaml. And I’m curious about both of those aspects, but to start with, can you tell me a little bit about what it’s been like starting to do compiler work in OCaml rather than in C and C++?"
+    },
+    {
+      "type": "ts",
+      "text": "00:46:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "Before coming to Jane Street, I have never programmed in OCaml. I knew about the existence of OCaml, and I sort of knew that I should learn this language, but all the times I tried, it didn’t quite work out. I even tried F# once because there was a good book, but it still didn’t help, and when I came to Jane Street and I started writing in OCaml, after getting used to the change in the thinking about my programs, it was amazing.\n I couldn’t believe I’ve been writing my program analysis in Java. OCaml is so much better suited for it. The language is just perfect. The code that I need to express my transformation is so small compared to multiple Java classes that I would need to write some visitors and traversals and so on. So, this has been great for me, for what I need. OCaml is just the perfect language for writing compilers and tools around compilation.\n But also it has this nice environment around it, the ecosystem of OCaml where there are build tools. But as for the language, I think one of the reasons that it’s convenient for me is the way that it… I think about it as more a mathematical description of what I want to do when I program rather than the imperative approach with languages I used before, especially with C and C++ where not only you need to think about what you are doing, but also about where the memory is going to be allocated which in OCaml is not a concern because of the garbage collector.\n And the other aspect, which I really enjoyed, after getting some intuition about the type error messages, after getting some idea of what the type checker is trying to tell me, it became a great tool because when my program type checks, I can see how many errors, how many silly mistakes in coding it caught and I was able to fix thanks to this.\n So, this is great, both the concise way of expressing things with the clarity of style of programming, the ecosystem around it, and dune and opam, of course, when I do the things that go outside of Jane Street, and also the type checker, holding my hand and helping me not make silly mistakes. But then you always need to test."
+    },
+    {
+      "type": "ts",
+      "text": "00:48:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s a thing I think that people often don’t appreciate who have not used OCaml or a similar language, is how much better languages kind of in the OCaml part of the design space of programming languages, how much better they are at catching errors at the type level. If you’re used to programming in a language like Java, you think, “oh, I know what a type system is like,” and it’s like, no, you really don’t know what a type system is like. You’ve seen one particular kind of type system with a lot of weird tradeoffs and a lot of limitations, and it really is better in this part of the pool. The type system is really much, much better at catching errors."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "This is so true. You know, I have a real story how true it is. I remember a few years ago talking to someone and saying, no, what do you mean? C++ has types. It does have types… and then we had another conversation, and I couldn’t really appreciate it until after I started programming in OCaml and how much more I get from the type system, how much more reassurance and guarantees it provides."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay, so that was all about OCaml as a language to work in. How do you find OCaml as a language to optimize? What challenges does that present?"
+    },
+    {
+      "type": "ts",
+      "text": "00:49:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, I’m learning to appreciate the value of the choices that were made by OCaml developers regarding the structure of the backend, and in particular, not just the structure of the way that the compiler backend is, but the choice of let’s not make it overly complicated.\n Let’s make assembly code or generated code that is easier to understand and it’s as close as possible to the original program, because the hardware will optimize it in ways that will be far superior, and we need to focus on generating the correct code, first of all. Having said that, there are some optimizations, but they are not phrased in a way that I’m familiar with from the literature.\n I think it’s also because of the sort of divide between the functional languages and the imperative languages and how things are sometimes called a single-static assignment, SSA, and sometimes they are called something else about continuations, but they are equivalent in some place, and different compilers use different approaches to implement it. So that was a big change for me, but I think I now appreciate the choices and how they were made.\n And I focus with what I do on the code generation for AMD64, so for the compiler backend, but the compiler backend is structured to be very portable and independent of the target hardware. Most of the backend is independent, and that’s another reason why it is the way it is and it is not diverging. The code that is specific to each hardware architecture is actually quite small, but that restricts us in ways that I think would be good to lift the restrictions.\n For example, the kind of optimizations and transformations that are performed right now in the backend, the compiler backend, they are statically defined, and there is basically no mechanism for changing them or adding to them, which is one of the problems that we’ve encountered recently with the feedback-directed optimization."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s all about, in some sense, the structure of how the compiler itself is built and how that affects the work. I’m wondering, is there anything about the surface language that affects how you think about the code generation process? Do OCaml programmers generate different patterns that require different optimizations than you might see in a language like C or C++?"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I’m probably not the right person to ask about it, right? But on that subject, I think that, again, the way that the OCaml compiler is structured, the most sophisticated part of it is the type checking and the optimizations like inlining. This is necessary in order to lower the higher-order functional language that it is down to assembly and produce efficient code and having that in place lets programmers write their code in a more natural way than they would have to without this support, right, and this is very powerful, and it has also been a subject of work at Jane Street, which I was not involved in, but I get to learn from it and benefit of it as a user for OCaml, as well. The work on improving the middle-end, as it’s called, the optimizations that are happening."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And actually, let’s demystify that terminology. Frontend, middle-end, backend is standard ways people talk about different parts of a compiler. Can you say roughly what each of those means?"
+    },
+    {
+      "type": "ts",
+      "text": "00:53:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "So, you can think of a compiler as applying a sequence of transformations, starting from source code, and changing it gradually into a machine code, and these transformations are divided into three stages called frontend, middle-end, and backend. So, usually, frontend performs things like parsing and type checking, and backend performs optimizations that are specific to a given hardware, and it knows about the exact registers in the pipeline design.\n So, the frontend, which takes as input the source code, is specific to the programming language that is being compiled, for example, OCaml. The backend, the third stage, generates machine code or assembly code targeting a specific hardware architecture so that it’s specific to the target architecture. For example, the OCaml compiler can generate code that runs on AMD64 Intel hardware using one backend and a different backend to generate code for ARM hardware, and it has a few other backends for different hardware architectures. So, the same front- and the middle-end of the compiler can be used with different backends for the same source language, and similarly, there are compilers that can take as input different source languages. For example, LLVM framework can take as input C++ and C using one frontend. It can also take as input Swift or Rust using different frontends, and then reuse the other two stages as they are.\n So, this enables the compiler infrastructure to reuse a lot of the source code while supporting different source and target languages. The second stage of compilation, the transformations, can be independent of both the source language and the target language, and different analysis can be performed and reused. So, because the first part is called frontend and the third part is called backend, then the middle part needs to also have end in its name. So, we get the middle-end of the compiler, which I can never say without laughing because it’s an oxymoron, but yes."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, and the middle-end is where things, at least in OCaml, where things like inlining occur, and so that’s what you’re talking about. Of taking all of this, like, complex, higher-ordered functions, calling functions being past functions and all of that, and then getting it flattened out to a simpler representation that’s more suitable for code generation, and the code generation is the part you’ve been focusing on, and that’s the backend of the compiler.\n So, one of the things, by the way, you mentioned is there’s relatively small amounts of code that are dedicated to particular architectures. I’m curious, actually, how well adapted you think OCaml is to ARM, right? You have a lot of experience working in ARM, and ARM is an increasingly important architecture. It’s a very good architecture for low-power utilization. In fact, I think Apple recently announced that they’re going to switch to using ARM for their desktop machines. So that’s a big step. How good of a compiler do you think OCaml is for ARM at this point?"
+    },
+    {
+      "type": "ts",
+      "text": "00:56:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I have not used OCaml on ARM. I have no experience with it. I’ve seen the code in the ARM backend to some extent, and to me, it looked like it would not be as good and fast code as, say, GCC generates, but that is a very difficult target and also not a fair comparison with garbage collector, but even without any allocation involved, I think that the ARM backend of OCaml has not received as much attention from what it looks like from the code.\n So, they are missing things that are specific to ARM, well, again, it depends on what kind of ARM microarchitecture is being targeted. Some of ARM microarchitecture low-power designs are in-order execution, so, there’s less  re-ordering that the hardware does, so it’s more important, for example, to do good scheduling of instructions at the block level, and there is a path for doing scheduling of instructions in the OCaml compiler backend. It’s not used for AMD64. It seems to be generic for ARM. So, all of ARMv8 get the same scheduling decisions, all of ARMv7s, the target CPUs, will get the same scheduling decisions, which is not always the best. The use of registers for ARM backend would be very important. So, improving register allocation, because using different registers with different instructions has restrictions and sometimes have different costs, and there is a way to encode it in the ARM compiler, but I think it’s not as flexible as one would like in order to get the good performance. Those are just the things I’ve noticed and came to mind now."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I wonder if this is an area we’ll start to care about more as the CPU ecosystem changes, because power matters to us, too, it turns out, and it’s interesting to think about it. Like, Intel has had a kind of monopoly on servers for quite a long time, and we care much more about servers. You know, at Jane Street, we don’t really write much code that’s targeted to, say, mobile phones, but it’s possible that we’ll see the server world move, as well, and that would probably change our priorities a fair amount."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I think the comments about register allocator also apply to the AMD64 backend where we know that the code generation is particularly simple-minded when it comes to registers, even though there is a good register allocation algorithm, but the end result often can be improved, but there’s something I think is a big investment, and I think in order to know that we will get the benefits we expect from it when it has some examples or some idea of why that we expect this to be better in terms of the faster code at the end of our systems.\n And that’s what I really like about being in a place like Jane Street, because I have access to these programs and applications that matter, that I know matter, and people who care about these applications write good benchmarking infrastructure for them, and to me, as someone who works on the compiler, that makes it easier to test different ideas and just get it straight away and maybe get input faster when I improve my things.\n Or cause more trouble faster – Recently, I made a small change to the compiler, which was an optimization, but because I misunderstood something about the internals of OCaml compiler, it introduced a miscompilation bug, and it was only noticed because one of the tests in one of the systems failed. It’s not a very common situation, so I don’t think there were any damage done or systems running in production, and there was a test that caught it, but it was a test that we didn’t routinely run, and it was very scary because I broke the compiler, and then I had to watch all these people who have very important things to do, spending their time rolling back their applications and talking and communicating and synchronizing on how to avoid hitting that problem. So, this just shows how important compiler work is and how much impact any correctness mistakes make.\n Even if it didn’t break any running system and production didn’t cause a problem, it took time of these people to move on, and I don’t want it to happen. Obviously, I did my best to test, but I didn’t test it enough, and I think one of the things about the culture at Jane Street and what I really like is that there is a process or…I think it’s not a process, it’s individuals and as a culture, the mistakes are taken as, “okay, we’ll fix it, and then how can we learn from it?” Why did we not run this test and then two weeks later, we have a system to run these tests, as well, and also something about the compilers team. How come we didn’t catch this before? It’s happened before to other people. How do we change? How can we improve the compiler intermediate representation or how can we improve the compiler to prevent this kind of mistakes happening?\n Then we go and sit. Oh, that’s what would need to be done to do it properly. Okay, so now we know this is something that would be nice to be done. When do we do it? We’ll figure it out separately. We need to prioritize. But this whole process, I was so relieved to be part of this process, even though I made this mistake and released the broken compiler, but it was a learning experience and a positive one and I think reassuring."
+    },
+    {
+      "type": "ts",
+      "text": "01:01:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’m glad that came across as a positive experience because it’s something that we try and keep baked into the culture kind of throughout the organization.\n So, I want to jump back to a thing that you said a moment ago. You were talking about feedback and particularly getting feedback from benchmarks and being able to kind of see the performance impact of the code you make and help that guide the optimization decisions that you’re making. One of the challenges that we have with working in OCaml is we do not own the language. The language exists outside of our walls. It was initially developed by the research team at Inria that created it, and they continue to have a very deep role there, and in the end, we have to convince upstream maintainers about changes that we want to make. And one of the challenges there is there’s lots of things that we see internally that are easy to see from the inside and harder to see from the outside, and I’m curious, what are the things that we can do to try and explain to upstream more effectively why we’re making the changes that we make and being able to kind of surface the motivations in a way that is compelling to the core team that maintains the language?"
+    },
+    {
+      "type": "ts",
+      "text": "01:02:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "We see many examples internally where we see a way to improve them. We see that, for example, like with FDO or with register allocation, there are ways to improve. We would like this to be accepted upstream, but the motivation for it is very internal to Jane Street.\n So, for these examples, the relationship that Jane Street developers and compiler core developers have and the participation in the upstream OCaml developers community being part of it, it really helps because there is some trust that’s being developed between the two, and very technical conversation happens between people outside of Jane Street, and there is a lot of collaboration also outside of Jane Street in the core OCaml developer community, but there is no automatic acceptance to anything that comes from Jane Street. If anything, it’s the other way around. If you only need it for Jane Street, then it’s probably not going to be a good feature for the general-purpose language and the community compiler. So, I think the best thing that could happen is finding other users of OCaml and sharing our tools with them and developing tools that help us measure code performance and evaluate different metrics and then sharing these tools upstream externally. It can be open-source, just as the compiler is and the other libraries that Jane Street open-sources.\n And then give these tools to other users of OCaml, and I think there is a growing community of high-scale users for OCaml, even outside of Jane Street, and with these tools, this will encourage also the community and will get us feedback from the other users of OCaml, for example, at Facebook and other companies that use OCaml industrially, but also from the researchers who use it in academia, and perhaps are more used to trying out new experimental features.\n\nNow, to make that happen, there is already opam and there is already dune that works externally and makes the process easier, but there is, to my knowledge, no place to share results. I think it happens a bit on OCaml Discuss, but maybe a different channel for communication of this would help, and a more open conversation between the core developers of OCaml and the users who are not part of that small group."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I suspect this is a place where you probably just need to build some better tooling, among other things, to share benchmarks, and there is some work in this direction. OCaml Labs has done a bunch of work for preparing for Multicore OCaml, which is now being pushed very aggressively, to the point where, for the first time, I feel like it’s the kind of in sight that we’ll actually have a version of the compiler that’s released with a Multicore garbage collector.\n They have this repo called Sandmark, which is a place where they have a bunch of benchmarks all together, and they use that for evaluating, and the idea that we can try and leverage that for other kinds of optimizations that we’re doing, I think is a promising one. But yeah, I think the communication is critical and hard, and it’s especially hard when some of the problems just have to do with scale and it’s a scale that other people may not see, right?\n I think we release a surprising amount of open source code – we have, like, a half a million lines of our internal code released on GitHub and updated a couple of times a week, and that helps because any problem that you can isolate to that code base, you can actually demonstrate it externally, but FDO is a good example where some of the strongest results for FDO improving the performance of things has come with very large executables with lots of dependencies.\n And those aren’t things we tend to open source, in part, because it’s internal stuff that’s not of any interest and in part, because we have some kind of proprietary intellectual property reasons to not want to release it. And so it’s those things that operate at larger scale that I feel like is some of the most challenging things to demonstrate effectively. I think your point about if it looks like it’s an optimization, which really just affects stuff inside of a company like Jane Street and has no other use elsewhere, upstream is going to be a lot less excited about taking it."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "I think the core for this objection is in the approach to code generation for OCaml. The backend is not… it is important for it to perform, but it is not perhaps the top priority. Portability is maybe a higher priority than that or to be able to put it in different systems or being able to perform well on a range of different input programs. So, it’s something that also needs to change not just in the communication, but also in what is valued by the community, and I understand the resistance to introducing new, obscure features. I mean, if you look at what happened to LLVM where it’s a lot easier to contribute code and add passes, then it’s a lot harder to keep the compiler uniformly reliable and predictable and correct, where, on the other hand, maybe these two are the extremes, and maybe there is some point in between. So, if there was more infrastructure in the OCaml backend that would enable people to add their own passes, optimizations, transformations that benefit particular code patterns that they care about and more flexibility in enabling such passes, then perhaps it would be easier to do."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, this is maybe a case where modularity is just a thing that can help. Like, I think one of the things that upstream is afraid of is they’re worried about a lot of complexity being added to the compiler and then it being their responsibility to maintain it, because I think both people at Jane Street, but also the other members of the core team feel an enormous amount of responsibility about the language. Everything that’s in there, they think of themselves as responsible for, and they think of it as a collective tax on the overall community to add new functionality, and so making it so that you can maintain some pieces of functionality on the side where it doesn’t become part of the shared ownership, that’s I think a valuable move. Another thing that I think can also help is having more modularity makes it easier to do experiments where maybe, in the long term, you do want to contribute this backup stream. But in the meantime, you’d like to make it easy to maintain a patch set that modifies just this one part so that you can try it out and see how effective it is and iterate quickly on the technology so that you can get to a point where you can propose it upstream and say, hey, we’ve done this work, and look, we can demonstrate a lot of benefits from it. It’s really worth taking on the complexity, but making it easier to do that kind of experimentation I think is critical to basically being able to do that at a larger scale."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "Indeed, and also getting feedback. So, thumbs up from other users of OCaml would be easier if it did not require them to change their build system in order to try any feature."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Here we’re talking about feedback-directed compiler construction."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "There we go."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Different kinds of feedback.\n Okay, well, I think we are, at this point, out of time, but thank you so much for taking the time to talk with me about this. It’s been a lot of fun."
+    },
+    {
+      "type": "ts",
+      "text": "01:10:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Greta"
+    },
+    {
+      "type": "p",
+      "text": "Thank you."
+    },
+    {
+      "type": "ts",
+      "text": "01:10:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You can find links to some of the things that we talked about, including Greta’s work on feedback-directed optimization, as well as a full transcript of the episode at signalsandthreads.com. Thanks for joining us, and see you next week."
+    }
+  ]
+}

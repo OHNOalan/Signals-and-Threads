@@ -1,0 +1,1455 @@
+{
+  "slug": "why-ml-needs-a-new-programming-language",
+  "title": "Why ML Needs a New Programming Language with Chris Lattner",
+  "mp3_rel": "audio/why-ml-needs-a-new-programming-language.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Chris Lattner is the creator of LLVM and led the development of the Swift language at\nApple. With Mojo, he’s taking another big swing: How do you make the process of getting\nthe full power out of modern GPUs productive and fun? In this episode, Ron and Chris\ndiscuss how to design a language that’s easy to use while still providing the level of\ncontrol required to write state of the art kernels. A key idea is to ask programmers to\nfully reckon with the details of the hardware, but making that work manageable and\nshareable via a form of type-safe metaprogramming. The aim is to support both\nspecialization to the computation in question as well as to the hardware platform.\n“Somebody has to do this work,” Chris says, “if we ever want to get to an ecosystem where\none vendor doesn’t control everything.”"
+    },
+    {
+      "type": "p",
+      "text": "Chris Lattner is the creator of LLVM and led the development of the Swift language at\nApple. With Mojo, he’s taking another big swing: How do you make the process of getting\nthe full power out of modern GPUs productive and fun? In this episode, Ron and Chris\ndiscuss how to design a language that’s easy to use while still providing the level of\ncontrol required to write state of the art kernels. A key idea is to ask programmers to\nfully reckon with the details of the hardware, but making that work manageable and\nshareable via a form of type-safe metaprogramming. The aim is to support both\nspecialization to the computation in question as well as to the hardware platform.\n“Somebody has to do this work,” Chris says, “if we ever want to get to an ecosystem where\none vendor doesn’t control everything.”"
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech\nstack, from Jane Street. I’m Ron Minsky. It is my great pleasure to have Chris Lattner on\nthe show. Typically on Signals and Threads, we end up talking to engineers who work here\nat Jane Street, but sometimes we like to grab outside folk, and Chris is an amazing figure\nto bring on because he’s been so involved in a bunch of really foundational pieces of\ncomputing that we all use—LLVM, and Clang, and MLIR, and OpenCL, and Swift, and now\nMojo. And this has happened at a bunch of different storied institutions—Apple, and Tesla,\nand Google, and SiFive, and now Modular. So anyway, it’s a pleasure to have you joining\nus, Chris."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Thank you, Ron. I’m so happy to be here."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess I want to start by just hearing a little bit more about your origin story. How did\nyou get into computing and how did you get into this world of both compiler engineering\nand programming language design?"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "So I grew up in the ’80s and back before computers were really a thing. We had PCs, but\nthey weren’t considered cool. And so I fell in love with understanding how the computer\nworked. And back then, things were way simpler. I started with a BASIC interpreter, for\nexample, and you’d get a book from the store. Remember when we had books? [laughs] And\nyou’d learn things from books?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Did you do the thing where you’d get the hobbyist magazine and copy out the listing of the\nprogram?"
+    },
+    {
+      "type": "ts",
+      "text": "00:01:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That’s exactly right. And so we didn’t have vibe coding, but we did have books. And so\njust by typing things in, you could understand how things work, and then when you broke\nit—because inevitably you’re typing something in and you don’t really know what you’re\ndoing—you have to figure out what went wrong and so it encouraged a certain amount of\ndebugging. I really love computer games. Again, back then, things were a little bit\nsimpler. Computer games drove graphics and performance and things like this. And so I\nspent some time on these things called bulletin board systems and the early internet\nreading about how game programmers are trying to push the limits of the hardware. And so\nthat’s where I got interested in performance and computers and systems. I went on to\ncollege and had an amazing professor at my school, shout out to University of Portland in\nPortland, Oregon, and he was a compiler nerd."
+    },
+    {
+      "type": "p",
+      "text": "And so, I think that his love for compilers was infectious. His name was Steven Vegdahl,\nand that caused me to go on to pursue compilers at University of Illinois. And there\nagain, continue to fall down this rabbit hole of compilers and systems, and build\nLLVM. And ever since I got into the compiler world, I loved it. I love compilers because\nthey’re large-scale systems, there’s multiple different components that all work\ntogether. And in the university setting, it was really cool in the compiler class, because\nunlike most of the assignments where you do an assignment, turn it in, forget about it—in\ncompilers, you would do an assignment, turn it in, get graded, and then build on it. And\nit felt much more realistic like software engineering, rather than just doing a project to\nget graded."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think for a lot of people, the OS class is their first real experience of doing a\nthing where you really are building layer on top of layer. I think it’s an incredibly\nimportant experience for people as they start engineering."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "It’s also one where you get to use some of those data structures. I took this, almost\nacademic, here’s what a binary tree is, and here’s what a graph is. And particularly when\nI went through it, it was taught from a very math-forward perspective, but it really made\nit useful. And so that was actually really cool. I’m like, ‘Oh, this is why I learned this\nstuff.’"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing that strikes me about your career is that you’ve ended up going back and\nforth between compiler engineering and language design space, whereas I feel like a lot of\npeople are on one side or the other—they’re mostly compilers people and they don’t care\nthat much about the language, and just, how do we make this thing go fast? And there are\nsome people who are really focusing on language design and the work on the compiler is a\nsecondary thing towards that design. And you’ve both popped back and forth. And then also\na lot of your compiler engineering work, really starting with LLVM, in some sense is\nitself, very language-forward. With LLVM, there’s a language in there that’s this\nintermediate language that you’re surfacing as a tool for people to use. So I’m just\ncurious to hear more about how you think about the back and forth between compiler\nengineering and language design."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "The reason I do this is that effectively, my career is following my own interests. And so\nmy interests are not static. I want to work on different kinds of problems and solve\nuseful problems and build into things. And so the more technology and capability you have,\nthe higher you can reach. And so with LLVM, for example, built and learned a whole bunch\nof cool stuff about deep code generation for an X86 chip and that category of technology\nwith register allocation, stuff like this. But then it made it possible to go, say, let’s\ngo tackle C++ and let’s go use this to build the world’s best implementation of something\nthat lots more people use and understand than deep backend code generation technology. And\nthen with Swift, it was, build even higher and say, ‘Okay, well C++, maybe some people\nlike it, but I think we can do better and let’s reach higher.’ I’ve also been involved in\nAI systems, been involved in building an iPad app to help teach kids how to code. And so,\nlots of different things over time. And so for me, the place I think I’m most useful and\nwhere a lot of my experience is valuable ends up being at this hardware-software boundary."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’m curious how you ended up making the leap to working on Swift. From my perspective,\nSwift looks from the outside, like one of these points of arrival in mainstream\nprogramming contexts of a bunch of ideas that I have long thought are really great ideas\nin other programming languages. And I’m curious, in some ways a step away from like, oh,\nI’m going to work on really low-level stuff and compiler optimization, and then we will go\nmuch higher level and do a C++ implementation, which is still a pretty low level. How did\nthe whole Swift thing happen?"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Great question. I mean, the timeframe for people that aren’t familiar is that LLVM started\nin 2000. So by 2005, I had exited university and I joined Apple. And so LLVM was an\nadvanced research project at that point. By the 2010 timeframe, LLVM was much more mature\nand we had just shipped C++ support in Clang, and so it could bootstrap itself, which\nmeans the compiler could compile itself. It’s all written in C++, it could build advanced\nlibraries like the Boost template library, which is super crazy advanced template\nstuff. And so the C++ implementation that I and the team had built was real. Now, C++ in\nmy opinion, is not a beautiful programming language. And so implementing it is a very\ninteresting technical challenge. For me, a lot of problem-solving ends up being, how do\nyou factor the system the right way?"
+    },
+    {
+      "type": "p",
+      "text": "And so Clang has some really cool stuff that allowed it to scale and things like that, but\nI was also burned out. We had just shipped it. It was amazing. I’m like, there has to be\nsomething better. And so, Swift really came starting in 2010. It was a nights and weekends\nproject. It wasn’t like top-down management said, ‘Let’s go build a new programming\nlanguage.’ It was ‘Chris being burned out’—I was running a 20 to 40 person team at the\ntime, being an engineer during the day, and being a technical leader, but then needing an\nescape hatch. And so I said, ‘Okay, well, I think we can have something better. I have a\nlot of good ideas. Turns out, programming languages are a mature space. It’s not like you\nneed to invent pattern matching at this point. It’s embarrassing that C++ doesn’t have\ngood pattern matching."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We should just pause for a second, because I think this is like a small but really\nessential thing. I think the single best feature coming out of language like ML in the\nmid-seventies is, first of all, this notion of an algebraic data type, meaning every\nprogramming language on earth has a way of saying this and that and the other, a record,\nor a class, or a tuple."
+    },
+    {
+      "type": "ts",
+      "text": "00:06:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "A weird programming language, I think it was Barbara Liskov?"
+    },
+    {
+      "type": "ts",
+      "text": "00:06:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And she did a lot of the early theorizing about, ‘What are abstract data types?’ But\nthe ability to do this or that or the other, to have data types that are a union of\ndifferent possible shapes of the data—and then having this pattern matching facility that\nlets you basically in a reliable way do the case analysis so you can break down what the\npossibilities are—is just incredibly useful. And very few mainstream languages have picked\nit up. I mean Swift again is an example, but languages like ML, SML, and Haskell, and\nOCaml—"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Standard!"
+    },
+    {
+      "type": "ts",
+      "text": "00:07:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. SML. Standard ML. It’s been there for a long time."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "I mean pattern matching, it is not an exotic feature. Here we’re talking about 2010. C#\ndidn’t have it. C++ didn’t have it. Obviously Java didn’t have it. I don’t think\nJavaScript had it. None of these mainstream languages had it, but it’s obvious. And so\npart of my opinion about that—and so by the way, I represent as engineer, I’m not actually\na mathematician, and so type theory goes way over my head. I don’t really understand\nthis. The thing that gets me frustrated about the academic approach to programming\nlanguages is that people approach it by saying there’s sum types, and there’s intersection\ntypes, and there’s these types, and they don’t start from utility forward. And so pattern\nmatching, when I learned OCaml, it’s so beautiful. It makes it so easy and expressive to\nbuild very simple things. And so to me, I always identify to the utility and then yes,\nthere’s amazing formal type theory behind it, and that’s great and that’s why it actually\nworks and composes. But bringing that stuff forward and focusing on utility and the\nproblems it solves, and how it makes people happy, ends up being the thing that I think\nmoves the needle in terms of adoption, at least in mainstream."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I mean I think that’s right. My approach also, and my interest in language is also\nvery much not from the mathematical perspective, although my undergraduate degree is in\nmath. I like math a lot, but I mostly approach these things as a practitioner. But the\nthing I’ve been struck by over the years is the value of having these features have a\nreally strong mathematical foundation is they generalize, and as you were saying, compose\nmuch better. If they are in the end mathematically simple, you’re way more likely to have\na feature that actually pans out as it gets used way beyond your initial view as to what\nthe thing was for."
+    },
+    {
+      "type": "ts",
+      "text": "00:08:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. This is actually a personal defect because I don’t understand the math in\nthe way that maybe theoretically would be ideal. I end up having to rediscover certain\ntruths that are obvious. The cliche, ‘If the Russian mathematician invented it 50 years\nago…’ And so a lot of what I find is that I can find truth and beauty when things compose\nand things fit together, and often I’ll find out it’s already been discovered because\neverything in programming language has been done. There’s almost nothing novel, but still\nthat design process of saying, let’s pull things together, let’s reason about why it\ndoesn’t quite fit together. Let’s go figure out how to better factor this. Let’s figure\nout how to make it simpler these days. That process to me, I think is kind of like people\nworking on physics, [from what] I hear. The simpler the outcome becomes, the more close to\ntruth it feels like it is. And so I share that—and maybe it’s more design gene or\nengineer-design combination, but it’s probably what you mathematicians actually know\ninherently, and I just haven’t figured it out yet."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you find yourself doing things after you come to it from an engineering perspective,\ntrying to figure out whether there are useful mathematical insights? Do you go back and\nread the papers? Do you have other PL people who are more mathematically oriented who you\ntalk to? How do you extend your thinking to cover some of that other stuff?"
+    },
+    {
+      "type": "ts",
+      "text": "00:09:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "See, the problem is math is scary to me. So I see Greek letters and I run away. I do\nfollow arXiv and things like this, and there’s a programming language section on that. And\nso I get into some of it, but what I get attracted to in that is the examples and the\nresults section and the future-looking parts of it. And so it’s not necessarily the ‘how,’\nit’s the ‘what it means.’ And so I think a lot of that really speaks to me. The other\nthing that really speaks to me when you talk about language design and things like this is\nblog posts from some obscure academic programming language that I’ve never heard of. You\njust have somebody talking about algebraic effect systems for this and that and the other\nthing, or something really fancy, but they figure out how to explain it in a way that’s\nuseful. And so when it’s not just, ‘Let me explain to you the type system,’ but it’s, ‘Let\nme explain this problem this fancy feature enables,’ that’s where I get excited. That’s\nwhere it speaks to me because, again, I’m problem-oriented, and having a beautiful way to\nexpress and solve problems, I appreciate."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think there’s a lot of value in the work that’s done in papers of really working out in\ndetail the theory and the math and how it all fits together. [And] I think the fact that\nthe world has been filled with a lot of interesting blog posts from the same people has\nbeen great because I think it’s another modality where it often encourages you to pull out\nthe simpler and easier-to-consume versions of those ideas. And I think that is just a\ndifferent kind of insight and it’s valuable to surface that too."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "And also when I look at those blog posts, sometimes they design smell. Particularly the\nC++ community, there’s a lot of really good work to fix C++. They’re adding a lot of stuff\nto it, and C++ will never get simpler—you can’t really remove things, right? And so a lot\nof the challenge there is, it’s constrained problem-solving. And so when I look at that,\noften what I’ll see when I’m reading one of those posts, and again, these are brilliant\npeople and they’re doing God’s work trying to solve problems with C++, best of luck with\nthat. But you look at that and you realize there’s a grain of sand in the system that\ndidn’t need to be there. And so to me, it’s like if you remove that grain of sand, then\nthe entire system gets relaxed and suddenly all these constraints fall away and you can\nget to something much simpler. Swift, for example, it’s a wonderful language and it’s\ngrown really well and the community is amazing, but it has a few grains of sand in it that\ncause it to be a lot more complicated. And so this is where I’m not just happy with things\nthat got built. LLVM is amazing, it’s very practical, but it has lots of problems. That’s\nwhy when I get a chance to build a next generation system, I want to learn from that and\nactually try to solve these problems."
+    },
+    {
+      "type": "ts",
+      "text": "00:11:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this is the great privilege of getting to work on a new language, which is a thing\nyou’re doing now. There’s this new language called Mojo, and it’s being done by this\ncompany that you co-founded called Modular. Maybe just so we understand the context a\nlittle bit, can you tell me a little bit about, what is Modular? What’s the basic\noffering? What’s the business model?"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Before I even get there, I’ll share more of how I got here. If you oversimplify my\nbackground, I did this LLVM thing and its foundational compiler technology for CPUs. It\nhelped unite a lot of CPU-era infrastructure and it provided a platform for languages like\nSwift, but also Rust, and Julia, and many different systems that all got built on top of,\nand I think it really catalyzed and enabled a lot of really cool applications of\naccelerated compiler technology. People use LLVM in databases and for query engine\noptimization, lots of cool stuff. Maybe you use it for trading or something. I mean, there\ncan be tons of different applications for this kind of technology—and then [I] did\nprogramming language stuff with Swift. But in the meantime, AI happened. And so with AI\nbrought this entirely new generation of compute: GPUs, tensor processing units,\nlarge-scale AI training systems, FPGAs, and ASICs and all this complexity for compute, and\nLLVM never really worked in that system."
+    },
+    {
+      "type": "p",
+      "text": "And so one of the things that I built when I was at Google was a bunch of foundational\ncompiler technology for that category of systems. And there’s this compiler technology\ncalled MLIR. MLIR is basically LLVM 2.0. And so take everything you learn from building\nLLVM and helping solve this, but then bring it forward into this next generation of\ncompiler technology so that you can go hopefully unify the world’s compute for this GPU\nand AI and ASIC kind of world. MLIR has been amazingly successful, and I think it’s used\nin roughly every one of these AI systems and GPUs. It’s used by Nvidia, it’s used by\nGoogle, it’s used by roughly everybody in this space. But one of the challenges is that\nthere hasn’t been unification. And so you have these very large-scale AI software\nplatforms. You have CUDA from Nvidia, you have XLA from Google, you have ROCm from AMD."
+    },
+    {
+      "type": "p",
+      "text": "It’s countless. Every company has their own software stack. And one of the things that I\ndiscovered and encountered, and I think the entire world sees, is that there’s this\nincredible fragmentation driven by the fact that each of these software stacks built by a\nhardware maker are just all completely different. And some of them work better than\nothers, but regardless, it’s a gigantic mess. And there’s these really cool high-level\ntechnologies like PyTorch that we all love and we want to use. But if PyTorch is built on\ncompletely different stacks and schooling together these megalithic worlds from different\nvendors, it’s very difficult to get something that works."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. They’re both complicated trade-offs around the performance that you get out of\ndifferent tools and then also a different set of complicated trade-offs around how hard\nthey are to use, how complicated it is to write something in them, and then what hardware\nyou can target from each individual one. And each of these ecosystems is churning just\nincredibly fast. There’s always new hardware coming out and new vendors in new places, and\nthere’s also new little languages popping up into existence, and it makes the whole thing\npretty hard to wrangle."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And AI is moving so fast. There’s a new model every week. It’s crazy. And new\napplications, new research, the amount of money being dumped into this by everybody is\njust incredible. And so how does anybody keep up? It’s a structural problem in the\nindustry. And so the structural problem is that the people doing this kind of work, the\npeople doing code generation for advanced GPUs and things like this, they’re all at\nhardware companies. And the hardware companies, every single one of them is building their\nown stack because they have to. There is nothing to plug into. There’s nothing like ‘LLVM\nbut for AI,’ that doesn’t exist. And so as they go and build their own vertical software\nstack, of course they’re focused on their hardware, they got advanced roadmaps, they have\na new chip coming out next year, they’re plowing their energy and time into solving for\ntheir hardware. But we, out in the industry, we actually want something else. We want to\nbe able to have software that runs across multiple pieces of hardware. And so, if\neverybody doing the work is at a hardware company, it’s very natural that you get this\nfragmentation across vendors because nobody’s incentivized to go work together. And even\nif they’re incentivized, they don’t have time to go work on somebody else’s chip. AMD is\nnot going to pay to work on Nvidia GPUs or something like this."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s true when you think about this, kind of, a split between low-level and high-level\nlanguages. So Nvidia has CUDA and AMD has ROCm, which is mostly a clone of CUDA, and then\nthe XLA tools from Google work incredibly well on TPUs, and so on and so forth. Different\nvendors have different things. Then there’s the high-level tools, PyTorch, and JAX, and\nTriton, and various things like that. And those are typically actually not made by the\nhardware vendors. Those are made by different kinds of users—I guess Google is responsible\nfor some of these and they’re also sometimes a hardware vendor—but a lot of the time it’s\nmore stepped back. Although even there, the cross-platform support is complicated and\nmessy and incomplete."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Because they’re built on top of fundamentally incompatible things. And so that’s the\nfundamental nature. And so again, you go back to Chris’s dysfunction and my weird career\nchoices, I always end up back at the hardware-software boundary, and there’s a lot of\nother folks that are really good at adding very high-level abstractions. If you go back a\nfew years ago, MLOps was the cool thing, and it was, ‘Let’s build a layer of Python on top\nof TensorFlow and PyTorch and build a unified AI platform.’ But the problem with that, is\nthat building abstractions on top of two things that don’t work very well, can’t solve\nperformance, or liability, or management, or these other problems. You can only add a\nlayer of duct tape, but as soon as something goes wrong, you end up having to debug this\nentire crazy stack of stuff that you really didn’t want to have to know about."
+    },
+    {
+      "type": "p",
+      "text": "And so it’s a leaky abstraction. And so the genesis of Modular (bringing it back to this)\nwas realizing there are structural problems in the industry. There is nobody that’s\nincentivized to go build a unifying software platform and do that work at the bottom\nlevel. And so what we set off to do is we said, ‘Okay, let’s go build…’—and there’s\ndifferent ways of explaining this. You could say ‘a replacement for CUDA,’ that’s like a\nflamboyant way to say this, but ‘let’s go build a successor to all of this technology that\nis better than what the hardware makers are building, and is portable.’ And so what this\ntakes, is doing the work that these hardware companies are doing, and I set the goal for\nthe team of saying, let’s do it better than, for example, Nvidia is doing it for their own\nhardware."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is no easy feat, right? They’ve got a lot of very strong engineers and they\nunderstand their hardware better than anyone does. Beating them on their own hardware is\ntough."
+    },
+    {
+      "type": "ts",
+      "text": "00:17:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That is really hard. And they’ve got a 20-year head start, because CUDA is about 20 years\nold. They’ve got all the momentum. They’re a pretty big company. As you say, lots of smart\npeople. And so that was a ridiculous goal. Why did I do that? Well, I mean a certain\namount of confidence in understanding how the technology worked, having a bet on what I\nthought we could build and the approach, and some insight and intuition, but also\nrealizing that it’s actually destiny. Somebody has to do this work. If we ever want to get\nto an ecosystem where one vendor doesn’t control everything, if we want to get the best\nout of the hardware, if we want to get new programming language technologies, if we want\npattern matching on a GPU—I mean, come on, this isn’t rocket science—then we need at some\npoint to do this. And if nobody else is going to do it, I’ll step up and do that. That’s\nwhere Modular came from—saying, ‘Let’s go crack this thing open. I don’t know how long it\nwill take, but sometimes it’s worthwhile doing really hard things if they’re valuable to\nthe world.’ And the belief was it could be profoundly impactful and hopefully get more\npeople into even just being able to use this new form of compute with GPUs and\naccelerators and all this stuff, and just really redemocratize AI compute."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you pointed out that there’s a real structural problem here, and I’m actually wondering\nhow, at a business model level, do you want to solve the structural problem? Which is, the\nhistory of computing is these days littered with the bodies of companies that try to sell\na programming language. It’s a really hard business. How is Modular set up so that it’s\nincented to build this platform in a way that can be a shared platform that isn’t subject\nto just one other vendor’s lock-in?"
+    },
+    {
+      "type": "ts",
+      "text": "00:19:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "First answer is, don’t sell a programming language. As you say, that’s very difficult. So\nwe’re not doing that. Go take Mojo, go use it for free. We’re not selling a programming\nlanguage. What we’re doing is we’re investing in this foundational technology to unify\nhardware. Our view is, as we’ve seen in many other domains, once you fix the foundation,\nnow you can build high-value services for enterprises. And so our enterprise layer, often\nwhat we talk to, you end up with these groups where you have hundreds or thousands of\nGPUs. Often it’s rented from a cloud on a three-year commit. You have a platform team\nthat’s carrying pagers and they need to keep all this stuff running and all the production\nworkloads running. And then you have these product teams that are inventing new stuff all\nthe time, and there’s new research, there’s a new model that comes out and they want to\nget it on the production infrastructure, but none of this stuff actually works."
+    },
+    {
+      "type": "p",
+      "text": "And so the software ecosystem we have with all these brilliant but crazy open source tools\nthat are thrashing around, all these different versions of CUDA and libraries, all this\ndifferent hardware happening, is just a gigantic mess. And so, helping solve this for the\nplatform engineering team that actually needs to have stuff work, and want to be able to\nreason about it, and want good observability and manageability and scalability and things\nlike this is actually, we think, very interesting. We’ve gotten a lot of good responses\nfrom people on that. The cost of doing this is we want to actually make it work, that’s\nwhere we do fundamental language compiler underlying systems technology and help bring\ntogether these accelerators so that we can get, for example, the best performance on an\nAMD GPU and get it so that the software comes out in the same release train as support for\nan Nvidia GPU. And being able to pull that together, again, it just multiplicatively\nreduces complexity, which then leads to a product that actually works, which is really\ncool and very novel in AI."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the way that Mojo plays in here, is it basically lets you provide the best possible\nperformance and I guess the best possible performance across multiple different hardware\nplatforms. Are you primarily thinking about this as an inference platform, or, how does\nthe training world fit in?"
+    },
+    {
+      "type": "ts",
+      "text": "00:20:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "So let me zoom in and I’ll explain our technology components. I have a blog post series I\nencourage you and any viewers or listeners to check out, called, ‘Democratizing AI\nCompute.’ It goes through the history of all the systems and the problems and challenges\nthat they’ve run into, and it gets to, ‘What is Modular doing about it?’ So Part 11 talks\nabout our architecture and the inside is Mojo, which is a programming language. I’ll\nexplain Mojo in a second. Next level out is called MAX. And so you can think of MAX as\nbeing a PyTorch replacement or a vLLM replacement, something that you can run on a single\nnode and then get high performance LLM surveying, that kind of use case. And then the next\nlevel out is called Mammoth, and this is the cluster management Kubernetes layer. And so\nif you zoom in all the way back to Mojo, you say—your experience, you know what\nprogramming languages are, they’re incredibly difficult and expensive to build."
+    },
+    {
+      "type": "p",
+      "text": "Why would you do that in the first place? And the answer is, we had to. In fact, when we\nstarted Modular, I was like, ‘I’m not going to invent a programming language.’ I know\nthat’s a bad idea, it takes too long, it’s too much work. You can’t convince people to\nadopt a new language. I know all the reasons why creating language is actually a really\nbad idea. But it turns out, we were forced to do this because there is no good way to\nsolve the problem. And the problem is, how do you write code that is portable across\naccelerators? So, that problem, I want portability across—for example, make it simple AMD\nand Nvidia GPUs, but then you layer on the fact that you’re using a GPU because you want\nperformance. And so I don’t want a simplified, watered down—I want Java that runs on a\nGPU."
+    },
+    {
+      "type": "p",
+      "text": "I want the full power of the GPU. I want to be able to deliver performance that meets and\nbeats Nvidia on their own hardware. I want to have portability and unify this crazy\ncompute where you have these really fancy heterogeneous systems and you have tensor cores\nand you have this explosion of complexity and innovation happening in this hardware\nplatform layer. Most programming languages don’t even know that there’s an 8-bit floating\npoint that exists. And so we looked around and I really did not want to have to do this,\nbut it turns out that there really is no good answer. And again, we decided that, hey, the\nstakes are high, we want to do something impactful. We’re willing to invest. I know what\nit takes to build a programming language. It’s not rocket science, it’s just a lot of\nreally hard work and you need to set the team up to be incentivized the right way. But we\ndecided that, yeah, let’s do that."
+    },
+    {
+      "type": "ts",
+      "text": "00:23:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I want to talk more about Mojo and its design, but before we do, maybe let’s talk a\nlittle bit more about the pre-existing environment. I did actually read that blog post\nseries. I recommended it to everyone. I think it’s really great, and I want to talk a\nlittle bit about what the existing ecosystem of languages looks like, but even before\nthen, can we talk more about the hardware? What does the space of hardware look like that\npeople want to run these ML models on?"
+    },
+    {
+      "type": "ts",
+      "text": "00:23:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so the one that most people zero in on is the GPU. And so GPUs are, I think, getting\nbetter understood now. And so if you go back before that though, you have CPUs. So, modern\nCPUs in a data center, often you’ll have—I mean today you guys are probably riding quite\nbig iron, but you got 100 cores in a CPU and you got a server with two-to-four CPUs on a\nmotherboard, and then you go and you scale that. And so, you’ve got traditional threaded\nworkloads that have to run on CPUs, and we know how to scale that for internet servers and\nthings like this. If you get to a GPU, the architecture shifts. And so they have basically\nthese things called SMs. And now the programming model is that you have effectively much\nmore medium-sized compute that’s now put together on much higher performance memory\nfabrics and the programming model shifts. And one of the things that really broke CUDA,\nfor example, was when GPUs got this thing called a tensor core—and the way to think about\na tensor core is it’s a dedicated piece of hardware for matrix multiplication. And so,\nwhy’d we get that? Well, a lot of AI is matrix multiplication. And so, if you design the\nhardware to be good at a specific workload, you can have dedicated silicon for that and\nyou can make things go really fast."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There are really these two quite different models sitting inside of the GPU space. Of\ncourse, the name itself is weird. GPU is ‘graphics processing unit,’ which is what they\nwere originally for. And then this SM model is really interesting. They have this notion\nof a warp. A warp is a collection of typically 32 threads that are operating together in\nlockstep, always doing the same thing—a slight variation on what’s called the SIMD model,\nsame instruction, multiple data. It’s a little more general than that, but more or less,\nyou can think of it as the same thing. And you just have to run a lot of them. And then\nthere’s a ton of hardware inside of these systems basically to make switching between\nthreads incredibly cheap. So you pay a lot of silicon to add extra registers. So the\ncontext switch is super cheap, so you can do a ton of stuff in parallel."
+    },
+    {
+      "type": "p",
+      "text": "Each thing you’re doing is itself 32-wise parallel. And then because you can do all this\nvery fast context switching, you can hide a lot of latency. And that worked for a\nwhile. And then we’re like, actually, we need way more of this matrix multiplication\nstuff. And you can sort of do reasonably efficient matrix multiplication through this warp\nmodel, but not really that good. And then there’s a bunch of quite idiosyncratic hardware,\nwhich changes its performing characteristics from generation to generation, just for doing\nthese matrix multiplications. So that’s the Nvidia GPU story, and Volta is like V100 and\nA100 and H100. They just keep on going and changing, pretty materially from generation to\ngeneration in terms of the performance characteristics, and then also the memory model,\nwhich keeps on changing."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "You go back to intuition, CUDA was never designed for this world. CUDA was not designed\nfor modern GPUs. It was designed for a much simpler world. And CUDA being 20 years old, it\nhasn’t really caught up. And it’s very difficult because, as you say, the hardware keeps\nchanging. And so CUDA was designed from a world where—almost like C is designed for a very\nsimple programming model that it expected to scale, but then as the hardware changed, it\ncouldn’t adapt. Now, if you get beyond GPUs, you get to Google TPU and many other\ndedicated AI systems. They blow this way out and they say, ‘Okay, well, let’s get rid of\nthe threads that you have on a GPU and let’s just have matrix multiplication units and\nhave really big matrix multiplication units and build the entire chip around that. And you\nget much more specialization, but you get a much higher throughput for those AI workloads."
+    },
+    {
+      "type": "p",
+      "text": "Going back to, ‘Why Mojo?’ Well, Mojo was designed from first principles to support this\nkind of system. Each of these chips, as you’re saying, even within Nvidia’s family, from\nVolta, to Ampere, to Hopper, to Blackwell, these things are not compatible with each\nother. Actually, Blackwell just broke compatibility with Hopper, so it can’t run Hopper\nkernels always on Blackwell. Oops, well, why are they doing that? Well, AI software is\nmoving so fast. They decided that was the right trade-off to make. And meanwhile, we all\nsoftware people need the ability to target this. When you look at other existing systems,\nwith Triton for example, their goal was, ‘Let’s make it easier to program a GPU,’ which I\nlove, that’s awesome. But then they said, ‘We’ll just give up 20% of the performance of\nthe silicon to do it.’ Wait a second. I want all the performance. And so if I’m using a\nGPU—GPUs are quite expensive by the way—"
+    },
+    {
+      "type": "p",
+      "text": "I want all the performance. And if it’s not going to be able to deliver the same quality\nof results you get by writing CUDA, well then, you’re always going to run to this head\nroom, where you get going quickly, but then you run into a ceiling and then have to switch\nto a different system to get full performance. And so this is where Mojo is really trying\nto solve this problem where we can get more usability, more portability, and full\nperformance of the silicon because it’s designed for these wacky architectures like tensor\ncores."
+    },
+    {
+      "type": "ts",
+      "text": "00:27:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And if we look at the other languages that are out there, there’s languages like CUDA, and\nOpenCL, which are low level, typically look like variations on C++, in that tradition are\nunsafe languages, which means that there’s a lot of rules you have to follow. And if you\ndon’t exactly follow the rules, you’re in undefined behavior land, it’s very hard to\nreason about your program."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "And just let me make fun of my C++ heritage because I’ve spent so many years, like, you\njust have a variable that you forget to initialize, it just shoots your foot off. [laughs]\nLike, it’s just unnecessary violence to programmers."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And it’s done in the interest of making performance better because the idea is C++\nand its related languages don’t really give you enough information to know when you’re\nmaking a mistake, and they want to have as much space as they can to optimize the programs\nthey get. So the stance is just, if you do anything that’s not allowed, we have no\nobligation to maintain any kind of reasonable semantics or debug ability around that\nbehavior. And we’re just going to try really, really hard to optimize correct programs,\nwhich is a super weird stance to take, because nobody’s programs are correct. There are\nbugs and undefined behavior in almost any C++ program of any size. And so, you’re in a\nvery strange position in terms of the guarantees that you get from the compiler system\nyou’re using."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Well, so I mean, I can be dissatisfied. I can also be sympathetic with people that work on\nC++. So again, I’ve spent decades in this language and around this ecosystem, and building\ncompilers for it. I know quite a lot about it. The challenge is that C++ is established,\nand so there’s tons of code out there. By far, the code that’s already written is the code\nthat’s the most valuable. And so if you’re building a compiler, or you have a new chip, or\nyou have an optimizer, your goal is to get value out of the existing software. And so you\ncan’t invent a new programming paradigm that’s a better way of doing things and defines\naway the problem. Instead, you have to work with what you’ve got. You have a SPEC\nbenchmark you’re trying to make go fast, and so you invent some crazy heroic hack that\nmakes some important benchmark work because you can’t go change the code."
+    },
+    {
+      "type": "p",
+      "text": "In my experience, particularly for AI, but also I’m sure within Jane Street, if\nsomething’s going slow, go change the code. You have control over the architecture of the\nsystem. And so, what I think the world really benefits from, unlike benchmark hacking, is\nlanguages that give control and power and expressivity to the programmer. And this is\nsomething where I think that, again, you take a step back and you realize history is the\nway it is for lots of structural and very valid reasons, but the reasons don’t apply to\nthis new age of compute. Nobody has a workload that they can pull forward to next year’s\nGPU—doesn’t exist. Nobody solved this problem. I don’t know the timeframe, but once we\nsolve that problem, once we solve portability, you can start this new era of software that\ncan actually go forward. And so now, to me, the burden is—make sure it’s actually\ngood. And so, to your point about memory safety, don’t make it so that forgetting to\ninitialize a variable is just going to shoot your foot off. [Instead] produce a good\ncompiler error saying, ‘Hey, you forgot to initialize a variable,’ right? These basic\nthings are actually really profound and important, and the tooling and all this usability\nand this DNA, these feelings and thoughts, are what flow into Mojo."
+    },
+    {
+      "type": "ts",
+      "text": "00:30:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And GPU programming is just a very different world from traditional CPU programming just\nin terms of the basic economics and how humans are involved. You end up dealing with much\nsmaller programs. You have these very small but very high-value programs whose performance\nis super critical, and in the end, a relatively small coterie of experts who end up\nprogramming in it. And so it pushes you ever in the direction, you’re saying, of\nperformance engineering, right? You want to give people the control they need to make the\nthing behave as it should, and you want to do it in a way that allows people to be highly\nproductive. And the idea that you have an enormous amount of legacy code that you need to\nbring over, it’s like, actually you kind of don’t. The entire universe of software is\nactually shockingly small, and it’s really about how to write these small programs as well\nas possible."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "And also there’s another huge change. And so this is something that I don’t think that the\nprogramming language community has recognized yet, but AI coding has massively changed the\ngame because now you can take a CUDA kernel and say, ‘Hey, Claude, go make that into\nMojo.’"
+    },
+    {
+      "type": "ts",
+      "text": "00:31:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And actually, how good have you guys found the experience of that? Of doing translation?"
+    },
+    {
+      "type": "ts",
+      "text": "00:31:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Well, we do hackathons and people do amazing things, having never touched Mojo, having\nnever done GPU programming, and within a day they can make things happen that are just\nshocking. Now, AI coding tools are not magic. You cannot just vibe code DeepSeek-R1 or\nsomething, right? But it’s amazing what that can do in terms of learning new languages,\nlearning new tools, and getting into and catalyzing ecosystems. And so this is one of the\nthings where, again, you go back five or 10 years—everybody knows nobody can learn a new\nlanguage, and nobody’s willing to adopt new things. But the entire system has changed."
+    },
+    {
+      "type": "ts",
+      "text": "00:32:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So let’s talk a little bit more in detail about the architecture of Mojo. What kind of\nlanguage is Mojo, and what are the design elements that you chose in order to make it be\nable to address this set of problems?"
+    },
+    {
+      "type": "ts",
+      "text": "00:32:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, again, just to relate how different the situation is—back when I was working on\nSwift, one of the major problems to solve was, objective C was very difficult for people\nto use, and you had pointers, and you had square brackets, and it was very weird. And so\nthe goal in the game of the day was, invent new syntax and bring together modern\nprogramming language features to build a new language. Fast forward to today, actually,\nsome of that is true. AI people don’t like C++. C++ has pointers, and it’s ugly, and it’s\na 40-year-old-plus language, and has actually the same problem that Swift had to solve\nback in the day. But today there’s something different, which is that AI people do\nactually love a thing. It’s called Python. And so, one of the really important things\nabout Mojo is, it’s a member of the Python family. And so, this is polarizing to some,\nbecause yes—I get it that some people love curly braces, but it’s hugely powerful because\nso much of the AI community is Pythonic already."
+    },
+    {
+      "type": "p",
+      "text": "And so we started out by saying, let’s keep the syntax like Python and only diverge from\nthat if there’s a really good reason. But then what are the good reasons? Well, the good\nreasons are, we want—as we were talking about—performance, power, full control over the\nsystem. And for GPUs, there’s these very important things you want to do that require\nmetaprogramming. And so Mojo has a very fancy metaprogramming system, kind of inspired by\nthis language called Zig, that brings runtime and compile time together to enable really\npowerful library designs. And the way you crack open this problem with tensor cores and\nthings like this, is you enable really powerful libraries to be built in the language as\nlibraries, instead of hard coding into the compiler."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Let’s take it a little bit to the metaprogramming idea. What is metaprogramming and why\ndoes it matter for performance in particular?"
+    },
+    {
+      "type": "ts",
+      "text": "00:34:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s a great question, and I think you know the answer to this too, and I know you,\nbut—"
+    },
+    {
+      "type": "ts",
+      "text": "00:34:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "[Laughs] We are also working on metaprogramming features in our own world."
+    },
+    {
+      "type": "ts",
+      "text": "00:34:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And so the observation here is, when you’re writing a for loop in a programming\nlanguage, for example, typically that for loop executes at runtime, so you’re writing code\nthat when you execute the program, it’s the instructions that the computer will follow to\nexecute the algorithm within your code. But when you get into designing higher level type\nsystems, suddenly you want to be able to run code at compile time as well. And so there’s\nmany languages out there. Some of them have macro systems, C++ has templates. What you end\nup getting is, you end up getting, in many languages, this duality between what happens at\nruntime, and then a different language almost that happens at compile time. And C++ is the\nmost egregious, because templates that you have a for loop in runtime, but then you have\nunrolled recursive templates, or something like that at compile time."
+    },
+    {
+      "type": "p",
+      "text": "Well, so the insight is, hey, these two problems are actually the same. They just run at\ndifferent times. And so what Mojo does is says, let’s allow the use of effectively any\ncode that you would use at runtime to also work at compile time. And so you can have a\nlist, or a string, or whatever you want in the algorithms—go do memory allocation,\ndeallocation—and you can run those at compile time, enabling you to build really powerful\nhigh-level abstractions and put them into libraries. So why is this cool? Well, the reason\nit’s cool is that on a GPU, for example, you’ll have a tensor core. Tensor cores are\nweird. We probably don’t need to deep dive into all the reasons why, but the indexing and\nthe layout that tensor cores use is very specific and very vendor different. And so the\ntensor core you have on AMD, or the tensor cores you have on different versions of Nvidia\nGPUs are all very different."
+    },
+    {
+      "type": "p",
+      "text": "And so what you want, is you want to build as a GP programmer a set of abstractions so you\ncan reason about all of these things in one common ecosystem and have the layouts much\nhigher level. And so what this enables, it enables very powerful libraries—and very\npowerful libraries where a lot of the logic is actually done at compile time, but you can\ndebug it because it’s the same language that you use at runtime. And it makes the language\nmuch more simpler, much more powerful, and just be able to scale into these complexities\nin a way that’s possible with C++. But in C++, you get some crazy template stack trace\nthat is maddening and impossible to understand. In Mojo, you can get a very simple error\nmessage. You can actually debug your code, and debugger things like this."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So maybe an important point here is that metaprogramming is really an old solution to this\nperformance problem. Maybe a good way of thinking about this is, imagine you have some\npiece of data that you have that represents a little embedded domain-specific language\nthat you’ve written, that you want to execute via a program that you wrote. You can, in a\nnice high-level way, write a little interpreter for that language that just—you know, I\nhave maybe a Boolean expression language or who knows what else. Maybe it’s a language for\ncomputing on tensors in a GPU. And you could write a program that just executes that mini\ndomain-specific language and does the thing that you want and you can do it, but it’s\nreally slow. Writing an interpreter is just inherently slow because of all this\ninterpretation overhead where you are dynamically making decisions about what the behavior\nof the program is. And sometimes what you want, is, you just want to actually emit exactly\nthe code that you want and boil away the control structure and just get the direct lines\nof machine code that you want to do the thing that’s necessary."
+    },
+    {
+      "type": "p",
+      "text": "And various forms of code generation let you get past in a simpler way, lets you get past\nall of this control structure that you have to execute at runtime and instead be able to\nexecute it at compile time and get this minified program that just does exactly the thing\nthat you want. So that’s a really old idea. It goes back to all sorts of programming\nlanguages. There’s a lot of Lisps that did a lot of this metaprogramming stuff, but then\nthe problem is this stuff is super hard to think about and reason about and debug. And\nthat’s certainly true if you think about in C, all this macro language, if you use the\nvarious C preprocessors to do this kind of stuff in C, it’s pretty painful to reason\nabout. And then C++ made it richer and more expressive, but still really hard to reason\nabout. And you write a C++ template and you don’t really know what it’s going to do or if\nit’s going to compile until you give it all the inputs and let it go and it—"
+    },
+    {
+      "type": "ts",
+      "text": "00:37:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Feels good in the simple case. But then when you get to more advanced cases, suddenly the\ncomplexity compounds and it gets out of hand."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And it sounds like the thing that you’re going for in Mojo is it feels like one\nlanguage. It has one type system that covers both the stuff you’re generating statically\nand the stuff that you’re doing at runtime. It sounds like debugging works in the same way\nacross both of these layers, but you still get the actual runtime behavior you want from a\nlanguage that you could more explicitly just be like, here’s exactly the code that I want\nto generate."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "[…] metaprogramming is one of the fancy features. One of the cool features is it feels\nand looks like Python, but with actual types."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "And let’s not forget the basics. Having something that looks and feels like Python but\nit’s a thousand times faster or something is actually pretty cool. For example, if you’re\non a CPU, you have access to SIMD, the SIMD registers that allow you to do multiple\noperations at a time and [to] be able to get the full power of your hardware even without\nusing the fancy features is also really cool. And so the challenge with any of these\nsystems is, how do you make something that’s powerful, but it’s also easy to use? I think\nyour team’s been playing with Mojo and doing some cool stuff. I mean, what have you seen\nand what’s your experience been?"
+    },
+    {
+      "type": "ts",
+      "text": "00:39:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We’re all still pretty new to it, but I think it’s got a lot of exciting things going for\nit. I mean, the first thing is, yeah, it gives you the kind of programming model you want\nto get the performance that you need. And actually, in many ways the same kind of\nprogramming model that you get out of something like CUTLASS or CuTe DSL, which are these\nNvidia-specific, some at the C++ level, some at the Python DSL level—and by the way, every\ntool you can imagine nowadays is done once in C++ and once in Python. We don’t need to\nimplement programming languages in any other way anymore. They’re all either skins on C++\nor skins on Python. But depending on which path you go down, whether you go the C++ path\nor the Python path, you get all sorts of complicated trade-offs."
+    },
+    {
+      "type": "p",
+      "text": "Like in the C++ path in particular, you get very painful compilation times. The thing you\nsaid about template metaprogramming is absolutely true. The error messages are super\nbad. If you look at these more Python-embedded DSLs, the compile times tend to be\nbetter. It still can be hard to reason about though. One nice thing about Mojo is the\noverall discipline seems very explicit when you want to understand: Is this a value that’s\nhappening at execution time at the end, or is it a value that is going to be dealt with at\ncompile time? It’s just very explicit in the syntax, you can look and understand. Whereas\nin some of these DSLs, you have to actively go and poke the value and ask it what kind of\nvalue it is. And I think that kind of explicitness is actually really important for\nperformance engineering, making it easy to understand just what precisely you’re doing."
+    },
+    {
+      "type": "p",
+      "text": "You actually see this a ton, not even with these very low-level things, but if you look at\nPyTorch, which is a much higher level tool, PyTorch does this thing where you get to write\na thing that looks like an ordinary Python program, but really it’s got a much trickier\nexecution model. Python’s an amazing and terrible ecosystem in which to do this kind of\nstuff, because what guarantees do you have when you’re using Python? None. What can you\ndo? Anything. You have an enormous amount of freedom. The PyTorch people in particular\nhave leveraged this freedom in a bunch of very clever ways, where you can write a Python\nprogram that looks like it’s doing something very simple and straightforward that would be\nreally slow, but no—it’s very carefully delaying and making some operations lazy so it can\noverlap compute on the GPU and CPU and make stuff go really fast. And that’s really nice,\nexcept sometimes it just doesn’t work."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "This is the trap again, this is my decades of battle scars now. So as a compiler guy, I\ncan make fun of other compiler people. There’s this trap and it’s an attractive trap,\nwhich is called the ‘sufficiently smart compiler.’ And so what you can do is you can take\nsomething and you can make it look good on a demo and you can say, ‘Look! I make it super\neasy and I’m going to make my compiler super smart, and it’s going to take care of all\nthis and make it easy through magic.’ But magic doesn’t exist. And so anytime you have one\nof those ‘sufficiently smart compilers,’ if you go back in the days, it was like\nauto-parallelization, just write C code is sequential logic, and then we’re going to\nautomatically map it into running on 100 cores on a supercomputer or something like that."
+    },
+    {
+      "type": "p",
+      "text": "They often actually do work, they work in very simple cases and they work in the\ndemos. But the problem is that you go and you’re using them and then you change one thing\nand suddenly everything breaks. Maybe the compiler crashes, it just doesn’t work. Or you\ngo and fix a bug and now instead of 100-times speedup, you get 100-times slowdown because\nit foiled the compiler. A lot of AI tools, a lot of these systems, particularly these\nDSLs, have this design point of, let me pretend like it’s easy and then I will take care\nof it behind the scenes. But then when something breaks, you have to end up looking at\ncompiler dumps, right? And this is because magic doesn’t exist. And so this is where\npredictability and control is really, I think, the name of the game, particularly if you\nwant to get the most out of a piece of hardware, which is how we ended up here."
+    },
+    {
+      "type": "ts",
+      "text": "00:42:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s funny, the same issue of, “How clever is the underlying system you’re using?” comes\nup when you look at the difference between CPUs and GPUs. CPUs themselves are trying to do\na weird thing where a chip is a fundamentally parallel substrate. It’s got all of these\ncircuits that in principle could be running in parallel and then it is yoked to running\nthis extremely sequential programming language, which is just trying to do one thing after\nanother. And then how does that actually work with any reasonable efficiency? Well,\nthere’s all sorts of clever dirty tricks happening under the covers where it’s trying to\npredict what you’re going to do, this speculation that allows it to dispatch multiple\ninstructions in a row by guessing what you’re going to do in the future. There’s things\nlike memory prefetching where it has heuristics to estimate what memory you’re going to\nask in the future so it can dispatch multiple memory requests at the same time."
+    },
+    {
+      "type": "p",
+      "text": "And then if you look at things like GPUs, and I think even more, TPUs, and then also\ntotally other things like FPGAs, the field-programmable gate arrays where you put\nbasically a circuit design on it. It’s a very different kind of software system. But all\nof them are in some sense simpler and more deterministic and more explicitly\nparallel. Like when you write down your program, you have to write an explicitly parallel\nprogram—that’s actually harder to write. I don’t want to complain too much about CPUs. The\ngreat thing about CPUs is they’re extremely flexible and incredibly easy to use and all of\nthat dark magic actually works a pretty large fraction of the time."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, remarkably well. But your point here, I think it’s really great, and what you’re\nsaying is, you’re saying CPUs are the magic box that makes sequential code go in parallel\npretty fast. And then we have new, more explicit machines, somewhat harder to program\nbecause they’re not a magic box, but you get something from it. You get performance and\npower because that magic box doesn’t come without a cost. It comes with a very significant\ncost, often the amount of power that your machine dissipates. And so it’s not\nefficient. And so a lot of the reasons we’re getting these new accelerators is because\npeople really do care about it being a hundred times faster, or using way less power, or\nthings like this. And I’d never thought about it, but your analogy of Triton to Mojo kind\nof follows a similar pattern, right? Triton is trying to be the magic box, and it doesn’t\ngive you the full performance, and it burns more power, and all that kind of stuff. And so\nMojo is saying, look, let’s go back to being simple. Let’s give the programmer more\ncontrol. And that more explicit approach, I think, is a good fit for people that are\nbuilding crazy advanced hardware like you’re talking about—but also people that want to\nget the best performance out of the existing hardware we have."
+    },
+    {
+      "type": "ts",
+      "text": "00:44:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So we talked about how metaprogramming lets you write faster programs by boiling away this\ncontrol structure that you don’t really need. So that part’s good. How does it give you\nportable performance? How does it help you on the portability front?"
+    },
+    {
+      "type": "ts",
+      "text": "00:44:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so this is another great question. So in this category of ‘sufficiently smart\ncompilers,’ and particularly for AI compilers, there’s been years of work and MLIR has\ncatalyzed a lot of this work building these magic AI compilers that take TensorFlow or\neven the new PyTorch stuff and trying to generate optimal code for some chip. So take some\nPyTorch model and put it through a compiler, and magically get out high performance. And\nso there’s tons of these things, and there’s a lot of great work done here, and a lot of\npeople have shown that you can take kernels and accelerate them with compilers. The\nchallenge with this is that people don’t ever measure—what is the full performance of the\nchip? And so people always measure from a somewhat unfortunate baseline and then try to\nclimb higher instead of saying—what is the speed of light? And so if you measure from\nspeed of light, suddenly you say, okay, how do I achieve several different things?"
+    },
+    {
+      "type": "p",
+      "text": "Even if you zero into one piece of silicon, how do I achieve the best performance for one\nuse case? And then how do I make it so the software I write can generalize even within the\ndomain? And so for example, take a matrix multiplication, well, you want to work on maybe\nfloat32, but then you want to generalize it to float16. Okay, well, templates and things\nlike this are easy ways to do this. Then programming allows you to say, okay, I will\ntackle that. And then the next thing that happens is, because you went from float32 to\nfloat16, your effective cache size has doubled, because twice as many elements fit into\ncache if there’s 16 bits than if there are 32 bits. Well, if that’s the case, now suddenly\nthe access pattern needs to change. And so you get a whole bunch of this conditional logic\nthat now changes in a very parametric way as a result of one simple change that happened\nwith float32 to float16."
+    },
+    {
+      "type": "p",
+      "text": "Now you play that forward and you say, okay, well actually matrix multiplication is a\nrecursive hierarchical problem. There’s specializations for tall and skinny matrices, and\na dimension is one or something. There’s all these special cases. Just one algorithm for\none chip becomes this very complicated subsystem that you end up wanting to do a lot of\ntransformations to so you can go specialize it for different use cases. And so Mojo with\nthe metaprogramming allows you to tackle that. Now you bring in other hardware, and so\nthink of matrix multiplication these days as being almost an operating system, and there’s\nso many different subsystems, and special cases, and different D types, and crazy float4\nand six and other stuff going on."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "At some point they’re going to come out with a floating point number so small that it will\nbe a joke. But every time I think that they’re just kidding, it turns out it’s real."
+    },
+    {
+      "type": "ts",
+      "text": "00:47:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Seriously, I heard somebody talking about 1.2-bit floating point, right? It’s exactly like\nyou’re saying, is that a joke? You can’t be serious. And so now when you bring in other\nhardware, other hardware brings in more complexity because suddenly the tensor core has a\ndifferent layout in AMD than it does on Nvidia. Or maybe to your point about warps, you\nhave 64 threads in a warp on one and 32 threads in a warp on the other. But what you\nrealize is, wait a second—this really has nothing to do with hardware vendors. This is\nactually true even within, for example, the Nvidia line, because across these different\ndata types, the tensor cores are changing. The way the tensor core works for float32 is\ndifferent from the way it works for float4 or something. And so you already—within one\nvendor—have to have this very powerful metaprogramming to be able to handle the complexity\nand do so in the scaffolding of a single algorithm like matrix multiplication."
+    },
+    {
+      "type": "p",
+      "text": "And so now as you bring in other vendors, well it turns out hey, they all have things that\nlook roughly like tensor cores. And so we’re coming at this with a software engineering\nperspective, and so we’re forced to build abstractions. We have this powerful\nmetaprogramming system so we can actually achieve this. And so even for one vendor, we get\nthis thing called LayoutTensor. LayoutTensor is saying, okay, well I have the ability to\nreason about not just an array of numbers or a multidimensional array of numbers, but also\nhow it’s laid out in memory and how it gets accessed. And so now we can declaratively map\nthese things onto the hardware that you have and these abstractions stack. And so it’s\nthis really amazing triumvirate between having a type system that works well and this very\nimportant basis. I know you’re a fan of type systems also."
+    },
+    {
+      "type": "p",
+      "text": "You then bring in metaprogramming, and so you can build powerful abstractions and run a\ncompile time so you get no runtime overhead. And then you bring in the most important part\nof this entire equation, which is programmers who understand the domain. I am not going to\nwrite a fast matrix multiplication. I’m sorry, that’s not my experience. But there are\npeople in that space that are just fricking brilliant. They understand exactly how the\nhardware works, they understand the use cases and the latest research and the new crazy\nquantized format of the day, but they’re not compiler people. And so the magic of Mojo is\nit says, ‘Hey, you have a type system, you have metaprogramming, you have effectively the\nfull power of a compiler that you have when you’re building libraries.’ And so now these\npeople that are brilliant at unlocking the power of the hardware can actually do this. And\nnow they can write software that scales both across the complexity of the domain but also\nacross hardware. And to me, that’s what I find so exciting and so powerful about\nthis. It’s unlocking the power of the Mojo programmer instead of trying to put it into the\ncompiler, which is what a lot of earlier systems have tried to do."
+    },
+    {
+      "type": "ts",
+      "text": "00:49:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So maybe the key point here is that you get to build these abstractions that allow you to\nrepresent different kinds of hardware, and then you can conditionally have your code\nexecute based on the kind of hardware that it’s on. It’s not like an #ifdef where you’re\npicking between different hardware platforms. There are complicated data structures like\nthese layout values that tell you how you traverse data."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Which is kind of a tree. This isn’t just a simple int that you’re passing around. This is\nlike a recursive hierarchical tree that you need at compile time."
+    },
+    {
+      "type": "ts",
+      "text": "00:50:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "The critical thing is you get to write a thing that feels like one synthetic program with\none understandable behavior, but then parts of it are actually going to execute at compile\ntime, so that the thing that you generate is in fact specialized for the particular\nplatform that you’re going to run it on. So one concern I have over this is it sounds like\nthe configuration space of your programs is going to be massive, and I feel like there are\ntwo directions where this seems potentially hard to do from an engineering\nperspective. One is, can you really create abstractions that within the context of the\nprogram hide the relevant complexity? So it’s possible for people to think in a modular\nway about the program they’re building, so their brains don’t explode with the 70\ndifferent kinds of hardware that they might be running it on. And then the other question\nis, how do you think about testing? Because there’s just so many configurations. How do\nyou know whether it’s working in all the places? Because it sounds like it has an enormous\namount of freedom to do different things, including wrong things in some cases. How do you\ndeal with those two problems, both controlling the complexity of the abstractions and then\nhaving a testing story that works out?"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Okay, Ron, I’m going to blow your mind. I know you’re going to be resistant to this, but\nlet me convince you that types are cool."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay!"
+    },
+    {
+      "type": "ts",
+      "text": "00:51:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "I know you’re going to fight me on this. Well, so this is again, you go back to the\nchallenges and opportunities of working with either Python or C++. Python doesn’t have\ntypes really. I mean it has some stuff, but it doesn’t really have a type system. C++ has\na type system, but it’s just incredibly painful to work with. And so what Mojo does is it\nsays, again, it’s not rocket science. We see it all around us. Let’s bring in\ntraits. Let’s bring in a reasonable way to write code so that we can build abstractions\nthat are domain-specific and they can be checked modularly. And so one of the big problems\nwith C++ is that you get error messages when you instantiate layers and layers and layers\nand layers of templates. And so if you get some magic number wrong, it explodes\nspectacularly in a way that you can’t reason about. And so what Mojo does, it says, cool,\nlet’s bring in traits that feel very much like protocols in Swift, or traits in Rust, or\ntype classes in Haskell. Like, this isn’t novel."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This is like a mechanism for what’s called ad hoc polymorphism, meaning I want to have\nsome operation or function that has some meaning, but actually it’s going to get\nimplemented in different ways for different types. And these are basically all mechanisms\nof a way of, given the thing that you’re doing and the types involved, looking up the\nright implementation that’s going to do the thing that you want."
+    },
+    {
+      "type": "ts",
+      "text": "00:52:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I mean a very simple case is an iterator. So Mojo has an iterator trait and you can\nsay, ‘Hey, what is an iterator over a collection?’ Well, you can either check, see if\nthere’s an element, or you can get the value at the current element. And then as you keep\npulling things out of an iterator, it will eventually decide to stop. And so this concept\ncan be applied to things like a linked list, or an array, or a dictionary, or an unbounded\nsequence of packets coming off a network. And so you can write code that’s generic across\nthese different—call them “backends” or “models”—that implement this trait. And what the\ncompiler will do for you is it will check to make sure when you’re writing that generic\ncode, you’re not using something that won’t work. And so what that does, is it means that\nyou can check the generic code without having to instantiate it, which is good for compile\ntime. It’s good for user experience, because if you get something wrong as a programmer,\nthat’s important. It’s good for reasoning about the modularity of these different\nsubsystems, because now you have an interface that connects the two components."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think it’s an underappreciated problem with the C++ templates approach to the world,\nwhere C++ templates seem like a deep language feature, but really they’re just a code\ngeneration feature."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "They’re like C macros."
+    },
+    {
+      "type": "ts",
+      "text": "00:53:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. It both means they’re hard to think about and reason about because it sort\nof seems at first glance not to be so bad—this property that you don’t really know when\nyour template expands, if it’s actually going to compile. But as you start composing\nthings more deeply, it gets worse and worse because something somewhere is going to fail,\nand it’s just going to be hard to reason about and understand. Whereas when you have\ntype-level notions of genericity that are guaranteed to compose correctly and won’t just\nblow up, you just drive that error right down. So that’s one thing that’s nice about\ngetting past templates as a language feature. And then the other thing is it’s just\ncrushingly slow. You’re generating the code, almost exactly the same code, over and over\nand over again. And so that just means you can’t save any of the compilation work. You\njust have to redo the whole thing from scratch."
+    },
+    {
+      "type": "ts",
+      "text": "00:54:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That’s exactly right. And so this is where again, we were talking about the sand in the\nsystem—these little things that if you get wrong, they play forward and they cause huge\nproblems. The metaprogramming approach in Mojo is cool, both for usability and compile\ntime and correctness. Coming back to your point about portability, it’s also valuable for\nportability because what it means is that the compiler parses your code, and it parses it\ngenerically and has no idea what the target is. And so when Mojo generates the first level\nof intermediate representation, the compiler representation for the code, it’s not hard\ncoding and the pointers are 32 bit or 64 bit, or that you’re on a x86 or whatever. And\nwhat this means is that you can take generic code in Mojo and you can put it on a CPU and\nyou can put it on a GPU. Same code, same function. And again, these crazy compilery things\nthat Chris gets obsessed about, it means that you can slice out the chunk of code that you\nwant to put onto your GPU in a way that it looks like a distributed system, but it’s a\ndistributed system where the GPU is actually a crazy embedded device that wants this tiny\nsnippet of code and it wants it fully self-contained. These worlds of things that normal\nprogramming languages haven’t even thought about."
+    },
+    {
+      "type": "ts",
+      "text": "00:55:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So does that mean when I compile a Mojo program, I get a shippable executable that\ncontains within it another little compiler that can take the Mojo code and specialize it\nto get the actual machine code for the final destination that you need? Do I bundle\ntogether all the compilers for all the possible platforms in every Mojo executable?"
+    },
+    {
+      "type": "ts",
+      "text": "00:55:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "The answer is no. The world’s not ready for that. And there are use cases for JIT\ncompilers and things like this, and that’s cool, but the default way of building, if you\njust run mojo build, then it will give you just an a.out executable, a normal thing. But\nif you build a Mojo package, the Mojo package retains portability. This is a big\ndifference. This is what Java does. If you think about Java in a completely different way\nand for different reasons in a different ecosystem universe, it parses all your source\ncode without knowing what the target is, and it generates Java bytecode. And so it’s not\n1995 anymore. The way we do this is completely different. And we’re not Java obviously,\nand we have a type system that’s very different. But this concept is something that’s been\nwell known, and is something that at least the world of compiled languages like Swift, and\nC++, and Rust have kind of forgotten."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the Mojo package is kind of shipped with the compiler technology required to specialize\nto the different domains."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yes. And so again, by default, if you’re a user, you’re sitting on your laptop and you\nsay, ‘Compile a Mojo program,’ you just want an executable. But the compiler technology\nhas all of these powerful features and they can be used in different ways. This is similar\nto LLVM, where LLVM had a just-in-time compiler, and that’s really important if you’re\nSony Pictures and you’re rendering shaders for some fancy movie, but that’s not what you’d\nwant to use if you’re just running a C++ code that needs to be ahead-of-time compiled."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I mean, there’s some echoes here also of the PTX story with Nvidia. Nvidia has this thing\nthat they sort of hide that it’s an intermediate representation, but this thing called\nPTX, which is a portable bytecode essentially. And they for many years maintained\ncompatibility across many, many different generations of GPUs. They have a thing called\nthe assembler that’s part of the driver thing for loading on, and it’s really not an\nassembler. It’s like a real compiler that takes the PTX and compiles it down to SASS, the\naccelerator-specific machine code, which they very carefully do not fully document because\nthey don’t want to give away all of their secrets. And so there’s a built-in portability\nstory there where it’s meant to actually be portable in the future across new\ngenerations. Although as you were pointing out before, it in fact doesn’t always\nsucceed. And there are now some programs that will not actually make the transition to\nBlackwell."
+    },
+    {
+      "type": "ts",
+      "text": "00:57:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "So that’s in the category that I’d consider to be like a virtual machine, a very low-level\nvirtual machine by the way. And so when you’re looking at these systems, the thing I’d ask\nis, what is the type system? And so if you look at PTX, because as you’re saying, you’re\ntotally right, it’s an abstraction between a whole bunch of source code on the top end and\nthen that specific SASS hardware thing on the backend, but the type system isn’t very\ninteresting. It’s pointers and registers and memory. And so Java, what is the type system?\nWell, Java achieves portability by making the type system in its bytecode expose\nobjects. And so it’s a much higher level abstraction, dynamic virtual dispatch, that’s all\npart of the Java ecosystem. It’s not a bytecode, but the representation that’s portable\nmaintains the full generic system. And so this is what makes it possible to say, ‘Okay,\nwell I’m going to take this code, compile it once to a package, and now go specialize and\ninstantiate this for a device.’ So the way that works is a little bit different, but it\nenables, coming back to your original question of safety and correctness, it enables all\nthe checking to happen the right way."
+    },
+    {
+      "type": "ts",
+      "text": "00:58:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right, there’s also a huge shift in control. With PTX, the machine-specific details of how\nit’s compiled are totally out of the programmer’s control. You can generate the best PTX\nyou can, and then it’s going to get compiled. How? Somehow, don’t ask too many questions,\nit’s going to do what it’s going to do. Whereas here, you’re preserving in the portable\nobject, the programmer-driven instructions about how the specialization is going to\nwork. You’ve just partially executed your compilation, you’ve got partway down, and then\nthere’s some more that’s going to be done at the end when you pick actually where you’re\ngoing to run it."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And so these are all very nerdy pieces that go into the stack, but the thing that\nI like is if you bubble out of that, it’s easy to use. It works. It gives good error\nmessages, right? I don’t understand the Greek letters, but I do understand a lot of the\nengineering that goes into this. The way this technology stack builds up, the whole\npurpose is to unlock compute, and we want new programmers to be able to get into the\nsystem. And if they know Python, if they understand some of the basics of the hardware,\nthey can be effective and then they don’t get limited to 80% of the performance. They can\nkeep driving and keep growing in sophistication, and maybe not everybody wants to do\nthat. They can stop at 80%, but if you do want to go all the way, then you can get there."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One thing I’m curious about is, how do you actually manage to keep it simple? You said\nthat Mojo is meant to be Pythonic and you talked a bunch about the syntax, but actually\none of the nice things about Python is it’s simple in some ways in a deeper sense. The\nfact that there isn’t by default a complicated type system with complicated type errors to\nthink about—there’s a lot of problems with that, but it’s also a real source of simplicity\nfor users who are trying to learn the system. Dynamic errors at runtime are in some ways\neasier to understand. ‘I wrote a program and it tried to do a thing and it tripped over\nthis particular thing and you can see it tripping over,’ and in some ways that’s easier to\nunderstand when you’re going to a language which, for both safety and performance reasons,\nneeds much more precise type level control. How do you do that in a way that still feels\nPythonic in terms of the base simplicity that you’re exposing to users?"
+    },
+    {
+      "type": "ts",
+      "text": "01:00:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "I can’t give you the perfect answer, but I can tell you my current thoughts. So again,\nlearn from history. Swift had a lot of really cool features, but it spiraled and got a lot\nof complexity that got layered in over time. And also one of the challenges with Swift is\nit had a team that was paid to add features to swift."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s never a good thing."
+    },
+    {
+      "type": "ts",
+      "text": "01:00:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Well, you have a C++ committee, what is the C++ committee going to do? They’re going to\nkeep adding features to C++. Don’t expect C++ to get smaller. It’s common sense. And so\nwith Mojo, there’s a couple of different things. So one of which is, start from Python. So\nPython being the surface-level syntax enables me as management to be able to push back and\nsay, ‘Look, let’s make sure we’re implementing the full power of the Python\necosystem. Let’s have lists, and for-comprehensions, and all this stuff before just\ninventing random stuff because it might be useful.’ But there’s also, for me personally, a\nsignificant back pressure on complexity. How can we factor these things? How can we get,\nfor example, the metaprogramming system to subsume a lot of complexity that would\notherwise exist? And there are fundamental things that I want us to add."
+    },
+    {
+      "type": "p",
+      "text": "For example, checked generics, things like this because they have a better UX, they’re\npart of the metaprogramming system, they’re part of the core addition that we’re adding,\nbut I don’t want Mojo to turn into a ‘add every language feature’ that every other\nlanguage has just because it’s useful to somebody. I was actually inspired by and learned\na lot from Go, and it’s a language that people are probably surprised to hear me talk\nabout. Go, I think, did a really good job of intentionally constraining the language with\nGo 1. And they took a lot of heat for that. They didn’t add a generic system, and\neverybody, myself included, were like, ‘Ha ha ha, why doesn’t this language even have a\ngeneric system? You’re not even a modern language.’ But they held the line, they\nunderstood how far people could get, and then they did a really good job of adding\ngenerics to Go 2, and I thought they did a great job."
+    },
+    {
+      "type": "p",
+      "text": "There was a recent blog post I was reading, talking about Go, and apparently they have an\n80-20 rule, and they say they want to have 80% of the features with 20% of the complexity,\nsomething like that. And the observation is that that’s a point in the space that annoys\neverybody, because everybody wants 81% of the features, but 81% of the features maybe\ngives you 35% of the complexity. And so, figuring out where to draw that line and figuring\nout where to say no—for example, we have people in the community that are asking for very\nreasonable things that exist in Rust. And Rust is a wonderful language. I love it. There’s\na lot of great ideas and we shamelessly pull good ideas from everywhere. But I don’t want\nthe complexity."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I often like to say that one of the most critical things about a language design is\nmaintaining the power-to-weight ratio."
+    },
+    {
+      "type": "p",
+      "text": "You want to get an enormous amount of good functionality, and power, and good user\nexperience while minimizing that complexity. I think it is a very challenging thing to\nmanage, and it’s actually a thing that we are seeing a lot as well. We are also doing a\nlot to extend OCaml in all sorts of ways, pulling from all sorts of languages, including\nRust, and again, doing it in a way where the language maintains its basic character and\nmaintains its simplicity is a real challenge. And it’s kind of hard to know if you’re\nhitting the actual right point on that. And it’s easier to do in a world where you can\ntake things back, try things out and decide that maybe they don’t work, and then adjust\nyour behavior. And we’re trying to iterate a lot in that mode, which is a thing you can do\nunder certain circumstances. It gets harder as you have a big open-source language that\nlots of people are using."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That’s a really great point. And so one of the other lessons I’ve learned with Swift, is\nthat with Swift, I pushed very early to have an open design process where anybody could\ncome in, write a proposal, and then it would be evaluated by the language committee, and\nthen if it was good, it would be implemented and put into Swift. Again, be careful what\nyou wish for. That enabled a lot of people with really good ideas to add a bunch of\nfeatures to Swift. And so with Mojo as a counterbalance, I really want the core team to be\nsmall. I want the core team not just to be able to add a whole bunch of stuff because it\nmight be useful someday, but to be really deliberate about how we add things, how we\nevolve things."
+    },
+    {
+      "type": "ts",
+      "text": "01:04:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How are you thinking about maintaining backwards compatibility guarantees as you evolve it\nforward?"
+    },
+    {
+      "type": "ts",
+      "text": "01:04:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "We’re actively debating and discussing what Mojo 1.0 looks like. And so I’m not going to\ngive you a timeframe, but it will hopefully not be very far away. And what I am fond of is\nthis notion of semantic versioning, and saying we’re going to have a 1.0, and then we’re\ngoing to have a 2.0, and we’re going to have a 3.0, and we’re going to have a 4.0, et\ncetera. And each of these will be able to be incompatible, but they can link together. And\nso one of the big challenges and a lot of the damage in the Python ecosystem was from the\nPython two-to-three conversion. It took 15 years and it was a heroic mess for many\ndifferent reasons. The reason it took so long is because you have to convert the entire\npackage ecosystem before you can be 3.0. And so if you contrast that to something like\nC++, let me say good things about C++, they got the ABI right."
+    },
+    {
+      "type": "p",
+      "text": "And so once the ABI was set, then you could have one package built in C++ 98, and one\npackage built in C++ 23, and these things would interoperate and be compatible even if you\ntook new keywords or other things in the future language version. And so what I see for\nMojo is much more similar to the—maybe the C++ ecosystem or something like this, but that\nallows us to be a little bit more aggressive in terms of migrating code, in terms of\nfixing bugs, and in moving language forward. But I want to make sure that Mojo 2.0 and\nMojo 1.0 packages work together and that there’s good tooling, probably AI-driven, but\ngood tooling to move from 1.0 to 2.0 and be able to manage the ecosystem that way."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think the type system also helps an enormous amount. I think one of the reasons the\nPython migration was so hard is that you couldn’t be like, ‘And then let me try and build\nthis with Python 3 and see what’s broken.’ You could only see what’s broken by actually\nwalking all of the execution paths of your program. And if you didn’t have enough testing,\nthat would be very hard. And even if you did, it wasn’t that easy. Whereas with a strong\ntype system, you can get an enormous amount of very precise guidance. And actually the\ncombination of a strong type system and an agentic coding system is awesome. We actually\nhave a bunch of experience of just trying these things out now, where you make some small\nchange to the type of something and then you’re like, ‘Hey, AI system, please run down all\nthe type errors, fix them all.’ And it does surprisingly well."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "I absolutely agree. There’s other components to it. So Rust has done a very good job with\nthe stabilization approach with crates and APIs. And I think that’s a really good\nthing. And so I think we’ll take good ideas from many of these different ecosystems and\nhopefully do something that works well, and works well for the ecosystem, and allows us to\nscale without being completely constrained by never being able to fix something once you\nship a 1.0."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I’m actually curious, just to go to the agentic programming thing for a second, which is\nhaving AI agents that write good kernels is actually pretty hard. And I’m curious what\nyour experience is of how things work with Mojo. Mojo is obviously not a language deeply\nembedded in the training set that these models were built on, but on the other hand, you\nhave this very strong type structure that can guide the process of the AI agent trying to\nwrite and modify code. I’m curious how that pans out in practice as you try and use these\ntools."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "So this is why Mojo being open source, and—so we have hundreds of thousands of lines of\nMojo code that are public with all these GPU kernels, and like, all this other cool\nstuff. And we have a community of people writing more code. Having hundreds of thousand\nlines of Mojo code is fantastic. You can point your coding tool cursor, or whatever it is,\nat that repo and say, ‘Go learn about this repo and index it.’ So it’s not that you have\nto train the model to know the language, just having access to it—that enables it to do\ngood work. And these tools are phenomenal. And so that’s been very, very, very\nimportant. And so we have instructions on our webpage for how to set up these tools, and\nthere’s a huge difference if you set it up right, so that it can index that, or if you\ndon’t, and make sure to follow that markdown file that explains how to set up the tool."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, I want to talk a little bit about the future of Mojo. I think that the current way\nthat Modular and you have been talking about Mojo, these days at least—it’s a replacement\nfor CUDA, an alternate full top-to-bottom stack for building GPU kernels, for writing\nprograms that execute on GPUs. But that’s not the only way you’ve ever talked about\nMojo. You’ve also, especially earlier on I think, there was more discussion of Mojo as an\nextension, and maybe evolution of, and maybe eventually replacement of Python. And I’m\ncurious, how do you think about that now? To what degree do you think of Mojo as its own\nnew language that takes inspiration and syntax from Python, and to what degree do you want\nsomething that’s more deeply integrated over time?"
+    },
+    {
+      "type": "ts",
+      "text": "01:08:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "So today, to pull it back to, ‘What is Mojo useful for today, and how do we explain it?’\nMojo is useful if you want code to go fast. If you have code on a CPU or a GPU and you\nwant it to go fast, Mojo is a great thing. One of the really cool things that is available\nnow—but it’s in preview and it’ll solidify in the next month or something—is it’s also the\nbest way to extend Python. And so if you have a large-scale Python code base, again, tell\nme if this sounds familiar, you are coding away and you’re doing cool stuff in Python and\nthen it starts to get slow. Typically what people do is, they have to either go rewrite\nthe whole thing in Rust or C++, or they carve out some chunk of it and move some chunk of\nthat package to C++ or Rust. This is what NumPy, or PyTorch, or all modern large-scale\nPython code bases end up doing."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "If you look up on the mirrors and look at the percentage of programs that have C\nextensions in them, it’s shockingly high. A really large fraction of Python stuff is\nactually part Python and part some other language, almost always C and C++, a little bit\nof Rust."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And so today—this isn’t distant future—today, you can take your Python\npackage and you can create a Mojo file and you can say, ‘Okay, well these for loops are\nslow, move it over to Mojo.’ And we have people, for example, doing bioinformatics and\nother crazy stuff I know nothing about, saying, ‘Okay, well I’m just taking my Python\ncode, I move it over to Mojo. Wow, now I get types, I get these benefits, but there’s no\nbindings. The pip experience is beautiful. It’s super simple.’ You don’t have to have\nFFI’s and nanobind and all this complexity to be able to do this. You also are not moving\nfrom Python with its syntax to curly braces and borrow checkers and other craziness. You\nnow get a very simple and seamless way to extend your Python package. And we have people\nthat say, okay, well I did that and I got it first 10x, and 100x, and 1000x faster on CPU."
+    },
+    {
+      "type": "p",
+      "text": "But then because it was easy, I just put it on a GPU. And so to me, this is amazing\nbecause these are people that didn’t even think and would never have gotten it on a GPU if\nthey switched to Rust or something like that. Again, the way I explain it is, Mojo is good\nfor performance. It’s good if you want to go fast on a GPU, on a CPU, if you want to make\nPython go fast, or if you want to—I mean, some people are crazy enough to go whole hog and\njust write entirely from scratch Mojo programs, and that’s super cool. If you fast forward\nsix, nine months, something, I think that Mojo will be a very credible top-to-bottom\nreplacement for Rust."
+    },
+    {
+      "type": "p",
+      "text": "And so we need a few more extensions to the generic system. And there’s a few things I\nwant to bake out a little bit. Some of the dynamic features that Rust has for the\nexistentials, the ability to make a runtime trait is missing in Mojo. And so we’ll add a\nfew of those kinds of features. And as we do that, I think that’ll be really interesting\nas an applications-level programming language for people who care about this kind of\nstuff. You fast forward, I might even project a timeframe, maybe a year, 18 months from\nnow, it depends on how we prioritize things, and we’ll add classes. And so as we add\nclasses, suddenly it will look and feel to a Python programmer much more familiar. The\nclasses in Mojo will be intentionally designed to be very similar to Python, and at that\npoint we’ll have something that looks and feels kind of like a Python 4."
+    },
+    {
+      "type": "p",
+      "text": "It’s very much cut from the same mold as Python. It integrates really well from\nPython. It’s really easy to extend Python, and so it’s very much a member of the Python\nfamily, but it’s not compatible with Python. And so what we’ll do over the course of N\nyears, and I can’t predict exactly how long that is, is continue to run down the line of,\nokay, well how much compatibility do we want to add to this thing? And then I think that\nat some point people will consider it to be a Python superset, and effectively it will\nfeel just like the best way to do Python in general. And I think that that will come in\ntime. But to bring it all the way back, I want us to be very focused on, ‘What is Mojo\nuseful for today?’ Great claims require great proof."
+    },
+    {
+      "type": "p",
+      "text": "We have no proof that we can do this. I have a vision and a future in my brain, and I’ve\nbuilt a few languages and some scale things before, and so I have quite high confidence\nthat we can do this. But I want people to zero back into, okay, if you’re writing\nperformance code, if you’re writing GPU kernels or AI, if you have Python code, you don’t\nwant it to go slow, a few of us have that problem, then Mojo can be very useful. And\nhopefully it’ll be even more useful to more people in the future."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think that already, the practical short-term thing is already plenty ambitious and\nexciting on its own. Seems like a great thing to focus on."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, let’s solve heterogeneous compute and AI. That’s actually a pretty useful thing,\nright?"
+    },
+    {
+      "type": "ts",
+      "text": "01:12:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Alright, that seems like a great place to stop. Thank you so much for joining me."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Chris"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, well thank you for having me. I love nerding out with you and I hope it’s useful and\ninteresting to other people too. But even if not, I had a lot of fun with you."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with show notes and links at\nsignalsandthreads.com. Thanks for joining us. See you next time."
+    }
+  ]
+}

@@ -1,0 +1,1295 @@
+{
+  "slug": "solving-puzzles-in-production",
+  "title": "Solving Puzzles in Production with Liora Friedberg",
+  "mp3_rel": "audio/solving-puzzles-in-production.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Liora Friedberg is a Production Engineer at Jane Street with a background in economics and\ncomputer science. In this episode, Liora and Ron discuss how production engineering blends\nhigh-stakes puzzle solving with thoughtful software engineering, as the people doing\nsupport build tools to make that support less necessary. They also discuss how Jane Street\nuses both tabletop simulation and hands-on exercises to train Production Engineers; what\nskills effective Production Engineers have in common; and how to create a culture where\npeople aren’t blamed for making costly mistakes."
+    },
+    {
+      "type": "p",
+      "text": "Liora Friedberg is a Production Engineer at Jane Street with a background in economics and\ncomputer science. In this episode, Liora and Ron discuss how production engineering blends\nhigh-stakes puzzle solving with thoughtful software engineering, as the people doing\nsupport build tools to make that support less necessary. They also discuss how Jane Street\nuses both tabletop simulation and hands-on exercises to train Production Engineers; what\nskills effective Production Engineers have in common; and how to create a culture where\npeople aren’t blamed for making costly mistakes."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech stack\nfrom Jane Street. I’m Ron Minsky. Alright, it is my pleasure to introduce Liora\nFriedberg. Liora is a Production Engineer and she’s worked here for the last five years in\nthat role. Liora, welcome to the podcast."
+    },
+    {
+      "type": "ts",
+      "text": "00:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Thank you for having me."
+    },
+    {
+      "type": "ts",
+      "text": "00:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So just to kick things off, maybe you could tell us a little bit more about, what is\nProduction Engineering at Jane Street?"
+    },
+    {
+      "type": "ts",
+      "text": "00:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So, Production Engineering is a role at Jane Street. It is a flavor of engineering that\nfocuses on the production layer of our systems, which is a pretty big statement and I can\ndefinitely break that down. But I’ll say the motivation here is that Jane Street is\nwriting software that trades billions of dollars a day. And so it’s important that that\nsoftware behaves as we expect in production, right? And if it doesn’t, we want people to\nnotice right away and to address what’s coming up. Production Engineers have support as a\nfirst-class part of their role. So, when we are on support, we are the first line of\ndefense for our team and we are responding to any issues that arise in our systems during\nthe day, whether that be from an alert or for a human raising some behavior that they\nobserve to us. And we are really tackling those issues right away."
+    },
+    {
+      "type": "p",
+      "text": "And I guess I will say as a clarifying bit here — that it’s not really the same thing as\nkind of being on call overnight or on the weekends. This is really like, during the\ntrading day you are present and responding to issues that are popping up live. And then of\ncourse Software Engineers do this type of work too. So the lines are a bit blurry, but\nroughly I would just say this is a first-class part of your role as a Production\nEngineer. So that is one big chunk. And then the other chunk of work as a Production\nEngineer is longer-term work to make your response to these issues better in the first\nplace, and also to make it less likely that you even need to respond. Sometimes Production\nEngineers do work that looks very similar to that of a Software Engineer. So, say you\nmight build an OCaml application that helps users self-service some requests that they\ncurrently come to your team for. Some Production Engineers, they might have roles that\nlook pretty different from a Software Engineer and maybe they’re spending a lot of their\ntime off support, thinking about processes and how we can respond to massive issues in a\nmore efficient, effective way."
+    },
+    {
+      "type": "p",
+      "text": "So, off-rotation work is much more varied depending on the Engineer’s interests and\nskillset and the team that they’ve been placed on. But they all share that overarching\ngoal of making our support story and our production story better."
+    },
+    {
+      "type": "ts",
+      "text": "02:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This sounds similar in spirit to the Site Reliability Engineer role that Google\npopularized over time, and similar production engineering roles in other places, where the\ncore thing that is organized around is the live support of the systems, but it’s not just\nthe activity of doing the support, it’s also various, kind of, project work around making\nthat support work well. So, what does the split look like? What amount of people’s time is\nspent sitting and actively thinking about the day-to-day support, and how much time is\nspent doing these projects that make the support world better?"
+    },
+    {
+      "type": "ts",
+      "text": "03:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s gonna vary a bit by team. But I would say roughly between a quarter and a third\nof your time you’ll actually be on rotation for your team, and then for the rest of your\ntime you’ll be doing that longer-term work."
+    },
+    {
+      "type": "ts",
+      "text": "03:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I’m a little curious about how you think about this fitting in with Software\nEngineering, which you mentioned it’s not a sharp line between the two and certainly\nSoftware Engineers here also do various kinds of support. So, what does the difference\nhere boil down to?"
+    },
+    {
+      "type": "ts",
+      "text": "03:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s a good question. And I think it is, again, a little bit in some ways\nchallenging to answer, because there are Production Engineers who look eerily similar to a\nSoftware Engineer and then there are Production Engineers where that difference is much\nstarker. But I guess I would say roughly that Software Engineers typically tend to be\nexperts in a few systems, and they’re gonna know right down to the depths those systems\nreally well. And typically Production Engineers will have a really strong working mental\nmodel of a broader set of systems and how all those systems fit together. And I think it’s\nthe same way that we have other types of engineers and roles embedded on the same\nteam. You might have a team with Software Engineers, Production Engineers, a PM, a UX\nDesigner, et cetera. Everyone is tackling that same team goal with a bit of a different\nperspective on it. And I think that is really how you get that excellent product in the\nend."
+    },
+    {
+      "type": "ts",
+      "text": "04:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, can you tell us a little bit more about what your path into Production Engineering was\nlike?"
+    },
+    {
+      "type": "ts",
+      "text": "04:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I studied computer science and economics in college, and after college I think\nlooking back it’s obvious what path I was going to take. But at the time, I truly could\nnot decide and wanted to try everything. So I went into consulting as many do after\ncollege. And I think the problems were actually very interesting, but I wasn’t motivated\nby the problems themselves. And I think I also just wanted a bit more of a work-life\nbalance and for various reasons didn’t feel like consulting was the place I wanted to end\nup in. So, I decided to move back into the tech world and I was thinking about where to\napply, and I already knew about Jane Street because I had taken an OCaml class in college\nand my TA, who I thought was really smart and cool had gone on to Jane Street. And so I\nthought, maybe I should apply there too."
+    },
+    {
+      "type": "p",
+      "text": "Shout out to Meyer, I think he’s still here. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "05:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Indeed."
+    },
+    {
+      "type": "ts",
+      "text": "05:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So I applied and Jane Street reached out to me and said, “Hey, you applied to Software\nEngineering, but we actually think you might be more interested in Production\nEngineering.” And this is just ‘cause I had a bit more of an interdisciplinary background\nthan the typical CS grad applicant. And I said, “What is that?” And they explained it to\nme as I’m doing to you now, and I thought it sounded interesting, so I went for it. And\nthat was all about five years ago."
+    },
+    {
+      "type": "ts",
+      "text": "05:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And you started in this role, you’ve been doing it for a long time, you enjoy it. What is\nit that you find appealing about Production Engineering? Why do you like it so much?"
+    },
+    {
+      "type": "ts",
+      "text": "05:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So, I guess I can say why I like support. I think that is, to me, the real differentiating\nfactor, although I do enjoy my longer-term work as well. But I think for me, when you’re\non support, it’s kind of like you’re on a puzzle hunt. You put your detective hat on, if\nyou will, and you’re sleuthing around and trying to build a story and find the answer to\nthis unsolved puzzle. And you might have to look at a bunch of different places and gather\nevidence and form a hypothesis. Sometimes you have that “aha!” moment when you discover\nwhat’s going on, and that feels really good, and it’s kind of just brain teasers all\nday. And that can be really fun. Also, this might sound a little mushy, but you’re just\nhelping people all day, which can feel really good, right? Like, people at Jane Street are\nnice and they’re going to be really grateful that you helped make their day go better by\nsolving this problem that was clearly enough of an issue that they messaged you about it,\nand then at the end of the day, maybe you helped 15 people, right? That just is really\nrewarding in kind of, like a short-term way."
+    },
+    {
+      "type": "ts",
+      "text": "06:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I dunno, that doesn’t sound too mushy. I think the human aspect of getting to interact\nwith a lot of people, understand their problems, that’s exciting. This other point you’re\nmaking about debugging itself — but not just debugging of a single program gone wrong, but\ndebugging of a large and complicated system with lots of different components, lots of\ndifferent human and organizational aspects to it. Sometimes you’re debugging our systems,\nsometimes you are debugging the systems that we are interacting with, of clearing firms\nand exchanges and all sorts of places. So there’s a lot of richness to the kind of\nproblems that you run into when things go horribly wrong."
+    },
+    {
+      "type": "ts",
+      "text": "07:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, definitely."
+    },
+    {
+      "type": "ts",
+      "text": "07:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So can we make this all a little more concrete? Like what’s an example of a system that\nyou’ve worked on and supported and maybe we can talk about some of the kinds of things\nthat have gone wrong."
+    },
+    {
+      "type": "ts",
+      "text": "07:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, definitely. So I sit on a team that owns applications that process the firm’s\ntrading activity. So they ingest the firm’s trading activity, parse them, normalize them,\ngroup them, and then ship them off downstream. So, trades you can think of as going\nthrough a pipeline of systems that generally live on my team and those are the\napplications that I’ve been supporting for years."
+    },
+    {
+      "type": "ts",
+      "text": "07:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Maybe it’s worth talking about, what is the system for? Like, I get the idea of, “it\ningests our trading activity and processes it, normalizes it, tries to put it into a\nregular representation and then ships it off to other things.” But why? What are those\nother things for? What are we achieving with this whole system?"
+    },
+    {
+      "type": "ts",
+      "text": "08:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So concretely, where do they go after they are processed by our pipeline? They’re going to\ngo in a giant database of all of the firm’s trading activity over time. They’re also going\nto go to a Kafka topic that people can subscribe to, to read the firm’s trading\nactivity. They’re gonna go to our banks — and each of these are gonna have a different\npurpose, right? So for example, sending to our banks, that’s really important because\nunless we do that, our banks aren’t gonna know what to make happen in the real world. And\nso that is really critical. Or if you think of writing them to downstream systems, those\ndownstream systems are gonna want to process the firm’s trading activity in a really\nconsistent format. They’re gonna want one central source for all of their calculations and\nwhat systems will care about that, right?"
+    },
+    {
+      "type": "ts",
+      "text": "08:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Good examples of these things are like, people have all sorts of live monitoring and\ntracking of trading, traders on the trading desk want to see the activity scroll by for\nthe given trading system or want up-to-date calculations of the current profit or loss of\na given trading strategy. And the way they get that live representation of what’s going on\nwith the trading we’re doing, is by subscribing to these upstream systems that collect,\nnormalize, fix any problems with the data, and distribute it on to clients. So it’s really\nconnected to the beating heart of the trading work that we do. So that seems like a pretty\nimportant system. What are the kinds of issues that you run up to when supporting a system\nlike that?"
+    },
+    {
+      "type": "ts",
+      "text": "09:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so something we get more routinely is a new type of trading activity hitting our\nsystem that we haven’t seen before. So for me, I think of a type of trading as the\ncollection of all the fields that that trade has. So, I mean the date the trade was booked\non, the counterparty it’s with, the settlement system on the trade, and a bunch of other\nfinancy words that are attached to the trade that can take on different values. And so\nwhen I say a new type of trading enters our system, I mean a trade with the same\ncollection of fields and values has not appeared before in our systems. And so then, when\nour system is looking at the trade and maybe, say, trying to match it up against some\nconfiguration files, there’s no path for that trade through the system because that\ncollection of fields has not been seen before."
+    },
+    {
+      "type": "ts",
+      "text": "10:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And the reason it might not have been configured, is there are concrete decisions that\nhave to be made that haven’t been made. Like each new settlement system — you mentioned a\nsettlement system — these are like, the back-end systems that involve a rendezvous point\nbetween different people who are trading the same security and the way in which the shares\nflow from one person to another. When someone trips into some new kind of trading, there’s\nan actual human process of thinking about, “Well actually, how do we need to handle this\nparticular case?”"
+    },
+    {
+      "type": "ts",
+      "text": "10:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And it’s this fun collaboration between business and tech, because of course, the\nactual decisions that we’re making, that you’re describing, my team is not gonna be\ntypically best placed to make those calls because we just lack some of that business\ncontext that the amazing Operations team will have. And so they will give us the\ninformation that we’ll try to translate into the technical language that our system will\nunderstand, although we are doing work to try to make that self-service."
+    },
+    {
+      "type": "ts",
+      "text": "10:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "In some ways you have maybe less of the context about that than people on like the\nOperations team, but also a lot more than most other people do. I sort of feel like people\nwho are in this production role learn an enormous amount about the nooks and crannies of\nthe financial system and how the business actually fits together. In some sense, I think\nthat’s some of what’s exciting about the role, is you really get to think not just about\nthe technological piece, like that’s really key, but also about how this all wires up and\nconnects to trading."
+    },
+    {
+      "type": "ts",
+      "text": "11:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, definitely. And I think there is this just, breadth and variety in what you learn. I\nmean, that to me is another thing that I enjoy about the role, because, I mean, maybe it\nwas obvious by not being able to pick an industry to go in at the beginning, but I think I\nlike to see and touch everything and when you come in you’re not quite sure what’s gonna\npop up and what you’ll learn about that day. And so, there is this variety that is\nconsistently present in your life as a Production Engineer."
+    },
+    {
+      "type": "ts",
+      "text": "11:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay, so one new thing that can happen is, you said there’s a new trade flow that shows\nup, a new collection of attributes that makes you say, “Ah, we actually don’t know how to\nhandle this and we need to figure it out.” And you’re going and talking to Legal and\nCompliance, and Operations people, and the traders, and trying to put all that\ntogether. What other kinds of things can go wrong?"
+    },
+    {
+      "type": "ts",
+      "text": "12:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So I think that that is a pretty common example. I guess to give some sense of the other\nside of things when it’s less common or more extreme, you might have something that we\ncall an “incident” at Jane Street, which is basically a big issue that might impact\nmultiple teams. Something you might be somewhat stressed about not being resolved and have\nall hands on deck to address. And that will come up too, as it will for almost every team\nat some point. For example, this year we had a case where a human had booked some trades\nand had manually modified the trade identifiers, and then when they reached our system we\nactually tried to raise errors, and then the system crashed on the error creation, which\nis kind of funny. And so then our system is down, and that’s not great because trades\ncannot get booked downstream. And so we had to go find the cause of the crash and get it\nback up. Thankfully, we already had a tool that let you remove trades in real-time from\nour stream of trades. So we did that to the malformed trades and then reflected on\neverything that had happened. But that is kind of a more drastic example of trade data\nflowing through our system that our system doesn’t expect or doesn’t like, that we then\nhave to handle on support."
+    },
+    {
+      "type": "ts",
+      "text": "13:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how do those different incidents differ in terms of the time intensity of the work\nthat you’re doing?"
+    },
+    {
+      "type": "ts",
+      "text": "13:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So, for my team, we do generally have time to dig into issues and get to the root cause\nand talk to human beings about what should happen. And then once in a while, you will have\nsomething like the latter example where something falls over and it’s really closer to\ncrunch time in that case. But there are teams where that is much more common. So for\nexample, our Order Engines team, which is a team that owns applications that send trades\nto the exchange — super roughly, I’m sure you can give a better definition — but that team\nhas support that is quite urgent and they might be losing, I don’t know, a million dollars\nin 10 minutes. I just made up that number (laughs). Take it with a grain of salt, but I\ndon’t think it’s crazy. And so there, it’s really high energy, fast-paced, adrenaline\npumping, and some people find that thrilling and thrive in that environment and that\nsupport is much more urgent than the typical case that I see on support."
+    },
+    {
+      "type": "ts",
+      "text": "14:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s worth saying most of the time when you’re like, “Oh, you know, we are losing money\nevery minute this isn’t fixed,” it’s overwhelmingly opportunity cost, i.e., there is\ntrading we could be doing, and something is down so we can’t be doing that trading, and we\nare losing the opportunity of being able to make the money of doing those trades. In the\nOrder Engines world, which is this intermediate piece that takes our internal language of\nhow we want to talk about our system’s orders and stuff, and then translates those to\nwhatever the exchange or broker or venue language is, and this fundamental connective\ntissue there, that’s in the live flow of trading. And so if that thing is down, you can’t\ntrade right now. Whereas the stuff that you’re talking about is more post-trade, it’s\nabout what we do after the fact, and there we have time to adjust and fix and solve\nproblems at a longer timescale because it doesn’t immediately stop us from doing the\ntrading. It’s just getting in the way of the booking stuff that’s going to need to happen,\nsay, by end of day."
+    },
+    {
+      "type": "ts",
+      "text": "15:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly."
+    },
+    {
+      "type": "ts",
+      "text": "15:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although I will say there are monitoring things that are like, pretty critical. So this\nstuff all kind of falls in between those two things, if those systems are totally down\nthen we are totally down. We cannot trade without monitoring. That’s just not safe."
+    },
+    {
+      "type": "ts",
+      "text": "15:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I actually used to work on our monitoring software closer to when I joined Jane\nStreet. I learned a lot because that system is very redundant and robust, and the review\nprocess is very intense, and the rollout process is pretty intense — as it should be,\nbecause if something goes wrong it can really impact our ability to trade."
+    },
+    {
+      "type": "ts",
+      "text": "15:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So maybe we should dig into that a little bit. I think one of the things I’m really\ninterested in is, what are the technical foundations of doing support in a good way? What\nare the tools that we need to build in order to be effective at support? And you’ve worked\non some of those, maybe you can tell us a little bit about the work you’ve done in that\ncontext as part of the project side of your work."
+    },
+    {
+      "type": "ts",
+      "text": "16:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so for the team that I just referenced, I joined that team somewhat early on, maybe\nabout a year or two in, because I was using that software every day — as were my teammates\n— and we had strong opinions about the features we wanted to see. And of course we are not\nthe only team using that software, it’s used firmwide. So we decided to dedicate our time\nand put me as an engineer on that team to advocate and work on the features that we\nwanted. So for example, I really wanted the ability to be able to snooze pages from this\nsystem. And so that is something that I added to our monitoring software and now still to\nthis day I will snooze pages that I get."
+    },
+    {
+      "type": "ts",
+      "text": "16:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Using the code that you yourself wrote?"
+    },
+    {
+      "type": "ts",
+      "text": "16:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yes. It feels great. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "16:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to say, there’s actually lots of different kinds of monitoring software we have\nout there. The particular system we’re talking about I think is called Oculus and it’s\nvery specifically alerting software. So this is like, you have a whole bunch of systems\nthat are doing stuff, it detects that something has gone wrong and it raises a discreet\nalert which needs to be brought to the attention of some particular set of humans. And\nit’s like a workflow system at that point. Something goes wrong, there’s a view that you\nhave and something pops up in your view that tells you the thing that has gone wrong, and\nnow you have various operations that you can do to handle those. This alerting and the\nresulting workflow management is really critical to the whole support role, because part\nof what you’re doing is paying attention to lots of things — and being able to handle and\nnot lose track of those things that go wrong — in the middle of a potentially hectic time\nwhere lots of things are potentially going wrong, and there’s lots of things that need\nyour attention, and there’s a lot of people who are collaborating together to work on the\nsupport and management of that system."
+    },
+    {
+      "type": "ts",
+      "text": "17:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and I think you do see this pattern where support team members are often super users\nof some technology. For example, Oculus, the one that we’re talking about, that same team\nput out a tool that lets you auto-act on pages that come up. And we actually had some\nProduction Engineers make our own version on top of that with state so that it was more\nexpressive and you had the ability to take more actions automatically. And that’s\nsomething that most teams probably don’t need, but Production Engineering teams really\nfind valuable."
+    },
+    {
+      "type": "ts",
+      "text": "18:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I think one of the lovely things about the fact that a lot of the Production\nEngineers, not all of them, but a lot of them spend a lot of time doing software\nengineering, is it means the tools that they’re using most intensely are tools that they\ncan shape to their own needs, right? So you’re not merely stuck as the victim. We’re using\nthe system in whatever the way it happens to work right now, and when you find things that\nare wrong, you can dive in and make those things better."
+    },
+    {
+      "type": "ts",
+      "text": "18:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and you also might be the only teams that want a tool. So sometimes, there will be a\ntool that you can build off of at the firm level, but sometimes you will come up with it\nfrom scratch, right? As an example, we have been talking as Production Engineers about the\nhealth of our rotation. What percentage of alerts are we actually actioning? And what\npercentage are we sending onwards or snoozing or close themselves? And what percentage of\nalerts that I’m seeing are from this system versus that system? And all these questions\nare well and good to ask, but it’s way better if you have technology that helps you answer\nthat question. So there were a few Production Engineers this year who built a system that\nanalyzes your team’s alerting history and tries to answer those questions for you, so that\nyou can take action and improve the health of your rotation more actively."
+    },
+    {
+      "type": "ts",
+      "text": "19:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, having tools that let you statistically analyze the historical behavior of alerting\nsystems and find anti-patterns and things that are going wrong and where you can focus on\nimproving things. Sounds great. I’m curious a little more concretely, what are the kinds\nof things that you find when you apply a tool like that? What are the anti-patterns that\nshow up in people’s alerting workflows?"
+    },
+    {
+      "type": "ts",
+      "text": "19:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "I think you kind of get desensitized sometimes when you’re on support. So I would say one\nexample is that often you’ll find that there’s just a lot of flickering going on in your\nview where pages will open and close and you did nothing to resolve them, they closed\nthemselves. And probably that is taking up mental space because you saw the thing raise\nand close itself, and you never even needed to see it. And probably sometimes you start to\nlook into it before it just closes itself. And so, that’s an example of a case where we\nshould go improve the call site of the alert and make it such that it does not show up on\nyour screen at all. So maybe that means there’s some threshold you need to make longer or\nmaybe there’s something fundamentally wrong with the alert itself."
+    },
+    {
+      "type": "ts",
+      "text": "20:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What do you mean by the call site of the alert?"
+    },
+    {
+      "type": "ts",
+      "text": "20:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So there’s some code that is literally calling a function in our monitoring library that\nis raising this thing on your screen and it’s possible that that spot in the code needs to\nbe refactored such that that alert is not causing noise on your screen."
+    },
+    {
+      "type": "ts",
+      "text": "20:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I guess this points to an architectural point about the way in which these\nalerting systems work, which is, you could imagine — and in fact we have this kind of\nsystem too — you could imagine that like, individual systems just export bland facts about\nthe world. And then outside of the systems you have things that monitor those facts, look\nat metrics exported by the system, and decide when something is in a bad state. But that’s\nnot the only thing we have. We also have systems that themselves have their own internal\nnotion separate from any large-scale alerting things of like, “Oh, something bad has\nhappened.” They see some behavior, you get down some series of conditionals inside of your\ncode and like, “Ooh, I never wanted to get here. This is uncomfortable.” And then like,\nyou raise an alert."
+    },
+    {
+      "type": "ts",
+      "text": "21:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "And I think that’s a common case that I see, even."
+    },
+    {
+      "type": "ts",
+      "text": "21:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think this kind of more metrics-based alerting thing is something that we are actually\nmore growing now, and the historical approach has much more been you have the internal\nstate of, maybe of some trading system, and it sees a weird thing and it flags that\nparticular weird thing. So when you want to go to fix the thing, you often have to go many\nsteps back from the alerting system, all the way back into the core application that is\nthe one that is doing the activity and that found the bad condition."
+    },
+    {
+      "type": "ts",
+      "text": "21:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yes. Although I recently saw that they added a feature to our software where you can jump\nfrom a page to the call site itself in our codebase, which is pretty exciting."
+    },
+    {
+      "type": "ts",
+      "text": "21:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh that’s cool. So you could like hit a button and it’ll just bring up the source for the\nparticular thing that raised the alert."
+    },
+    {
+      "type": "ts",
+      "text": "21:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "22:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh that’s awesome. One problem you’re talking about here is desensitization, right? You\nget too many alerts thrown at you after a while, you just can’t see them anymore and then\npeople aren’t reacting. How does desensitization show up in the statistics that you\ngather?"
+    },
+    {
+      "type": "ts",
+      "text": "22:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So I mean, I think that that would be this higher proportion of alerts that are\n“transient,” is what we call them. So they close themselves without anyone taking action\non them. We’ll have recordings of what actions people took on a page, right? Did they own\nit? Did they send it elsewhere? Did they remove it from their view entirely? If so, for\nhow long? And maybe you’ll have an alert that opened and closed within a short timeframe\nwith no one doing anything to it. And probably that’s an example of an alert that should\nbe looked at."
+    },
+    {
+      "type": "ts",
+      "text": "22:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one indicator of noise is stuff that flickers. Are there other things that are markers\nof noise?"
+    },
+    {
+      "type": "ts",
+      "text": "22:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so stuff that flickers is one, but I think if you’re routinely, say, snoozing an\nalert, that is probably an example of the alert not behaving quite as you intended. So\nsnoozing can be a really powerful tool, but I remember when we were adding the ability to\nsnooze to Oculus, we had conversations and we were thinking to ourselves, is this enabling\nbad behavior? (laughs) And we ultimately decided no, you should trust Jane Streeters to\nuse snoozing with thought and care. But we were wondering, you know, if people can just\nsnooze alerts, will they not care as much about addressing the problem with the alert\nitself? And so I think any action that is not owning and then resolving could conceivably\nbe noise. If you are sending it to someone else, it should probably go to that person in\nthe first place. If you are snoozing it, then why are you snoozing it? Should it have\nraised later? All those types of questions can come up if the action isn’t pretty\nstraightforward owning and resolving."
+    },
+    {
+      "type": "ts",
+      "text": "23:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. That all makes sense. Another bad behavior in the context of alerting systems that\nI often worry about is the temptation to “win the video game.” There’s a bunch of alerts\nthat pop up and then there are buttons you can press to resolve those alerts in one way or\nanother. And one of the things that sometimes happens is people end up pushing the buttons\nto resolve the alerts and clear their screen of problems without maybe engaging their\nbrain a hundred percent in between and actually understanding and fixing the underlying\nproblem. And I’m curious, to what degree have you seen that video game dynamic going on\nand how do you notice it and what do you do about it?"
+    },
+    {
+      "type": "ts",
+      "text": "24:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "I will say for me, I think what even makes a good Production Engineer in the first place\nis a healthy dose of self-reflection for every issue that pops up. The goal really should\nnot be to clear it from your screen. After every issue, there are so many questions you\ncan ask yourself to try to fight against this tendency of, “just close the alert.” You\nshould ask yourself, did it need to raise in the first place at all? Could I have\nmitigated the impact for the next time it raises? Could I make the alert clearer for the\nnext person who has to look at it? Could I automate part of the solution?"
+    },
+    {
+      "type": "ts",
+      "text": "24:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, one of the techniques you mentioned in there, which is close to my heart, is\nautomation. You see lots of things are going wrong. You can build automation to resolve,\nfilter, make the alerts more actionable, and get rid of a lot of that noise. I think\nthat’s an important necessary part of having a good alerting system. You need people to be\nconstantly curating and combing over the list of things that happen. You want a very high\nsignal-to-noise ratio. When an alert goes off, you want it to be as meaningful as\npossible, so humans are trained to actually care about what the alerts say and to respond\nto them. There’s a danger on the other side of that too. If you have a lot of powerful\nautomation tools, those themselves can get pretty complicated and pretty hairy and\nsometimes can contain their own bugs, where you’ve tried to get rid of a lot of noise and\nin the end — in the process of getting rid of a lot of noise — have silenced a lot of real\nthings that you shouldn’t in the end have silenced. And the scary thing about that is,\nit’s really hard to notice when the mistake is that nothing happened. You’ve over silenced\nthings. So I’m curious how you feel about the role of automation and what do you do to try\nand build systems that make it possible for people to automate and clean things up without\nencouraging them to over automate in a way that creates its own risks?"
+    },
+    {
+      "type": "ts",
+      "text": "26:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s a really good question and I’m not sure I have an amazing answer. I think at\nJane Street we generally try to expose a lot, at least to the expert user. So applications\nwill often expose their internal state via command-line tools. And so they should be\nrelatively easy — maybe “should” is the wrong word — but they’re often relatively easy to\npack on or build some automation around, because Jane Streeters will have exposed some\nhelpful commands for you to interact with the state of their system. And I think that is\ngreat. And then I think the question then, is how do you make sure you’re not doing that\ntoo much? And I don’t think I have a good answer. I guess code review is one thing,\nhopefully someone is reading the changes you’ve made and agrees that they are sane. But I\nthink also triage and prioritization is something that Production Engineering teams talk a\nlot about. I think for example, on my team, at the end of every support day people write a\nsummary of all the things that they worked on during that day, all the things that popped\nup live. And that will often generate a discussion in thread about things that we could\nimprove. And then I think it’s really survival of the fittest there, where the ideas that\nhave the most traction and get people the most excited are the ones that will be picked\nup."
+    },
+    {
+      "type": "ts",
+      "text": "27:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think part of what I’m hearing you say here is that you need to take the stuff that you\nbuild that’s automation around the support role, and take that seriously as software, and\ntake the correctness of that software seriously. In some ways it’s easy to think, “Oh,\nthis is just like the monitoring stuff, getting it wrong isn’t that important.” But it’s\nactually really important, right? You get it wrong in the direction of under-filtering,\nand in the end you filter it out because in the brain of the person who’s watching it,\nthey can’t pay attention and they just stop paying attention. And if you over-filter, well\nnow you hide important information from the people who need to see it. Even this stuff is\nsurprisingly correctness-critical and you have to take it as its own pretty serious\nengineering goal. So we’ve talked a lot about one important phase of support, which is the\ndiscovery and managing of alerts, things that go wrong. That’s not the only thing you need\nto do in support. A thing you were mentioning before is this, debugging and digging and\ntrying to understand and analyze and explore. I think that kind of work rewards things in\nthe space of debugging and introspection tools, and I’m curious what are the tools there\nthat you think are important? Are there any interesting things that we’ve built that have\nhelped make that part of the support work easier?"
+    },
+    {
+      "type": "ts",
+      "text": "28:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "We’re definitely making strides in this area now. For example, to be honest, it’s pretty\nrecent that the firm has had this big push towards CLM, or centralized log management,\nthat is very helpful in terms of combing through events that have happened. And that is\nactually something that I have just seen come about in the past maybe two years. We kind\nof were in our happy world SSH-ing onto production boxes and reading log files and then\njust parsing them or reading them by hand and we are kind of upgrading now. So I think\nthat’s one big area where things are happening. I think people often will write their own\ntools to parse data. So a lot of our data at Jane Street is in S-expressions, or “sexps,”\nand we store a lot of data that way, and that means that people kind of have shared tools\naround the firm for how to pull data nicely out of those expressions."
+    },
+    {
+      "type": "ts",
+      "text": "29:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "All of this stuff you’re talking about highlights the way in which Jane Street is off in\nits own slightly independent technical universe from the rest of the world. If you look at\nour internal tooling, you’ll find it simultaneously dramatically better and dramatically\nworse than the thing you might expect from some big tech infrastructure. And also just in\nsome ways weird and different. Other people use JSON and protobufs and we use\nS-expressions, which is the file format basically from the mid-fifties involving lots of\nheavily parenthesized expressions. The thing from Lisp if you happen to know what that is."
+    },
+    {
+      "type": "ts",
+      "text": "29:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Oh but I’ve grown to love them."
+    },
+    {
+      "type": "ts",
+      "text": "29:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) I like them too. And in many ways we’ve built a system where people are much more\nconnected to and using the particular hardware and particular systems, and the fact that\nwe actually, like, SSH into particular boxes and look at the log files on those boxes, in\nsome ways is just kind of a holdover from those origins. But over time that’s not actually\nhow we want things to work. And so we’ve done, as you said, much more building of\ncentralized systems for bringing together data. Log data is one of them but not the only\none. In fact, there’s now a whole Observability team which has built a ton of different\ntools like distributed tracing tools and all sorts of observability stuff that lets you\nquickly and efficiently aggregate data from systems and show it together. There’s some\nkind of observability tools that we’ve had for a long time that you don’t find in other\nplaces."
+    },
+    {
+      "type": "p",
+      "text": "Like we have extremely detailed, super high-resolution packet captures with shockingly\naccurate timestamps of everything that comes in and out of a large swath of our trading\nsystems so that we can, like, down to a handful of nanoseconds, see exactly when things\nhappened and put complicated traces of things together. That’s the kind of tool that you\ndon’t see in lots of other contexts, but a lot of the more standard observability tools\nare things we’re really only leaning into in the last handful of years. So I’m curious, as\nthose tools have landed, have they made a big difference to how support works?"
+    },
+    {
+      "type": "ts",
+      "text": "31:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I think there’s definitely a bit of inertia here when it comes to change. And I\nthink it’s this interesting combination where engineers hear about these things and are\nreally excited and I absolutely have seen a lot of them being taken on board. But like I\nsaid before, everyone has so much always on their stack that they want to work on. And\nmigrating to a new library is something that will be somewhere on that stack, but it may\nor may not be at the top."
+    },
+    {
+      "type": "ts",
+      "text": "31:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s always a tough thing that when you come up with a new and better way of doing\nsomething, how do you deal with the process of migrating things over? And I think there’s\nthat last tail of things to migrate that can take a long time and that’s not great, right?\nBecause it in complicated ways increases the complexity and risk of what’s going\non. Because there’s the new standard shiny way of doing it, and when you’re in the world\nwhere most things have been moved over into the new way. And then there’s the handful of\nthings in the old way and people have a little forgotten how the old way works. So I do\nthink it’s important to actually make time on teams to clean up this kind of technical\ndebt and migrate things over maybe a little more eagerly than people might do naturally."
+    },
+    {
+      "type": "ts",
+      "text": "32:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and Jane Street has a giant monorepo, and so, often you’ll go look at someone else’s\ncode and I mean certainly Production Engineers we’ll often go read the code of the\napplications that are creating pages that come our way. And so being able to jump into a\ncodebase that you haven’t seen before and understand all the tools that it’s using and\nwhat’s going on is just really important. And that’s true also for Software Engineers who\nare also often gonna be jumping into codebases in our big monorepo that they haven’t\nexplored before. And so that’s another benefit on top of the benefit that these libraries\nare just better than the old way in most cases."
+    },
+    {
+      "type": "ts",
+      "text": "32:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And what goes into that kind of Production Engineering role, and what’s a little more on\nthe texture of the work if you’re not doing very much in the way of writing code, what is\nthe kind of project work you do in that context?"
+    },
+    {
+      "type": "ts",
+      "text": "33:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "I can definitely give you an example of that type of work. I probably can’t come up with\nan amazing summary of it just ‘cause I’m not in that part of the world. But I can say — we\nkeep going back to Order Engines — I have a friend on Order Engines and something he might\ndo when he’s off support is, he might work on a new type of trading that we’re doing, and\nhe might go talk to the desk about the trading they want to start doing. He might read a\nspec about that type of trading, he might then go write some code to make it happen. He\nmight talk to downstream clients of his systems to make sure they’re ready for it and kind\nof be that glue between all of these systems so that — that is an example of something he\nmight do."
+    },
+    {
+      "type": "ts",
+      "text": "33:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I think that kind of thing does connect to the support role more than it might seem,\nin the sense that there’s all this operational work where you’re trying to understand the\ntrading that’s coming up, and understand the systems on the other side. That first day\nwhen you try and do something, as you said, there are often failures that you then have to\nrespond to and support, and understand maybe the specifics of that particular flow. But\nalso just understanding in general what is the process of connecting to and getting set up\nwith a new counterparty and what are all the, kind of, little corners and details of how\nthose systems work and hook together. That I think very much connects to the kind of\nthings that go wrong and the kind of things you need to understand when you’re doing\nsupport, even though it’s a different kind of operational work that’s not just about\nmachining down the support role. I do think there’s a lot of synergy between those two\nkinds of thinking."
+    },
+    {
+      "type": "ts",
+      "text": "34:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, totally."
+    },
+    {
+      "type": "ts",
+      "text": "34:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So we just talked a bunch about the tooling that makes support better, but along the way\nyou pointed out in a number of ways the importance of culture. How do you build a good\nculture around support and around safety? And I’m curious, what do you think are the\nimportant ingredients of the culture that we bring to support and to safely supporting the\nsystems that we have here?"
+    },
+    {
+      "type": "ts",
+      "text": "34:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think a big part of Jane Street culture in general that I have noticed, and maybe\neven someone has said this already on your podcast because it’s pretty pervasive, but it’s\nthat you should just be totally comfortable making mistakes. And if you make a mistake,\nyou should say it. And I think if you are making a mistake that’s gonna impact the\nproduction environment, that’s okay. Humans do that. The important thing is that you raise\nit to someone around you urgently so that we can mitigate the impact and resolve it. And I\nthink this shows up in our postmortems of incidents after they take place. There’s really\nnot a blaming culture here, right? It’s just people describing what happened so we can\nlearn from it."
+    },
+    {
+      "type": "ts",
+      "text": "35:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. People are going to make mistakes and sometimes it’s true that when someone makes a\nmistake, the right response is like, “Oh I made a mistake, I need to think about how to do\nthat better personally.” But most of the time, certainly when the rate of mistakes is\nhigh, the thing that you need to think about is, how do I change the system? How do I make\nit so that mistakes are less likely, or that even when mistakes happen, the blast radius\nof the mistake is reduced. So you talked about postmortems, what is a postmortem? When do\nwe write a postmortem? What are these things for? Where do they go? What’s the story here?"
+    },
+    {
+      "type": "ts",
+      "text": "36:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Roughly after an incident, we basically do some reflection and writing about what\nhappened. We’ll sometimes write in a pretty detailed way, with timestamps, the sequence of\nevents. And we’ll write down what led to it, what caused it, how it got resolved. And then\nwe’ll really have a big chunk of the postmortem that is dedicated to, how can we do\nbetter? It’s all well and good to reflect, but you really want to come away with concrete\nactionable items that you can do. You know, you might have some process takeaway, like,\n“Oh, I should have reached out to impacted users sooner.” And that’s great. But I think\ntechnical takeaways are often a result of a postmortem."
+    },
+    {
+      "type": "ts",
+      "text": "36:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how do you help people actually write these things effectively? I’ll say, maybe an\nobvious thing — even though we try really hard and I think largely succeed in having a\nculture where people are encouraged to admit their mistakes, it’s awkward. It is hard for\npeople to sit down and say, “Yeah, here’s the thing that went wrong and here are the\nmistakes that I made.” I think a thing that’s actually unusually hard to handle is, when\nyou’re the person who’s writing down the postmortem, we ideally try and get the person who\nmade a lot of the mistakes themselves. If it was their hand that did the thing that caused\nthe bad thing, that’s the person who you want to give the opportunity to do the\nexplanation. But sometimes a lot of people have made different mistakes in different\nplaces. I think in a well-engineered system when things go wrong, it’s often because\nthere’s like a long parley that was hit, a number of different things failed, and that’s\nwhy we got into a bad state. And so you need to talk about other people’s failures, which\nis especially awkward. What are the things that you do to try and help new people to the\norganization get through this process, learn how to write a good postmortem — how do we\nhelp spread this culture of this?"
+    },
+    {
+      "type": "ts",
+      "text": "37:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I think some of it they’re going to pick up by reading other postmortems and\nexperiencing other incidents. It’s pretty rare that someone will join, and then right away\nbe involved in a large incident where it was their mistake that was, you know, heavily the\ncause. And to be honest, if that happens, probably their mentor should have avoided that\nsituation. I think probably by the time they’re in this situation, they have seen enough\nthings go wrong, seen enough people admit that they have made mistakes, seen enough people\nstill be respected and not shamed for that. And I kind of think it’s just a matter of\ntime, but you do want to be intentional with the way you talk about it. So if something\ndid come up where a new person was involved, I think it would be really important that\nsomeone pulls them aside and makes sure they’re comfortable with everything going on, and\nthat they feel okay. It’s up to their teammates to instill that culture and make sure that\neveryone is talking about it in the right, thoughtful way."
+    },
+    {
+      "type": "ts",
+      "text": "38:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the tools that I’ve noticed coming up a lot that’s meant to help people write good\npostmortems about which I have complicated mixed feelings—"
+    },
+    {
+      "type": "ts",
+      "text": "38:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "The template?"
+    },
+    {
+      "type": "ts",
+      "text": "38:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Templates. Yeah, right. Where we have templates of, what is the shape of a postmortem,\nwhat are the set of things you write in a postmortem, there’s the place for the timeline\nof an event and the place to write down — you were kind of echoing this, you know — here\nare the things that went well, here are the things that went badly, here are the\ntakeaways. And one of the things I worry about is that sometimes people take the template\nas the thing they need to do and they go in and fill it in the template. And the thing you\nmost want to have people do when they’re writing a postmortem is to stop and think, and be\nlike, “Yeah, yeah, there’s a lot of detail but like, big picture, how scary was this? What\nreally went wrong? What are the deep lessons that we should learn from this?”"
+    },
+    {
+      "type": "p",
+      "text": "And I totally see the value of giving people structure that they can walk through. You\nknow, the old five paragraph essay. You give people some kind of structure that shapes\nwhat they’re doing. But at the same time there’s something hard about getting people to,\nlike, take a deep breath, look wide, think about how this matters to the overall\norganization, and pull out those big picture lessons. And I sometimes feel there’s just\ntension there where you give people a lot of structure and they end up focusing on the\nstructure, and spend less time leaning back and thinking, “Wait, no, no, no. What is\nactually important to take away from this?” And I’m curious whether you’ve seen that and\nif you have thoughts about how to get people to grow at this harder task of doing the\nsynthesis of, like, “No, no, no, what’s really going on here?”"
+    },
+    {
+      "type": "ts",
+      "text": "40:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I definitely have observed that. My personal opinion is that the template can be\nreally helpful for people who have never written one before. Because it can be kind of\nintimidating — this big thing went wrong, now go write about it and reflect on it. And\nhaving a bit of structure to guide you when you’re starting off can make it much more\napproachable. So I do think there is a role for the template, but I definitely agree with\nyou that it can be restrictive. And I think once people are kind of in the flow of writing\npostmortems and are a bit more used to it and know what to expect, they’re not gonna get\nwriter’s block sitting down. I think removing the template and giving them a bit more\nspace is totally reasonable. Then your question is like, how do you get them from the\ntemplate onwards, and how do you get them to think about this big-picture framing?"
+    },
+    {
+      "type": "p",
+      "text": "And I think the answer to a lot of these questions is that hopefully the Production\nEngineers around them are instilling this in them. I mean, to be honest, postmortems are\nnot the only way we reflect and take action after an incident. In reality, you’re going to\nhave team meetings about this and you’re gonna get a lot of people in a room who are\ntalking about what could have gone better or maybe they’re just in the row talking about\nit, but there’s going to be a real conversation where a lot of these big-picture questions\nare coming up. And I think it’s really important to have those discussions. And the\npostmortem is a very helpful tool in reflecting, but it I think should not be the only\ntool in your arsenal."
+    },
+    {
+      "type": "ts",
+      "text": "41:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that makes sense. Another thing that I often worry about when it comes to support,\nis the problem of, how do you train people? And especially, how do you train people over\ntime as the underlying systems get better? I think about this a lot, because early on,\nstuff was on fire all the time. Every time the markets got busy, you know, things would\nbreak and alarms would go off and there were all sorts of alerts. And you had lots of\nopportunities in some sense to learn from production incidents because there were\nproduction incidents all the time. And, we’ve gotten a lot better. And there are still\nplaces that are, like, new things that we’ve done and we’re still working it out and the\nerror rate is high. But there are lots of places where we’ve done a really good job of\nmachining things down and getting the ordinary experience to be quite reliable. But when\nthings do go wrong, you want the experience of knowing how to debug things. How do you\nsquare that circle? How do you continue to train people to be good Production Engineers in\nan environment where the reliability of those systems is trending up over time?"
+    },
+    {
+      "type": "ts",
+      "text": "42:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think different teams have come up with different solutions to this question. And\nthe question of how to train people on incidents is a really hard one. I’ve seen some\ncreative solutions out there. So I know one popular method of training is what we call the\n“incident simulation.” And it’s kind of a choose-your-own style adventure through a\nsimulated incident. And this is all happening in conversation, in discussion. It’s not on\na machine, but the trainer is gonna present to you some scenario that you’re in, where\nsomething’s going wrong and you are gonna step through it. It’s kind of like D&D and\nyou’re gonna step through it and pick your path and then they will tell you, okay, you’ve\ntaken this step, here’s the situation now. And you’ll walk through the incident and talk\nabout how to resolve it, what updates you would give stakeholders, how you would mitigate\nit, what you would be thinking about, all of those things."
+    },
+    {
+      "type": "p",
+      "text": "That is one approach and I think that gamifying approach has proved pretty useful. I know\nother teams that actually use some Nintendo Switch video games as training. So if you know\nthe games, Overcooked! or Keep Talking and Nobody Explodes, those are both fun, team-based\ngames where you’re actually communicating a fair amount under pressure. It manufactures a\nbit of a stressful situation, and you’re talking to your teammates, and it’s fun, but also\nit does simulate how to keep a level head and think clearly and communicate to people\nunder pressure. So we have definitely had to come up with creative ways because like you\nsaid, bad incidents are probably just coming up less frequently."
+    },
+    {
+      "type": "ts",
+      "text": "43:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "There’s at least some teams that I’ve seen build ways of intentionally breaking\nnon-production versions of the system. So they have some test version of the system with\nlots of the components deployed and operating in a kind of simulated mode and will do a\nkind of war-gaming thing. But a war gaming where you actually get to use your keyboard and\ncomputer to dig into the actual behavior of the system. There’s a big investment in doing\nthat. You have to both have this whole parallel system that looks close enough to\nproduction, that it’s meaningful to kind of bump around inside of it. And then people have\nto design fun and creative ways of breaking the system to create an interesting experience\nfor new people to go in and try and debug it. In some ways that seems kind of ideal. I\ndon’t know how often people do that, how widespread that kind of thing is. I’ve seen a\ncouple of examples of people doing that."
+    },
+    {
+      "type": "ts",
+      "text": "44:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I haven’t seen it be as widespread as I might like. I agree. It is the ideal\nscenario. I can think of, off of the top of my head, one team that I know has built\nthat. But I think like you said, it’s just a pretty high investment cost, and so I think\npeople have tried to steer away from that where possible — or maybe that’s too strong —\nbut they have put it off in favor of trainings that have a very low investment cost. I do\nknow that we had a simulation, kind of like how you’re describing, where a real thing\nbreaks and you go investigate it. That was used firmwide, or at least in my part of the\nfirm, for many years. And it wasn’t really a system that you had to know about ahead of\ntime, it would break. It’s called Training Wheels, if you know it. Someone wrote it maybe\n10 years ago or something like that. This was before we had Production Engineers. Any\nengineer could try their hand at fixing this system with a small codebase and with a\npretty manageable file system presence that you could kind of just go explore off the\ncuff. So I do know that things like this have popped up over the years, but I don’t think\nit’s something that you’re gonna find on every team."
+    },
+    {
+      "type": "ts",
+      "text": "45:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So beyond simulating outages and simulating working together and communicating effectively\nthere, what other things go into training people to be effective Production Engineers?"
+    },
+    {
+      "type": "ts",
+      "text": "45:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "I think that comes with time on the job. So all Software Engineers go through OCaml\nbootcamp when they join, we have Production Engineers do that, and then also go through a\nproduction bootcamp. And you can see a similar pattern with the classes that we have\nSoftware Engineers take in their first year, where Production Engineers take them and also\ntake a production class. But then beyond that, it’s just gonna be so team-specific, right?\nYou wanna be a strong debugger, you wanna remain calm, you wanna be careful, you wanna\ncommunicate well, but the actual support you’re doing is gonna have such a different shape\nand color depending on your team. A lot of it is team-driven rather than firm-driven,\nwhere someone is gonna sit with you and literally do support with you for weeks, and be\nteaching you a ton of context about the systems. And hopefully every time you handle a\nsupport issue, they’ll be providing active feedback on what you could do better."
+    },
+    {
+      "type": "ts",
+      "text": "46:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So a lot of this stuff comes through in essentially an apprenticeship model. You are\nsitting next to people who have done this for longer and they’re showing you the ropes,\nand you over time absorb by osmosis the things that you need to learn to do it\neffectively."
+    },
+    {
+      "type": "ts",
+      "text": "47:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and some teams do have much stricter training models. For example, the team I\nmentioned earlier, Order Engines that has pretty high-stakes support. I think they have a\nstricter training model that people follow when they’re joining the team compared to a\nteam that has a much lower support load."
+    },
+    {
+      "type": "ts",
+      "text": "47:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how does this all filter down to the recruiting level? I know that you’re involved in\nsome recruiting stuff, both on the Software Engineer and the Production Engineer\nside. What does the recruiting story for Production Engineering look like, and how does it\ndiffer from the Software Engineering pipeline?"
+    },
+    {
+      "type": "ts",
+      "text": "47:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I guess if you go back to my story, right, I was applying to Software Engineering\nand Jane Street raised Production Engineering to me as something I might be interested\nin. And that pattern does pop up a fair amount because certainly, at least at the college\nlevel, students don’t know about Production Engineering and so they’re gonna default to\nSoftware Engineering, which is totally reasonable. And it’s also kind of just hard to tell\nwhat a student might be interested in because you only have so much data. So I think often\nif we think someone might be interested in Production Engineering, we will propose it to\nthem, see how they feel about it, and have a conversation. We have interviews that are\nProduction Engineering-focused, so someone can even try it out and see if they find it fun\nor not. We do legitimately get feedback that some of our Production Engineering interviews\nare pretty fun."
+    },
+    {
+      "type": "p",
+      "text": "Maybe people are just being nice, but I think they are legitimately fun if you’re into\nthis solving-a-puzzle business. So, part of this is us reaching out to people, or trying\nto identify people who will be interested in it. But I think there’s also this lateral\npool of candidates who, like you mentioned at the beginning, have done something similar\nat another tech company and so are somewhat in this space already. And then those people\nwill be a bit more opinionated about what type of work they would want to do and if this\nwould be a good fit for them."
+    },
+    {
+      "type": "ts",
+      "text": "48:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can you identify any of what you think of as the personal qualities of someone who’s\nlikely to be an excellent Production Engineer? I think there are lots of people we hire\nwho would be kind of terrible, unhappy, ineffective Production Engineers, and some people\nwho are great at it. What do you think distinguishes the people who are really well-fitted\nto the role?"
+    },
+    {
+      "type": "ts",
+      "text": "49:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So, I think strong communication is really important for Production Engineers. And\ncommunication, sometimes I think people think of it as a throwaway skill or something like\nthat, but it’s so key because Production Engineers are really the glue between a lot of\nteams. They’re gonna be speaking to people who have very different mental models of all\nthe data and systems in play. You know, like I said, when we’re talking to Operations, we\nmight speak a different language about a trade, right? I think the debugging skill is of\ncourse important and I think that’s a great example of how all of these skills are\nobviously also important for Software Engineering and other engineering disciplines — but\nI think especially important for Production Engineering because you’re doing an extra high\nlevel of investigation and debugging. I would say carefulness, just because you’re\ninteracting with production systems and it’s important that you are taking extra care and\nthought and aren’t gonna do something crazy, you’re gonna think it through."
+    },
+    {
+      "type": "p",
+      "text": "You wanna be pretty level-headed and I guess that would be the last quality I would\nmention, which is just remaining calm. Even in a stressful situation, which might not — to\nbe fair — help you on every team because some teams don’t need that. But typically no\nmatter what team you’re on, a lot of stuff might come up at once. You might feel a little\nbit overwhelmed and that’s okay, you just need to keep a level head, remain calm, not\npanic. And that is a certain type of person and that is totally not everyone. And some\npeople would hate that and some people like me don’t mind that situation at all. And some\npeople love that, and then they go to the Order Engines team, right? So you get this big\nspectrum. But I think across all these teams, those are the qualities that kind of stand\nout."
+    },
+    {
+      "type": "ts",
+      "text": "50:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Having just a personal enjoyment of putting out fires. I think some people find it\nunpleasant and hard and some people find it really energizing. I think I actually found it\nreally energizing. I don’t do as much of it as I once did, but there’s something exciting\nabout an emergency — not exciting enough that you would create one when you didn’t need\none. But when it’s there, there’s something joyful about it."
+    },
+    {
+      "type": "ts",
+      "text": "50:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and I think it kind of ups the reward factor because then once you’re done solving\nit, you feel extra excited about having tackled this really big issue."
+    },
+    {
+      "type": "ts",
+      "text": "51:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you do anything in the interviewing process as a way of trying to get to these\nqualities? The one that seems like it maybe should be possible to get at is the debugging\nskill. What do you guys do that’s different for evaluating Production Engineers from what\nyou might do for Software Engineers?"
+    },
+    {
+      "type": "ts",
+      "text": "51:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "So we do ask candidates software engineering questions, but we also have\nproduction-focused questions that we’ll ask them. And for example, one of these questions\nputs you in an environment with some code, with some command-line tools, with some data,\nand we tell you, “Hey, here’s the thing that went wrong. We wanna figure out what\nhappened.” And it is their job to go piece together that story. In fact, actually, that\nspecific interview question is based on a real thing that my team had to do on support a\nlot in the past before we eventually built a website that helps people do it for\nthemselves. But we used to have that all the time on support. So it really is kind of\nhaving the candidate go through an action that we used to take ourselves on support a lot,\nand a thought process that we used to think about ourselves a lot."
+    },
+    {
+      "type": "p",
+      "text": "So we do try to get at it in as realistic a way as possible. Obviously it’s a bit of a\nsynthetic situation, there’s no way around that, but I think if you talk to a candidate\nabout it and hear how they’re brainstorming about solving this problem and what steps they\nwanna take to get there and what’s the reasoning behind it, you can kind of get at a lot\nof these skills, but you do have to ask a lot of questions maybe in a way that you don’t\nwanna take a backseat. Not that any interviewer should, but you certainly can’t just look\nat the code at the end and form a really strong opinion. You really need to observe them\nas they get to the answer throughout the whole process to have a strong opinion of the\ncandidate."
+    },
+    {
+      "type": "ts",
+      "text": "52:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I do think that’s the thing that’s, in general, true about interviewing. Very early on\nwhen we started doing interviewing, I think we had the incorrect mental frame of like, oh,\nwe’ll give people problems and we’ll see how well they solve the problems. But I think in\nreality you learn much more by seeing what it’s like to work together and seeing what’s\nthe process they go through. You talked a lot about the feeling of solving puzzles and in\nsome sense we solve puzzles for a living, but we don’t really solve puzzles for a\nliving. There are puzzles that are part of it, but it’s much more collaborative and\nconnected than that. And just seeing what it’s like working with a person, and how their\nbrain works, and how those gears turn seems much more important."
+    },
+    {
+      "type": "ts",
+      "text": "53:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "There are Production Engineers who do very little coding, and that is, like I said,\nthere’s that spectrum. So we also want to make sure that we have interviews that really\ncan help those people shine and get at people who would be good for that type of role."
+    },
+    {
+      "type": "ts",
+      "text": "53:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Alright, well thank you very much for joining me. This has been a lot of fun."
+    },
+    {
+      "type": "ts",
+      "text": "53:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Liora"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, thank you for having me."
+    },
+    {
+      "type": "ts",
+      "text": "53:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with links to some of the things\nthat we discussed at signalsandthreads.com. Thanks for joining us and see you next time."
+    }
+  ]
+}

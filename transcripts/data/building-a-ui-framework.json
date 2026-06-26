@@ -1,0 +1,1535 @@
+{
+  "slug": "building-a-ui-framework",
+  "title": "Building a UI Framework with Ty Overby",
+  "mp3_rel": "audio/building-a-ui-framework.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Ty Overby is a programmer in Jane Street’s web platform group where he\nworks on Bonsai, our OCaml library for building interactive\nbrowser-based UIs. In this episode, Ty and Ron consider the functional\napproach to building user interfaces. They also discuss Ty’s\nprogramming roots in Neopets, what development features they crave on\nthe web, the unfairly maligned CSS, and why Excel is “arguably the\ngreatest programming language ever developed.”"
+    },
+    {
+      "type": "p",
+      "text": "Ty Overby is a programmer in Jane Street’s web platform group where he\nworks on Bonsai, our OCaml library for building interactive\nbrowser-based UI. In this episode, Ty and Ron consider the functional\napproach to building user interfaces. They also discuss Ty’s\nprogramming roots in Neopets, what development features they crave on\nthe web, the unfairly maligned CSS, and why Excel is “arguably the\ngreatest programming language ever developed.”"
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. It’s my\npleasure to be talking today with Ty Overby. Ty is a software engineer\nwho’s been at Jane Street since 2018. And his work here has been\nfocused on our tools for building web applications and specifically on\na library he designed called Bonsai. We’re going to talk a lot about\nthe ideas behind Bonsai and about UI development more generally. But\nfirst Ty, can you tell us a bit more about your background before Jane\nStreet?"
+    },
+    {
+      "type": "ts",
+      "text": "00:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I think my first experience with web development was probably\nwhen I was in middle school writing petpages for my\nNeopets. After that, I’ve\nbeen doing hobby programming ever since I was a kid, went to the\nUniversity of Washington and worked on compilers for a while at\nMicrosoft. I decided at some point to move to New York, so Jane Street\nseemed like a great place to continue my love for programming\nlanguages and somehow managed to get on a team doing some programming\nlanguages and web development stuff, which I think is pretty exciting."
+    },
+    {
+      "type": "ts",
+      "text": "01:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you got to combine two different loves."
+    },
+    {
+      "type": "ts",
+      "text": "01:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "01:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You talked a little bit about your hobby programming. I know that\nyou’re someone who really spends time and really enjoys digging into\nall sorts of things in your spare time. Can you tell us a little bit\nmore about what kind of things you’ve done on the side?"
+    },
+    {
+      "type": "ts",
+      "text": "01:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I guess a running theme of mine is that I wind up taking the\nhammer that is compiler development and bashing everything that I can\nget my hands on with it. I think my biggest, longest-running project\nis probably a computer-aided design library, suite of software, where\nin order to describe the shapes for your object you write programs,\nlittle functions that go from some point in space to the distance, to\nthe outline of your shape. Then there’s all sorts of fun\ncombinators that you\ncan write on top of this and all sorts of fun optimizations that you\ncan do if you somewhat limit the capabilities of the person using it,\ntaking compiler optimizations to the computer-aided design workflow."
+    },
+    {
+      "type": "ts",
+      "text": "02:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you’re diving right into the abstractions and the math, but to step\nback for a second, the thing you’re talking about as I understand it\nis what’s called programmatic CAD, which is instead of having\nsomething that’s the moral descendant of\nMacPaint or something, where\nyou go in and interactively construct some 3D object that’s going to\nthen be printed in the 3D printer or constructed in some other way,\nyou write a program to do that. And there’s actually lots of stuff out\nthere that lets you do this already. One of them that I’ve played\naround myself and with my kids is called\nOpenSCAD."
+    },
+    {
+      "type": "ts",
+      "text": "02:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So OpenSCAD is programmatic CAD. I believe it operates on a\nboundary\nrepresentation. So\nthis is very similar to what you would get in CAD software or Blender\nor any of the other 3D modeling softwares, which is that the\nfundamental primitive is the points or a face. Whereas the style that\nI’m particularly interested in as a functional programmer, is called\nfunctional representation or\nF-rep. And\nthese two different styles of representing shapes lead to some really\ninteresting trade-offs. Some things that are really easy in B-reps or\nboundary representation are very hard in F-reps and vice versa."
+    },
+    {
+      "type": "ts",
+      "text": "03:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And just to see if I have the description right, an F-rep is\nsomething where instead of describing explicitly through a collection\nof polygons or whatever, the boundary of some surface, you write down\na function and then the boundary is something like the zeros of that\nfunction. So implicitly you’re describing the boundary by just writing\ndown what the function is."
+    },
+    {
+      "type": "ts",
+      "text": "03:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "They’re also called implicit\nsurfaces."
+    },
+    {
+      "type": "ts",
+      "text": "03:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Why is it better to use implicit surfaces versus a boundary\nrepresentation? You said there are some things that are easier and\nsome things that are harder. Can you give me a sense of someone who\nmight use this? Why I might prefer the implicit representation?"
+    },
+    {
+      "type": "ts",
+      "text": "03:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Oh, I think a lot of the combinators are trivial to express. So things\nlike taking two shapes and finding their union is well, the two\nshapes, they’re two functions, so you apply them both. And then you\ntake the maximum of whichever of the two points and the function that\ncombines these now describes the shape that is the union of those two\nshapes. These functions return numbers that represent the distance to\nthe edge. So zero is on the edge, negative numbers are inside and\npositive numbers are outside. So union would be max, intersection\nwould be min, and negation or taking a shape and making the outside\ninside and the inside outside is just literally negation. And you can\nuse negation and union to get cuts. And also something that you can’t\ndo in boundary representation stuff is just write some code. And I\nreally enjoy just being able to think of a function and see what kind\nof shape it would create."
+    },
+    {
+      "type": "ts",
+      "text": "04:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. Although, I mean, you can write code, OpenSCAD lets you write\ncode that generates boundary representations and manipulates those\nboundary representations. So can’t you do it programmatically in both\nstyles?"
+    },
+    {
+      "type": "ts",
+      "text": "04:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Probably. I think some of the shapes that I’m interested in are things\nlike the interference pattern between two sine waves, each of them\ndescribing distances to the outside of a shape and cutting that off\nvia a circle. And the cutting off via a circle OpenSCAD can do just\nfine, but describing a shape implicitly is something that implicit\nsurfaces do pretty well. And the type of programming that you do is\nvery different."
+    },
+    {
+      "type": "ts",
+      "text": "05:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I can immediately see how your functional programming background\nleaks into the way you talk about CAD. I think people who are doing\nCAD don’t normally talk about combinators. They might talk about the\noperations you use for combining shapes. And I guess those two are one\nand the same in the way that you’re describing them."
+    },
+    {
+      "type": "ts",
+      "text": "05:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah."
+    },
+    {
+      "type": "ts",
+      "text": "05:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "As I understand it, there are other things that are supposed to be\ngood about implicit surface-style representations. I’ve used OpenSCAD\na lot and one thing that’s really annoying about it is you have to\ndecide early on when you’re constructing the boundaries how detailed\nthe boundary representation is going to be. So there’s essentially\nalmost tessellation of the surface or an approximation of the surface\nby a bunch of little tiny polygons. And then when you do things like\nmerge things together, you can get all sorts of weird artifacts that\ncome from exactly the kind of beats in the frequencies of the\ndifferent polygonalizations of the two shapes and you get all sorts of\nweird things that happen on the boundaries. And I think the implicit\nsurface approach gives you something where while you’re doing all of\nyour transformations, you have everything in some sense at full\nresolution. And then finally when you render it, you get to decide how\nyou want to do the final display and how detailed that needs to be."
+    },
+    {
+      "type": "ts",
+      "text": "06:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s exactly right. Sadly, one of the downsides is that doing\nthat final transformation from F-rep to B-rep, which is useful if you\nwant to 3D print something or pull it into a game engine, that’s\nreally hard. As far as I can tell, no one has done it perfectly\nyet. There’s an amazing project by Matt\nKeeter called\nlibfive, which I’ve built a ton\nof stuff on top of, and I’ve loved using that. And it’s very good, but\nit still has issues with weird edge cases, in this case, literally\nedge cases. You can imagine interesting things happening to a shape as\npoints go to infinity or negative infinity. And unless you’re very\ncareful, you can easily create topologies that are hard or impossible\nto render into a regular 3D file."
+    },
+    {
+      "type": "ts",
+      "text": "07:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I guess if you have points that go to infinity it’s\nprobably hard to find a 3D printer big enough to actually render the\nresulting surface."
+    },
+    {
+      "type": "ts",
+      "text": "07:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "It’s true."
+    },
+    {
+      "type": "ts",
+      "text": "07:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. So that’s a fun kind of hobby. You said you did a bunch of web\ndevelopment on the side as part of your personal work. Have you done\nweb development in a professional context as well before your work\nhere?"
+    },
+    {
+      "type": "ts",
+      "text": "07:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so I helped out on a project at Microsoft building a in-browser\nREPL. I don’t know if any of my code is still\nalive in there, but I think that’s it actually, I think that was the\nonly brush that I had with web dev professionally before Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "07:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. And then somehow, despite the lack of any professional\nbackground, nonetheless, you ended up building the library that is now\nJane Street’s default library for building user interfaces, which is\ncalled Bonsai. So let’s talk about that a little bit. So when you\narrived here, we already had some foundation for doing web\ndevelopment. There was a library called\nIncr_dom and this was based\non a compiler component, which we still use, called\nJs_of_ocaml. So Js_of_ocaml\nis a backend that takes OCaml and converts it into JavaScript, doing\nactually a surprisingly good job of respecting OCaml semantics. And we\nhad successfully built a number of user interfaces using Incr_dom and\nJs_of_ocaml, and also run into some trouble with it. Maybe you can\ntell us a little bit about what Incr_dom looked like to you when you\narrived and explain how it works for someone who’s never touched\nbefore?"
+    },
+    {
+      "type": "ts",
+      "text": "08:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "For people that are familiar with the Elm\narchitecture, Incr_dom\nwould seem quite natural. Let’s back up and talk about the Elm\narchitecture for a little bit. Elm is a\nprogramming language built entirely for developing user interfaces in\nthe browser, certainly its standard library is very focused on\nthis. And it also comes with a design pattern and that design pattern\nis separating the logic of your application into a view function that\ntakes inputs and the model for an application and produces a pure\nfunctional representation of its view. And then also an apply-action\nfunction, which can take in an existing model for the application and\nan action that is triggered either by the user interacting with the\npage in some way or by interactions with a web socket connection or\nother IO. And it’ll take this action and the current model and produce\na new model. And then the render function gets called again with a new\nmodel and hopefully the changes that you want to see represented on\nthe screen make their way there."
+    },
+    {
+      "type": "ts",
+      "text": "09:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. So this is in some sense, just another spin on the classic\nmodel-view-controller pattern and model is your representation of\ndata, view is what you’re going to display, and the controller is\nsomehow how you interact with the outside world and do transformations\nto your model, right? And I guess this whole thing will sound very\nfamiliar to anyone who’s used React, where\nReact is also based on a notion of a pure functional representation of\nthe DOM. You have some just pure data structure that represents the\nDOM you wish you had, and it gets slammed into the actual messy,\ncomplicated tree of objects that is the actual DOM in the browser in a\nhopefully efficient way. Can you say maybe a word about how Elm\narchitecture differs from what a React programmer might be used to?"
+    },
+    {
+      "type": "ts",
+      "text": "10:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "On the surface, they appear to be very similar. The one thing that\nReact users typically reach for is a state management library. And\nthis is changing over time. I think it’s a bit less common now that\nReact has adopted some of this into the library itself, but there were\nsome very popular libraries like\nRedux or\nMobX that did the pure functional\nmodel updating that Elm has kind of built into its framework. Prior to\nthis, the way that you did state in React was by putting state in your\ncomponents. And this is handy. It’s private. You don’t need the rest\nof your application to know about this state, but it also has some\nproblems like that if a component is removed from the component tree\nand then added back in again, the state is gone. So it’s a bit more\nlike having an immutable variable inside of your component tree. So\npeople reach for state management solutions that provided the model to\naction to model transformation that Elm has."
+    },
+    {
+      "type": "ts",
+      "text": "11:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to maybe say it in a slightly different way, the Elm approach\nis to some degree, like a good first-order approximation is, your UI\nis a function. And the key function is a function from model to\nview. And it really is just a pure function where the model is just\nsimple data and the view is just simple data. And in fact, immutable\ndata at that. And then there’s this extra action step where inside of\nthe view, there’s some, essentially, description of how actions can be\nused to update the model, say when you click a button and that leads\nto an event which asynchronously will later then cause the model to be\nupdated. So you don’t get this whole encapsulation of hiding state\ninside of components. Instead you have this pure, in some sense, more\ntotalistic like no, the whole UI is a function. And then we compose\nfunctions in the ordinary way that we compose functions in the context\nof functional programming."
+    },
+    {
+      "type": "ts",
+      "text": "12:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly. And I think a major selling point for libraries like\nthis is your application as a function where you take the state and\nyou transform it into a view. But really I think that that’s the least\ninteresting part. I think the way that you get applications that\npeople want to use is by having really well defined and edge-case-free\ninteractions. And that means transitioning from one model to the next,\nin a way that makes sense to your users. And I think that modeling\nthings as a state machine like Elm does, and like some of these React\nstate managers is a great way to do that."
+    },
+    {
+      "type": "ts",
+      "text": "13:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that’s like a new piece of jargon, a state machine. When you say\nit’s modeled as a state machine, what does that concretely mean?"
+    },
+    {
+      "type": "ts",
+      "text": "13:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I guess the abstract notion of a state machine is you have\nsome state and then you have actions that express a desire to change\nthe state, and another function that takes an action and state and\nproduces a new state. This separation allows programs to more\naccurately read when interesting things happen as opposed to direct\nmutation. So you might notice a few actions coming in altogether and\nyou could debounce them to separate multiple actions into just a\nsingle one. You can imagine a user accidentally hitting a button twice\nor typing something a bit too fast, and you might want to put some\nguardrails on that and make sure that they aren’t doing anything\naccidentally. This is the type of thing where if in an action handler,\nyou are directly mutating some state, it might be a bit harder to do\nthis, but if you’re representing everything as transitions between\nstates that are described by actions that are raised by events, then\nthis kind of intentional transition becomes a lot more possible."
+    },
+    {
+      "type": "ts",
+      "text": "14:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Which is to say, you might think about something like this as being\nprimarily about two different types of data, the model that represents\nthe state of your application and the view, which is how you present\nit to the user, but really there’s three, there’s the model and\nthere’s the view and there’s also the action, which is the thing that\nrepresents transitions, ways in which you change your model. And you\nhave some kind of explicit way of talking about the way in which\ntransitions cause the state to update. And it’s that structure that\nyou’re referring to as a state machine."
+    },
+    {
+      "type": "ts",
+      "text": "14:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, exactly."
+    },
+    {
+      "type": "ts",
+      "text": "14:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. So how does this Elm model that you described, how does that\nrelate to what Incr_dom was like?"
+    },
+    {
+      "type": "ts",
+      "text": "14:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Incr_dom took the pattern that Elm popularized and left it relatively\nunchanged with the exception of a single addition, which was combining\nit with a library that we have developed here internally called\nIncremental. And the\nIncremental library is effectively a smart\nmemoization technique\nwhere if you write a function using the Incremental library and you\nrun it multiple times where the inputs are changing only slightly\nbetween runs, then you could expect some better performance if the\noutput that you’re producing is changing slightly in response to\ninputs changing slightly."
+    },
+    {
+      "type": "ts",
+      "text": "15:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this goes back to a general fact I’ve long noted about UI\nframeworks, which is that hidden inside of every UI framework is some\nkind of incrementalization framework as well, because you basically\nneed this incrementalization for performance reasons everywhere. UIs\nin general, what are they doing? They are computing something to\ndisplay to the user and those things need to change quickly. And one\nof the things that can help them change quickly is they don’t change\nall at once, little bits of them change. You go and click somewhere\nand some small part of what you’re seeing changes, it’s not everything\nin the entire view being transformed all at once."
+    },
+    {
+      "type": "ts",
+      "text": "15:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you need some way of computationally taking advantage of\nthis. Maybe we should mostly leave off those gory details here as\nwell. In some sense, the difference between Elm and Incr_dom is that\nElm has a way of doing incrementalization and Incr_dom has\nIncremental, which is a more powerful way of incrementalizing meaning\nyou can express more complicated algorithms incrementally, but I think\nthat’s kind of mostly not the thing that’s interesting about the gap\nbetween Incr_dom and Bonsai. So maybe we shouldn’t talk too much about\nIncremental, but I’m curious what you felt was problematic about\nIncremental. The story you’ve told so far is Elm is this nice way of\ndescribing things, and then Incr_dom takes the Elm model and adds this\nmore powerful incrementalization framework. That sounds great. What\ndoesn’t work that well about the model?"
+    },
+    {
+      "type": "ts",
+      "text": "16:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that I think Incremental does differently than your\naverage React application is that it also incrementally computes the\nstate machine transition functions, these apply action. And this is\nreally nice. It means that you can thread values throughout your\napplication and make use of them in the state machine transition\nfunctions just as you would threading values through your view\nfunction. But it does mean that combining components becomes a lot\nharder because you’ve not only got to take the views from multiple\ncomponents and stitch them together into one parent view, but also you\nneed to compose the apply actions for child components into this super\ncomponent. And the way that this is done with Incremental is very\nboilerplate heavy. The downside of having this library that expresses\na lot more of the power of incremental computing means that these\ncompositions were quite verbose."
+    },
+    {
+      "type": "ts",
+      "text": "17:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this whole point about the action application function itself being\ncomputed incrementally, on the face of it seems very abstract. Can you\ngive an example of where that gives you something useful?"
+    },
+    {
+      "type": "ts",
+      "text": "17:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "We have this library that implements a UI component for very large\ntables. And one of the things about this table that’s quite unique is\nthat it can sort and filter and display an absolutely enormous amount\nof data, hundreds of thousands of rows. And really a lot of the magic\nthere is in the view where we only actually show a very small subset\nto the DOM. But during that sorting and filtering, we produce a lot of\nintermediate data structures that could be very useful in downstream\ncomponents. You might imagine that these sorted and filtered tables\nmight expose internal structures that allow you to very efficiently\nimplement row selection, where you want to be able to navigate through\nthe table using a keyboard. In a naive implementation, they might have\nto sort and filter all of that data again, but because we’ve done it\nincrementally and because the apply-action function is also computed\nincrementally, we can share that data a lot easier."
+    },
+    {
+      "type": "ts",
+      "text": "18:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It sounds like the problem you see that comes out of all of this is\nthat it makes the system in some sense less composable, it’s harder,\nat least requires more boilerplate to take little pieces of a UI and\ncombine them together to make larger UIs. Do you think that problem is\nworse for Incr_dom than it is for Elm? Or do you see the same problem\nin both approaches?"
+    },
+    {
+      "type": "ts",
+      "text": "19:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I see the same problem in both approaches, but I think that the\nboilerplate that you get from Elm is quite minimal and for Incr_dom,\nit was absolutely not. I believe that when I made the simplest\npossible combinator for two Incr_dom components, which was just\ncombine their models or rather take a supermodel that splits into\nsub-models and apply action that would dispatch to one or the other,\nand a view that combined both sub-views, this was something like 50 to\n70 lines of code. And what that meant was that people were making\nmonoliths where they didn’t want to break their code up into multiple\npieces because they knew that they would have to do this recombining\nat some level. And that recombining was error prone and it was\ntedious. Maybe in the opposite order, it was tedious and therefore\nerror prone."
+    },
+    {
+      "type": "ts",
+      "text": "20:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. So this is a problem that you wanted to solve, right? I think\nit seemed clear to you that it’s not great to not give people a way of\nbuilding little reusable components. And if everyone’s building\nmonolithic things, they’re not going to throw off small, useful,\nreusable bits. And you built this library called Bonsai, how does\nBonsai help?"
+    },
+    {
+      "type": "ts",
+      "text": "20:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Bonsai started out basically as a single type definition that\nencompassed what I saw as the right way to build an Incr_dom\ncomponent. This type signature was almost a reification of a\nprogramming pattern. That programming pattern being that there is a\nfunction that can incrementally compute a view, arbitrary extra data\nthat might be useful to downstream components, like talked about\nearlier, and an apply action. And this function is given a model to\nact on and a function for raising events so that it can perform the\nstate machine transition. So Bonsai really started out as that\nfunction type."
+    },
+    {
+      "type": "ts",
+      "text": "21:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So just a bundle, you just take together the function for computing\nthe view from the model, the function for updating the action, the way\nof throwing actions out into the world, just take all of those things\nand pack them together. And that’s what a Bonsai component was."
+    },
+    {
+      "type": "ts",
+      "text": "21:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Yeah. And I was able to write some pretty nice combinators on\ntop of this. So things like given two components, give me a new one\nthat combines their models, combines their apply actions in the\ntrivial manner. And then you could specify how you wanted the views\ncombined as well. But fairly early on, I recognized that the fact that\nUI components were computing … Well, the fact that we called them UI\ncomponents at all was a bit of a misnomer, really they’re\nsomething-producing. And the fact that they happened to be views most\nof the time was a bit of an accident really."
+    },
+    {
+      "type": "ts",
+      "text": "21:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "So among the first things that I did was remove the hard-coded view\nfrom that type. So now instead of a UI component that produces a view\nand maybe some extra data, it was just, here is a component, not\nnecessarily a UI component, that produced some result\nincrementally. And frequently, that result type would be a view, but\nit doesn’t have to be. And I think more than half of the components\nthat I write for a web application won’t be manipulating views at\nall. They will be state machines that produce some results that I\nthink might be interesting. And maybe they get transformed into a view\nlater on the line or maybe they get passed in as inputs to other\ncomponents."
+    },
+    {
+      "type": "ts",
+      "text": "22:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this is a real break with the style of components that you see in\nsystems like React, right? Every React component by its nature is\nproducing some chunk of DOM. And here Bonsai is a kind of more general\ncomputational system that you can use for computing all sorts of\nthings."
+    },
+    {
+      "type": "ts",
+      "text": "22:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yes, absolutely. That is a massive difference. But the difference that\nmatters to me is that Bonsai structures its components and its\ncompositions in the form of a directed acyclic graph rather than as a\ntree. And this is the thing that allows you to get components that\nproduce values to thread them into inputs for other\ncomponents. Whereas in a React-style UI, the value that you’re\ncomputing incrementally must be a view. So if you want to communicate\nwith other components, you’re almost forced to walk up the tree, pass\nsomething onto its parent, and then that parent is responsible for\nshuffling down whatever value you’ve computed."
+    },
+    {
+      "type": "ts",
+      "text": "23:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that means that in React, when you break down your components, you\nessentially have to do it by slicing it along the structure of the\ngenerated DOM."
+    },
+    {
+      "type": "ts",
+      "text": "23:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. The structure of these components wind up being very\nclosely related to the structure of the view that you want to compute\nin the end. There are workarounds for this. One of the ones that I’m\nthinking of now is that a parent component might produce a function\nthat gets passed on to its children, and that function produces some\nmore view. And this is a good way of kind of doing a bit of a\ndecoupling, but well, it doesn’t really match my aesthetics for how I\nwant to be programming. The tree style of building components in React\nalso doesn’t let you move values from one child’s component of a node\nto another, a sibling."
+    },
+    {
+      "type": "ts",
+      "text": "24:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What’s the case where you’d want to do that?"
+    },
+    {
+      "type": "ts",
+      "text": "24:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "One motivating example might be a text box and a button, and you want\nthe text box to have some text in it before the button is\nclickable. Now in a tree-motivated UI component, you might have a\ncomponent for your text box, a component for your button, a callback\nthat you pass to the text box to be notified when there’s text in it,\nand then a value passed into the button that says if it’s disabled or\nnot. Whereas with a graph-oriented structure, you could have the value\nof the text for the text box flow into the button, and the button\ncould check to see if it’s invariance or upheld. And the button\ndoesn’t need to be a child of the text box, it just needs to depend on\nthe value that is produced."
+    },
+    {
+      "type": "ts",
+      "text": "25:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one thing that’s changed from the original view is that the\ncomponents aren’t specifically view- or virtual DOM-producing\ncomponents, they’re more general components. How else does a Bonsai\ntype differ from what you might find in some other UI component\nframework?"
+    },
+    {
+      "type": "ts",
+      "text": "25:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Well, when you’re comparing it to Incr_dom or Elm, one of the major\ndifferences is that components don’t actually expose what model they\nhave, or really even if they have a model. And they don’t expose what\ntheir action type is either. So really all that a Bonsai.t has, which\nin Bonsai the primary type is called a computation, it’s only\nparameterized over what value it produces. And any state machine and\ntransitions that it has is local to it."
+    },
+    {
+      "type": "ts",
+      "text": "26:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Part of what’s going on here is you’re basically giving a good way of\ncompartmentalizing the model and the action. So essentially, there’s a\npart of this which is like a function, which takes some input and\nproduces some output. And part of this which is a state machine, and\nit gives you a way of composing together functions in a way that let\ncombine state machines as well. Is that a fair description?"
+    },
+    {
+      "type": "ts",
+      "text": "26:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Depending on who I’m talking to. I’ll describe Bonsai as a\nframework for building incremental state machines."
+    },
+    {
+      "type": "ts",
+      "text": "26:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So given that description, how general do you think Bonsai is? Is it\nuseful outside of building web UIs? Is it useful outside of UI\ncontexts entirely?"
+    },
+    {
+      "type": "ts",
+      "text": "26:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I want to say yes, but I’ve been looking for an alternative example\nfor a very long time and I haven’t been able to really come up with\nanything."
+    },
+    {
+      "type": "ts",
+      "text": "26:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is that true for both the question of user interfaces that are not web\nuser interfaces?"
+    },
+    {
+      "type": "ts",
+      "text": "27:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Oh, no. I mean, I think Bonsai is broadly applicable to user\ninterfaces, as long as you have some abstraction that exposes the\ndesired view for your UI as a pure value. That is one of the downsides\nof Bonsai is that effectively everything inside of it has to be\npure. It becomes very hard to reason about when you have mutable\nvalues. So it might be hard to build a Bonsai UI on top of platform du\njour UI component library, which is primarily mutation-based. But it\nshould be possible if someone wrote a virtual DOM-style abstraction on\ntop of it."
+    },
+    {
+      "type": "ts",
+      "text": "27:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this restriction, I guess, is essentially the same restriction the\nsystems like React and Elm have. And Elm, I guess, at the language\nlevel enforces purity, and React, being in JavaScript, doesn’t. And\nsimilarly with Bonsai, because it’s in OCaml, which is a language that\nsupports mutation without restricting it, like at the level of\ntypes. Also it’s the case that this is just a mistake you can make. If\nyou use Bonsai and you use side effects in the middle, it’s going to\nbe confusing, and that’s kind of that. So early on, you said that a\nrepeated pattern in your way of thinking about the work you do is ways\nto turn the problems you solve into compiler problems, into\nprogramming language problems, and we haven’t really talked about how\nthat affects Bonsai. What is the way in which the Bonsai work also\nlooks like a compiler project?"
+    },
+    {
+      "type": "ts",
+      "text": "28:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I’ve been describing Bonsai as an incrementalized directed acyclic\ngraph. And one of the invariants that we enforce about this directed\nacyclic graph at the type level is that it can’t be dynamic. That is\nto say, once you’ve constructed the super-component that represents\nyour entire application, all possible combinations of components are\nknown. And this lets us effectively do a number of compiler\noptimizations. If you look at this DAG as a program, instead of as a\nforest of nodes communicating with one another, then you can employ\nsome fairly rudimentary compiler optimizations, like constant\nfolding or collapsing\nmultiple nodes into one if you detect that one of them is going to run\nreally fast and you would rather not have the overhead of\nincrementalization. In some cases, we can even transform the\nalgorithms that are being used on a node by node basis. So we talked\nearlier a bit about view library Incremental allows you to express a\nlot of powerful algorithms incrementally. And one of the places where\nit really shines is when it deals with map-like data structures. And\nwe are able to pick and choose from a number of these different\nalgorithms at the point where Bonsai application is first evaluated to\npick the one that is the most optimal for that particular node."
+    },
+    {
+      "type": "ts",
+      "text": "29:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And you’re talking about this as being compiler optimizations,\nbut it’s not like you’re hacking the OCaml compiler to do\nsomething. Where in the process of doing this does the\ncompilation-like phase fit in?"
+    },
+    {
+      "type": "ts",
+      "text": "30:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so it happens exactly once. And that is when you start the\nBonsai application. You give a Bonsai.t to the functional equivalent\nof a main method. And it’ll take that, it’ll crunch it, it’ll optimize\nit, and then it’ll start running. After it starts running, we don’t\ntouch it anymore. But at that point where the user hands off the\nrepresentation of their application, we are able to fully traverse the\nentire component graph and see where we want to make changes."
+    },
+    {
+      "type": "ts",
+      "text": "30:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So when someone is building up a Bonsai computation, the thing\nI’m really building is something that’s closer to the abstract syntax\ntree of an expression that represents that computation. And then\nyou’re running a compilation step to convert that into the real live\nrunning computation."
+    },
+    {
+      "type": "ts",
+      "text": "30:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. That’s why we call the thing computation. It is an\nunevaluated expression and that’s what they give to us. And we can\nlook through the entire thing and then start running it."
+    },
+    {
+      "type": "ts",
+      "text": "31:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So that’s a great approach, but it also limits you in some\nways."
+    },
+    {
+      "type": "ts",
+      "text": "31:05"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. The way I think of an application written in Bonsai is really an\napplication written in three different programming languages. The\nfirst one is a meta language, this language happens to be OCaml and it\nmanipulates computation.t and composes the structure of the\napplication. But once this meta programming is done, it’s done. You\ndon’t get to add new possibilities for components at runtime. The\nsecond language is Bonsai itself, which when you look at code written\nin Bonsai, you can identify things that really look like programming\nlanguage constructs. So we have our own if, we have our own way to do\nrecursion, we have functions and ways to apply values to these\nfunctions. The third programming language is the one that you alluded\nto, which was that the actual business logic, the code that’s running\ninside of these abstract notions of the components is again, OCaml. At\nthis level, you cannot add to the component graph. It’s restricted to\nperforming calculations on values that are being passed through it and\napplying actions to transition state machines. But yeah, after stage\none, you’re kind of set in stone."
+    },
+    {
+      "type": "ts",
+      "text": "32:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "And maybe I should go back a little bit and say that when I say that\nthe graph itself is static after this first stage is finished, I don’t\nmean that the application can’t change itself dynamically. So in\nGmail, for example, you’ve got your inbox view and your compose view,\nand your reading-someone-else’s-email view. And in Bonsai you can\nabsolutely switch between all of these at runtime. But at compile\ntime, well, what I’m calling compile time, it’s known statically that\nthere are those many views possible and it can traverse all of those\nseparate sub-graphs even though there isn’t any data actually flowing\nthrough it, even though those components themselves aren’t active\nright then and there."
+    },
+    {
+      "type": "ts",
+      "text": "33:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And this is a kind of classic trade-off here where you’re taking away\nsome real freedom from someone who is constructing the UI, there’s\nsome kind of highly dynamic things that are maybe impossible or at\nleast awkward to express in the context of Bonsai. But in exchange,\nwhat you have is the ability to do more things like these kind of\noptimizations that you’re talking about within the framework. So in\nsome ways, you take away power from the user of a library and you give\npower to the implementer of the library to provide better services to\nthe user."
+    },
+    {
+      "type": "ts",
+      "text": "33:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Yeah. And I would say that the services that we provide go\ndeeper than just compiler optimizations. I’ve been saying that I will\nbuild a debugger for a very long time and I haven’t yet, but it would\nbe possible to build a very useful debugger that up ahead of time\nknows the exact structure of your UI and allows you to navigate the\nDAG and poke values and see what the states of various components are\nin a way that I think would be a lot harder if we didn’t have this\nupfront, solidified representation of the application."
+    },
+    {
+      "type": "ts",
+      "text": "34:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So one of the things that strikes me about the way that you describe\nall of this is in some sense, quite abstract, right? There’s all these\nfairly fancy sounding ideas about how we build computations and\ncompose them together and how we’re going to have our own language\ninside of the language and our own version of if and our own version\nof recursion. It kind of sounds like a lot. I wonder, how does that\naffect the ability to construct a tool that you can give to people and\nthey can easily use? What’s the learning curve like with Bonsai and\nhow hard has it been for people and teams to pick it up and use it?"
+    },
+    {
+      "type": "ts",
+      "text": "34:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I think it’s getting a lot better. It’s still not great. I\nlearned a whole lot trying to teach very early versions of Bonsai to\npeople. And in fact, I think we ran about 50 people through a class\nthat included Bonsai in that class when it was still very young, and\ntheir frustrated expressions still motivate me today. I think that one\nof the things that we’ve been leaning on quite heavily is the ability\nto extend OCaml syntax itself to make expressions in Bonsai look a lot\nlike expressions in OCaml. So here I’m talking about the\nPPX\nsystem which lets me write little extensions to OCaml syntax like\n“let” for binding variables or “if” or “match” for evaluating\ndifferent possibilities of data that’s flowing through the Bonsai\ngraph. So in a way, the structure of the Bonsai code looks an awful\nlot like OCaml, but still has all of the restrictions that we were\ntalking about earlier."
+    },
+    {
+      "type": "ts",
+      "text": "35:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So this is another way of turning this into a programming languages\nproblem, not just inside of Bonsai itself, do you do programming\nlanguage self transformations, but you’ve also moved up into the OCaml\nsyntax itself and added essentially new language features to OCaml to\nmake it easier and more convenient to express Bonsai computations in a\nway that feels normal to people."
+    },
+    {
+      "type": "ts",
+      "text": "36:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I think that it’s one of the things that I really enjoy\nabout a number of our other libraries that operate monadically in that\nyou don’t really need to know what a monad is in order to use them\neffectively. But if they have radically different syntax than what\nyou’re used to, it can still be an enormous pain. So by extending the\nsyntax for monads, I think that a lot of people that start at Jane\nStreet don’t know what it is, don’t really need to care. They’ll learn\neventually as they see numerous examples of monads in the code, but it\nlooks so much like regular OCaml that you can think of it as though it\nwere regular OCaml."
+    },
+    {
+      "type": "ts",
+      "text": "36:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. This kind of just reminds me of the general fact that the\nability to transform the syntax of your language is such a great\nfeature. And it’s always sad when you run into languages that don’t\nhave it. Just having some kind of syntactic abstractions where you can\njust write some piece of code that transforms it to simplify\nthings. There are downsides to various kinds of macro capabilities in\nthat the macros themselves can be hard to reason about and can\nsometimes give you awkward error message and all of that. But when\ndone right, it’s just enormously powerful part of the world and large\nparts of the languages out there just never adopted."
+    },
+    {
+      "type": "ts",
+      "text": "37:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I think they’re moving in that direction though. It’s really hard to\nthink of a programming language that has been designed in the past 10\nyears that hasn’t at least acknowledged the power of metaprogramming\nand good metaprogramming in some way. I’m thinking here specifically\nabout like Zig and\nRust as examples of languages that are\nvery static and very serious, and they still have excellent\nmetaprogramming capabilities."
+    },
+    {
+      "type": "ts",
+      "text": "38:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess Java just recently got closures. So maybe it’ll get\nmetaprogramming next."
+    },
+    {
+      "type": "ts",
+      "text": "38:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. One would hope. I think C# got source code generators which\ndon’t let you extend existing files, but let you produce new ones\nbased off of the contents of a syntax tree."
+    },
+    {
+      "type": "ts",
+      "text": "38:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, and it’s maybe worth saying, I think OCaml’s metaprogramming\nfacilities are okay. They’re not great. It’s great that they’re there\nand they’re extremely useful, but I think people who work in Lisp or\nScheme or Racket or something in that\nwould mostly point and laugh at OCaml’s macro system."
+    },
+    {
+      "type": "ts",
+      "text": "38:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think that’s right. It’s simultaneously too powerful in that\nyou can do basically anything and inject arbitrary code, but it’s also\nbecause of that, it’s really hard to just make a tiny one-off\nextension to OCaml that you’re using perhaps only within lexical scope\nof the definition of this macro. It would be great if we had some kind\nof macro system in addition to compiler extensions."
+    },
+    {
+      "type": "ts",
+      "text": "39:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I agree. And there’s some exciting work in the direction of\nstrengthening OCaml’s support for various kinds of macros. And also I\nthink it would be great to have macros exposed in a modular way. Right\nnow, what macros you’re using is a thing that’s kind of controlled\nentirely from the build system and is not integrated in a real way in\nthe language. And I think that’s another thing that would make the\nsystem more usable and easier to apply in more cases. So a big part of\nlanding a new library like Bonsai is evangelism, right? You can write\nthe nicest library that you want, and if no one uses it, nothing good\nhappens. How have you approached the problem of evangelizing Bonsai\nand getting people excited and getting people using it inside of Jane\nStreet?"
+    },
+    {
+      "type": "ts",
+      "text": "39:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I think one of the things that I’m still very happy that I did was\nbackwards compatibility with Incr_dom in that you can kind of spread\nthroughout an Incr_dom program, providing value to people that have\nexisting applications. And once they see the difference between the\ncode that they’re maintaining and the code that they’re adding, there\nwere a lot of people that were very motivated to convert wholesale and\nstart new applications using just Bonsai."
+    },
+    {
+      "type": "ts",
+      "text": "40:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And how has that gone in practice? How popular now is Bonsai compared\nto Incr_dom for people who are building new things?"
+    },
+    {
+      "type": "ts",
+      "text": "40:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I’m not aware of any new serious projects that aren’t using it, but\nI’ll also say on the point of evangelism, I really enjoy it. Well, the\nmain goal for Bonsai was to make people want to modularize their\napplications and break off bits and pieces that other people might\nfind useful. So whenever someone does this, I will be their\nevangelist. And I maintain an enormous collection of examples using\ncomponents that I’ve written, but also a lot of the other people have\nwritten and I will make sure that any new application knows exactly\nwhat powerful features other people at the company have contributed."
+    },
+    {
+      "type": "ts",
+      "text": "41:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What are you dissatisfied about with respect to Bonsai? What are the\nremaining things about it that are problematic, that you feel need to\nbe much better than they are now?"
+    },
+    {
+      "type": "ts",
+      "text": "41:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that I’m a bit disappointed by that isn’t directly\nrelated to Bonsai, but we still get flak for it, is composing\ncomponents can lead to issues when you are styling things with CSS,\nbecause if a component author wants to ship a CSS file alongside their\ncomponent, there could be issues with name clashes where two people\npick the same name for a thing and now they’re overriding each other’s\nstyles. This is largely solved by doing component styling in our\nvirtual DOM library. So styles added directly to the virtual DOM\nnodes. But I think that CSS is a much maligned pattern-matching\nlanguage. And the things that you can do in it are incredibly useful,\nespecially for expressing things that are possible in OCaml like\nhighlighting every other row in a table a different color. But also\nthere are just things in CSS that you can do that you couldn’t do with\ninline styles, like changing the appearance of an item based on\nwhether or not it’s being hovered over, for example."
+    },
+    {
+      "type": "ts",
+      "text": "42:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "So this is a pretty weak point when you’re writing something using\nBonsai web. And I have a project about to get merged that I hope will\nfix this, which also uses OCaml’s extension language. And the way that\nit works is by writing CSS directly in your OCaml file inside of an\ninvocation to this compiler extension. It’ll pull out all of the CSS,\nlook through the names, give them all unique names and then expose\nthose names to your OCaml program so that you can use these uniquified\nhashed name values that are coming out of a very crisp and clean CSS\nstring."
+    },
+    {
+      "type": "ts",
+      "text": "43:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the goal here is to specifically get rid of this case where you\nessentially pun your way into the problem where you had two different\nclasses for nodes, and you happened to name them the same thing, and\nyou’re just going through and making sure that you have no unintended\nname clashes."
+    },
+    {
+      "type": "ts",
+      "text": "43:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yes. Well, in fact, we do that by just hashing the contents of your\nstring and also the file name that you’re currently in. And appending\nthat hash will generate something that hopefully doesn’t wind up\nclashing with anything else. I’ll also say that the CSS language\nitself is not what people complain about when they complain about\nCSS. What they’re complaining about is the implementation of layout in\nthe browser which can be very confusing, and the complex interplay\nbetween various styling rules. So these things aren’t going away with\na PPX, they might go away with some other abstractions. We hide the\ndetails of the algorithms that are used to display and lay out\ncontent. But CSS itself, no, it’s quite nice I think."
+    },
+    {
+      "type": "ts",
+      "text": "44:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. So you think this does solve the primary problem here, which\nis this kind of name clash issue?"
+    },
+    {
+      "type": "ts",
+      "text": "44:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I think I can come up with other things that I don’t like about\nBonsai. Right now, you need to repeat yourself a lot. Moving from one\nlanguage to another, in this case, the Bonsai component language into\nthe actual OCaml code that manipulates values at runtime is quite\nverbose. I would really like to get rid of a lot of that\nrepetition. Right now, it’s not repetition that I think would cause\npeople to inadvertently write bugs, but you do wind up repeating a\nbunch of names in multiple places, which is a bit unfortunate. And\nit’s something that a very recent addition to OCaml, by our own\nStephen Dolan, is going to hopefully make better. And that is “let\npunning.” This verbosity,\nthe repeating of these names is going to be fixed in a very new\nversion of OCaml that lets you ignore cases where the variable that\nyou’re binding to has the same name as the value that you’re binding."
+    },
+    {
+      "type": "ts",
+      "text": "45:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So that actually leads to another question. I’m curious what you think\nthe ups and downs are of OCaml as a language for writing web\napplications? The normal language used in JavaScript, and there’s lots\nof others, you could write an Elm, you can write in\nTypeScript, you can write in\nDart. How do you think OCaml measures up as a\nlanguage for doing this kind of work?"
+    },
+    {
+      "type": "ts",
+      "text": "45:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I have to say that web development at Jane Street is very different\nfrom web development anywhere else in that we have some of the fastest\nnetworks that money can buy. And because of that, a lot of the things\nthat would kill Bonsai on arrival at any other company like somewhat\nenormous JavaScript bundle size and not being able to do server side\nrendering in order to cut down on initial load times or being able to\nsplit a application into many files so that you’re only loading the\nones that are needed on the initial display. Things like this that are\ncommonplace in other languages and frameworks are simply not\npresent. And that’s because here we primarily use our web browsers as\na 2D vector graphics library where we don’t care too much about web\npages, almost all of them are a single page that loads a whole bunch\nof JavaScript, connects back to the server with a web socket\nconnection and sits there chugging along all day. And the constraints\nthat most web developers have to face are just simply nonexistent."
+    },
+    {
+      "type": "ts",
+      "text": "46:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So for us, the web browser is just another place to run an OCaml\nprogram and an OCaml program that happens to generate a UI. But a lot\nof the ordinary stuff that are the concerns of the web just kind of\ndon’t show up."
+    },
+    {
+      "type": "ts",
+      "text": "46:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I would say that OCaml is well-suited for this style of\nimmutable program construction and its tools and its libraries make\nthis very easy in a way that JavaScript, for example, does not."
+    },
+    {
+      "type": "ts",
+      "text": "47:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is there anything about the language itself that you feel like gets in\nthe way from a kind of expressiveness and convenience point of view?\nAre you mostly pretty happy with OCaml as a language for this kind of\nwork?"
+    },
+    {
+      "type": "ts",
+      "text": "47:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Yeah, absolutely. I think if I wasn’t happy with it, we wouldn’t\nbe having this conversation."
+    },
+    {
+      "type": "ts",
+      "text": "47:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, you can be happy but have some axes to grind about things that\nyou’d like to make better. I feel like it’s rare to be so happy about\na programming language that you don’t have complaints."
+    },
+    {
+      "type": "ts",
+      "text": "47:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Oh, I definitely have complaints. But they’re mostly from a library\nauthor’s perspective. I think there’s not a ton that I think I\ndesperately want from my user’s perspective. I mean, I’m going to\nregret saying this. As soon as we’re done, I’m going to come up with\nfive things that are actually deal breakers."
+    },
+    {
+      "type": "ts",
+      "text": "47:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So to ask a grander question still, in what ways are you dissatisfied\nabout the web as a platform for writing user interfaces?"
+    },
+    {
+      "type": "ts",
+      "text": "48:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I think that the one thing that every UI author has to contend with is\nthe only options we really have are JavaScript and the DOM for\nprogramming language and UI runtime. And I think that this may change\nas WebAssembly\npicks up steam, and as they add the features that allow OCaml to\ncompile down to it, like access to the garbage collector, or I guess\nthe ability for us to implement our own garbage collector. I think we\nwould be happy getting the OCaml GC to run on WebAssembly if that was\nalso possible. But I think that the DOM is going to be here for a\nwhile. And it does a whole bunch of really amazing things. The fact\nthat anyone really can create an accessible, styleable user interface\nwith very little thought is unbelievably powerful. And I think that\nthe prevalence of the web goes to show for just how valuable this\nis. But for people building user interface components that lie outside\nof what the styling and layout engines of browsers consider normal, it\nwould be nice to be able to tell them, “Hands off, we’re going to be\nmanaging what we consider to be the DOM tree from here on out.” And be\nable to forward on some of the invariants that we maintain to the web\nbrowser in order for them to make it as performant as possible."
+    },
+    {
+      "type": "ts",
+      "text": "49:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So how different is this from just drawing your own widgets on a\ncanvas inside of the browser? In fact, I think I heard a week ago that\nGoogle is planning on doing this for various\nthings\nin the Google Docs Suite. Where they have done a lot of work over time\nto wrestle with the DOM and get it to do all sorts of things that the\nDOM was never designed to do, display hundreds of thousands of lines\nof a spreadsheet. And it sounds like they are giving up and they’re\nlike, “Now we’re just going to render to canvas.” Does that give you\nthe flexibility that you need? Is that enough?"
+    },
+    {
+      "type": "ts",
+      "text": "50:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "So, yes, but at great cost. The great cost being reimplementing text\nboxes. Clearly there’s more than just text boxes, but I think text\nboxes are an incredible example of complexity that you really don’t\nnotice until it’s wrong. Things like selection not wrapping around\nlines correctly, or maintaining cursor position and moving them\ncorrectly through strings that aren’t necessarily ASCII. Doing text\nlayout, doing text shaping, these are things that yeah, Google is\ngoing to have to do and they have the manpower to do it. But if you\ntold me that I needed to implement a text box on top of canvas, well\nman, that’s maybe best measured in years."
+    },
+    {
+      "type": "ts",
+      "text": "51:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what you want is not to have just the raw ability to kind of draw\nstuff to the canvas, you want something that preserves more of the\npower of the DOM that exists but still gives people more control. What\nwould you do? What’s the magic feature you would ask for from the web?"
+    },
+    {
+      "type": "ts",
+      "text": "51:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I guess direct integration into the layout engine and maybe APIs that\nallow us to tell the Chrome renderer what things to avoid drawing,\ndirect access to the layout engine, maybe direct access to their\nunderlying 2D graphics renderer. And I think a more powerful\nintegration with incoming user events, things like keyboard and mouse\nthat allow us to take a bit more power."
+    },
+    {
+      "type": "ts",
+      "text": "51:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is this the kind of thing that people are talking about or is this\njust stuff you think would be awesome but it’s not on anyone’s radar?"
+    },
+    {
+      "type": "ts",
+      "text": "51:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "I think that there’s a proposal called\nHoudini that includes a lot of\nthis. It’s not totally clear whether or not it will be adopted as a\nstandard and when those features will arrive or how powerful they will\nbe. But I think that certainly there are people, probably the same\npeople that are working on Google Docs, that have been bitten by these\nproblems and are eager to solve them."
+    },
+    {
+      "type": "ts",
+      "text": "52:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So you spent all this time on Bonsai, which is a UI toolkit. Are there\nother tools for building UIs that you are especially jealous of or\nhave a lot of admiration for? What are other great systems that you’ve\nencountered for building user interfaces?"
+    },
+    {
+      "type": "ts",
+      "text": "52:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I think that the Svelte project is a\nrecent UI toolkit but also programming language that has a lot of\nfeatures that I think make it very desirable for\noutside-of-Jane-Street UI development. It fundamentally operates on\nthe basis that UI components are specified ahead of time. They are\ncomposed dynamically, but the UI components are passed through a\ncompiler first and it can do optimizations, it can find places where\nbugs might be introduced by composing things incorrectly. And it just\nfeels to me … I also haven’t done any programming in Svelte, but\nreading over the tutorials, it feels like the type of thing that\nmight’ve been developed for the web with hindsight."
+    },
+    {
+      "type": "ts",
+      "text": "53:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Are there any approaches to building UIs that you’ve seen outside of\nthe web context that you’re excited about? There’s a whole world, I\ndon’t know, there’s wizards for composing UIs together and all sorts\nof systems for building UIs in different contexts. Is there anything\nin that world that you’re excited about that you think does something\nimpressive and good?"
+    },
+    {
+      "type": "ts",
+      "text": "53:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "No. I think that UI-based UI design will almost always fall over. It\nwill not expose enough power to the people that want it. And at that\npoint, you need either very powerful hooks so that developers can\nattach things into a UI that was built in a GUI, or you need to\ntransition that GUI into code and then hand it off to the dev. And I\nhaven’t seen any of these work particularly well."
+    },
+    {
+      "type": "ts",
+      "text": "54:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Arguably, one of the most successful systems for building user\ninterfaces is Excel. I wonder how you think about that fitting in?"
+    },
+    {
+      "type": "ts",
+      "text": "54:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Excel is arguably the greatest programming language ever\ndeveloped. Certainly its ability to convince non-programmers that they\naren’t doing programming is unbelievable. It builds in an entire\nincremental framework for reducing recomputation of values. And it\nmakes people integrate the data input that they have to do with the\nviewing and analysis that they want to do in a way that I just really\nhaven’t seen replicated anywhere else."
+    },
+    {
+      "type": "ts",
+      "text": "54:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I mean Excel is another case where it does the thing where it’s\nvery limiting. You get the best behavior out of Excel when you do the\nmaximum amount possible in the equation language and the equation\nlanguage is very limited. Although excitingly, they recently got let\nexpressions\nand\nclosures,\nbut still, it’s a very limited language. But once you accept those\nlimitations, boy oh boy, is it a nice system to work in. I don’t want\nto build everything inside of Excel, I mean, I feel like there’s a\nwhole separate long podcast one could have about all the things that\ngo wrong when you use Excel, Excel has some imperfections. You can\ntalk about the genomics\ndisaster of\nvarious genomic markers being misinterpreted as dates and wildly\nmessing up computations or results. Excel is far from perfect, but as\na way of constructing easy-to-use and easy-to-understand interfaces\nfor people doing data analysis, it’s pretty impressive."
+    },
+    {
+      "type": "ts",
+      "text": "55:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely. And I think that one of the reasons for that is that\nthere’s this very tiny barrier between seeing something on your\nscreen, seeing a visualization or some results for a formula and\nediting the formula that produced that result. You don’t need to dig\nthrough source code and find out where that value is being\nproduced. You click on the thing and it’ll show you exactly how and\nwhy and where those values and those computations are coming from. And\nit’s unbelievably powerful. And I’ve been experiencing a different\nkind of visual-based programming in the\nBlender program, which is a 3D modeling\nanimation rendering, but I’m using it almost entirely for shading in\nwhich a typical shader is a source code in a language that looks a lot\nlike C. And you write a program that operates on usually a single\npixel and it produces a color at the end. Blender has a wonderful\nsetup in the form of what they call nodes, which is this\ngraph-construction UI where you create nodes that represent different\ncombinators over numbers or colors or textures. And you can visually\nsee the output of an individual node in the editor. And as you combine\nand compose all of these different nodes, you build up something that\nis practically, well, for me at least, literally impossible to do in\ncode without seeing all these intermediate steps represented so\neasily."
+    },
+    {
+      "type": "ts",
+      "text": "57:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "When you say seeing the intermediate steps, do you mean seeing\nessentially the instructions in the intermediate steps or do you mean\nactually being able to interrogate and see the results in the middle\nof your image transformation pipeline?"
+    },
+    {
+      "type": "ts",
+      "text": "57:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "The latter. There’s a single key binding that if you have a node\nselected, it’ll change the output for the entire shader to just be\nthat node, and of course, all of the things that it depends on. But\nthere’s also an incredible plugin that’ll actually inline previews\nabove every node that you care about. So you can see just what does\nthis node contribute to the rest of the program."
+    },
+    {
+      "type": "ts",
+      "text": "58:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So part of the value here is just a really good debugger."
+    },
+    {
+      "type": "ts",
+      "text": "58:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. Yeah. Oh, absolutely."
+    },
+    {
+      "type": "ts",
+      "text": "58:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And it makes sense. It’s for a kind of programming where a lot\nof the ordinary things you would do for understanding whether you’re\ndoing the right thing just kind of don’t make sense. When you’re doing\nthis numerical transformation of data, when you make mistakes, your\nprogram doesn’t do something like enormously wrong, it just looks\nwrong or something. And it’s hard to know what’s going on if you can’t\nvisually inspect the intermediate components."
+    },
+    {
+      "type": "ts",
+      "text": "58:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Right. And a lot of the tools that we bring to bear on programs\nwritten out in source code just can’t apply here. How do you write a\ntest that passes if your shader looks good? You can’t, you need a\nhuman to look at it and to tweak the parameters and make it appease\nsome art director somewhere in a movie studio. The debuggability and\nexpectability is the feature. It would not be what it is if it were\nmerely a projection into source code or out of source code. And like\nwith Excel, it has managed to convince a whole bunch of artists to do\nprogramming without knowing it. And I think that’s really empowering\nas well."
+    },
+    {
+      "type": "ts",
+      "text": "59:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, I look forward to you tricking a bunch of Jane Street people\ninto thinking that they’re not programming while they develop UIs\ninside of our walls, and also provide them with excellent debugging\ntools."
+    },
+    {
+      "type": "ts",
+      "text": "59:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Yeah, get back to me on that one."
+    },
+    {
+      "type": "ts",
+      "text": "59:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Will do. Okay, well Ty, thanks for joining me. This has been a lot of\nfun. The world of UIs is enormously complicated, both the stuff we’re\ndoing and just the whole world. It was fun to get your view on it all."
+    },
+    {
+      "type": "ts",
+      "text": "59:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ty"
+    },
+    {
+      "type": "p",
+      "text": "Thank you for having me. This has been a blast."
+    },
+    {
+      "type": "p",
+      "text": "Ron You can find a full transcript of the episode along with more\ninformation about some of the topics we discussed, including Ty’s\nBonsai library at signalsandthreads.com. Thanks for joining us and see\nyou next time."
+    }
+  ]
+}

@@ -1,0 +1,1551 @@
+{
+  "slug": "building-a-data-warehouse-from-scratch",
+  "source": "google-translate",
+  "paragraphs": [
+    {
+      "idx": 0,
+      "en": "In university Jacob Baskin studied at the intersection of computer science and economics,\nthinking about systems that incentivize people to express their true preferences. He put\nthose ideas into practice at Google, where he worked on ad serving, before joining Jane\nStreet’s database infrastructure team. In this episode, Ron and Jacob discuss Superstore,\na distributed columnar database now central to Jane Street’s tech stack that Jacob began\nbuilding practically the day he started. How do you support wide-ranging analytical\nqueries while transactional writes stream in at the speed of trading systems? And what’s\nit like when your first design doc leads to an eight-figure hardware purchase? After\nbuilding Superstore Jacob has since gone back to his roots, thinking about schemes for\nbidding on compute time as he works to optimize usage of the Hive, Jane Street’s massive\ncompute cluster for research.",
+      "zh": "雅各布·巴斯金（Jacob Baskin）在大学学习计算机科学和经济学的交叉学科，\n考虑激励人们表达真实偏好的系统。他把\n在加入 Jane 之前，他在 Google 从事广告服务工作，将这些想法付诸实践\nStreet 的数据库基础设施团队。在这一集中，罗恩和雅各布讨论了超市，\n一个分布式柱状数据库，现在是 Jacob 创立的 Jane Street 技术堆栈的核心\n几乎从他开始的那天就开始建造。您如何支持广泛的分析\n交易写入时的查询以交易系统的速度流入？什么是\n就像你的第一个设计文档导致购买八位数的硬件一样？之后\n建造超级商店之后，雅各布回到了他的根源，思考着如何建造超级商店的计划。\n在他致力于优化 Hive（Jane Street 的大型网络）的使用时，对计算时间进行竞价。\n用于研究的计算集群。"
+    },
+    {
+      "idx": 1,
+      "en": "Some links to topics that came up in the discussion:",
+      "zh": "讨论中出现的一些主题链接："
+    },
+    {
+      "idx": 2,
+      "en": "Well, it’s my pleasure to have Jacob Baskin here on Signals and Threads. Jacob’s a\nsoftware engineer here who has worked on a bunch of large scale compute and data systems\nthat we’ve built here, and we’ll talk about a few of those. But first of all, just\nwelcome. Thanks for joining me.",
+      "zh": "嗯，我很高兴雅各布·巴斯金 (Jacob Baskin) 来到这里讨论信号和线程。雅各布是一个\n这里的软件工程师曾从事过大量大规模计算和数据系统的工作\n我们在这里构建的，我们将讨论其中的一些。但首先，只要\n欢迎。感谢您加入我。"
+    },
+    {
+      "idx": 3,
+      "en": "Happy to be here.",
+      "zh": "很高兴来到这里。"
+    },
+    {
+      "idx": 4,
+      "en": "And I always like to hear a little bit about how people got started. Can you tell me a\nlittle bit more about how you got into computer science in the first place?",
+      "zh": "我总是喜欢听一些关于人们如何开始的事情。你能告诉我一个\n更多关于您最初是如何进入计算机科学的？"
+    },
+    {
+      "idx": 5,
+      "en": "Well, so I’ve been coding since I was a little kid. My dad taught me basic back when I was\nseven. But then in college, I was actually not going to be a computer science major. I\ninitially planned to be a psychology major, but I couldn’t get away. I enjoyed coding too\nmuch and there was too much cool stuff to work on. So I went to Brown University and I\nended up doing a bunch of stuff for my thesis around mechanism design and the connection\nbetween economics and algorithms, which I found super interesting and had no particular\nbelief that I would ever end up using this in my career. There’s some really cool stuff\nwhere incorporating the economics makes finding efficient algorithms and finding good ways\nto actually do the computations within a reasonable amount of time much more difficult.",
+      "zh": "嗯，所以我从小就开始编码。我小时候爸爸就教过我基础知识\n七。但在大学里，我实际上并不打算主修计算机科学。我\n本来打算学心理学专业，但是没能脱身。我也喜欢编码\n太多了，还有太多很酷的东西需要去做。所以我去了布朗大学\n最终我为我的论文做了很多关于机制设计和连接的事情\n在经济学和算法之间，我发现这非常有趣并且没有什么特别的\n相信我最终会在我的职业生涯中使用它。有一些非常酷的东西\n结合经济学可以找到有效的算法并找到好的方法\n在合理的时间内实际完成计算要困难得多。"
+    },
+    {
+      "idx": 6,
+      "en": "And just say a bit of jargon, like mechanism design is weird econ jargon for designing\nmarkets, right?",
+      "zh": "只是说一些行话，比如机制设计是设计时奇怪的经济行话\n市场，对吗？"
+    },
+    {
+      "idx": 7,
+      "en": "Yeah. Well, markets are one kind of mechanism. I guess if you want to be technical about\nit, there’s a lot of mechanisms that don’t look like markets. But usually when people talk\nabout mechanism design, they’re talking about something that looks like an auction, where\npeople have some number that’s denominated in dollars or whatever, that they’re willing to\npay for a certain thing or a certain collection of things. And your job as a mechanism\ndesigner is getting everyone to say their amount of dollars without having to be strategic\nand underhanded in a way that lets you figure out a socially good, so something that will\nresult in the most actual value for real human beings, allocation of resources to the\npeople who are contending for them.",
+      "zh": "是的。嗯，市场是一种机制。我想如果你想了解技术\n它有很多看起来不像市场的机制。但通常当人们说话时\n关于机制设计，他们谈论的是看起来像拍卖的东西，其中\n人们有一些以美元或其他形式计价的数字，他们愿意\n为某种东西或某种东西的集合付费。而你作为机制的工作\n设计师让每个人说出他们的金额，而不必具有战略意义\n并以一种卑鄙的方式让你弄清楚社会公益，所以一些事情\n为真正的人类带来最实际的价值，将资源分配给\n为他们而奋斗的人。"
+    },
+    {
+      "idx": 8,
+      "en": "And then how does mechanism design connect into software engineering?",
+      "zh": "那么机制设计如何与软件工程相结合呢？"
+    },
+    {
+      "idx": 9,
+      "en": "Well, often the thing that you’re trying to do is hard, not just from a mechanism\nperspective. It’s not just that different people want things in different amounts and you\nhave to figure out who wants stuff more and who wants stuff less, but actually figuring\nout the allocation is computationally difficult. So some classic problems and mechanism\ndesign are things like building networks. If you want to connect a bunch of different\npeople’s houses to the internet, you have to literally go in the world and dig trenches\nand put fiber in trenches, right? And figuring out what are the right trenches to dig and\nwhat’s the right fiber to put. Even if you’re the king of the world and you get to dig\nwhatever trenches you want and command the resources of everyone in the economy, still\ninvolves some algorithms and computation, but in a world where you actually have to find\ncontractors to do this and pay them and Verizon is out there and AT&T is out there and\nthey want to do this in different places and are willing to charge you different amounts,\nright?  Then you get this combination of this algorithmically challenging problem, this\neconomically challenging problem. And you have to kind of solve both at once and they have\ninteresting effects on each other.",
+      "zh": "嗯，通常你想做的事情很困难，不仅仅是因为机制\n观点。不仅仅是不同的人想要不同数量的东西，而且你\n必须弄清楚谁想要更多东西，谁想要更少东西，但实际上要弄清楚\n分配在计算上是困难的。那么一些经典的问题和机制\n设计就像建立网络一样。如果你想连接一堆不同的\n人们的房屋连接到互联网，你必须真正走进世界并挖掘战壕\n然后将光纤放入沟渠中，对吗？并弄清楚什么是正确的战壕挖掘和\n放置什么纤维合适？即使你是世界之王并且你可以挖掘\n无论你想要什么战壕并控制经济中每个人的资源，仍然\n涉及一些算法和计算，但在一个你实际上必须找到的世界中\n承包商来做这件事并付钱给他们，Verizon 在那里，AT&T 在那里，\n他们想在不同的地方这样做，并愿意向您收取不同的费用，\n对吗？  然后你就得到了这个算法上具有挑战性的问题的组合，这个\n经济上具有挑战性的问题。你必须同时解决这两个问题，他们已经\n彼此之间产生有趣的影响。"
+    },
+    {
+      "idx": 10,
+      "en": "Sure. Although I would like to point out that I asked you, how does it connect to software\nengineering? And then you told me how it connected –",
+      "zh": "当然。虽然我想指出，我问你，它是如何连接到软件的\n工程？然后你告诉我它是如何连接的——"
+    },
+    {
+      "idx": 11,
+      "en": "It connected to computer science.",
+      "zh": "它与计算机科学有关。"
+    },
+    {
+      "idx": 12,
+      "en": "To digging trenches.",
+      "zh": "去挖战壕。"
+    },
+    {
+      "idx": 13,
+      "en": "Yes. Fair enough. Okay. It connects to software engineering because a lot of the problems\nthat we’re trying to build software to solve are problems that are economically important,\nwhere the ways that people interact with software are driven by their incentives and by\ntheir economic desires.",
+      "zh": "是的。很公平。好的。它与软件工程有关，因为很多问题\n我们正在尝试构建软件来解决具有经济重要性的问题，\n人们与软件交互的方式是由他们的动机和\n他们的经济欲望。"
+    },
+    {
+      "idx": 14,
+      "en": "Right. And obviously you can totally see this stuff playing out in design of exchanges and\nmarkets and stuff like that. And there you see a rich intertwining of what you do on the\nmechanism design and how people behave and how that affects the technology. So despite you\nimagining this wouldn’t come up much in life, here you are at a trading firm.",
+      "zh": "正确的。显然你完全可以看到这些东西在交易所的设计中发挥作用\n市场之类的东西。在那里你会看到你在网上所做的事情丰富地交织在一起\n机制设计以及人们的行为方式及其如何影响技术。所以尽管你\n想象一下，这在生活中不会发生太多，但你现在在一家贸易公司。"
+    },
+    {
+      "idx": 15,
+      "en": "Right. Here I am. It turns out that my interests are what they are and are somewhat\nconsistent over the course of my life. But in fact, the way that I ended up dealing with\nthis first at work involved advertising. My first job out of school was at Google, and I\nwound up working on Google’s very large and very interesting advertising business, helping\nGoogle do a better job of showing ads on other people’s websites. The system that I was\nworking on, interestingly enough, was called AdExchange.",
+      "zh": "正确的。我在这里。事实证明我的兴趣就是这样，而且有些\n在我的一生中始终如一。但事实上，我最终处理的方式\n这首先涉及到广告。我离开学校后的第一份工作是在 Google，我\n最终在谷歌非常庞大且非常有趣的广告业务中工作，帮助\n谷歌在其他人的网站上展示广告方面做得更好。我原来的系统\n有趣的是，我们的工作被称为 AdExchange。"
+    },
+    {
+      "idx": 16,
+      "en": "So yet another market.",
+      "zh": "所以又是另一个市场。"
+    },
+    {
+      "idx": 17,
+      "en": "Yet another market. And this one was in fact a two-sided market, much like financial\nmarkets because you had people with space who wanted to show ads and then you had people\nwho had ads and wanted to find space for them. And our job was to connect them. And we did\nin fact have to do some mechanism design to make the system work well.",
+      "zh": "另一个市场。这实际上是一个双边市场，很像金融市场\n市场，因为有人有空间想要展示广告，然后有人\n谁有广告并想为它们找到空间。我们的工作就是将它们连接起来。我们做到了\n实际上必须做一些机制设计才能使系统良好运行。"
+    },
+    {
+      "idx": 18,
+      "en": "So I mean, Google obviously selling advertising is very deep in that business. And in\nfact, early on it was kind of the only way they made any money at all. Where was this in\nthe kind of evolution of Google’s ad business? What had been happening in their business\nat the time?",
+      "zh": "所以我的意思是，谷歌显然在销售广告业务方面非常深入。并且在\n事实上，早期这是他们赚钱的唯一方式。这是在哪里\n谷歌广告业务的演变是怎样的？他们的生意发生了什么\n当时？"
+    },
+    {
+      "idx": 19,
+      "en": "So in 2008, which was in fact the year that I started at Google, they bought a company\ncalled DoubleClick, which is one of the original companies for doing banner ads. Back in\nthe olden days in the internet, advertisements were much more about like you go to a\nwebsite and there’s like an image and that image is an image that advertises something and\nyou have to pick which image to load when someone visits the website. And that particular\nproblem of loading the right image when a person visits the website and then also keeping\ntrack of all of these, that was DoubleClick’s bread and butter. And Google was very good\nat showing ads on Google search, but not so good at showing ads on other people’s\nwebsites. I mean, Google’s had that business for a long time too, but particularly when it\ncame to sort of larger and fancier websites, DoubleClick was the industry leader.  So\nGoogle acquired them and then they had this problem of, well, can we do both? Can we take\nthe stuff that we’re so good at when it comes to showing ads on google.com, which was an\nauction forever. They wrote very interesting papers back when they were building the\nsystem about how they did this auction mechanism for showing ads on Google. Can we combine\nthat kind of auction mechanism with something that takes into account the needs and the\ndesires of large web publishers, people like newspapers or large news operations,\nHuffington Post, Buzzfeed, this was the aughts. So those were large companies at the\ntime. So how do we adapt this auctioning world to one where there’s all these publishers,\nbut also where we don’t know what all the ads are in the world, where in fact there’s all\nof these other companies, whether they’re ad agencies or whether they’re middlemen who\nunderstand the advertisers and what they want and want to integrate with our system in\nsome reasonable way.",
+      "zh": "所以在 2008 年，也就是我开始在 Google 工作的那一年，他们收购了一家公司\nDoubleClick，是最早做横幅广告的公司之一。回到\n在互联网的过去，广告更多的是关于你去一个网站\n网站上有一个图像，该图像是广告某物的图像，\n当有人访问该网站时，您必须选择要加载的图像。还有那个特别的\n当一个人访问网站时加载正确的图像然后还保留的问题\n跟踪所有这些，这就是 DoubleClick 的面包和黄油。谷歌非常好\n擅长在 Google 搜索上展示广告，但不太擅长在其他人的搜索上展示广告\n网站。我的意思是，谷歌也从事这项业务很长时间了，尤其是当它\n对于更大、更精美的网站，DoubleClick 是行业领导者。  所以\n谷歌收购了他们，然后他们遇到了这样的问题：我们可以两者兼而有之吗？我们可以采取\n我们非常擅长在 google.com 上展示广告，这是一个\n永远拍卖。他们在建造时写了非常有趣的论文\n系统介绍了他们如何使用这种拍卖机制在 Google 上展示广告。我们可以结合吗\n这种拍卖机制考虑到了需求和\n大型网络出版商、报纸或大型新闻机构等人的愿望，\n赫芬顿邮报、Buzzfeed，这就是问题所在。所以那些都是当时的大公司\n时间。那么我们如何使这个拍卖世界适应一个拥有所有这些出版商的世界，\n而且我们不知道世界上所有的广告是什么，但事实上那里有所有的广告\n这些其他公司，无论他们是广告公司还是中间商\n了解广告商以及他们想要什么并希望与我们的系统集成\n一些合理的方式。"
+    },
+    {
+      "idx": 20,
+      "en": "Can you say a little bit more about what the kind of two sides of this two company combo\nwas? I can sort of guess at what Google was good at here. Google is really good at\nbuilding infrastructure and I bet did a lot of good work on setting up the auction so it\nmade sense and had coherent incentives and all of that.",
+      "zh": "你能多说一下这两家公司组合的两侧是什么样的吗\n是？我可以猜测谷歌在这里擅长什么。谷歌真的很擅长\n建设基础设施，我打赌在设置拍卖方面做了很多出色的工作，所以它\n是有道理的，有连贯的激励措施等等。"
+    },
+    {
+      "idx": 21,
+      "en": "So what was DoubleClick bringing to the table?",
+      "zh": "那么 DoubleClick 带来了什么？"
+    },
+    {
+      "idx": 22,
+      "en": "What was DoubleClick good at?",
+      "zh": "DoubleClick 擅长什么？"
+    },
+    {
+      "idx": 23,
+      "en": "Double-Click understood enterprise customers. I don’t want to overgeneralize about Google\nin the mid 2000s, but there is certainly an ethos of we don’t know why anyone would rather\ntalk to a salesperson than use a web UI.",
+      "zh": "Double-Click 了解企业客户。我不想过度概括谷歌\n在 2000 年代中期，但肯定有一种风气，我们不知道为什么有人宁愿\n与销售人员交谈而不是使用 Web UI。"
+    },
+    {
+      "idx": 24,
+      "en": "I mean, I do sympathize.",
+      "zh": "我的意思是，我确实同情。"
+    },
+    {
+      "idx": 25,
+      "en": "I sympathize too. I would almost always rather use a web UI than talk to a salesperson,\nbut there are definitely cases, especially when it’s one company talking to another\ncompany where first of all, having the attitude as a business that we really want to\nunderstand what it is that our customers are trying to do and why, rather than think that\nwe should know better than them and tell them what we should try to do. And then also have\na much more managed relationship with these people that’s not just like, “Here you go,\nenjoy your advertising system.” So that was sort of where DoubleClick was coming in. They\nhad built relationships with the very largest web publishers and the very largest\nadvertisers. And obviously Google appreciated having those relationships, but they also\nreally appreciated having the DNA of, well, here’s what it takes to serve large customers,\nwhich was just not something that Google did very much of at all in the early days.",
+      "zh": "我也深表同情。我几乎总是宁愿使用网络用户界面而不是与销售人员交谈，\n但肯定有这样的情况，尤其是当一家公司与另一家公司对话时\n公司首先要有我们真正想要的企业态度\n了解我们的客户正在尝试做什么及其原因，而不是认为\n我们应该比他们更了解并告诉他们我们应该尝试做什么。然后还有\n与这些人建立一种更加可控的关系，而不仅仅是“给你，\n享受您的广告系统。”这就是 DoubleClick 发挥作用的地方。他们\n与最大的网络出版商和最大的网络出版商建立了关系\n广告商。显然，谷歌很高兴拥有这些关系，但他们也\n非常感谢拥有这样的 DNA，这就是为大客户提供服务所需要的，\n这并不是谷歌早期所做的事情。"
+    },
+    {
+      "idx": 26,
+      "en": "Got it. So then what was the kind of technical work that you were doing? You have these\ntwo companies that you need to integrate their businesses together. How does that turn\ninto a technical problem?",
+      "zh": "知道了。那么您当时所做的技术工作是什么呢？你有这些\n您需要将两家公司的业务整合在一起。这怎么转\n陷入技术问题？"
+    },
+    {
+      "idx": 27,
+      "en": "Well, so we were building all of this on Google infrastructure. So DoubleClick and Google\nhad completely separate technical infrastructure and pretty quickly the decision that, and\nthis was in fact before I started, Google made the decision we’re going to throw out all\nthe DoubleClick stuff and build it all again on Google infrastructure because of course\nthey did.  So the challenge became sort of trying to take the insights that DoubleClick\nhad about their business and combine them with Google’s … It’s worth saying that at the\ntime, Google’s infrastructure felt like it came from the future. A lot of the stuff that\nGoogle built … And these days, we just sort of live with it in the cloud. So we don’t\nrecognize after the fact how revolutionary it was back in the mid 2000s, but things like\nMapReduce and BigTable, which were Google’s distributed systems for storing and processing\nlarge amounts of data. They had this very large distributed file system called GFS that\nstored many petabytes of data. You could just run applications over thousands of computers\nat once just by typing in the right numbers into a config file. These things were not\ntable stakes across the industry.",
+      "zh": "嗯，所以我们在谷歌基础设施上构建了所​​有这些。 DoubleClick 和 Google\n拥有完全独立的技术基础设施，并且很快就做出了决定，并且\n事实上，在我开始之前，谷歌就做出了我们将抛弃所有内容的决定\nDoubleClick 的东西并在 Google 基础设施上再次构建它，因为当然\n他们做到了。  因此，挑战变成了尝试获取 DoubleClick 的见解\n了解他们的业务并将其与谷歌的业务结合起来......值得一提的是，\n当时，谷歌的基础设施感觉就像来自未来。很多东西都是这样的\n谷歌建立了......而如今，我们只是在云端生活。所以我们不\n事后才认识到它在 2000 年代中期是多么具有革命性，但诸如此类的事情\nMapReduce 和 BigTable，它们是 Google 用于存储和处理的分布式系统\n大量数据。他们有一个非常大的分布式文件系统，称为 GFS\n存储了许多 PB 的数据。您可以在数千台计算机上运行应用程序\n只需在配置文件中输入正确的数字即可立即完成。这些东西本来就不是\n整个行业的赌注。"
+    },
+    {
+      "idx": 28,
+      "en": "Yeah. And I remember when those papers came out, they made a huge splash because it was\n… In some sense, the underlying techniques were not super new or surprising exactly, but\nthey had sort of implemented it at scale and gotten … And there’s a lot of hard things\nto go from taking an idea that kind of makes sense to doing it really effectively at scale\nand had learned a lot from that experience. And it was actually great that they published\nthose papers and I think it influenced the industry broadly a bunch.",
+      "zh": "是的。我记得当这些论文发表时，它们引起了巨大的轰动，因为它是\n......从某种意义上说，底层技术并不是非常新或令人惊讶，但是\n他们已经大规模地实施了它并得到了......而且还有很多困难的事情\n从采取某种有意义的想法到真正有效地大规模实施\n并从那次经历中学到了很多东西。他们出版了这件事真的很棒\n这些论文我认为它对整个行业产生了广泛的影响。"
+    },
+    {
+      "idx": 29,
+      "en": "So really the technical work or one very hard piece of technical work was taking this\nGoogle infrastructure that was, again, very horizontally scalable and combining it with\nthese double click insights about what is the feature set that you need to serve these\nlarge publishers and large advertisers. For ad exchange specifically, there’s another very\ninteresting technical piece, which is called real-time bidding. To integrate with the\nsystems on the advertiser’s side, the things that actually know what ads people want to\nshow, rather than have them give us all of their ad inventory in advance and be able to\npick out of a database, we actually would query these systems across the internet for\nevery single ad impression that they wanted to show and let them submit a bid in real\ntime.",
+      "zh": "所以真正的技术工作或者一项非常艰巨的技术工作正在采取这一点\n谷歌基础设施再次具有非常水平的可扩展性，并将其与\n双击这些关于您需要提供哪些功能集的见解\n大型出版商和大型广告商。具体来说，对于广告交易，还有另一个非常\n有趣的技术部分，称为实时竞价。为了与\n广告商方面的系统，真正知道人们想要什么广告的东西\n展示，而不是让他们提前向我们提供所有广告库存并能够\n从数据库中挑选，我们实际上会通过互联网查询这些系统\n他们想要展示的每一个广告展示并让他们真实提交出价\n时间。"
+    },
+    {
+      "idx": 30,
+      "en": "Oh, wait, how does that actually work practically? They have ads. Those ads have\nrelatively heavy assets like images and stuff that need to get delivered. And is it like\nliterally just in time, like someone loads a webpage and it needs to find an ad and it\ngoes all the way end to end to the actual advertiser who’s providing the ad and gets the\nimage at the last moment?",
+      "zh": "哦，等等，这实际上是如何运作的？他们有广告。这些广告有\n相对较重的资产，例如图像和需要交付的东西。是不是像\n从字面上看，恰逢其时，就像有人加载网页并且需要找到广告一样\n一路端到端地到达提供广告并获取广告的实际广告商\n最后一刻的形象？"
+    },
+    {
+      "idx": 31,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 32,
+      "en": "Is it really like just in time the whole way through?",
+      "zh": "整个过程真的很及时吗？"
+    },
+    {
+      "idx": 33,
+      "en": "Well, so it’s actually, it’s just in time twice. So the first thing that happens is you\nsay like, “Hey, I want to show an ad here.” And then you need people to bid. So that goes\nthrough Google systems to look at all of the people who sort of have bids. They have some\nfilter criteria. We don’t call everyone for every single time Google shows an ad on the\ninternet, but there’s some filter criteria. We choose which advertisers call. We say like,\n“Hey, here’s information about this advertising spot on this website. What’s your bid?”\nAnd then they return us a bid and then if they win, we inject a little HTML snippet into\nthe ad unit on the webpage. That goes to their system and fetches the image.",
+      "zh": "嗯，事实上，只是时间上的两次而已。所以首先发生的就是你\n可以这样说：“嘿，我想在这里展示广告。”然后你需要有人出价。就这样\n通过谷歌系统来查看所有出价的人。他们有一些\n过滤标准。我们不会每次 Google 在 Google 上展示广告时都会给每个人打电话\n互联网，但有一些过滤标准。我们选择给哪些广告商打电话。我们说，\n“嘿，这是有关该网站上的广告位的信息。您的出价是多少？”\n然后他们向我们返回出价，如果他们获胜，我们会在其中注入一个小 HTML 片段\n网页上的广告单元。这会进入他们的系统并获取图像。"
+    },
+    {
+      "idx": 34,
+      "en": "Got it. So then the final asset is not actually flowing through Google systems, that’s\njust being directly loaded from the final advertiser.",
+      "zh": "知道了。那么最终的资产实际上并没有流经谷歌系统，那就是\n只是直接从最终广告商加载。"
+    },
+    {
+      "idx": 35,
+      "en": "Exactly. With a lot of asterisks around … This is all very much integrated with all of\nthe crazy ad tracking pixels and cookies stuff that got built in the internet around that\ntime. So really the load on pages for loading ads, I mean these days as well, but also in\nthose days, was incredibly heavy just in terms of all of the various tracking cookies and\npixels and different domains that provided all of this different stuff to do metrics and\nmonitoring for the ad. That ended up being much worse than the image itself.",
+      "zh": "确切地。周围有很多星号……这一切都与所有\n互联网上围绕此构建的疯狂广告跟踪像素和 cookie 内容\n时间。所以，实际上，加载广告的页面负载，我的意思是现在也是如此，而且在\n那些日子里，就所有各种跟踪 cookie 而言，就非常繁重了\n像素和不同的域提供了所有这些不同的东西来进行指标和\n监控广告。这最终比图像本身糟糕得多。"
+    },
+    {
+      "idx": 36,
+      "en": "Got it. And then also this whole infrastructure is also probably kind of a security\ndisaster, although maybe in a way that wasn’t as obvious back then.",
+      "zh": "知道了。然后整个基础设施也可能是一种安全性\n灾难，尽管当时可能并不那么明显。"
+    },
+    {
+      "idx": 37,
+      "en": "Definitely all of the tracking and cookie stuff is absolutely a security and privacy mess,\nbut we did in fact think about this. And one of the things that we built was a way for\nadvertisers to link what they knew about a given user with a particular ad impression\nwithout us being able to extend their reach to that user across the internet. We would\nanonymize users identifiers in a way that didn’t give advertisers access to them, but it\nstill let them know if they had seen that user before.",
+      "zh": "毫无疑问，所有的跟踪和 cookie 内容绝对是安全和隐私的混乱，\n但我们确实考虑过这一点。我们建造的东西之一是一种方法\n广告商将他们对特定用户的了解与特定的广告印象联系起来\n我们无法通过互联网将他们的影响范围扩展到该用户。我们会\n以不让广告商访问用户标识符的方式匿名化用户标识符，但它\n仍然让他们知道他们以前是否见过该用户。"
+    },
+    {
+      "idx": 38,
+      "en": "Got it. So I guess that sounds like part of the security problem. I guess the other\nsecurity problem is around the like delivery of weird malware through JavaScript nonsense,",
+      "zh": "知道了。所以我想这听起来像是安全问题的一部分。我猜另一个\n安全问题类似于通过 JavaScript 传递奇怪的恶意软件，"
+    },
+    {
+      "idx": 39,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 40,
+      "en": "This kind of complex routing system.",
+      "zh": "这种复杂的路由系统。"
+    },
+    {
+      "idx": 41,
+      "en": "Yes. So Google also had pretty reasonable controls for that. That can be very\ndifficult. That was a real arms race with malware actors, but at least we tried very\nhard. But yes, certainly once you get to put arbitrary HTML inside a user’s browser, yeah,\nit’s a pretty fraught scenario. And certainly at the time, browsers didn’t have any\nparticularly good sandboxing abilities for managing this well.",
+      "zh": "是的。所以谷歌对此也有相当合理的控制。那可以是非常\n困难。这是一场与恶意软件参与者之间真正的军备竞赛，但至少我们尝试了很多\n很难。但是，是的，一旦您将任意 HTML 放入用户的浏览器中，是的，\n这是一个非常令人担忧的情况。当然在当时，浏览器没有任何\n特别好的沙箱能力可以很好地管理这一点。"
+    },
+    {
+      "idx": 42,
+      "en": "Right. Luckily when this all started, it was less important and then we had some time to\nspend time making it better as it got more central to the world.",
+      "zh": "正确的。幸运的是，当这一切开始时，它就不那么重要了，然后我们有一些时间\n花时间让它变得更好，因为它变得更加中心于世界。"
+    },
+    {
+      "idx": 43,
+      "en": "Yeah, I think that’s fair. It’s certainly very important to the publishers at the time. If\nyou remember back in the day, the New York Times didn’t have a paywall. Just so much\njournalism on the internet and just content more generally on the internet was ad\nsupported. And this is one of the exciting things about working in that industry at the\ntime is we were like on a mission to make the ad supported internet actually work for\npeople. Now we failed, but we tried really hard.",
+      "zh": "是的，我认为这是公平的。这对当时的出版商来说无疑非常重要。如果\n你还记得当时，《纽约时报》没有付费专区。就这么多\n互联网上的新闻以及互联网上更普遍的内容都是广告\n支持。这是在该行业工作的令人兴奋的事情之一\n我们的使命就是让广告支持的互联网真正发挥作用\n人们。现在我们失败了，但我们非常努力。"
+    },
+    {
+      "idx": 44,
+      "en": "So you’d studied something about mechanism design in school, and then here you were right\nin the middle of designing these mechanisms. How well did the lessons that you learned in\nschool pan out? What do you feel like you learned from the whole process of trying to do\nthis stuff with a real system?",
+      "zh": "所以你在学校学过一些关于机制设计的东西，然后你是对的\n在设计这些机制的过程中。你所学的课程学得如何\n学校出局了？你觉得你从尝试做的整个过程中学到了什么\n这玩意儿有真正的系统吗？"
+    },
+    {
+      "idx": 45,
+      "en": "So the main message that you get or that I got at the time from the sort of academic\ncommunity around mechanism design was that building incentive compatible mechanisms was\nextremely valuable. That if you build the mechanism right, it benefits people to tell you\nthe truth. And if you build mechanisms wrong, then people are going to try and game the\nsystem, and this will end up resulting in a worse situation than you otherwise would\nhave. And I think the main thing that I learned in industry was that’s definitely a\nvaluable thing that it’s nice to do, but that is a much smaller part of the problem than I\nbelieved it was back when I was in school.",
+      "zh": "所以你从学术界得到的或者我当时得到的主要信息\n围绕机制设计的社区认为，建立激励兼容机制是\n非常有价值。如果你建立了正确的机制，人们告诉你会有好处\n事实。如果你建立的机制是错误的，那么人们就会尝试博弈\n系统，这最终会导致比其他情况更糟糕的情况\n有。我认为我在行业中学到的主要东西绝对是\n有价值的事情，很高兴做，但这只是问题的一部分，比我要小得多\n相信那是我上学时的事。"
+    },
+    {
+      "idx": 46,
+      "en": "So what’s the rest of the problem?",
+      "zh": "那么剩下的问题是什么？"
+    },
+    {
+      "idx": 47,
+      "en": "So two big things that you have to focus on that are not covered in that view of mechanism\ndesign are first of all, people need to understand the mechanism. It’s no good if you can\ngive them the complicated proof that the mechanism is incentive compatible if they don’t\nhave any idea what the heck is going on. So being able to point to, well, here’s why this\ngood thing happened to you. Here’s why this bad thing happened to you. Here’s why we\ncharge you this amount without having to get a whiteboard out is really important when\nyou’re actually trying to sell something to people who are not mechanism design PhDs.",
+      "zh": "因此，您必须关注的两件大事并未在机制视图中涵盖\n设计首先，人们需要了解其机制。如果可以的话那就不好了\n如果他们不这样做，就给他们复杂的证明，证明该机制是激励相容的\n知道到底发生了什么吗？所以能够指出，这就是为什么\n你发生了好事。这就是为什么这件坏事发生在你身上。这就是为什么我们\n在以下情况下，无需拿出白板即可向您收取这笔费用，这一点非常重要：\n你实际上是在试图向不是机制设计博士的人推销一些东西。"
+    },
+    {
+      "idx": 48,
+      "en": "Can you give an example of a part of the technical design that was done to achieve that\ngoal of making the results more explainable to people?",
+      "zh": "您能否举例说明为实现这一目标而完成的部分技术设计\n使结果更容易被人们解释的目标？"
+    },
+    {
+      "idx": 49,
+      "en": "Okay. Well, so a great example is budgets. If I’m an advertiser and I want to go and show\nads on websites, probably I don’t want to spend infinite amounts of money, even if I can\nget really good prices all day.",
+      "zh": "好的。嗯，一个很好的例子就是预算。如果我是广告商并且我想去展示\n网站上的广告，可能我不想花无限的钱，即使我可以\n全天都能获得非常优惠的价格。"
+    },
+    {
+      "idx": 50,
+      "en": "Sure.",
+      "zh": "当然。"
+    },
+    {
+      "idx": 51,
+      "en": "Probably I want to spend a thousand bucks, maybe a thousand bucks a day.",
+      "zh": "可能我想花一千美元，也许每天花一千美元。"
+    },
+    {
+      "idx": 52,
+      "en": "You want some risk limits?",
+      "zh": "您想要一些风险限制吗？"
+    },
+    {
+      "idx": 53,
+      "en": "Yeah, I want some risk limits.",
+      "zh": "是的，我想要一些风险限制。"
+    },
+    {
+      "idx": 54,
+      "en": "Fantastic.",
+      "zh": "极好的。"
+    },
+    {
+      "idx": 55,
+      "en": "So let’s say that I go and I start spending my budget and I spend it really quickly and\nthen I have like five bucks left and it’s getting towards the end of the day. What should\nI do to give myself better outcomes? Well, I should probably lower my bid, right? Because\nthe chances are that I have been spending too fast and I could get more of the good stuff\nthat I want for less money if I just bid less for it. And this is not really an incentive\ncompatible result because another way of saying that is if I have a budget, then I should\nbid less than my marginal value of each thing in order to get the best results for\nme. Right. So budgets break sort of a very naively memoryless incentive compatible auction\nall the time. And yet very few people try and model this for their market participants.\nIn almost all the cases, what you’ll see is that people offer, maybe they have some kind\nof second price auction, maybe not even, but nobody tries to take into account people’s\nbudgets when figuring out how to allocate them stuff.",
+      "zh": "假设我去了，我开始花我的预算，而且我花得非常快，\n然后我就剩下五块钱了，而且一天快结束了。应该做什么\n我这样做是为了给自己带来更好的结果吗？好吧，我也许应该降低出价，对吗？因为\n很可能我花钱太快了，我可以得到更多好东西\n如果我出价更低，我就想要更少的钱。这并不是真正的激励\n兼容的结果，因为另一种说法是，如果我有预算，那么我应该\n为了获得最好的结果，出价低于我对每件事的边际价值\n我。正确的。所以预算打破了一种非常天真的无记忆激励兼容拍卖\n一直。然而很少有人尝试为市场参与者建立模型。\n在几乎所有情况下，你会看到人们提供，也许他们有某种\n第二价格拍卖，也许甚至没有，但没有人试图考虑人们的\n在弄清楚如何分配他们的东西时制定预算。"
+    },
+    {
+      "idx": 56,
+      "en": "When you say nobody, you mean like in the academic literature, nobody thinks about\nbudgets, or do you mean in real world systems?",
+      "zh": "当你说没有人时，你的意思是就像在学术文献中一样，没有人考虑\n预算，或者你的意思是在现实世界的系统中？"
+    },
+    {
+      "idx": 57,
+      "en": "In real world systems, people let you manage your budget. They don’t try and manage your\nbudget for you. And they will even maybe say like, “Hey, you should bid less so that your\nbudget lasts all day.” And rather than trying to model budgets as part of the mechanism,\nthey just let it be this other thing that people have to manage on their own. Because when\nwe try and incorporate people’s budgets for them in some way, they just get results that\nthey don’t understand. And in fact, people have a lot of constraints that they’re not\ntelling you that you’re not really in a good place to know and you just kind of have to\nlet them do their thing and be sort of incentive compatible in a narrower sense if you can\nwithout really trying to be fully incentive compatible in some theoretical sense. I\nremember –",
+      "zh": "在现实世界的系统中，人们让你管理预算。他们不会尝试和管理你的\n给你的预算。他们甚至可能会说，“嘿，你应该少出价，这样你的\n预算持续一整天。”与其尝试将预算建模作为该机制的一部分，\n他们只是让它成为人们必须自己管理的另一件事。因为当\n我们尝试以某种方式纳入人们的预算，他们只是得到了结果\n他们不明白。事实上，人们有很多他们没有的限制\n告诉你，你并不真正处于了解的好地方，而你只是不得不这样做\n如果可以的话，让他们做自己的事情，并在狭义上兼容激励\n没有真正尝试在某种理论意义上完全激励兼容。我\n记住——"
+    },
+    {
+      "idx": 58,
+      "en": "So simplicity is a value.",
+      "zh": "所以简单是一种价值。"
+    },
+    {
+      "idx": 59,
+      "en": "Simplicity is a value.",
+      "zh": "简单是一种价值。"
+    },
+    {
+      "idx": 60,
+      "en": "So Google was obviously an interesting place to learn about all of this kind of market\nstuff around ads, but there’s also a lot of interesting technical stuff happening there as\nyou were mentioning. What do you feel like you learned from the experience of being a kind\nof systems engineer and systems designer in that world?",
+      "zh": "所以谷歌显然是一个了解所有此类市场的有趣地方\n围绕广告的东西，但也有很多有趣的技术东西发生在那里\n你提到的。你觉得你从做一个善良的人的经历中学到了什么\n那个世界的系统工程师和系统设计师？"
+    },
+    {
+      "idx": 61,
+      "en": "Just so much. I feel like I’m still mining a lot of my early Google experience for\nsoftware engineering insights. One of the main things that I learned was kind of how to\nthink about distributed systems in ways that let you design them well. The Google approach\nto building distributed systems is to try and make the hard part be as contained as\npossible. You take some existing system that does a very hard distributed system thing,\nwhether that’s distributed consensus or whether that’s like building a large stateful key\nvalue store, and then you build your system in terms of that existing thing. And often\nthis is sort of a nested process where like Big Table, which is this great distributed key\nvalue store is built on top of Chubby, which is this distributed consensus mechanism. And\nmost engineers at Google are not building big table or Chubby, they’re building something\non top of both of them.  And in particular, building large stateless systems is much\neasier than building large stateful systems. So you really want to contain the state of\nyour system in as few different components as you can.",
+      "zh": "就这么多。我觉得我仍在挖掘我早期的谷歌经验\n软件工程见解。我学到的主要事情之一是如何\n以让您能够很好地设计分布式系统的方式来思考分布式系统。谷歌的方法\n构建分布式系统就是尝试让困难的部分包含在\n可能的。你采用一些现有的系统来做非常困难的分布式系统事情，\n无论是分布式共识还是类似于构建一个大型的有状态密钥\n价值存储，然后你根据现有的东西构建你的系统。并且经常\n这是一种嵌套过程，就像大表一样，这是一个伟大的分布式密钥\n价值存储是建立在 Chubby 之上的，Chubby 是一种分布式共识机制。并且\n谷歌的大多数工程师并不是在建造大桌子或 Chubby，他们正在建造一些东西\n在他们两个之上。  特别是，构建大型无状态系统非常重要\n比构建大型有状态系统更容易。所以你真的想包含以下状态\n您的系统包含尽可能少的不同组件。"
+    },
+    {
+      "idx": 62,
+      "en": "Although I find it’s always kind of funny when people talk about building stateless\nsystems, like often there is state there. It’s just like not being managed by you.",
+      "zh": "尽管我发现当人们谈论构建无状态时总是很有趣\n系统，就像通常有状态一样。就像不受你管理一样。"
+    },
+    {
+      "idx": 63,
+      "en": "Right",
+      "zh": "正确的"
+    },
+    {
+      "idx": 64,
+      "en": "And so it’s more about like, it’s not so much about the system you’re building being\nstateless, but the component that you’re adding on, not being responsible for managing\nthis data on itself.",
+      "zh": "所以这更多的是，这与你正在构建的系统无关\n无状态，但是你要添加的组件，不负责管理\n这些数据本身。"
+    },
+    {
+      "idx": 65,
+      "en": "Well, almost every system is like stateful in some sense, or what is it even doing? Maybe\nyou’re building a data center of a million pocket calculators, but otherwise you’re pretty\nstateful. But yeah, again, the goal is having as few of the components be stateful as you\ncan.  So a very Google approach to this kind of problem is like, well, we’ll have this\nstateful core that goes and gets the data and loads into memory in some extremely\nefficient form, and then we’ll just have a bazillion web servers that I’ll go talk to it\nand we’ll push as much of the workout to these bazillion web servers as we can, and then\nthey’ll make what are hopefully very efficient queries to the thing maintaining the state,\nand that’s what the system will look like. This does not look a lot like the way that\ntrading systems work, where you end up keeping the state very close to the edge because\nyou prioritize latency at levels that Google just didn’t. Our latency target for ad\nserving was 250 milliseconds.",
+      "zh": "好吧，几乎每个系统在某种意义上都是有状态的，或者它到底在做什么？也许\n你正在建设一个拥有一百万台袖珍计算器的数据中心，但除此之外你就很漂亮了\n有状态的。但是，是的，我们的目标是让尽可能少的组件有状态\n运河  因此，解决此类问题的一种非常谷歌的方法是，好吧，我们会有这个\n有状态核心，以某种极端的方式获取数据并加载到内存中\n高效的形式，然后我们将拥有无数的网络服务器，我可以与它交谈\n我们将尽可能多地将训练推送到这些数不胜数的网络服务器上，然后\n他们将对维护状态的事物进行希望非常有效的查询，\n这就是系统的样子。这看起来不太像那样\n交易系统有效，最终使状态保持在非常接近边缘的位置，因为\n你优先考虑延迟的程度是谷歌没有做到的。我们的广告延迟目标\n服务时间为 250 毫秒。"
+    },
+    {
+      "idx": 66,
+      "en": "Which by some measures is kind of fast, but-",
+      "zh": "从某些方面来看，这有点快，但是-"
+    },
+    {
+      "idx": 67,
+      "en": "Yeah, it’s fast enough that you’re not going to go and get a cup of coffee waiting for the\nwebsite to load, which is really the important thing.",
+      "zh": "是的，它的速度足够快，你不会去喝杯咖啡等待\n网站加载，这确实是重要的事情。"
+    },
+    {
+      "idx": 68,
+      "en": "Right. But it’s very, very different from the kind of latencies that we worry about when\nwe’re building systems.",
+      "zh": "正确的。但这与我们担心的延迟非常非常不同\n我们正在构建系统。"
+    },
+    {
+      "idx": 69,
+      "en": "And so you can do a lot of things with a 250 millisecond latency budget that you can’t if\nyour latency budget is in the microseconds.",
+      "zh": "因此，您可以用 250 毫秒的延迟预算做很多事情，但如果\n您的延迟预算以微秒为单位。"
+    },
+    {
+      "idx": 70,
+      "en": "Right. Yeah. And people often talk about technical organizations pointing out that the\ntechnical organizations are often kind of shaped like their initial application and\nGoogle’s early infrastructure in many ways was built around search and ours was built very\nmuch around trading systems and that’s led to some very different choices.",
+      "zh": "正确的。是的。人们经常谈论技术组织并指出\n技术组织的形状通常类似于其最初的应用程序和\n谷歌的早期基础设施在很多方面都是围绕搜索构建的，而我们的基础设施非常\n很多都围绕交易系统，这导致了一些非常不同的选择。"
+    },
+    {
+      "idx": 71,
+      "en": "And in ads at Google, we were 100% using components that were initially developed for\nGoogle search. Google looked at advertising, this was before my time, Google looked at\nadvertising as just a search problem. Our problem is like we have to index all of the ads\nin the world and find the best one to show for a given website. Yeah, if you squint hard\nenough, sure.",
+      "zh": "在 Google 的广告中，我们 100% 使用最初开发的组件\n谷歌搜索。谷歌研究了广告，这是在我的时代之前，谷歌研究了\n广告只是一个搜索问题。我们的问题是我们必须对所有广告建立索引\n并找到针对给定网站展示的最佳内容。是的，如果你用力眯起眼睛\n够了，当然。"
+    },
+    {
+      "idx": 72,
+      "en": "Okay. So you learned a bunch of this fun stuff at Google. How did you end up here?",
+      "zh": "好的。所以你在谷歌学到了很多有趣的东西。你怎么到这里来了？"
+    },
+    {
+      "idx": 73,
+      "en": "Well, so from Google, I ended up going and doing a startup focused on helping cities\nmanage their curbs.",
+      "zh": "好吧，从谷歌开始，我最终创办了一家专注于帮助城市的初创公司\n管理他们的限制。"
+    },
+    {
+      "idx": 74,
+      "en": "What do you mean manage their curbs?",
+      "zh": "管理他们的限制是什么意思？"
+    },
+    {
+      "idx": 75,
+      "en": "So if you walk down the sidewalk, certainly in New York, but also in really just about any\ncity in the world, there will be all kinds of arcane paint markings and signs with icons\non them and so forth, denoting if someone pulls a vehicle over to the side of this\nparticular street, what are they allowed to do and what is going to get them a ticket?\nOkay. Maybe you’re allowed to park, but do you have to pay? Can you park for four hours or\ncan you only park for one hour? Maybe you can’t park, but if you’re a truck, you can load\nand unload goods from the truck. Maybe you can’t unload goods, but you can unload\npassengers, but only for three minutes. All of these rules have sort of been built up over\ntime and accrued in these cities and almost nobody has a good record of what they are and\nwhy.  Okay. So we were trying to solve this problem and build a platform for cities to\nmanage both the actual physical control infrastructure that causes these rules to take\neffect on a given street, and then also better be able to understand and analyze what the\nrules even were. How many parking spots are there in New York? This is a harder question\nto answer than one might think, especially because it changes day to day and hour to hour.",
+      "zh": "因此，如果你走在人行道上，当然是在纽约，但也几乎在任何地方\n世界上的城市，都会有各种神秘的油漆标记和带有图标的标志\n等等，表示是否有人将车辆停在其一侧\n特定的街道，他们可以做什么，怎样才能得到罚单？\n好的。也许你可以停车，但你需要付费吗？可以停车四个小时或者\n只能停车一小时吗？也许你不能停车，但如果你是卡车，你可以装载\n并从卡车上卸下货物。也许你不能卸货，但你可以卸货\n乘客，但只有三分钟。所有这些规则都是建立在\n在这些城市中积累的时间和积累，几乎没有人对它们是什么以及它们有很好的记录\n为什么。  好的。所以我们试图解决这个问题并为城市建立一个平台\n管理导致这些规则生效的实际物理控制基础设施\n对给定街道的影响，然后也能够更好地理解和分析\n规则甚至是。纽约有多少个停车位？这是一个更难的问题\n答案比人们想象的要多，特别是因为它每天、每时每刻都在变化。"
+    },
+    {
+      "idx": 76,
+      "en": "Wait, it changes day to day. How does it change from hour to hour?",
+      "zh": "等等，情况每天都在变化。每小时的变化如何？"
+    },
+    {
+      "idx": 77,
+      "en": "Well, there’s a sign that says no stopping 4:00 PM to 6:00 PM Monday to Friday.",
+      "zh": "嗯，有一个标志说周一至周五下午 4:00 至下午 6:00 禁止停车。"
+    },
+    {
+      "idx": 78,
+      "en": "Okay. And then how is this company going to solve those problems?",
+      "zh": "好的。那么这家公司将如何解决这些问题呢？"
+    },
+    {
+      "idx": 79,
+      "en": "One of the interesting things about parking signs is that exactly where they are matters\nto plus or minus one parking spot, which is a little tighter than you can do reliably in\nurban areas with GPS. Okay. So one piece of infrastructure we had was an app that used\nsort of AR inspired visual odometry techniques to figure out exactly where along the\nstreet different things like signs were.",
+      "zh": "停车标志的有趣之处之一是它们的确切位置很重要\n增加或减少一个停车位，这比您可以可靠地做到的要紧一点\n市区有GPS。好的。所以我们拥有的一个基础设施是一个使用的应用程序\n一种受 AR 启发的视觉里程计技术，可以准确地计算出沿途的位置\n街道上有不同的东西，比如标志。"
+    },
+    {
+      "idx": 80,
+      "en": "Wait, AR, augmented reality.",
+      "zh": "等等，AR，增强现实。"
+    },
+    {
+      "idx": 81,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 82,
+      "en": "What?",
+      "zh": "什么？"
+    },
+    {
+      "idx": 83,
+      "en": "So if you like Pokemon GO, you lift up your phone and there on the table is sitting at\nPokemon and you move your phone around and the Pokemon stays where they are relative to\nthe things in the scene, even if your phone moves. So to do that, you have to build a map\nof the scene inside your phone.",
+      "zh": "所以如果你喜欢《Pokemon GO》，你拿起手机就会发现桌子上有\n口袋妖怪和你移动手机，口袋妖怪就会停留在它们相对的位置\n场景中的事物，即使你的手机移动了。所以要做到这一点，你必须构建一张地图\n手机内的场景。"
+    },
+    {
+      "idx": 84,
+      "en": "Sure.",
+      "zh": "当然。"
+    },
+    {
+      "idx": 85,
+      "en": "If you can build a map of a scene inside your phone, then you can build a map of a block\ninside your phone.",
+      "zh": "如果您可以在手机内构建场景地图，那么您就可以构建街区地图\n在你的手机里。"
+    },
+    {
+      "idx": 86,
+      "en": "Okay.",
+      "zh": "好的。"
+    },
+    {
+      "idx": 87,
+      "en": "And then we can use those to position the parking signs along the block with extremely\nhigh accuracy.",
+      "zh": "然后我们可以用它们来沿着街区定位停车标志\n高准确度。"
+    },
+    {
+      "idx": 88,
+      "en": "Nice. Okay. Fun.",
+      "zh": "好的。好的。乐趣。"
+    },
+    {
+      "idx": 89,
+      "en": "So that data collection problem is actually really fun to solve. And then once you have\nthe data of like, well, where are the parking signs? Well, then you have to figure out\nwhat they say, which is a transcription problem. We didn’t have Claude back in the day. We\nhad to figure out how to do this using slightly less general techniques.",
+      "zh": "因此，解决数据收集问题实际上非常有趣。然后一旦你有了\n例如，停车标志在哪里？那么你必须弄清楚\n他们所说的，这是一个转录问题。那天我们没有克劳德。我们\n必须弄清楚如何使用不太通用的技术来做到这一点。"
+    },
+    {
+      "idx": 90,
+      "en": "Sure.",
+      "zh": "当然。"
+    },
+    {
+      "idx": 91,
+      "en": "And then even once you know what, they say you have to know what that means.",
+      "zh": "然后，即使你知道什么，他们也会说你必须知道那意味着什么。"
+    },
+    {
+      "idx": 92,
+      "en": "Right.",
+      "zh": "正确的。"
+    },
+    {
+      "idx": 93,
+      "en": "And parking signs have this language that’s sort of all their own where often-",
+      "zh": "停车标志有一种独特的语言，通常——"
+    },
+    {
+      "idx": 94,
+      "en": "I would think one advantage is like the vocabulary is relatively small.",
+      "zh": "我认为一个优点是词汇量相对较小。"
+    },
+    {
+      "idx": 95,
+      "en": "The vocabulary is relatively small. We ended up essentially hand building parsers for\nthis, but it’s actually quite tricky because this is designed to be sort of easily looked\nat by humans who know that particular city very well. So the vocabulary varies city to\ncity and also things like the position of different numbers and words on the sign looks\nvery different than the linear reading of a sentence of text on a computer. There’s a big\ntwo over here and then somewhere else on the sign, it’ll say maximum hours parking. And do\nyou connect those? Well, yes, as a human, we’re very good at using spatial context to put\nthese things together, but figuring out a way to model this in a computer can be quite\nchallenging.",
+      "zh": "词汇量相对较小。我们最终基本上手动构建了解析器\n这个，但实际上相当棘手，因为它的设计目的是为了易于查看\n由非常了解那个特定城市的人来完成。所以词汇因城市而异\n城市以及标牌上不同数字和文字的位置等\n与在计算机上线性阅读文本句子非常不同。有一个大\n这里有两个，然后在标志上的其他地方，上面会写着最长停车时间。并做\n你连接那些吗？嗯，是的，作为人类，我们非常擅长利用空间上下文来表达\n这些东西放在一起，但是找到一种在计算机中对其进行建模的方法可能会非常困难\n具有挑战性。"
+    },
+    {
+      "idx": 96,
+      "en": "So this sounds like a big pile of fun, grotty engineering problems and a bunch of weird\ndomain specific knowledge that you need to make this thing work. How did this work out as\na business?",
+      "zh": "所以这听起来像是一大堆有趣的、棘手的工程问题和一堆奇怪的问题\n使这件事发挥作用所需的领域特定知识。这是如何实现的\n一个企业？"
+    },
+    {
+      "idx": 97,
+      "en": "Not so well. Not so well, Ron. I love this problem to death. I still wish this data\nexisted in the world, but we were not really set up very well to turn this into a\nbusiness.",
+      "zh": "不太好。不太好，罗恩。我爱死这个问题了。我还是希望这个数据\n世界上存在，但我们并没有真正做好准备将其变成一个\n业务。"
+    },
+    {
+      "idx": 98,
+      "en": "Okay.",
+      "zh": "好的。"
+    },
+    {
+      "idx": 99,
+      "en": "That didn’t so much work out. And then I was saying, “Well, okay, what do I do next?” I\nknew I didn’t want to go back to Google. Partly just kind of been there, done that. Partly\nthe company had gotten much, much bigger in the time that I was there and in the time\nsince I was there. And I was looking for something that I could do in New York. I loved\nliving in New York. I didn’t want to move.",
+      "zh": "但这并没有多大效果。然后我说：“好吧，接下来我该怎么办？”我\n我知道我不想回到谷歌。部分只是去过那里，做过那件事。部分\n当我在那里的时候，公司已经变得更大了。\n自从我在那里以来。我正在寻找一些我可以在纽约做的事情。我爱过\n住在纽约。我不想动。"
+    },
+    {
+      "idx": 100,
+      "en": "Back to being enough of an urbanist to want to do a startup around cities.",
+      "zh": "回到一个足够的城市主义者，想要在城市周围创业。"
+    },
+    {
+      "idx": 101,
+      "en": "Exactly. And I loved this kind of economic thinking that I was doing back earlier in my\ncareer. And I knew of, in fact, a bunch of people who were doing finance-y type stuff in\nNew York. And so I thought, well, where do I do this? What’s the right place for me to put\nall these things together? Jane Street was a super obvious choice for me, partly because\nalmost all the people I knew who were working in the financial sphere were in fact at Jane\nStreet already. These are people who I’d worked with at university. These are people I\nknew from Google. These were random people I knew socially. It was a bunch of people who I\nthought were extremely smart, who I really respected, and they all managed to wind up at\nthis place. And you’re kind of like, “Hmm, I wonder how that happened.” I mean, also I had\ndone some functional programming in college, and even back in 2008, already in the back of\nmy head was, “Oh, Jane Street’s a place you can go and write OCaml.” Oh, that sounds\npretty fun.",
+      "zh": "确切地。我很喜欢我早年所做的这种经济思考\n职业生涯。事实上，我知道有一群人在做金融类的事情\n纽约。所以我想，好吧，我该在哪里做呢？什么地方适合我放置\n所有这些事情加在一起？简街对我来说是一个非常明显的选择，部分原因是\n事实上，我认识的几乎所有在金融领域工作的人都在 Jane\n已经上街了这些是我在大学时共事过的人。这些人是我\n从谷歌知道的。这些是我在社交上认识的随机人。我是一群人\n我认为他们非常聪明，我非常尊重他们，他们都设法最终在\n这个地方。你会说，“嗯，我想知道这是怎么发生的。”我的意思是，我也有\n在大学里做过一些函数式编程，甚至早在 2008 年，就已经在后面了\n我的想法是，“哦，Jane Street 是一个你可以去编写 OCaml 的地方。”哦，听起来\n很有趣。"
+    },
+    {
+      "idx": 102,
+      "en": "So our odd taste in programming languages strikes again.",
+      "zh": "所以我们对编程语言的奇怪品味再次出现。"
+    },
+    {
+      "idx": 103,
+      "en": "Absolutely. And I had in fact written some OCaml to do some combinatorial optimization\nproblem solving for a class back in university. Not that that came in that handy when I\nstarted here. The OCaml that Jane Street writes actually looks pretty different than the\nOCaml that I wrote 15 years ago. But yeah, I’d known about the place and it seemed really\ncool. And so I thought, why don’t I interview with them and see what there is?",
+      "zh": "绝对地。事实上我已经编写了一些 OCaml 来进行一些组合优化\n解决大学课堂上的问题。并不是说当我\n从这里开始。 Jane Street 编写的 OCaml 实际上看起来与\n我 15 年前写的 OCaml。但是，是的，我知道这个地方，而且看起来真的\n酷。所以我想，为什么我不采访他们，看看有什么？"
+    },
+    {
+      "idx": 104,
+      "en": "Cool. Okay. So when you got here, what did you find yourself doing? What part of the\norganization did you land in?",
+      "zh": "凉爽的。好的。那么当你来到这里时，你发现自己在做什么？是哪一部分\n你登陆的组织是？"
+    },
+    {
+      "idx": 105,
+      "en": "So one of the things that Jane Street does before you start is there’s this team match\nprocess where you go and meet with people who seem like teams that you might want to work\non and you chat with them. So one of the teams that I did a team match with was this team\ncalled database infrastructure. And I talked to this guy, Sam, who talked about, well,\nJane Street runs all these Postgres databases. Some of them are really big and we’re\nhaving trouble managing them and we just sort of let people put whatever data in there and\nit doesn’t always go very well, so we really want to make this work better. And I’m like,\nokay, well, that definitely sounds like a hard problem, but why are you trying to do this?\nWhy don’t you have some kind of distributed analytical database that can query over all of\nthis different data without it having to live on a single computer that runs Postgres?\nAnd so I’m like, yeah, that kind of does seem like something we thought about. We haven’t\nbuilt it yet, but it seems like that would be a good direction to at least explore. And\nI’m like, okay, I’m very happy to work on these database problems, but just so you know,\nif I come and work on your team, I’m going to try and build this data warehouse analytics\nthing.",
+      "zh": "所以 Jane Street 在你开始之前做的一件事就是这场团队比赛\n处理你去的地方并与那些看起来像你可能想要工作的团队的人会面\n就可以和他们聊天了。所以我参加团队比赛的球队之一就是这支球队\n称为数据库基础设施。我和 Sam 聊过，他谈到，嗯，\nJane Street 运行所有这些 Postgres 数据库。其中一些非常大，我们\n在管理它们时遇到麻烦，我们只是让人们把任何数据放在那里，然后\n它并不总是进展顺利，所以我们真的想让这项工作变得更好。我就像，\n好吧，这听起来确实是一个难题，但是你为什么要尝试这样做呢？\n为什么没有某种可以查询所有数据的分布式分析数据库\n这些不同的数据不必存在于运行 Postgres 的一台计算机上？\n所以我想，是的，这似乎确实是我们考虑过的事情。我们还没有\n尚未建成，但看起来这至少是一个值得探索的好方向。并且\n我想，好吧，我很高兴能够解决这些数据库问题，但你知道，\n如果我来你们的团队工作，我将尝试构建这个数据仓库分析\n事。"
+    },
+    {
+      "idx": 106,
+      "en": "So can we dig in a little bit more to the kind of like, status quo ante, what is wrong\nwith the throw a lot of data into a Postgres database? Isn’t that what databases are for\nis throwing a lot of data into them? How were you using them and what was weird about that\nuse from your perspective?",
+      "zh": "那么我们是否可以更深入地探讨一下，现状，问题出在哪里\n将大量数据放入 Postgres 数据库？这不就是数据库的用途吗\n是向其中放入大量数据吗？你是如何使用它们的以及有什么奇怪的\n从你的角度使用？"
+    },
+    {
+      "idx": 107,
+      "en": "So Postgres is a great database, but it has a lot of different goals that it’s trying to\nmeet. One of the things that Postgres is trying to do is be able to do really fast single\nrow or few row transactions. Think about running a store. Someone clicks a checkout button\non your website and they go and buy a widget. And you want to both record this order that\nsomeone bought this widget. You want to decrease the number of widgets in your inventory\nby one. And you want this to all happen while the page is loading in a very short amount\nof time and you want it to all succeed atomically. Postgres has to solve that\nproblem. There’s this other set of problems which we kind of call sort of analytical\nprocessing, which are about I have a lot of data and I want to answer questions about all\nof this data altogether in aggregate in some way that could involve not just single rows,\nbut like many millions of rows of data.  Postgres can do this for you as well, but it’s\nmuch slower at it because it’s constrained by needing to store this data in a way that\nlets it do these atomic transactions over very few rows. It’s like for example, Postgres\nmaintains indexes. You have all this data in a table and Postgres can look up this data\nfor you by potentially a lot of different things, a lot of different potential keys into\nthis piece of data. But that means that all these indexes have to live on disk. And also\nPostgres can very efficiently update individual rows. And if you think about it, what this\nmeans is that Postgres can’t really compress across rows. Because if I have to be able to\nchange that one bit on that one row, if that bit is compressed into like some 50 kilobyte\nor one megabyte chunk, well then every time I change a row, I got to write that 50\nkilobytes or that one megabyte of data back to disk, and that’s just going to be a\nnon-starter for these transactional use cases.  So Postgres does as good of a job as it\ncan given the constraints that it has. But ultimately, when you’re doing these analytical\nprocessing use cases, you really want to lay out the actual data at rest in a very, very\ndifferent way.",
+      "zh": "所以 Postgres 是一个很棒的数据库，但它有很多不同的目标\n见面。 Postgres 正在尝试做的事情之一是能够非常快速地执行单个操作\n行或几行事务。考虑经营一家商店。有人点击结帐按钮\n在您的网站上，他们去购买一个小部件。你想要记录这个订单\n有人购买了这个小部件。您想要减少库存中小部件的数量\n一个。并且您希望这一切在页面加载很短的时间内发生\n时间，你希望它全部成功。 Postgres 必须解决这个问题\n问题。还有另一组问题，我们称之为分析型问题\n处理，这是关于我有很多数据，我想回答所有的问题\n以某种方式汇总这些数据，可能不仅仅涉及单行，\n但就像数百万行数据一样。  Postgres 也可以为你做到这一点，但它是\n速度要慢得多，因为它受到需要以某种方式存储这些数据的限制\n让它在很少的行上执行这些原子事务。例如，Postgres\n维护索引。所有这些数据都在一个表中，Postgres 可以查找这些数据\n为你提供潜在的很多不同的东西，很多不同的潜在钥匙\n这段数据。但这意味着所有这些索引都必须位于磁盘上。还有\nPostgres 可以非常有效地更新各个行。如果你想一想，这是什么\n这意味着 Postgres 无法真正跨行压缩。因为如果我必须能够\n更改该行上的一位（如果该位被压缩为大约 50 KB）\n或者一个兆字节块，那么每次我更改一行时，我都必须写入 50\n千字节或一兆字节的数据返回磁盘，这只是\n对于这些事务性用例来说是不可能的。  所以 Postgres 的工作和它一样好\n可以给出它所具有的约束。但最终，当你进行这些分析时\n处理用例时，您确实希望以非常非常的方式布置静态的实际数据\n不同的方式。"
+    },
+    {
+      "idx": 108,
+      "en": "Right. And this kind of goes back to this classic distinction between row oriented\ndatabases and column oriented databases, which has always struck me as super weird. The\nidea is like, I would like to get a piece of software for managing my data. It’s like,\nwait, do you want a row oriented database or a column oriented data? And I’m like, you\nmean I have to pick my data structure now? Why can’t I pick it on a table by table basis?\nWhy can’t I take my data and represent it multiple different ways so that I can do both\nthis kind of access and that kind of access efficiently, depending on the particular kind\nof thing I want to do?",
+      "zh": "正确的。这种类型可以追溯到面向行之间的经典区别\n数据库和面向列的数据库，这一直让我觉得超级奇怪。的\n想法是，我想要一个软件来管理我的数据。就像，\n等等，您想要面向行的数据库还是面向列的数据？而我就像，你\n意味着我现在必须选择我的数据结构？为什么我不能逐桌挑选？\n为什么我不能获取我的数据并以多种不同的方式表示它，以便我可以同时做到这两点\n这种访问和那种访问有效，取决于特定类型\n我想做的事？"
+    },
+    {
+      "idx": 109,
+      "en": "And a lot of people try and build systems that do both. But what we found is that the\nabstractions that make columnar databases efficient kind of leak through the interface\nlayer. You can go out and find right now a lot of SQL compliant, whatever that means,\ndifferent things to different people, databases that have columnar storage. In fact, at\nJane Street, we were using one at the time that I came and made my bold claim, which was\ncalled Vertica, which is an existing columnar database. It’s in fact very efficient for a\nlot of these sorts of analytical problems. What we found with Vertica is that because it\ntried to give you these full SQL transactional semantics, it was very easy to break. A lot\nof the things that you could do with SQL that Postgres can support very efficiently,\ntrying to build that transactional layer over underlying columnar data just gets rid of a\nlot of the advantages that you’re trying to get in the first place.  And the way that this\ngets implemented with a lot of these systems just dramatically slows down the queries and\ncan even make the database unusable. Now what most-",
+      "zh": "许多人尝试构建兼具这两种功能的系统。但我们发现的是\n使列式数据库高效的抽象通过接口泄漏\n层。你现在可以出去找到很多符合 SQL 的，无论这意味着什么，\n不同的人有不同的东西，具有列式存储的数据库。事实上，在\n简街，当我来并提出我的大胆主张时，我们正在使用一个，这是\n称为Vertica，这是一个现有的列式数据库。事实上，对于一个\n很多这样的分析问题。我们对 Vertica 的发现是因为它\n试图为您提供这些完整的 SQL 事务语义，但它很容易被破坏。很多\n您可以使用 Postgres 非常有效地支持的 SQL 执行哪些操作，\n尝试在底层柱状数据上构建事务层只会摆脱\n您首先想要获得的许多优势。  以及这样的方式\n许多这样的系统都实现了，只会大大减慢查询速度，\n甚至可能导致数据库无法使用。现在最-"
+    },
+    {
+      "idx": 110,
+      "en": "SQL is like the blessing and curse of the database industry.",
+      "zh": "SQL就像数据库行业的祝福和诅咒。"
+    },
+    {
+      "idx": 111,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 112,
+      "en": "There’s this language defined like, what, in the 70s, I think, that somehow we’re all\nstill using more or less the same language today. And I guess the problem you’re pointing\nat here is like a kind of overexpressiveness problem of like SQL can do a lot of different\nthings, but the implementation you put under it, maybe we’ll do some of those things\nreally well and some of those things really badly. And when you give the full API surface\nto people, they’ll maybe try and do all the things that you tell them that you can do and\nit’s going to be a bad time.",
+      "zh": "有一种语言的定义是，在 70 年代，我想，不知怎的，我们都是\n今天仍然使用或多或少相同的语言。我猜你指出的问题\n这里就像一种过度表达问题，就像 SQL 可以做很多不同的事情\n事情，但是你在它下面的实现，也许我们会做其中一些事情\n确实很好，但有些事情真的很糟糕。当你提供完整的 API 界面时\n对于人们来说，他们可能会尝试做你告诉他们可以做的所有事情，并且\n这将是一段糟糕的时光。"
+    },
+    {
+      "idx": 113,
+      "en": "Now the way that I’d put that is that SQL does such a good job of being what it is that it\ndoesn’t feel like programming. If someone told you like, “Oh, C++ is way too expressive.”\nIt lets you do whatever you want to do. And sometimes people do bad things with C++ and\nthat means it’s a mistake. No, God knows C++ has plenty of faults, but you’re not going to\nsay, “Oh, it’s too expressive. It lets you do too many different things.” If people\ntreated the SQL that they write as if they were writing a software system when they were\nconstructing their queries, I think we wouldn’t mind that SQL can do all these different\nthings and it has leaky abstractions and et cetera, et cetera. This is all stuff that as\nsoftware engineers we take for granted, but SQL makes it so natural to write queries that\nyou just feel like you’re asking a question of the system.  You don’t feel like you’re\nwriting a program. Even though what a database’s query planner actually is, is a compiler\nthat generates code to run your SQL query as a program. It doesn’t feel like that’s what\nit’s doing to us because SQL is such a good abstraction.",
+      "zh": "现在我想说的是，SQL 做得非常好，它就是这样的。\n感觉不像编程。如果有人告诉你，“哦，C++ 的表现力太强了。”\n它可以让你做任何你想做的事。有时人们会用 C++ 做坏事\n这意味着这是一个错误。不，上帝知道 C++ 有很多错误，但你不会\n说，“哦，它太富有表现力了。它让你可以做太多不同的事情。”如果人们\n将他们编写的 SQL 视为他们在编写软件系统时的样子\n构建他们的查询，我认为我们不会介意 SQL 可以做所有这些不同的事情\n事物，它有漏洞抽象等等。这就是所有的东西\n我们认为软件工程师是理所当然的，但 SQL 使编写查询变得如此自然\n你只是觉得你在向系统问一个问题。  你不觉得自己是\n编写程序。尽管数据库的查询规划器实际上是一个编译器\n生成代码以将 SQL 查询作为程序运行。感觉不是那么回事\n它对我们造成的影响是因为 SQL 是一个很好的抽象。"
+    },
+    {
+      "idx": 114,
+      "en": "Right. But I think it also goes back to almost like the mechanism design point you were\nmaking before of sometimes it’s more important to be explainable. And the key thing that\nSQL trades away is explainability, which is like you do put in a SQL query and then it’s\noptimized and then a miracle happens or maybe the miracle doesn’t happen. And depending on\nnot just the shape of the tables you run it on, but the statistics that were gathered from\nthat table, it will optimize in different ways. It can be very hard to predict what the\nbehavior is. Right, so you’re sort of not used to as a user who’s sitting there writing\nSQL work.",
+      "zh": "正确的。但我认为它也几乎可以追溯到你之前的机制设计点\n有时，可解释性更重要。关键的是\nSQL 牺牲了可解释性，这就像您输入 SQL 查询，然后它\n优化然后奇迹就会发生，或者奇迹可能不会发生。并取决于\n不仅仅是运行它的表的形状，还有从中收集的统计信息\n该表，它将以不同的方式进行优化。很难预测会发生什么\n行为是。是的，所以你有点不习惯作为一个坐在那里写作的用户\nSQL 工作。"
+    },
+    {
+      "idx": 115,
+      "en": "Whereas we can all simulate our compilers in our head and understand exactly what they do\nto our OCaml code. I think a lot of the last 10 years or 15 years even maybe of CPU design\nhas been designed to give people the illusion that they still understand what the CPU is\ndoing to their code when in fact they have no freaking idea what makes it fast.",
+      "zh": "而我们都可以在脑海中模拟编译器并准确理解它们的作用\n到我们的 OCaml 代码。我认为过去 10 年或 15 年甚至可能是 CPU 设计的大部分时间\n其设计初衷是为了让人们产生一种错觉，认为他们仍然了解 CPU 是什么\n事实上，他们根本不知道是什么让代码变得更快。"
+    },
+    {
+      "idx": 116,
+      "en": "I mean, I think what you’re saying is obviously true in the sense that if you want to\nunderstand what’s actually happening in a program that you write in OCaml or C or\nwhatever, and you really want to understand it at a very low level of detail, God help\nyou. There’s an enormous amount of complex things happening at many different levels and\nlots of optimizations that are in there that try to make it fast for you even when you\nhaven’t done all the careful work for yourself. But I think there’s a difference of\ndegree. There are deep algorithmic big O notation changes to the execution of a SQL query,\nwhich makes it dramatically harder to predict what it’s going to do just from the query\nalone than you can from looking at a program in almost any ordinary-",
+      "zh": "我的意思是，我认为你所说的显然是正确的，因为如果你想\n了解您用 OCaml 或 C 编写的程序中实际发生的情况，或者\n无论如何，你真的想以非常低的细节水平来理解它，上帝保佑\n你。在许多不同的层面上发生着大量复杂的事情\n其中有很多优化，即使您在\n还没有为自己完成所有细致的工作。但我觉得还是有区别的\n学位。 SQL 查询的执行有深度算法大 O 表示法更改，\n这使得仅从查询中预测它将要做什么变得非常困难\n比你在几乎任何普通程序中查看程序都更简单-"
+    },
+    {
+      "idx": 117,
+      "en": "This is true. Very few compilers will change the big O complexity of your code up from\nunder you. Whereas the decisions of the query optimizer for a SQL query engine can often\nbe extremely load bearing. That’s a hundred percent true.",
+      "zh": "这是真实的。很少有编译器会将代码的大 O 复杂度从\n在你之下。而 SQL 查询引擎的查询优化器的决策通常可以\n具有极高的承重能力。这是百分百正确的。"
+    },
+    {
+      "idx": 118,
+      "en": "Right. And when you say we were throwing lots of data and creating lots of queries and\nstuff, what for, what was the use case that you were running into that we were all kind of\nrunning into and how we were using databases?",
+      "zh": "正确的。当你说我们抛出大量数据并创建大量查询时\n东西，为什么，你遇到的用例是什么，我们都是这样的\n我们如何使用数据库？"
+    },
+    {
+      "idx": 119,
+      "en": "Well, so the funny thing is that this was in many ways just kind of emergent from lots of\ndifferent people’s connected use of these databases. So a great example is like a list of\nall the trades that Jane Street has done every day. You can totally imagine why that’s\nvaluable. Okay, let’s take some information that I have in my trading. Let’s combine that\nwith all the trades that Jane Street is doing and derive some insight from this. Super\nvaluable. Let’s understand things about the fees that we’re paying to exchanges or the\npositions that we keep in our different accounts.",
+      "zh": "好吧，有趣的是，这在很多方面都是从很多方面出现的\n不同的人对这些数据库的关联使用。所以一个很好的例子就像一个列表\n简街每天所做的所有交易。你完全可以想象为什么会这样\n有价值的。好吧，让我们来看看我在交易中得到的一些信息。让我们结合起来\n与简街正在做的所有交易有关，并从中得出一些见解。超级\n有价值的。让我们了解一下我们向交易所或交易所支付的费用\n我们在不同账户中保留的头寸。"
+    },
+    {
+      "idx": 120,
+      "en": "Or the symbology.",
+      "zh": "或者符号学。"
+    },
+    {
+      "idx": 121,
+      "en": "Or the symbology.",
+      "zh": "或者符号学。"
+    },
+    {
+      "idx": 122,
+      "en": "Or the different symbols.",
+      "zh": "或者不同的符号。"
+    },
+    {
+      "idx": 123,
+      "en": "Yeah. Yeah. What markets does this stock trade on? What currency is it denominated and\nstuff like that.",
+      "zh": "是的。是的。该股票在哪些市场交易？它以什么货币计价？\n诸如此类的事情。"
+    },
+    {
+      "idx": 124,
+      "en": "And part of what gets surfaced here is part of the value here is database as\necosystem. The set of things that you can join together, like every new thing that you add\nto that increases the value of the platform. And the key thing about joining the data\nbehavior is literally join, like SQL joins or the essential data operation for bringing\nthis data together.",
+      "zh": "这里出现的部分内容是这里的值的一部分是数据库\n生态系统。您可以组合在一起的一组事物，例如您添加的每个新事物\n从而增加平台的价值。连接数据的关键是\n行为实际上就是联接，就像 SQL 联接或用于引入数据的基本数据操作\n这些数据放在一起。"
+    },
+    {
+      "idx": 125,
+      "en": "And many companies, when faced with these problems with transactional databases, end up\nessentially getting rid of a lot of the flexibility and a lot of the usability of these\nsystems in order to maintain the scale. They will have a schema council that before you’re\nallowed to add a table to the database, you have to have these people sit in judgment on\nyou and find a schema. You’ll end up with databases where the only queries you’re allowed\nto run are ones that have been code reviewed.",
+      "zh": "许多公司在面对事务数据库的这些问题时，最终都陷入困境\n基本上摆脱了这些的很多灵活性和可用性\n系统以维持规模。他们将有一个模式委员会，在你之前\n允许向数据库添加表，你必须让这些人来判断\n你并找到一个模式。您最终将得到只允许您进行查询的数据库\n要运行的是已经过代码审查的程序。"
+    },
+    {
+      "idx": 126,
+      "en": "And in fact, often what you’ll have is you’ll have code that sits in front of the database\nand you can’t just use the database directly. You go to the program that you type\nsomething into a GUI and it goes off and constructs the queries. And so you don’t have any\nkind of free reign in just running whatever queries that you want.",
+      "zh": "事实上，通常您会拥有位于数据库前面的代码\n而且你不能直接使用数据库。您转到您键入的程序\n将某些内容放入 GUI 中，然后它就会启动并构建查询。所以你没有任何\n可以自由地运行您想要的任何查询。"
+    },
+    {
+      "idx": 127,
+      "en": "But we are getting huge value from traders, not just traders, but among other people,\ntraders, being able to do more or less whatever they want on these databases. And we were\nputting in a ton of work on maintaining the database in such ways to give traders the\nillusion that they could do whatever they want. Don’t get me wrong, Postgres is a very\ngood database, but there’s a lot of things that you can do once you have hundreds of users\non a Postgres database that will slow down and kill the database for everyone. Long\nrunning transactions being the best example. So rather than just not let people run\ntransactions on the shared database, we had a long running transaction killer that would\ngo around and kill long running transactions if they got too long.",
+      "zh": "但我们从交易者那里获得了巨大的价值，不仅仅是交易者，还有其他人，\n交易者能够在这些数据库上做或多或少的任何他们想做的事情。我们当时\n投入大量工作来维护数据库，以便为交易者提供\n幻想他们可以为所欲为。别误会我的意思，Postgres 是一个非常\n良好的数据库，但是一旦拥有数百个用户，您就可以做很多事情\n在 Postgres 数据库上，这会减慢并杀死每个人的数据库。长\n运行事务就是最好的例子。所以与其只是不让人们跑\n共享数据库上的事务，我们有一个长期运行的事务杀手，它会\n如果长时间运行的事务太长，就终止它们。"
+    },
+    {
+      "idx": 128,
+      "en": "So can you say more about this? Why are long running transactions bad?",
+      "zh": "那么您能对此多说一些吗？为什么长时间运行的事务不好？"
+    },
+    {
+      "idx": 129,
+      "en": "The way that Postgres does animicity is essentially every time you have a transaction that\nwrites to a table, it sort of forks the table and keeps it in two states, the state before\nyour transaction and the state after your transaction. And then once you commit, it then\nhas to do essentially almost like a version control merge.",
+      "zh": "Postgres 进行友好性的方式本质上是每次你有一笔交易时\n写入表，它会分叉表并将其保持在两种状态，即之前的状态\n您的交易以及交易后的状态。然后一旦你承诺了，它就会\n本质上几乎就像版本控制合并一样。"
+    },
+    {
+      "idx": 130,
+      "en": "So that on the face of it sounds insanely expensive. When you say forks the table, do you\nmean like makes a whole copy of the table?",
+      "zh": "因此，从表面上看，这听起来非常昂贵。当你说叉桌子时，你会吗？\n意味着就像制作了表格的整个副本？"
+    },
+    {
+      "idx": 131,
+      "en": "Well so –",
+      "zh": "好吧——"
+    },
+    {
+      "idx": 132,
+      "en": "That would be bad.",
+      "zh": "那会很糟糕。"
+    },
+    {
+      "idx": 133,
+      "en": "It’s all copy on write, right? So it only forks the pieces of the table that you touch.",
+      "zh": "都是写时复制，对吧？所以它只会分叉你接触到的桌子部分。"
+    },
+    {
+      "idx": 134,
+      "en": "So it’s both copy on write and it’s copy on write in a kind of segmented way.",
+      "zh": "所以它既是写时复制，也是以某种分段方式写时复制。"
+    },
+    {
+      "idx": 135,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 136,
+      "en": "Got it. Okay.",
+      "zh": "知道了。好的。"
+    },
+    {
+      "idx": 137,
+      "en": "So",
+      "zh": "所以"
+    },
+    {
+      "idx": 138,
+      "en": "Then why is that bad? A nice analogy for this is like version control. When you like Git\nor whatever, you can have lots of forks and actually it’s like kind of okay to have lots\nof fork. You in fact have lots of long running forks and that doesn’t necessarily cause\nother things to fall apart. Why is it problematic to have these long running transactions\nin a database context?",
+      "zh": "那为什么会那么糟糕呢？对此的一个很好的类比就是版本控制。当你喜欢 Git 时\n或者无论如何，你可以有很多叉子，实际上拥有很多也没什么问题\n的叉子。事实上，你有很多长时间运行的分叉，这并不一定会导致\n其他事情会分崩离析。为什么这些长时间运行的事务会出现问题\n在数据库上下文中？"
+    },
+    {
+      "idx": 139,
+      "en": "The way the transaction semantics that databases give people aren’t like, okay, begin\ntransaction starts a fork and you work in that fork and then later on you have to\nmerge. So the way that the semantics of transactions in SQL and thus in Postgres is that\nwhile a transaction is in flight, it’s effectively locking all the rows that it’s\nchanging. Not necessarily every row that it’s reading, but every row that it’s writing to,\nit gets effectively a lock. This is to stop merge hell from happening when transactions\ncommit, which turns out to not be what most people want out of their databases.  So\ninstead of letting you do whatever you want and then merging, we assume that if you’re\ntouching something, you want to lock it until your transaction’s done and then the next\nperson gets to run on that. But what that means is that long running transactions can\naccrue along a large amount of locks and a large amount of data that we don’t know if it’s\nthe future or not. And this can end up effectively costing a lot of storage and a lot of\ncompute time on the database for having to take this into account and do all the\nbookkeeping for this transaction while it’s open. Once a transaction gets closed, you just\ncan very quickly garbage collect all of the past stuff that happened before this\ntransaction.",
+      "zh": "数据库为人们提供的事务语义的方式并不像，好吧，开始\n交易启动一个分叉，你在该分叉中工作，然后你必须\n合并。因此，SQL 以及 Postgres 中事务的语义是这样的\n当事务正在进行时，它有效地锁定了它所在的所有行\n改变。不一定是它正在读取的每一行，而是它正在写入的每一行，\n它有效地获得了锁。这是为了阻止事务发生时发生合并地狱\ncommit，事实证明这并不是大多数人想要从数据库中得到的。  所以\n我们不会让你做任何你想做的事情然后合并，而是假设如果你\n触摸某些东西，你想锁定它直到你的交易完成，然后下一个\n人们可以以此为基础。但这意味着长时间运行的事务可以\n积累了大量的锁和大量我们不知道是否是的数据\n未来与否。这最终可能会消耗大量存储空间和大量数据\n计算数据库上的时间，必须考虑到这一点并执行所有操作\n在该交易开放期间进行簿记。一旦交易结束，您只需\n可以非常快速地收集在此之前发生的所有过去的事情\n交易。"
+    },
+    {
+      "idx": 140,
+      "en": "Is the main issue there that if you’re acquiring a bunch of locks that you’re basically\nrunning into issues of performance isolation, like this long running transaction blocks\nother transactions from completing because maybe somebody else wanted to write to that",
+      "zh": "那里的主要问题是，如果你要获取一堆锁，那么你基本上是\n遇到性能隔离问题，例如长时间运行的事务块\n其他事务无法完成，因为也许其他人想写入该事务"
+    },
+    {
+      "idx": 141,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 142,
+      "en": "And now they have to be pushed later in time. Yeah,",
+      "zh": "现在他们必须及时推迟。是的，"
+    },
+    {
+      "idx": 143,
+      "en": "That’s certainly the brunt of the problem. There’s other ways that this interacts with\nreplication, for instance, and the ability to do what Postgres calls vacuuming, which is\ncleaning up old data in a table that where long running transactions make that hard\ntoo. But yeah, certainly this ability to have this chain of long running transactions is\none of the things that makes this difficult for Postgres to manage performably.",
+      "zh": "这无疑是问题的首当其冲。还有其他方式可以与之交互\n例如，复制，以及执行 Postgres 所谓的清理功能的能力，即\n清理表中的旧数据，因为长时间运行的事务会使其变得困难\n也是。但是，是的，这种拥有长期运行交易链的能力确实是\n这是导致 Postgres 难以有效管理的原因之一。"
+    },
+    {
+      "idx": 144,
+      "en": "Got it. Okay. So the state of the world is we have this incredibly valuable, not just a\nsingle database, but a set of databases that are being used in this kind of somewhat wild\nand undisciplined way where lots of people are pretty freely throwing in new kinds of\ndata, throwing new SQL transactions at it and relatively routinely running into exciting\nperformance problems, that you have a bunch of people who are doing a lot of operational\nwork to try and keep this Frankenstein monstrosity running efficiently.",
+      "zh": "知道了。好的。所以世界的现状是我们拥有这个极其宝贵的东西，而不仅仅是一个\n单个数据库，而是一组正在使用的数据库，这种有点疯狂\n和无纪律的方式，很多人都相当随意地投入新的种类\n数据，向其抛出新的 SQL 事务，并且相对常规地遇到令人兴奋的情况\n性能问题，你有一群人正在做大量的操作\n努力让这个弗兰肯斯坦怪物保持高效运转。"
+    },
+    {
+      "idx": 145,
+      "en": "And just another big part of the problem is that Postgres very inherently has to keep all\nof your data on a single machine. So we had, I think at the time it was like the largest\ncomputer that Jane Street owned was running Trader DB. So yeah, so what are our\nrequirements when we’re trying to replace the system? What are the things that we want out\nof the new system? Well, we still want it to be the Wild West. We still want people to\nfeel like they can do anything. We absolutely want this to be able to store more data that\nyou can fit on a computer. And ideally, we want this to be much more compressible and much\nbetter at doing sort of large reads over arbitrarily large amounts of data than Postgres.",
+      "zh": "问题的另一个重要部分是 Postgres 本质上必须保留所有\n您的数据在一台机器上。所以我们有，我想当时它就像是最大的\nJane Street 拥有的计算机正在运行 Trader DB。所以是的，那么我们的\n当我们尝试更换系统时有什么要求？我们想要什么\n新系统的？好吧，我们仍然希望它成为狂野西部。我们仍然希望人们\n感觉他们可以做任何事情。我们绝对希望它能够存储更多的数据\n你可以安装在电脑上。理想情况下，我们希望它更具可压缩性\n与 Postgres 相比，它更擅长对任意大量数据进行大量读取。"
+    },
+    {
+      "idx": 146,
+      "en": "Right. And essentially you want to move from something that is focused on transactions to\nthings that are focused on big read queries that get lots of data and figure out the\nresults of complex computations.",
+      "zh": "正确的。从本质上讲，您希望从专注于交易的事物转向\n专注于大读取查询的事情，这些查询获取大量数据并找出\n复杂计算的结果。"
+    },
+    {
+      "idx": 147,
+      "en": "Exactly. And we also want it to be much harder for people to break isolation. We want it\nto be much harder for me to go and do some crazy thing on the system that will impact your\nability to use it. Right. Both from a correctness perspective and also from a performance\nperspective. It should be much harder for a single user to bork the whole system for\neveryone.",
+      "zh": "确切地。我们还希望人们更难打破孤立。我们想要它\n对我来说更难在系统上做一些疯狂的事情，这会影响你\n使用它的能力。正确的。无论是从正确性角度还是从性能角度\n观点。对于单个用户来说，让整个系统瘫痪应该要困难得多\n大家。"
+    },
+    {
+      "idx": 148,
+      "en": "Did you have problems? I would’ve thought you’d have lots of performance isolation\nproblems in something like Postgres and very few correctness problems.",
+      "zh": "您遇到问题了吗？我本以为你会有很多性能隔离\nPostgres 之类的问题和很少的正确性问题。"
+    },
+    {
+      "idx": 149,
+      "en": "Well, you had deadlocks were sort of the main ways. Is a deadlock a performance problem?\nWell, in a sense.",
+      "zh": "嗯，僵局是主要的方式。死锁是性能问题吗？\n嗯，从某种意义上说。"
+    },
+    {
+      "idx": 150,
+      "en": "It’s a very, very bad performance problem. Got it. And inherently when you’re grabbing\nlots of locks … Actually, how do you deal with deadlocks in the Postgres world? Does the\nwhole thing lock?",
+      "zh": "这是一个非常非常糟糕的性能问题。知道了。当你抓住时，本质上\n很多锁……实际上，你如何处理 Postgres 世界中的死锁？是否\n整个东西锁？"
+    },
+    {
+      "idx": 151,
+      "en": "So we had a deadlock detector, and if queries got deadlocked, we would just kill them.",
+      "zh": "所以我们有一个死锁检测器，如果查询陷入僵局，我们就会杀死它们。"
+    },
+    {
+      "idx": 152,
+      "en": "Makes sense.",
+      "zh": "有道理。"
+    },
+    {
+      "idx": 153,
+      "en": "So this is what we wanted. There’s no free lunch, right? As I said, we’re not going to\njust do Postgres, but better because we think Postgres is pretty good. So what can we give\nup? Well, it would be really nice if we could give up transactions.",
+      "zh": "这就是我们想要的。天下没有免费的午餐，对吧？正如我所说，我们不会\n只做 Postgres，但更好，因为我们认为 Postgres 非常好。那么我们能给予什么\n起来？嗯，如果我们能够放弃交易那就太好了。"
+    },
+    {
+      "idx": 154,
+      "en": "Sure. Although transactions are really nice.",
+      "zh": "当然。虽然交易确实不错。"
+    },
+    {
+      "idx": 155,
+      "en": "These transactions are really nice. Well,",
+      "zh": "这些交易真的很不错。出色地，"
+    },
+    {
+      "idx": 156,
+      "en": "It’s nice to be able to reason consistently about the data in your database.",
+      "zh": "能够对数据库中的数据进行一致的推理是件好事。"
+    },
+    {
+      "idx": 157,
+      "en": "It sure is. So what if we couldn’t … Is there a way that we could avoid giving up\ntransactions entirely while still avoiding the kinds of problems that transactions caused\non Postgres? So this ended up being a lot of the meat of what we tried to build when we\nwere specing out our data warehouse. And we looked at a lot of the existing systems around\nthis. A lot of them either give up transactions entirely. You have something like Kafka,\nsay, which Kafka isn’t a database. Yeah, I know you",
+      "zh": "确实如此。如果我们不能……有什么方法可以避免放弃呢？\n完全交易，同时仍然避免交易引起的各种问题\n在 Postgres 上？所以这最终成为我们尝试构建的大部分内容\n正在指定我们的数据仓库。我们研究了很多现有的系统\n这个。他们中的许多人要么完全放弃交易。你有像卡夫卡这样的东西，\n比如说，Kafka 不是数据库。是的，我认识你"
+    },
+    {
+      "idx": 158,
+      "en": "Don’t think of Kafka as a database.",
+      "zh": "不要将 Kafka 视为数据库。"
+    },
+    {
+      "idx": 159,
+      "en": "But it is a system that stores a lot of data, right? For sure. And if you look at Kafka,\nit doesn’t have read-modify-write and –",
+      "zh": "但它是一个存储大量数据的系统，对吗？一定。如果你看看卡夫卡，\n它没有读取-修改-写入功能，并且 –"
+    },
+    {
+      "idx": 160,
+      "en": "To the degree that it has any notion of consistency, it’s the ordering guarantees that are\nprovided, and those are very narrowly scoped.",
+      "zh": "就其具有一致性概念而言，排序保证是\n提供，而且这些范围非常狭窄。"
+    },
+    {
+      "idx": 161,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 162,
+      "en": "And there’s the amount of data that you could fit inside of a single partition of a single\ntopic, that’s the scope over which you have well-defined ordering.",
+      "zh": "单个分区的单个分区中可以容纳的数据量\n主题，这是您有明确定义的排序的范围。"
+    },
+    {
+      "idx": 163,
+      "en": "Yeah. Or you have something like Redis, for instance, which has no guarantees essentially\nacross keys.",
+      "zh": "是的。或者你有像 Redis 这样的东西，它本质上没有任何保证\n跨键。"
+    },
+    {
+      "idx": 164,
+      "en": "Okay. Yeah. Another way of limiting the scope.",
+      "zh": "好的。是的。另一种限制范围的方法。"
+    },
+    {
+      "idx": 165,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 166,
+      "en": "Which is totally not good enough. If you’re trying to do some complex join across multiple\ntables where you need consistency across those things, its like you definitely need to\ncross keys.",
+      "zh": "这完全不够好。如果您尝试跨多个进行一些复杂的连接\n您需要在这些事情之间保持一致性的表，就像您绝对需要的那样\n十字键。"
+    },
+    {
+      "idx": 167,
+      "en": "Yeah. And so on the flip side, you have something like Vertica, which tries to provide\nfull transactional semantics, but if you use it just right, you can make it efficient,\nwhich again, we still want this to be the Wild West. So we want something that you don’t\nneed to use just right, and it’ll still work well. So what we ended up landing on is\nsomething in the middle. In particular, we wanted to make it possible to do consistent\nrights to a single table because this is something that comes up a lot is I want to have\nsome log of a systems behavior or going back to the list of all the trades that we do. You\nreally want to not miss any trades. You really want to not double count any trades, but\nyou don’t necessarily need to insert new trades transactionally with other pieces of data\nbecause either the trade happens or it doesn’t and you have some source of truth for that.\nSo you can always just pull in new trades from the source of truth to keep this up to\ndate.",
+      "zh": "是的。另一方面，你有像 Vertica 这样的东西，它试图提供\n完整的事务语义，但如果你使用得当，你可以使其高效，\n再说一遍，我们仍然希望这里成为狂野的西部。所以我们想要一些你不想要的东西\n需要使用得恰到好处，它仍然会发挥作用。所以我们最终着陆的是\n中间的东西。特别是，我们希望能够做到一致\n拥有一张桌子的权利，因为这是经常出现的事情，我想要拥有\n系统行为的一些日志或返回我们所做的所有交易的列表。你\n真的不想错过任何交易。您确实不想重复计算任何交易，但是\n您不一定需要使用其他数据以事务方式插入新交易\n因为交易要么发生，要么不发生，而且你有一些事实来源。\n因此，您始终可以从事实来源中引入新交易，以保持最新状态\n日期。"
+    },
+    {
+      "idx": 168,
+      "en": "That’s right. And also to the degree that you’re making changes, most of the changes are\nappends.",
+      "zh": "这是正确的。而且就您所做的改变而言，大多数改变都是\n附加。"
+    },
+    {
+      "idx": 169,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 170,
+      "en": "You’re mostly adding new data. And so a lot of the crosstable stuff that happens is like,\nit’s not quite consistent for free, but it’s mostly consistent in the sense that you might\nbe missing data, but the data is mostly not being changed under your feet.",
+      "zh": "您主要是添加新数据。所以发生的很多交叉表的事情都是这样的，\n免费的情况下它不太一致，但从某种意义上说它基本上是一致的，您可能会\n可能会丢失数据，但数据大多不会在你脚下发生改变。"
+    },
+    {
+      "idx": 171,
+      "en": "Yeah. So we wanted to have data that you could atomically write to a single table, you\ncould get order preserving writes to a single table. You could essentially get all of the\nguarantees that you want for that table, but not between tables. Another key thing that we\ngave up, so one of the big problems with columnar databases is that rewriting stuff is\nreally annoying because … So the way that columnar databases store their data is every\ncolumn becomes its own separate stream of data. And the reason you do that is because a\nsingle column of data turns out to be extremely easy to compress and manage. The other\nreason you do this is because most queries don’t hit all the columns in a table,\nespecially analytical queries. You have these very wide tables, and maybe a given query\nneeds like seven out of a hundred columns, and you just get to ignore the other 93.  And\nso this makes adding new columns to a table nearly free at query time, which is super\ncool. Sure. So given this layout, doing an update of a single row, something that is in\nPostgres, extremely easy and efficient, becomes very difficult because first of all, all\nthese columns are their own separate things, and second of all, they’re all compressed.\nBut again, we didn’t want to give up the ability to update and delete data because it\nturns out that being able to do that is really important.",
+      "zh": "是的。因此，我们希望拥有可以自动写入单个表的数据，您\n可以对单个表进行保留顺序的写入。你基本上可以获得所有\n保证您想要的是该表，而不是表之间。我们的另一件关键的事情\n放弃了，所以列式数据库的一大问题是重写东西\n真的很烦人，因为……所以列式数据库存储数据的方式是\n列成为其自己独立的数据流。你这样做的原因是因为\n单列数据非常容易压缩和管理。另一个\n这样做的原因是因为大多数查询不会命中表中的所有列，\n特别是分析查询。你有这些非常宽的表，也许还有一个给定的查询\n需要一百列中的七列，而您只需忽略其他 93 列。并且\n所以这使得在查询时向表添加新列几乎是免费的，这是超级的\n酷。当然。因此，给定这个布局，对单行进行更新，这是在\nPostgres，极其简单和高效，却变得非常困难，因为首先，所有\n这些列是它们自己独立的东西，其次，它们都是压缩的。\n但同样，我们不想放弃更新和删除数据的能力，因为它\n事实证明，能够做到这一点非常重要。"
+    },
+    {
+      "idx": 172,
+      "en": "Even though it’s by far not the ordinary thing, mostly you stream it in",
+      "zh": "尽管这不是普通的事情，但大多数情况下你都会将其流式传输"
+    },
+    {
+      "idx": 173,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 174,
+      "en": "Sometimes, you get it wrong.",
+      "zh": "有时，你会弄错。"
+    },
+    {
+      "idx": 175,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 176,
+      "en": "And you’d like to go and edit the table.",
+      "zh": "您想要去编辑表格。"
+    },
+    {
+      "idx": 177,
+      "en": "So we want to have these be able to happen, but we’re sort of okay with them being slow,\nas long as they don’t slow down other stuff that’s going on in the database. So what we\ndecided to do, and this is kind of a weird decision, is we decided to make all writes in\nthis database asynchronous. Now you write to this table and your writes gets committed,\nwhich is the database says, yes, I acknowledge your write. This is going to go in in the\ncorrect order. This is going to go in atomically if you ask it to be atomic and so forth,\nbut readers aren’t necessarily going to be able to see it just yet. And this lets us take\nthe time in between when you do the write and when it becomes readable to make sure that\nthe data that you’re writing gets readable efficiently, that we put it in the right place\nin the columnar data store, that we redo the compression if we have to do the compression\nand so forth and so on.  And we’re much happier doing that neither when someone’s waiting\nfor their read to complete, nor when someone’s waiting for their write to commit, but\nsomewhere in the middle.",
+      "zh": "所以我们希望这些能够发生，但我们也同意它们进展缓慢，\n只要它们不减慢数据库中正在发生的其他事情。那么我们\n决定这样做，这是一个奇怪的决定，我们决定将所有写入\n这个数据库是异步的。现在你写入这个表并且你的写入被提交，\n哪个数据库说，是的，我承认你写的。这将进入\n正确的顺序。如果你要求它是原子的等等，这将以原子方式进入，\n但读者目前还不一定能够看到它。这让我们可以采取\n进行写入和变得可读之间的时间，以确保\n您编写的数据可以有效地读取，我们将其放在正确的位置\n在列式数据存储中，如果必须进行压缩，我们会重做压缩\n等等等等。  当有人在等待时，我们更乐意这样做\n让他们的读取完成，也不当有人等待他们的写入提交时，但是\n中间的某个地方。"
+    },
+    {
+      "idx": 178,
+      "en": "Right. And this is very different from doing updates to a database via SQL, where SQL is\nkind of part of the language and you’re kind of just mixing together the reads and the\nwrites into one set of SQL expressions and they kind of all are supposed to operate in\nthis kind of integrated way. And here you’re kind of breaking out the writes essentially\nas a totally separate API that has different semantics and where the kind of results of\nthose writes happen asynchronously.",
+      "zh": "正确的。这与通过 SQL 更新数据库有很大不同，其中 SQL 是\n有点像语言的一部分，你只是将阅读和内容混合在一起\n写入一组 SQL 表达式，它们都应该在\n这种综合的方式。在这里你基本上打破了写入\n作为一个完全独立的 API，它具有不同的语义，并且结果的类型\n这些写入是异步发生的。"
+    },
+    {
+      "idx": 179,
+      "en": "Exactly. And part of you will not see very many commercial or open source systems that\nmake this decision just because, I think mostly because you have to educate your users\nevery single time. But this is one of the cool things about being at Jane Street where all\nof our users are in house is we just get to tell them how it works and why. And we can\neven build the first few examples ourselves to give them examples of how this works really\nnicely. And also very importantly, we can have, even if SQL is like the first class read\ninterface to this system, it doesn’t need to be the first class write interface. Because\none thing that we noticed looking at Trader DB, for instance, is that even though a lot of\nthe read queries were extremely ad hoc and just written by hand by a human being, most of\nthe writes were happening in much better to find ways through actual software systems.",
+      "zh": "确切地。你们中的一部分人不会看到很多商业或开源系统\n做出这个决定只是因为，我认为主要是因为你必须教育你的用户\n每一次。但这是在简街最酷的事情之一，那里所有人\n我们的用户在内部，我们只是告诉他们它是如何工作的以及为什么。我们可以\n甚至我们自己构建前几个示例，向他们展示其实际工作原理的示例\n很好。而且非常重要的是，即使 SQL 就像第一堂课一样，我们也可以拥有\n该系统的接口，它不需要是第一类写入接口。因为\n例如，我们在查看 Trader DB 时注意到的一件事是，尽管很多\n读取查询是非常临时的，并且只是由人手工编写的，大多数\n通过实际的软件系统找到方法，写入的情况要好得多。"
+    },
+    {
+      "idx": 180,
+      "en": "Right. And maybe this goes back to its role as an analytical database. The place where the\ninnovation is happening is on the query side, on the read side. And there’s data\nloading. You got to do the data loading,",
+      "zh": "正确的。也许这可以追溯到它作为分析数据库的角色。那个地方\n创新发生在查询端、读取端。还有数据\n正在加载。你必须进行数据加载，"
+    },
+    {
+      "idx": 181,
+      "en": "Yep",
+      "zh": "是的"
+    },
+    {
+      "idx": 182,
+      "en": "But the data loading is kind of done once per data source and that’s kind of that.",
+      "zh": "但数据加载是每个数据源完成一次，就是这样。"
+    },
+    {
+      "idx": 183,
+      "en": "Often. Now we didn’t want to stop people from writing ad hoc data to the database if they\nwanted to. A very common case is like, I have this shared data that’s very big and\nimportant and I want to query it, but I want to join it with some other thing that nobody\nelse has ever heard of. So you want to make it easy to upload your little join table to\nthe database to join with the big existing table. We want to have ad hoc data. We don’t\nnecessarily need to have that have full SQL semantics. You just upload the whole table at\nonce. And if that’s fast enough, then if you want to change the analysis, re-upload it.",
+      "zh": "经常。现在我们不想阻止人们将临时数据写入数据库，如果他们\n想要。一个非常常见的情况是，我有一个非常大的共享数据，并且\n重要，我想查询它，但我想将它与其他没有人知道的东西结合起来\n其他人都听说过。因此，您希望能够轻松地将您的小连接表上传到\n数据库与现有的大表连接。我们想要临时数据。我们不\n必然需要具有完整的 SQL 语义。您只需上传整个表格即可\n一次。如果速度足够快，那么如果您想更改分析，请重新上传。"
+    },
+    {
+      "idx": 184,
+      "en": "Got it. So you sort of avoid the whole writing an individual row by just not having\nthat. Exactly. Not a thing in the system. So another thing that’s interesting about this\nsystem, it’s called Superstore, is that another thing that we … There’s various things\nthat we have not given people who want it, who want it from it. In particular, just to say\na little more about the underlying design, the underlying data is actually stored in\nParquet files. Parquet is lovely open source format for storing columnar data. And a\nrequest that people have put out a lot, which has always been denied is like, oh, can I\njust access the Parquet files directly? You have all these nice parquet files distributed\nin this nice distributed system. Can I just go and read them directly and do something\nwhatever I want to them? And the answer from the Superstore team has been no. I’m curious,\nwhy is that?",
+      "zh": "知道了。因此，您可以通过不具有来避免整个写入单独的行\n那个。确切地。不是系统里的东西。还有一件事很有趣\n系统，它被称为超级商店，是我们的另一件事......有各种各样的东西\n我们没有给那些想要它、想要从中得到它的人。特别要说的是\n更多关于底层设计的信息，底层数据实际上存储在\n镶木地板文件。 Parquet 是一种可爱的开源格式，用于存储柱状数据。还有一个\n人们提出了很多要求，但总是被拒绝，就像，哦，我可以吗\n直接访问 Parquet 文件吗？您已经分发了所有这些漂亮的镶木地板文件\n在这个漂亮的分布式系统中。我可以直接去读它们然后做点什么吗\n我想给他们什么？ Superstore 团队的答案是否定的。我很好奇，\n这是为什么？"
+    },
+    {
+      "idx": 185,
+      "en": "So in some sense, this seems like a very natural decision to make because if you look at,\nagain, Postgres, can you just go and read the files on just that Postgres uses to store\nits tables? No, that would be crazy. You have a database for that. So if you think about\nit as like, well, we’re building a software system and offering it to the firm, it’s a\nvery natural decision. But the funny thing is how little software that Jane Street\ndevelops actually works like that. People are very smart and good at programming and love\nlooking under the hood and understanding what’s going on. And so once you tell them like,\n“Hey, this is a bunch of parquet files on a disk.” They’re like, “Oh, so I can read them,\nright?” So why don’t we let them read?  Because we get to manage all of the reads and all\nof the writes, we get to build a lot of features that we can reason about. So one of the\nbest examples is just access control. Sure. If we let people access our Parquet files on\nthe disk, then we’d be stuck with Unix file system access controls because they were\nreading files off of a disk and we don’t have any code that’s running in between the disk\nand them. But in fact, since they’re reading them through our system, we get to build an\naccess control layer and have ACLs and so forth for these data sets.  Another thing that\nwe can do is we can do usage logging. So this came out of a real problem with Trader DB\nand with other systems at Jane Street, which is they become nearly impossible to deprecate\nor to do schema evolution on. Imagine you have a table and a database and there are like\n500 different people querying this database every day and you want to delete this\ntable. Well, which of these 500 people are querying this table? How do you find out? I can\ngo, maybe, okay, so I write down every SQL query that everyone is running and I grep for\nthe name of my table. Well, okay, maybe this works and I find and I grep and I don’t see\nany matches to my table. Well, except there’s a view that references my table and now I\nhave to grep for the view too.  Well, maybe there’s a view on that view. So it ends up\nbeing very difficult to understand who is using this table and who’s not. And then even if\nyou do understand it, why are they using it? And what data are they reading from it and\nhow much … Maybe you can keep this data that you have, you only retain the last month\ninstead of going back to all time. Can you do that efficiently? Who knows?  So being able\nto have full read and write access logs to Superstore turned out to be very important. And\nto even just build a taxonomy of like, well, here’s the list of all of the data sets that\npeople are storing in our system. Now again, Postgres has that, but this is a system\nthat’s many orders of magnitude larger than Postgres. I guess this is another important\nthing to say is single computer databases only scale so far. If you want more than a few\nthousand tables, you’re going to need something that scales horizontally.",
+      "zh": "所以从某种意义上说，这似乎是一个非常自然的决定，因为如果你看看，\n再说一次，Postgres，你能去读一下 Postgres 用来存储的文件吗？\n它的桌子？不，那太疯狂了。你有一个数据库。所以如果你想\n就像，我们正在构建一个软件系统并将其提供给公司，这是一个\n非常自然的决定。但有趣的是，简街的软件是多么的少\n开发实际上就是这样工作的。人很聪明，擅长编程，热爱\n深入了解并了解正在发生的事情。一旦你告诉他们，\n“嘿，这是磁盘上的一堆镶木地板文件。”他们就像，“哦，这样我就可以读它们，\n对吧？”那么我们为什么不让他们读书呢？  因为我们可以管理所有的读取和所有的操作\n在写入过程中，我们可以构建许多可以推理的功能。所以其中之一\n最好的例子就是访问控制。当然。如果我们让人们访问我们的 Parquet 文件\n磁盘，那么我们就会陷入 Unix 文件系统访问控制的困境，因为它们是\n从磁盘读取文件，并且我们没有在磁盘之间运行任何代码\n和他们。但事实上，由于他们通过我们的系统阅读它们，我们可以构建一个\n访问控制层并具有针对这些数据集的 ACL 等。  另一件事是\n我们能做的是我们可以做使用记录。所以这是 Trader DB 的一个真正问题造成的\n以及简街的其他系统，它们几乎不可能被弃用\n或者进行模式演化。想象一下你有一个表和一个数据库，就像\n每天有 500 个不同的人查询此数据库，而您想要删除此数据库\n表。那么，这 500 个人中哪些人在查询这张表呢？你怎么知道的？我可以\n去吧，也许吧，好吧，所以我写下每个人都在运行的每个 SQL 查询，然后用 grep 查找\n我的桌子的名称。好吧，好吧，也许这可行，我发现，我 grep 但我没有看到\n任何与我的桌子匹配的内容。好吧，除了有一个视图引用了我的表，现在我\n也必须 grep 来查看视图。  好吧，也许有一种观点。所以最终结果是\n很难理解谁在使用这张桌子，谁没有。然后即使\n你确实明白它，为什么他们要使用它？他们从中读取什么数据以及\n多少……也许你可以保留你拥有的这些数据，你只保留上个月的数据\n而不是回到所有时间。你能高效地做到这一点吗？谁知道？  所以能够\n事实证明，拥有对 Superstore 的完整读写访问日志非常重要。并且\n甚至只是建立一个分类法，好，这是所有数据集的列表\n人们正在我们的系统中存储。现在再说一遍，Postgres 有这个，但这是一个系统\n这比 Postgres 大很多数量级。我想这是另一个重要的\n值得一提的是，单台计算机数据库到目前为止只能扩展。如果你想要多于几个\n一千张桌子，你将需要一些可以水平扩展的东西。"
+    },
+    {
+      "idx": 186,
+      "en": "Right. And all of this is happening in the context of a huge explosion in the amount of\ndata that we’re using and the kind of intensity we’re using that data and many different\nnew use cases for all of this data. And somewhere along the way in the middle of this, a\nkind of revolution in the kind of machine learning driven approaches that we’re using also\narrived and also put a lot more pressure on this system.",
+      "zh": "正确的。而这一切都发生在数据量巨大爆炸的背景下\n我们正在使用的数据以及我们使用该数据的强度以及许多不同的\n所有这些数据的新用例。在这中间的某个地方，\n我们正在使用的机器学习驱动方法的革命\n的到来也给这个系统带来了更大的压力。"
+    },
+    {
+      "idx": 187,
+      "en": "And it just turns out that once you have a system that’s able to query over many terabytes\nof data efficiently, you keep finding new use cases. And again, we were building this,\nthis database we keep talking about is called Trader DB. We’re building this mostly for\ntraders and researchers, but we keep finding use cases across the firm. Cybersecurity\nwants to have access logs for our network. Oh, why don’t you just put that in Superstore?",
+      "zh": "事实证明，一旦您拥有一个能够查询数 TB 数据的系统\n有效地处理数据，您会不断发现新的用例。再说一遍，我们正在构建这个，\n我们一直在谈论的这个数据库称为 Trader DB。我们构建这个主要是为了\n交易员和研究人员，但我们不断在整个公司寻找用例。网络安全\n想要获得我们网络的访问日志。哦，你为什么不把它放在超市里呢？"
+    },
+    {
+      "idx": 188,
+      "en": "Tools and compilers wants to have access",
+      "zh": "工具和编译器想要访问"
+    },
+    {
+      "idx": 189,
+      "en": "Right",
+      "zh": "正确的"
+    },
+    {
+      "idx": 190,
+      "en": "For all the history of the code review that people have done for all sorts of ad hoc\nqueries that people want to do.",
+      "zh": "对于人们为各种临时任务所做的代码审查的所有历史\n人们想做的查询。"
+    },
+    {
+      "idx": 191,
+      "en": "Right. Every build that’s ever run at Jane Street. And you just kind of put stuff in. And\nthen from the trading side, you end up wanting a record of the thing that a trading system\nthought at the time that it made a given order is a very good example of a kind of data\nthat has very high cardinality. You want to write down rows like that across the firm like\nmany billions of times a day. And we just couldn’t do that really, except that now we\ncan. So you end up doing it a lot.",
+      "zh": "正确的。简街曾经运行过的每一个建筑。你只需要把东西放进去。\n然后从交易方面来说，你最终想要一个交易系统的记录\n当时认为它发出了给定的订单是一种数据的一个很好的例子\n具有非常高的基数。你想在整个公司写下这样的行，比如\n每天数十亿次。我们真的无法做到这一点，除了现在我们\n运河所以你最终会做很多事情。"
+    },
+    {
+      "idx": 192,
+      "en": "So one thing I wonder about this design is like, we sort of pointed a few different kinds\nof systems where there are kind of clear distinctions and approach, but data warehouses\naren’t like a new idea. Lots of people have written data warehouses and there’s lots of\ncommercial products for data warehouses. How did you think about the question of, should\nwe just like, I don’t know, sign up for yield software-as-a-service data warehouse thing\nversus, “No, actually we’re going to go and design our own thing from scratch.”",
+      "zh": "所以我对这个设计感到好奇的一件事是，我们指出了几种不同的类型\n存在明显区别和方法的系统，但数据仓库\n不像是一个新主意。很多人都写过数据仓库，而且有很多\n数据仓库的商业产品。您如何看待“应该”这个问题\n我们只是喜欢，我不知道，注册收益软件即服务数据仓库\n相反，“不，实际上我们要从头开始设计我们自己的东西。”"
+    },
+    {
+      "idx": 193,
+      "en": "So software as a service is a very interesting question here because really most of the\ndata warehouses that are at the cutting edge in the world that we see are cloud software\nas a service offerings, Snowflake and Databricks being kind of the two primary examples\nthat it makes sense to point to. And these are perfectly good software. There are a few\ndisadvantages there. One is they’re extremely expensive. And in particular, whenever I\ntalk to people who work at companies that use these systems, they end up thinking very\nhard about what queries they want to run or not just because the cost of running a lot of\nqueries in dollars is quite high and we just sort of don’t want to think about that. The\nother problem is that our data isn’t in the cloud. We have a lot of systems producing data\nand managing data on premises and requiring people to copy all of their data to the cloud\nin order to run queries over them just seemed like not a great idea.  Sure. But even\nstill, once you’re on premises, there’s still many offerings. There’s commercial\nofferings, there’s open source offerings, so why don’t we just use one of those? Well, one\nof the things that we’ve learned, and really I say we, but this was really not me who was\npushing this because I kind of came in here and I’m like, “Oh, Jane Street has so much not\ninvented here syndrome. We never use open source software. We just write everything from\nscratch.” Probably it’s because this Ron guy needs everyone write everything in OCaml.",
+      "zh": "因此，软件即服务是一个非常有趣的问题，因为实际上大多数\n我们看到的处于世界最前沿的数据仓库是云软件\n作为服务产品，Snowflake 和 Databricks 是两个主要示例\n指出这一点是有道理的。这些都是非常好的软件。有几个\n那里的缺点。一是它们非常昂贵。特别是，每当我\n与在使用这些系统的公司工作的人交谈，他们最终认为非常\n很难确定他们想要运行什么查询，或者不只是因为运行大量查询的成本\n以美元计算的查询量相当高，我们只是不想考虑这一点。的\n另一个问题是我们的数据不在云端。我们有很多产生数据的系统\n管理本地数据并要求人们将所有数据复制到云端\n为了对它们运行查询似乎不是一个好主意。  当然。但即使\n不过，一旦您到达现场，仍然有很多产品可供选择。有商业广告的\n产品，有开源产品，那么我们为什么不只使用其中之一呢？嗯，一个\n我们学到的东西，我真的说我们，但这实际上不是我\n推动这个是因为我来到这里，我想，“哦，简街有很多不\n发明了这里综合症。我们从不使用开源软件。我们只写从\n刮擦。”可能是因为这个 Ron 家伙需要每个人都用 OCaml 编写所有内容。"
+    },
+    {
+      "idx": 194,
+      "en": "That is a fair complaint.",
+      "zh": "这是一个公平的抱怨。"
+    },
+    {
+      "idx": 195,
+      "en": "But I do think, I guess now I’ve been here for long enough that I kind of see some of the\nmethod and the madness. In particular, the finance use case does not get very well\nunderstood by the open source community because we keep pretty quiet about exactly what\nwe’re doing and why, because we think it’s a competitive advantage. Sure. And our\ncompetitors think the same thing. So you’ll have a lot of open source people who can spout\noff what’s sort of the tech company reason to use an analytical. Okay, people visit your\nwebsite and record all their clicks and all their visits and sessions and stuff, and you\nneed a big database for this because you have millions of people visiting your\nwebsite. That’s a very well understood use case for data warehouses. And so a lot of the\nopen source products are very good at solving that.  I think very few people who are\ndeveloping these systems can spout off some of the finance related use cases quite as\nwell. And there’s just a huge advantage for us in being able to do the specific thing that\nwe want to do very well. And because these systems aren’t necessarily built for these use\ncases from the top, we don’t have any particular reason to believe that they’re going to\nprioritize the things that we care the most about. Honestly, even in the ones that do\nthink more about finance use cases, there are time series databases where a lot of the\npeople who are using them are finance companies, but Jane Street’s a weird finance\ncompany. So being able to just sort of go into our system and make this thing work is\nextremely valuable.",
+      "zh": "但我确实认为，我想现在我已经在这里呆了足够长的时间，我有点看到了一些\n方法和疯狂。特别是，金融用例进展得不太好\n开源社区能够理解，因为我们对具体内容保持沉默\n我们正在这样做以及为什么这样做，因为我们认为这是一种竞争优势。当然。还有我们的\n竞争对手也有同样的想法。所以你会有很多可以滔滔不绝的开源人士\n科技公司使用分析的理由是什么。好的，人们访问您的\n网站并记录他们所有的点击、所有访问、会话等等，而你\n为此需要一个大数据库，因为有数百万人访问您的\n网站。这是一个非常容易理解的数据仓库用例。所以很多\n开源产品非常擅长解决这个问题。  我认为很少有人\n开发这些系统可以推出一些与财务相关的用例，就像\n好吧。能够做特定的事情对我们来说是一个巨大的优势\n我们希望做得很好。而且因为这些系统不一定是为这些用途而构建的\n从高层的情况来看，我们没有任何特别的理由相信他们会\n优先考虑我们最关心的事情。老实说，即使在那些这样做的人中\n更多地考虑金融用例，有时间序列数据库，其中有很多\n使用它们的人是金融公司，但 Jane Street 是一家奇怪的金融公司\n公司。因此，能够进入我们的系统并使其发挥作用就是\n非常有价值。"
+    },
+    {
+      "idx": 196,
+      "en": "The exact choice of trade-offs is an enormously load bearing thing. And the fact that we\nget to make the choice of which of these features matters and which doesn’t and where can\nwe give up on something and where are we going to demand that we really get really\nperfect. That’s just an extremely powerful place to be.",
+      "zh": "权衡的精确选择是一件非常繁重的事情。事实上我们\n可以选择这些功能中哪些重要、哪些不重要以及哪些可以\n我们放弃了一些东西，我们将在哪里要求我们真正得到真正的东西\n完美。那是一个非常强大的地方。"
+    },
+    {
+      "idx": 197,
+      "en": "And we have use cases that if we were to share them with people building these pieces of\nsoftware commercially, which is make them shudder and walk out of the room. And honestly,\nsometimes they make me shudder and walk out of the room. And one impulse that I’ve had to\nreally stifle in myself is asking people who are using tools like Superstore are like,\n“Have you tried not doing that? “ I ask it more than no times. It’s definitely good to\npush on people and see if there’s a better way for them to meet their use case and the\nfirst thing they have to have come up with, but you really want to not push back on the\nuse case itself because our traders are very smart and they’ve thought very hard about\nwhat is the thing that they want to understand.  So being able to say yes in many more\ncases than a vendor would perhaps say yes to us is a huge advantage.",
+      "zh": "我们有一些用例，如果我们与构建这些组件的人们分享它们\n商业软件，这让他们不寒而栗并走出房间。老实说，\n有时他们让我颤抖并走出房间。以及我不得不做的一个冲动\n我真正感到窒息的是问那些使用像 Superstore 这样的工具的人，\n“你试过不这样做吗？”我不止一次地问过。这绝对是好事\n推动人们，看看是否有更好的方法来满足他们的用例和需求\n他们必须想出的第一件事，但你真的不想拒绝\n用例本身，因为我们的交易者非常聪明，他们已经认真思考了\n他们想了解的是什么。  所以能够在更多方面说“是”\n比供应商可能对我们说“是”的情况来说是一个巨大的优势。"
+    },
+    {
+      "idx": 198,
+      "en": "So one thing I wonder about this story in general that you’re telling is that you kind of\njoined Jane Street and were kind of immediately plopped into a team and started to help\nlead a project that was to replace a pretty central piece of infrastructure that the day\nit falls over, it’s really bad, like a pretty important central piece. And here you are,\nlike a person pretty new to the organization. And how did that all happen?",
+      "zh": "所以我对你所讲述的这个故事感到好奇的一件事是，你有点\n加入 Jane Street 并立即加入团队并开始提供帮助\n领导一个项目，该项目旨在替换当天相当重要的基础设施\n它摔倒了，真的很糟糕，就像一个非常重要的中心部件。而你在这里，\n就像一个刚加入组织的人一样。这一切是如何发生的？"
+    },
+    {
+      "idx": 199,
+      "en": "Well, so a lot of this is not on me. And I had many collaborators doing this. Many of them\nhad been at Jane Street much longer than me. I talked briefly about Sam, who was my boss\nwhen I started at Jane Street. He was very much bought into this general project and did a\nlot of the work of giving me talking tos when I proposed something that just would not\nwork at Jane Street or that is a bad idea for reasons that he understood and that I didn’t\nunderstand yet. And just sort of transmitting to me what are the things that make software\nvaluable at Jane Street and why? And also doing a lot of the work with the prospective\nusers of this system to explain to them what we’re building and why, and make sure that\nthey were ready to use it once something existed.  So these were both incredibly\nimportant. I was involved with them, but I don’t think that they worked, I don’t think I\ndeserved the credit for them going well. I think really this involved a lot of very\nimpressive organizational flexibility from across Jane Street. One kind of conversation\nthat I had a lot that I found very impressive was I would go and talk to a team who we\nthought might one day want to use Superstore. This is before it existed. And they would\nsay like, “Hmm, this seems pretty hard. Are you sure you’re going to be able to do it? “\nAnd we’d say like, “Well, we’re going to try really hard to do it. We’re going to\nprioritize this exact thing that you’re talking about working for the following reasons,\nbut you just have to kind of trust us that we really think that this is achievable because\nwe’ve run some tests and it seems to look good.” And they’d be like, “Okay, this sounds\ngreat. We will use it when it’s available.” And I was like, “Okay, wow.  This was a very\nego-free conversation with a lot of trust between teams and trust of me who had not\nparticularly done anything at that point.” And once we did launch the thing, we got a lot\nof usage very quickly. I think in many ways it turned out to work quite well, which is\nnice, but people were willing to give it a try pretty easily and early on, which I think\nreally helped contribute to the system’s success.",
+      "zh": "好吧，所以很多事情都不是我的责任。我有很多合作者在做这件事。他们中的许多人\n在简街待的时间比我长得多。我简短地谈到了山姆，他是我的老板\n当我开始在简街的时候。他非常投入这个总体项目并做了一个\n当我提出一些根本不会的事情时，需要花很多时间与我交谈\n在简街工作，或者这是一个坏主意，因为他理解但我不明白的原因\n还明白。只是向我传达什么是制作软件的东西\n在简街很有价值，为什么？并且还与潜在客户一起做了很多工作\n该系统的用户向他们解释我们正在构建什么以及为什么构建，并确保\n一旦有东西存在，他们就准备好使用它。  所以这些都令人难以置信\n重要。我参与了他们的工作，但我不认为他们有效，我不认为我\n他们进展顺利，值得赞扬。我认为这确实涉及很多非常\n简街对面的组织灵活性令人印象深刻。一种对话\n我有很多让我印象深刻的事情，我会去和我们的团队交谈\n我想有一天可能会想要使用超市。这是在它存在之前。他们会\n可以这样说：“嗯，这看起来很难。你确定你能做到吗？”\n我们会说，“好吧，我们会非常努力地做到这一点。我们会\n出于以下原因，优先考虑您正在谈论的这件事，\n但你只需要相信我们，我们真的认为这是可以实现的，因为\n我们已经进行了一些测试，看起来效果不错。”他们会说，“好吧，这听起来\n太棒了。当它可用时我们将使用它。”我当时想，“好吧，哇。这是一个非常\n团队之间充满信任的无私对话以及对我的信任\n特别是在那时做了任何事情。”一旦我们推出了这个东西，我们就得到了很多\n使用起来非常快。我认为从很多方面来看，它的效果都很好，\n很好，但人们愿意很容易地、很早就尝试一下，我认为\n确实为系统的成功做出了贡献。"
+    },
+    {
+      "idx": 200,
+      "en": "Yeah. Maybe there’s two key cultural things going on there. One is this kind of extension\nof grace, the trusting of someone else that’s trying to do things, something, and it seems\nlike a reasonable thing to try and do. And I guess the other thing is just the willingness\nto make bets. It’s a trading firm. We make bets all the time. And the idea that some of\nthe software projects we’re doing are also bets. And I think I’m fairly confident that the\nvarious people that you talked to who said, “Oh, this seems hard.” Some of them thought,\n“Yeah, this probably won’t work, but it’s okay. We’re allowed to make bets that there’s\nsome risk and sometimes they work and sometimes they don’t.”",
+      "zh": "是的。也许那里正在发生两个关键的文化事件。一种是这种扩展\n恩典，信任正在尝试做某事的其他人，某件事，看起来\n喜欢尝试做一件合理的事情。我想另一件事就是意愿\n进行投注。这是一家贸易公司。我们一直在下注。以及一些想法\n我们正在做的软件项目也是赌注。我认为我相当有信心\n与你交谈过的很多人都说：“哦，这看起来很难。”他们中的一些人认为，\n“是的，这可能行不通，但没关系。我们可以打赌，有\n存在一些风险，有时有效，有时无效。”"
+    },
+    {
+      "idx": 201,
+      "en": "Well, and one of the fun conversations on that note that I got to have pretty early on in\nmy tenure at Jane Street was buying the storage appliances that were going to back\nSuperstore. So there’s a few questions here. One is when do you buy these? And the second\none is how do you size them? Now this is in 2022 when supply chain dislocations from COVID\nwere still going on and lead times were quite long.",
+      "zh": "嗯，我很早就在这张纸条上进行了一次有趣的对话\n我在简街的任期是购买存储设备\n超市。所以这里有几个问题。一是你什么时候买这些？还有第二个\n一是你如何确定它们的大小？现在是 2022 年，新冠疫情导致供应链混乱\n仍在进行中，并且交货时间相当长。"
+    },
+    {
+      "idx": 202,
+      "en": "Thank God there are no more supply chain dislocations",
+      "zh": "感谢上帝，供应链不再混乱"
+    },
+    {
+      "idx": 203,
+      "en": "Yeah",
+      "zh": "是的"
+    },
+    {
+      "idx": 204,
+      "en": "It’s all good now.",
+      "zh": "现在一切都好了。"
+    },
+    {
+      "idx": 205,
+      "en": "All fixed. So we didn’t have a running system yet, right? So we sat down with a relatively\nsmall group of people like, “Okay, well, what’s the right amount of storage for us to\nbuy?” And I don’t know how, but we ended up landing on a number of 10 petabytes. I was\nlike, “What, petabytes, really? That seems like pretty big.” And they’re like, “Yeah, but\nyou don’t really want to go smaller than that. “ Well, how much is this going to cost? And\nit was some eight figure amount of money. And I just, to be clear, I had just come from a\nstartup where we had never seen an eight figure amount of money in the whole company’s\nexistence.",
+      "zh": "全部固定。所以我们还没有一个正在运行的系统，对吧？所以我们坐下来相对\n一小群人会说，“好吧，我们需要多少存储空间才合适？\n买吗？我不知道如何实现，但我们最终达到了 10 PB。我是\n就像，“什么，拍字节，真的吗？这看起来相当大。”他们就像，“是的，但是\n你真的不想比这更小。 “嗯，这要花多少钱？并且\n这是大约八位数的钱。我只是，澄清一下，我刚刚来自\n我们在整个公司的资金中从未见过八位数的初创公司\n存在。"
+    },
+    {
+      "idx": 206,
+      "en": "And before that, you were at Google where they hadn’t seen a storage number as small as\neight petabytes.",
+      "zh": "在此之前，您在 Google 工作时，他们还没有见过像\n八拍字节。"
+    },
+    {
+      "idx": 207,
+      "en": "Right. But where decisions were made in a much larger and more centralized way. So the\nfact that a few people could get in the room and decide to write this check on the\nstrength of a design doc was pretty … I mean, it made me nervous that day, I would say,\nbut I think it’s also a very impressive thing to be able to do as a company of Jane\nStreet’s size.",
+      "zh": "正确的。但决策是以更大、更集中的方式做出的。所以\n事实上，有几个人可以进入房间并决定在上面写这张支票\n设计文档的力量非常强大……我的意思是，那天这让我很紧张，我会说，\n但我认为作为 Jane 的公司能够做到这一点也是一件非常令人印象深刻的事情\n街道的大小。"
+    },
+    {
+      "idx": 208,
+      "en": "So Superstore had a bunch of embedded bets in it of different design choices, different\nthings it was trying to achieve. And on the whole, it has panned out very well. Are there\nany aspects of the initial approach or design or things you did that you kind of in\nretrospect think didn’t pan out particularly well, decisions that you kind of regret?",
+      "zh": "所以 Superstore 有很多不同的设计选择、不同的嵌入式赌注\n它试图实现的目标。总体而言，效果非常好。有吗\n初始方法或设计的任何方面或您所做的事情\n回想起来，结果不是特别好，你有些后悔的决定吗？"
+    },
+    {
+      "idx": 209,
+      "en": "Yes. So I think the main decision that I regret from Superstore is the way that we handled\nthe metadata. So in all of these columnar databases, the metadata ends up being a pretty\nkey piece. Metadata being just like, what are the tables and what are the pointers to the\ndata that’s currently in them?",
+      "zh": "是的。所以我认为我对 Superstore 感到遗憾的主要决定是我们的处理方式\n元数据。因此，在所有这些柱状数据库中，元数据最终成为一个漂亮的\n关键部分。元数据就像什么是表以及什么是指向\n其中当前的数据？"
+    },
+    {
+      "idx": 210,
+      "en": "And I guess also what are the permissions and who has access to what? Is that also part of\nthe metadata?",
+      "zh": "我想还有哪些权限以及谁有权访问什么？这也是一部分吗\n元数据？"
+    },
+    {
+      "idx": 211,
+      "en": "In our case, no. But in many other systems, yes, permissions live in those metadata\nstores. Sure. So we thought, well, what do we want to use for the metadata store? This\npretty clearly has to be some sort of distributed globally consistent storage system\nbecause you certainly don’t want your data to be consistent or not just you don’t\nwant. It’s impossible to have a system where your data is consistent, but your metadata is\nnot if the metadata is like the pointers to the data. Sure. It’s like, well, what should\nwe use for this? We decided to use CockroachDB. It’s",
+      "zh": "在我们的例子中，没有。但在许多其他系统中，是的，权限存在于这些元数据中\n商店。当然。所以我们想，我们想用什么来存储元数据？这个\n很明显必须是某种分布式全局一致的存储系统\n因为您当然不希望数据保持一致，或者不仅仅是您不希望数据一致\n想要。不可能有一个数据一致的系统，但你的元数据是一致的\n如果元数据就像指向数据的指针，则不会。当然。就像，嗯，应该怎样\n我们用这个？我们决定使用 CockroachDB。它是"
+    },
+    {
+      "idx": 212,
+      "en": "It’s like a well-known, well-regarded, open source-",
+      "zh": "它就像一个众所周知的、受人尊敬的开源软件——"
+    },
+    {
+      "idx": 213,
+      "en": "Transactional data.",
+      "zh": "交易数据。"
+    },
+    {
+      "idx": 214,
+      "en": "Transactional data, thats right.",
+      "zh": "交易数据，没错。"
+    },
+    {
+      "idx": 215,
+      "en": "And again, you want the metadata store to be transactional because very often doing these\ntransactional, even lightly transactional operations over the underlying data require\ntransactional metadata operations.",
+      "zh": "再说一次，您希望元数据存储是事务性的，因为经常这样做\n事务性的，即使是对底层数据的轻度事务性操作也需要\n事务性元数据操作。"
+    },
+    {
+      "idx": 216,
+      "en": "Right. And you do a transaction every time you add a new chunk of data, you’re doing a\ntransaction and it really looks more like the Postgres use case in that instead of\noperating on whole columns, you really are operating on rows of like, oh, there’s a new\nchunk of data and I want to register that chunk of data. And so the ordinary use case is\nlike the dual. It’s the opposite thing here.",
+      "zh": "正确的。每次添加新数据块时都会执行一次事务，您正在执行\n事务，它看起来更像是 Postgres 用例，而不是\n对整列进行操作，实际上是对行进行操作，哦，有一个新的\n数据块，我想注册该数据块。所以普通的用例是\n就像双性的一样。这里恰恰相反。"
+    },
+    {
+      "idx": 217,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 218,
+      "en": "Okay.",
+      "zh": "好的。"
+    },
+    {
+      "idx": 219,
+      "en": "And in many ways, CockroachDB was a great fit, but it turned out that we’ve had more and\nmore problems with it as we’ve been scaling. I think one of the key areas where we’ve been\nhaving problems with CockroachDB comes to write latency. So we have a lot of the data\nthat’s in Superstore. I would say probably by bytes the majority of the data that’s in\nSuperstore is data that comes in streaming. Some system is writing some stream of data and\nthen we want to take that stream of data and materialize it as a Superstore table as fast\nas we can. As fast as we can is ideally within less than a second, which is like, again,\nfor a trading system, not fast, but for analytical database pretty fast.",
+      "zh": "从很多方面来说，CockroachDB 都非常适合，但事实证明我们有更多\n随着我们规模的扩大，它的问题也越来越多。我认为我们一直以来的关键领域之一\nCockroachDB 的问题在于写入延迟。所以我们有很多数据\n那是在超市里的。我想说的可能是字节中的大部分数据\nSuperstore 是流式传输的数据。某些系统正在写入一些数据流并且\n然后我们想要获取该数据流并将其物化为 Superstore 表\n尽我们所能。理想情况下，我们能做到的最快速度是不到一秒，这就像，\n对于交易系统来说，速度不快，但对于分析数据库来说相当快。"
+    },
+    {
+      "idx": 220,
+      "en": "Right. They’re fast enough that you could build stuff for analyzing trading on the day and\nit would be fine, fast enough that you could build monitoring systems based on this, not\nfast enough that you would want your path from quote to order or something to go through\nthe system.",
+      "zh": "正确的。它们的速度足够快，您可以构建用于分析当天交易的东西\n就可以了，足够快，你可以基于此构建监控系统，而不是\n足够快，以至于您希望从报价到订单或其他内容的路径经过\n系统。"
+    },
+    {
+      "idx": 221,
+      "en": "And this particular style of access ends up being pretty bad for CockroachDB because every\ntime you need to write to a row, you end up doing a transactional update, which for\nCockroachDB being distributed means like distributed consensus round. And CockroachDB gets\nat scale by just dividing all of the rows in the world into many different Paxos group, or\nsorry, not Paxos, Raft, many different consensus groups that are independent of each other\nand like having a bunch of stuff on top of that to make that mutually consistent. But if\nyou’re touching the same row over and over and over and over and over again, in effect,\nyou’re serialized. There’s no way for them to do those transactions in parallel. And the\nwall time that a single consensus round takes ends up being quite high.",
+      "zh": "这种特殊的访问方式最终对于 CockroachDB 来说非常糟糕，因为每个\n当您需要写入一行时，您最终会进行事务性更新，这对于\nCockroachDB 的分布式意味着类似于分布式共识轮。 CockroachDB 得到\n通过将世界上的所有行划分为许多不同的 Paxos 组，或者\n抱歉，不是Paxos、Raft，很多不同的共识组彼此独立\n并且喜欢在此之上添加一堆东西以使其相互一致。但如果\n实际上，你一遍又一遍地触摸同一行，\n你被连载了。他们无法并行进行这些交易。还有\n单个共识轮所花费的时间非常长。"
+    },
+    {
+      "idx": 222,
+      "en": "Got it. And just to unpack a little bit of the distributed systems terminology here,\nconsensus is like the name for the algorithm that does the simplest like get a bunch of\nservers in different places to agree on anything. It could be a single bit.",
+      "zh": "知道了。这里只是解开一些分布式系统术语，\n共识就像算法的名称，它执行最简单的操作，例如获取一堆\n不同地方的服务器可以就任何事情达成一致。它可能是一个比特。"
+    },
+    {
+      "idx": 223,
+      "en": "Exactly. I don’t want to have there be a single computer that’s the only place that stores\nlike what’s the latest data in this table because then if that computer gets unplugged, I\ncan’t access my table. So what CockroachDB does and what many distributed systems do is\nthey write this to a bunch of computers and then essentially they vote. If the majority of\nthe computers agree on where the data is, then congratulations you get to write your\ntable. And this gives you very nice fault tolerance guarantees. But the way that these\ncomputers have to exchange information ends up being a really limiting factor in the\ndesign of the system.",
+      "zh": "确切地。我不想让一台计算机成为唯一存储数据的地方\n就像这个表中的最新数据是什么，因为如果那台计算机被拔掉插头，我\n无法访问我的桌子。所以 CockroachDB 所做的以及许多分布式系统所做的是\n他们将其写入一堆计算机，然后实质上进行投票。如果大多数\n计算机就数据的位置达成一致，那么恭喜你可以编写你的数据了\n表。这为您提供了非常好的容错保证。但这些方式\n计算机必须交换信息最终成为一个真正的限制因素\n系统的设计。"
+    },
+    {
+      "idx": 224,
+      "en": "And just to be clear, you were saying that the bad thing is having to go to a single place\nover and over to make a decision, but actually if you just had to go to a single place\nover and over to make a decision, it would be fine.",
+      "zh": "澄清一下，你说不好的是必须去一个地方\n一遍又一遍地做出决定，但实际上如果你只需要去一个地方\n一遍又一遍地做出决定，就可以了。"
+    },
+    {
+      "idx": 225,
+      "en": "Yeah. It turns out CPUs are pretty fast. CPUs are fast. They make a lot of decisions and\nit’s all of this network communications and distributed synchronization that ends up\nmaking this slow.",
+      "zh": "是的。事实证明，CPU 的速度相当快。 CPU 速度很快。他们做出很多决定并且\n所有这些网络通信和分布式同步最终都会结束\n使这变慢。"
+    },
+    {
+      "idx": 226,
+      "en": "And one of the things we’re doing now is like ripping out all of the Cockroach DB and\nreplacing it with Aria.",
+      "zh": "我们现在正在做的事情之一就是删除所有 Cockroach DB 和\n将其替换为咏叹调。"
+    },
+    {
+      "idx": 227,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 228,
+      "en": "And Aria is this very finance style state machine replication system that basically shoves\nall of the data, it gets consistency by shoving all the data through a single core and you\njust distribute that data out by reliable ordered multicast and it gets to all the\npeople. And the thing that’s weird about the system from a kind of big systems person kind\nof perspective is there is a single point of failure, which is the sequencer, the thing in\nthe middle that gets all the transactions and brought –",
+      "zh": "Aria 是一个非常金融风格的状态机复制系统，基本上可以推动\n所有数据，通过将所有数据推送到单个核心来获得一致性，并且您\n只需通过可靠的有序多播分发该数据即可到达所有\n人们。从某种大系统人员的角度来看，该系统的奇怪之处\n从角度来看，存在一个单点故障，即定序器，即\n中间获取所有交易并带来 –"
+    },
+    {
+      "idx": 229,
+      "en": "There is a plug that if someone unplugs, the entire Aria system will go down. And once\nSuperstore is built on Aria, there is a single plug that you can pull to disable an entire\nSuperstore cluster.",
+      "zh": "有一个插头，如果有人拔掉插头，整个 Aria 系统就会瘫痪。还有一次\nSuperstore 建立在 Aria 之上，有一个插头，您可以拔出它来禁用整个\n超市集群。"
+    },
+    {
+      "idx": 230,
+      "en": "Although it’s worth saying, it disables it in a kind of temporary way and that you can\nactually recover in that all of the information that goes through the sequencer is also\nreplicated and captured by other components of the system.",
+      "zh": "尽管值得一提，但它会以一种临时的方式禁用它，您可以\n实际上是恢复的，因为通过定序器的所有信息也是\n由系统的其他组件复制和捕获。"
+    },
+    {
+      "idx": 231,
+      "en": "Effectively, you’re in read-only mode for a while.",
+      "zh": "实际上，您在一段时间内处于只读模式。"
+    },
+    {
+      "idx": 232,
+      "en": "That’s right. And then there’s a careful, in the end involving some human intervention\nstep to make sure the original sequencer is good and dead to flip over to a backup\nsequencer. So when it’s a single point of failure, you’re not totally dead, but you are\npaused in a way that’s not awesome. Although I think one of the points about this design\nthat I think is interesting is it’s true that it’s not great to have single points of\nfailure, but if you have a single single point of failure, it’s not as bad. A well-tended\nmachine might experience a hardware failure once every four years in a well-cooled data\ncenter and all of that. And then what you’re really taking on in exchange for way higher\nperformance is like, it will be down for a minute once every four years. And that’s not\nnecessarily so bad.",
+      "zh": "这是正确的。然后是一个小心的过程，最后涉及一些人为干预\n确保原始定序器完好且无法翻转到备份的步骤\n定序器。 So when it’s a single point of failure, you’re not totally dead, but you are\n以一种不太好的方式暂停。虽然我认为这个设计的要点之一\nthat I think is interesting is it’s true that it’s not great to have single points of\nfailure, but if you have a single single point of failure, it’s not as bad.一个精心照料的\n在冷却良好的数据中，机器每四年可能会遇到一次硬件故障\n中心和所有这些。 And then what you’re really taking on in exchange for way higher\nperformance is like, it will be down for a minute once every four years.那不是\n必然如此糟糕。"
+    },
+    {
+      "idx": 233,
+      "en": "And you have a background rate of outages. I’m not going to sit here and say, “Oh,\nSuperstore never has outages. This is going to be our primary cause of outages.” No, we’re\nhumans. We write bugs the same as anyone. And if you look at what causes system downtime,\nincluding for big tech systems that don’t have single points of failure, it turns out that\nit’s almost always caused by software bugs and not by the kinds of failures that people\nare designing against.",
+      "zh": "并且您有背景中断率。我不会坐在这里说：“哦，\n超市从来没有停电过。这将是我们造成停电的主要原因。”不，我们是\n人类。我们和任何人一样编写错误。如果你看看导致系统停机的原因，\n事实证明，包括没有单点故障的大型科技系统\n它几乎总是由软件错误引起的，而不是由人们所遇到的故障引起的\n正在设计针对。"
+    },
+    {
+      "idx": 234,
+      "en": "And anyway, so here, the point that you’re pointing to as a bit of regret is the core\nmetadata system was basically architected with a kind of higher requirements, like made a\nbunch of trade-offs in favor of very high availability that blocked you from having the\nkind of throughput you needed to really scale the system as far as we want to.",
+      "zh": "无论如何，所以在这里，你指出的一点遗憾是核心\n元数据系统基本上是按照更高的要求构建的，比如制作一个\n为了获得非常高的可用性而进行的一系列权衡，这阻碍了您拥有\n真正按照我们想要的方式扩展系统所需的吞吐量。"
+    },
+    {
+      "idx": 235,
+      "en": "And throughput in this particular dimension, I think what we, the reasoning-",
+      "zh": "在这个特定维度的吞吐量，我认为我们的推理是-"
+    },
+    {
+      "idx": 236,
+      "en": "The query throughput is fine.",
+      "zh": "查询吞吐量很好。"
+    },
+    {
+      "idx": 237,
+      "en": "Query throughput is fine. Total commit throughput across all of our tables is fine. It\nturns out the thing that we can’t scale is just like the rate of commits to a single\ntable. And I just don’t think that we fully appreciated how much of a blocker that would\nbe when we were designing Superstore initially.",
+      "zh": "查询吞吐量很好。我们所有表的总提交吞吐量都很好。它\n事实证明，我们无法扩展的事情就像单个项目的提交率一样\n表。我只是认为我们没有完全意识到拦截器的作用有多大\n当我们最初设计超市时。"
+    },
+    {
+      "idx": 238,
+      "en": "Got it. Okay. So let’s talk about the after Superstore world. So you no longer work on\nSuperstore. What’s your day job today?",
+      "zh": "知道了。好的。那么让我们来谈谈超级商店之后的世界。所以你不再工作\n超市。你今天的日常工作是什么？"
+    },
+    {
+      "idx": 239,
+      "en": "So today I work on Jane Street’s compute cluster, which is called The Hive. So the Hive is\nnot like all of the computers at Jane Street, but it is sort of the place that you go to\nif you have a computation that needs to be done by a lot of computers at once. So examples\nof this include, for instance, training neural networks, but also things like analyzing\nmany days worth of trading to understand what the patterns might be that we see there.",
+      "zh": "所以今天我在 Jane Street 的计算集群上工作，它被称为 The Hive。所以蜂巢是\n不像简街的所有电脑，但它是你去的地方\n如果您有一个计算需要同时由很多计算机完成。所以例子\n例如，其中包括训练神经网络，还包括分析等\n经过很多天的交易才能了解我们在那里看到的模式。"
+    },
+    {
+      "idx": 240,
+      "en": "Or running large scale simulations where you take the actual code of our trading systems\nand run them in simulated mode, like over large swaths of historical data.",
+      "zh": "或者运行大规模模拟，您可以使用我们交易系统的实际代码\n并以模拟模式运行它们，例如在大量历史数据上运行。"
+    },
+    {
+      "idx": 241,
+      "en": "Yes, exactly.",
+      "zh": "是的，完全正确。"
+    },
+    {
+      "idx": 242,
+      "en": "Right. And this system is actually like, I have a great fondness for it because it’s like\none of the first … The early prototype of this thing is one of the first systems I\nworked on. The original version of the hive was like six Dell boxes piled up on a card\ntable and I think was like set up what we used to call a Beowulf cluster back in the day.\nIt was like very simple and very primitive. And it’s a very different system now. First of\nall, then it was a very kind of simple and naive kind of scheduling story of like you\nwould run one thing at a time, it would get the whole hive, you’d have a master process,\nwhich is like go off and schedule jobs running on individual cores and gather the results\ntogether and write them down to a file. It was also just about CPUs. We didn’t do any GPU\nstuff back then. It was like more than 20 years ago. Things are dramatically different\nnow. Can you maybe say a little bit more on what is the kind of use cases that are driving\nthe work on the hive today?",
+      "zh": "正确的。这个系统实际上就像，我非常喜欢它，因为它就像\n第一个......这个东西的早期原型是我的第一个系统之一\n工作过。蜂巢的原始版本就像六个戴尔盒子堆在一张卡片上\n我认为这就像设置我们过去所说的 Beowulf 集群。\n这就像非常简单和原始。现在这是一个非常不同的系统。第一个\n所有，那么这就是一个像你这样的非常简单和天真的调度故事\n一次运行一件事，它会得到整个蜂巢，你会有一个主进程，\n这就像开始安排在各个核心上运行的作业并收集结果\n一起并将它们写到一个文件中。这也与 CPU 相关。我们没有做任何 GPU\n那时的东西。那就像是20多年前的事了。情况截然不同\n现在。您能否多说一下正在推动的用例类型\n今天蜂巢上的工作？"
+    },
+    {
+      "idx": 243,
+      "en": "So there’s a ton of different use cases on the hive, but if you look at where most of our\ngrowth is coming from, most of the growth in demand for hive compute is coming from\ntraining neural networks and processing the feature data that we’re going to feed to these\nneural networks.",
+      "zh": "因此，蜂巢上有大量不同的用例，但如果你看看我们的大多数用例\n增长来自于，Hive 计算需求的增长大部分来自于\n训练神经网络并处理我们将提供给这些网络的特征数据\n神经网络。"
+    },
+    {
+      "idx": 244,
+      "en": "Right. Some of which ends up being on GPUs and some of which ends up being on CPUs.",
+      "zh": "正确的。其中一些最终会在 GPU 上进行，而另一些最终会在 CPU 上进行。"
+    },
+    {
+      "idx": 245,
+      "en": "Yeah. So the training itself for neural networks happens almost exclusively on GPUs, but a\nlot of the data production and the data analysis that go before and after the training\nruns happen on CPUs. Great. The hive is we have hundreds of thousands of CPU cores and\nover 10,000 GPUs running on the hive. And this is big enough that it’s become essentially\na giant DOS machine. You can point this many things at almost anything and make it go\ndown. So one of the big challenges has been just scaling the underlying infrastructure\nthat powers the hive to make sure that it doesn’t rely on anything that it’s going to DOS,\nand that it can actually feed all of these computers efficiently. So what are some of the\nthings that we’ve had to make sure that we can scale? So one of them is just storage. And\nall of these computers have to have their input somewhere and then also have their output\nsomewhere.  Sometimes this is Superstore, but in fact, some of the larger data sets on the\nHive are too big for us to want to store them in Superstore. We just store them directly\non a storage appliance or on a large object storage system. And it’s very easy to\naccidentally write code that makes these storage appliances fall over. So we’ve been\nworking very hard to make sure that hive jobs don’t bring down storage appliances.",
+      "zh": "是的。因此，神经网络的训练本身几乎完全发生在 GPU 上，但是\n训练前后进行的大量数据生成和数据分析\n运行发生在 CPU 上。伟大的。蜂巢是我们有数十万个 CPU 核心，\nHive 上运行着超过 10,000 个 GPU。这已经足够大了，基本上已经变成了\n一台巨大的 DOS 机器。你可以将这么多东西指向几乎任何东西并让它运行\n下来。因此，最大的挑战之一就是扩展底层基础设施\n为蜂巢提供动力，确保它不依赖于任何将要进入 DOS 的东西，\n它实际上可以有效地为所有这些计算机提供数据。那么其中有哪些\n我们必须确保我们能够扩展哪些事情？所以其中之一就是存储。并且\n所有这些计算机都必须在某个地方有输入，然后也有输出\n某处。  有时这是Superstore，但实际上，一些更大的数据集\nHive 太大了，我们不想将它们存储在 Superstore 中。我们直接存储它们\n在存储设备或大型对象存储系统上。而且很容易\n不小心编写的代码导致这些存储设备翻倒。所以我们一直\n非常努力地确保 Hive 作业不会导致存储设备瘫痪。"
+    },
+    {
+      "idx": 246,
+      "en": "Is that a problem you solve by making the hive itself better or is it a problem you solve\nby isolating the hive so that its queries don’t like reach out and smack some unsuspecting\nsystem on the head and knock it over?",
+      "zh": "这是你通过让蜂巢本身变得更好来解决的问题还是你解决的问题\n通过隔离蜂巢，使其查询不会伸出援手并打击一些毫无戒心的人\n系统在头上并把它打翻？"
+    },
+    {
+      "idx": 247,
+      "en": "So we have to do both. We definitely isolate the hive in many ways and we make it much\nharder for Hive. We try and make it impossible for HiveJobs to accidentally interact with\ntrading systems, which would be a big no-no. But even the stuff that the Hive is supposed\nto talk to, we want to make sure that the Hive talks to it gently enough that that thing\ndoesn’t get taken down. A great example, we’re still using, for better or for worse, NFS\nas the protocol by which Hive machines access much of their data. And NFS has some bizarre\nlocking semantics around certain interactions, especially when it comes to things like\nlisting directories and creating new files in a directory. A very easy way to bring down\nour storage appliances on the hive is to create thousands of files in the same directory\nfrom different computers all at once at the same time.",
+      "zh": "所以我们必须两者都做。我们确实通过多种方式隔离了蜂巢，并且做得很好\n对于蜂巢来说更难。我们尝试让 HiveJobs 不可能意外地与\n交易系统，这将是一个很大的禁忌。但即使是蜂巢所设想的东西\n与之交谈，我们要确保蜂巢与它交谈的方式足够温和，以至于那个东西\n不会被删除。一个很好的例子，无论好坏，我们仍在使用 NFS\n作为 Hive 机器访问其大部分数据的协议。 NFS 有一些奇怪的地方\n围绕某些交互锁定语义，特别是当涉及到诸如\n列出目录并在目录中创建新文件。一个非常简单的方法来降低\n我们在hive上的存储设备是在同一个目录中创建数千个文件\n同时从不同的计算机上进行操作。"
+    },
+    {
+      "idx": 248,
+      "en": "Oh, interesting. Just because there’s a kind of consistency semantics on the directory\nitself.",
+      "zh": "哦，有趣。仅仅因为目录上有一种一致性语义\n本身。"
+    },
+    {
+      "idx": 249,
+      "en": "Yeah. Pretty clearly, I think most people would realize that if you tried to write to the\nsame file from 5,000 machines at the same time, that would go badly. But people don’t\nrealize that creating a file in a directory is effectively writing to a file.",
+      "zh": "是的。很明显，我想大多数人都会意识到，如果你试图写信给\n同时从 5,000 台机器获取同一个文件，那会很糟糕。但人们不\n意识到在目录中创建文件实际上就是写入文件。"
+    },
+    {
+      "idx": 250,
+      "en": "Right. It feels like it should be okay, right? It’s just like some kind of eventually\nconsistent, eventually all the files that you added show up there would be fine, but like-\nThat’s not how that works. That’s not how NFS works, right? Okay.",
+      "zh": "正确的。感觉应该没问题吧？就像某种最终\n一致，最终您添加的所有文件都显示在那里就可以了，但是就像-\n事情不是这样的。 NFS 不是这样工作的，对吧？好的。"
+    },
+    {
+      "idx": 251,
+      "en": "So obviously you shouldn’t do that. We put some checks in place like disabled jobs that we\nthink are doing that, but then a big part of this is just building the interfaces to the\nhive in such a way that people won’t do that. Rather than having people open files\ndirectly, we build frameworks that they can use that can manage their data in larger\nchunks.",
+      "zh": "显然你不应该这样做。我们制定了一些检查措施，例如残疾人工作\n我认为我们正在这样做，但其中很大一部分只是构建与\n以人们不会这样做的方式蜂巢。而不是让人打开文件\n直接，我们构建他们可以使用的框架，可以在更大的范围内管理他们的数据\n大块。"
+    },
+    {
+      "idx": 252,
+      "en": "So one thing that’s notable is that your experience coming to work on The Hive is sort of\nthe opposite of your experience of coming to work on Superstore. You started working on\nSuperstore when it didn’t exist.  And then you got to ask the nice question of like, what\nare the APIs I would like to have people to have in order to use this system? And how can\nI pick just the right trade-offs and all of that? And in The Hive, you came up in a much\nworse position of a system that the worst of all situations I initially wrote and then has\nbeen used by lots of people and evolved a lot over time and is the beating heart of a lot\nof our research work. And you don’t have the freedom to just be like, “Ah, and here’s what\nall the APIs are going to be. “ It’s already being used actively and all the time. So what\ndo you do about that? How do you think about improving the system and changing the kind of\ntrade-offs in a world where there’s already a ton of uses before you get to make any of\nthose decisions?",
+      "zh": "所以值得注意的一件事是，你在 The Hive 工作的经历有点像\n与您来 Superstore 工作的经历相反。你开始致力于\n当超市不存在时。  然后你必须问一个好问题，比如什么\n我希望人们拥有哪些 API 来使用这个系统？又如何能\n我选择了正确的权衡以及所有这些？在《蜂巢》中，你的表现非常出色。\n系统的最糟糕的位置是我最初写的所有情况中最糟糕的，然后有\n被很多人使用，并且随着时间的推移发生了很大的变化，是很多人的核心\n我们的研究工作。而且你没有自由地说，“啊，这就是\n所有的 API 都将是。 “它已经一直被积极使用。那又怎样\n你会做那件事吗？您如何看待改进系统和改变类型\n在你做出任何一个之前已经有大量用途的世界中的权衡\n那些决定？"
+    },
+    {
+      "idx": 253,
+      "en": "It’s really hard, I think is the long and short of it. One of the things that I really try\nand do is I try and understand the full stack of code. One of the things that I found was\nhappening a lot when I started on The Hive is that we were building features and then\nshipping the features and then nobody would use them. And so why was that? It’s because\nthe people who the features were designed for were not actually using our APIs\ndirectly. They were using other systems that used our APIs in turn. So it’s not enough to\ndesign a feature that solves a problem. You have to design a feature in a way that solves\na problem in concert with the other layers of our research stack.",
+      "zh": "这真的很难，我认为这就是它的长处和短处。我真正尝试过的事情之一\n我要做的就是尝试理解完整的代码堆栈。我发现的一件事是\n当我开始开发 The Hive 时，发生的很多事情是我们正在构建功能，然后\n发布了这些功能，然后就没有人会使用它们了。那么这是为什么呢？这是因为\n这些功能的设计目标人群实际上并未使用我们的 API\n直接。他们正在使用其他系统，而这些系统又使用了我们的 API。所以这还不够\n设计一个解决问题的功能。你必须以解决问题的方式设计一个功能\n与我们研究堆栈的其他层相关的问题。"
+    },
+    {
+      "idx": 254,
+      "en": "And there’s like 20 years of people hacking away on these layers. So there’s like a lot\nthere.",
+      "zh": "人们在这些层上进行了大约 20 年的研究。所以有很多类似的\n那里。"
+    },
+    {
+      "idx": 255,
+      "en": "Exactly. So having that sort of full end-to-end understanding and actually interacting\nwith researchers. In fact, the first thing that I did when I started on the Hive team was\nI didn’t work on the Hive at all. I sat on a trading desk for a month using the Hive with\nthem. I worked with these traders to take some of their code and rewrite it in a way that\nwas sort of more maintainable and better integrated with the rest of the code base, but\nthat involved a lot of using the Hive and changing the way that this code interacted with\nthe Hive, which really gave me an appreciation for at least one of the ways that actual\ntrading code interacted with the Hive. And my goal was to use that kind of insights to\nbetter align the way that we released our features with the ways that users were actually\nworking.",
+      "zh": "确切地。因此，拥有这种完整的端到端理解并进行实际交互\n与研究人员。事实上，当我加入 Hive 团队时，我做的第一件事就是\n我根本没有在 Hive 上工作过。我在交易台上使用 Hive 坐了一个月\n他们。我与这些交易者合作，获取他们的一些代码，并以这样的方式重写：\n有点更易于维护并且与代码库的其余部分更好地集成，但是\n这涉及大量使用 Hive 并改变此代码交互的方式\nHive，这确实让我至少欣赏了一种实际的方式\n交易代码与 Hive 进行交互。我的目标是利用这种见解\n更好地使我们发布功能的方式与用户实际使用的方式保持一致\n工作。"
+    },
+    {
+      "idx": 256,
+      "en": "So now you’ve had some experience going off and using it, an experience, seeing what’s\ngoing on in the team and making changes to the system. What do you think of as the\nproblems that there are to solve? What are the important things to be done to make the\nHive better fit for both what we’re doing today and the insane amount of compute we are\nbringing up over the next several years?",
+      "zh": "所以现在你已经有了一些使用它的经验，一种体验，看看有什么\n团队中正在进行的事情并对系统进行更改。你认为什么是\n还有哪些问题需要解决？为实现这一目标，需要做哪些重要的事情\nHive 更适合我们今天所做的事情以及我们的疯狂计算量\n未来几年的培养？"
+    },
+    {
+      "idx": 257,
+      "en": "So bringing this all the way back to the beginning, one of the main challenges that the\nHive has is a mechanism design challenge. So one of the things we have to do is we have to\nschedule different jobs. We have to decide what computers are going to run which people’s\ncode. And sometimes more people are demanding hive resources than we have resources to\ngive. So we have to decide how to prioritize them. And being a trading firm, we do this\nusing money. People bid in dollars per CPU hour or dollars per GPU hour for how much they\nwant to run their code on the system and we run a second price auction. So this all sounds\nwell and good, but in fact, the structure of the mechanism makes it very hard for people\nto say things that we want them to be able to tell us about how they want their code to\nrun on the hive.",
+      "zh": "因此，让这一切回到最初，这是我们面临的主要挑战之一。\nHive 面临着机制设计方面的挑战。所以我们必须做的一件事就是我们必须\n安排不同的工作。我们必须决定哪些计算机将运行哪些人的计算机\n代码。有时，需要蜂巢资源的人比我们拥有的资源还要多\n给。所以我们必须决定如何确定它们的优先顺序。作为一家贸易公司，我们这样做\n使用金钱。人们以每 CPU 小时美元或每 GPU 小时美元的价格出价\n想要在系统上运行他们的代码，我们进行第二次价格拍卖。所以这一切听起来\n很好很好，但事实上，这个机制的结构让人很难\n说出我们希望他们能够告诉我们他们希望他们的代码如何实现的事情\n在蜂巢上奔跑。"
+    },
+    {
+      "idx": 258,
+      "en": "Are you telling me you would like them to be able to express their true preferences about\nhow valuable they think their job is?",
+      "zh": "您是在告诉我您希望他们能够表达自己的真实偏好吗？\n他们认为自己的工作有多有价值？"
+    },
+    {
+      "idx": 259,
+      "en": "Well, so the funny thing again is that it’s not so much about getting the exact dollar\nvalue, which they don’t know down to the cent how valuable their thing is. It’s about what\nis the structure of their preferences. And particularly the thing that we haven’t been\ndoing a good job at modeling is urgency, right? Maybe this piece of work is worth $10,000\nand this piece of work is worth $5,000, but the $5,000 work decays much faster. If I don’t\ndo it this hour, it’s going to be worth $0. Whereas the $10,000 piece of work, if I don’t\nget to it until tomorrow, it’ll still be worth $10,000. That’s a very valuable piece of\ninformation when you’re trying to figure out what the computers should do right now.",
+      "zh": "好吧，有趣的是，这并不是要获得确切的美元\n价值，他们根本不知道自己的东西有多值钱。这是关于什么\n是他们的偏好结构。尤其是我们没有经历过的事情\n做好模特工作是当务之急，对吗？也许这件作品价值一万美元\n而这件作品价值 5000 美元，但是 5000 美元的作品腐烂的速度要快得多。如果我不这样做\n这个小时做，它的价值将是 0 美元。而价值 10,000 美元的作品，如果我不这样做\n直到明天，它仍然值 10,000 美元。这是一件非常有价值的作品\n当您试图弄清楚计算机现在应该做什么时的信息。"
+    },
+    {
+      "idx": 260,
+      "en": "Yeah. This is like a key insight that was not at all obvious to me, but as I’ve kind of\nheard people talk about the kind of scheduling problems on the hive, just like makes a ton\nof sense, which is if you think about it in terms of utility curve, the thing that matters\nis the kind of derivative, right? It’s like, if your utility curve is flat, I would like\nto get this done, but it’s worth the same if it happens today or tomorrow, then while I’m\nnot very urgent to get it scheduled right now, I’m kind of happy to wait. And if there’s\nfree time on the hive, happy to schedule it then, but it can also wait and other things\nthat are more urgent can go first. And so this very simple thing of not a single dollar\nvalue, but a curve seems like a much better way of thinking about what’s going on.",
+      "zh": "是的。 This is like a key insight that was not at all obvious to me, but as I’ve kind of\nheard people talk about the kind of scheduling problems on the hive, just like makes a ton\nof sense, which is if you think about it in terms of utility curve, the thing that matters\n是衍生品的那种吧？ It’s like, if your utility curve is flat, I would like\nto get this done, but it’s worth the same if it happens today or tomorrow, then while I’m\nnot very urgent to get it scheduled right now, I’m kind of happy to wait.如果有\nfree time on the hive, happy to schedule it then, but it can also wait and other things\n比较紧急的可以先去。 And so this very simple thing of not a single dollar\nvalue, but a curve seems like a much better way of thinking about what’s going on."
+    },
+    {
+      "idx": 261,
+      "en": "Yeah. So assuming again that you give people good ways to specify this, and there’s a real\nAPI design problem for how do you not just make this thing of running a program on the\nhive be an entire economics quiz?",
+      "zh": "是的。因此，再次假设您为人们提供了指定这一点的好方法，并且存在真正的\nAPI 设计问题是如何不只是让程序在\n是一个完整的经济学测验吗？"
+    },
+    {
+      "idx": 262,
+      "en": "Having everyone have full freedom in writing out their utility curve for every job sounds\nalso like a nightmare.",
+      "zh": "让每个人都有充分的自由来写出每项工作的效用曲线听起来\n也像一场噩梦。"
+    },
+    {
+      "idx": 263,
+      "en": "Right. And plus you hope that they’re like convex.",
+      "zh": "正确的。而且你希望它们是凸的。"
+    },
+    {
+      "idx": 264,
+      "en": "Sure. Right. Yeah. It would be weird if they went up in time.",
+      "zh": "当然。正确的。是的。如果他们及时上去那就奇怪了。"
+    },
+    {
+      "idx": 265,
+      "en": "Well, but sometimes they do, right? Think about a thing that runs every hour or every day\nthat you want sort of a regular monitoring cadence. In that case, really your utility is\nhow close you get to being exactly one day after the last thing and one day before the\nnext thing. You’re probably fine with like a 20-hour gap and then a 28-hour gap, but like\na four-hour gap and then a 44-hour gap sucks a lot.",
+      "zh": "好吧，但有时他们会这么做，对吧？想一想每小时或每天运行的事情\n你想要一种定期的监控节奏。在这种情况下，你的效用实际上是\n你离最后一件事的一天后和最后一件事的前一天有多近\n接下来的事情。您可能可以接受 20 小时和 28 小时的间隔，但就像\n先是 4 小时，然后是 44 小时，这很糟糕。"
+    },
+    {
+      "idx": 266,
+      "en": "Oh, so that means there’s like a peak around where you would like to get the job to run.",
+      "zh": "哦，这意味着你想让工作运行的地方有一个高峰。"
+    },
+    {
+      "idx": 267,
+      "en": "It’s not a convex utility curve.",
+      "zh": "这不是凸效用曲线。"
+    },
+    {
+      "idx": 268,
+      "en": "But we in fact don’t –",
+      "zh": "但事实上我们并不——"
+    },
+    {
+      "idx": 269,
+      "en": "We’re not modeling that.",
+      "zh": "我们不是在建模。"
+    },
+    {
+      "idx": 270,
+      "en": "Okay, good. Back to the-",
+      "zh": "好的，很好。回到-"
+    },
+    {
+      "idx": 271,
+      "en": "We’re not modeling that. There’s a paper from CMU that talks about this. So you want to\nmodel this thing over time. This of course creates an NP hard scheduling problem. I mean,\nit’s already NP hard because we have these chunky jobs that need a certain number of GPUs\nin order to run. So that’s solving problem.",
+      "zh": "我们不是在建模。 CMU 有一篇论文谈到了这个问题。所以你想要\n随着时间的推移对这个东西进行建模。这当然会产生 NP 硬调度问题。我的意思是，\n这已经是 NP 困难了，因为我们有这些需要一定数量 GPU 的大块工作\n为了运行。这样就解决了问题。"
+    },
+    {
+      "idx": 272,
+      "en": "Gang scheduling now you want a whole group. And this is because the GPU problems\nthemselves, in fact, all of the original stuff that we scheduled on the hive was this kind\nof like, you just have a bag of jobs, they’re all independent, they all just want to run,\nyou want to get the result, that’s kind of that.",
+      "zh": "帮派安排现在你需要一个完整的小组。这是因为 GPU 问题\n事实上，我们在蜂巢上安排的所有原始内容都是这样的\n就像，你只有一袋工作，它们都是独立的，它们都只想运行，\n你想要得到结果，就是这样。"
+    },
+    {
+      "idx": 273,
+      "en": "And this was before multi-core OCaml. They all used exactly one core. We really had an\nabstract problem.",
+      "zh": "这是在多核 OCaml 出现之前。他们都只使用一个核心。我们确实有一个\n抽象问题。"
+    },
+    {
+      "idx": 274,
+      "en": "And now we have, especially GPU jobs where they’re locked into a tight barrier\nsynchronization thing and they are like, if you’re missing any GPU, you can’t do anything\nand you just kind of have to have this very tight scheduling.",
+      "zh": "现在我们已经做到了，尤其是 GPU 作业，它们被锁定在一个严格的障碍中\n同步的事情就像，如果你缺少任何 GPU，你就什么也做不了\n你必须有一个非常紧张的日程安排。"
+    },
+    {
+      "idx": 275,
+      "en": "So even solving the scheduling problem at a given time T involves a lot of sort of\ncombinatorial work. As our GPU clusters get more advanced, we want to be topologically\naware also. We want to make sure that people get scheduled on GPUs that have good\nconnectivity to each other. And then of course, as our GPUs are now in multiple data\ncenters, we have to pick which data centers things run in, which often means copying their\ndata from where it lives to where the free computers are. So that also gets very\nchallenging. Sure. But then on top of that, we want to add this time dimension, which just\nmakes the problem much more complex. So we know that we’re not going to be solving this\nproblem in an algorithmically perfect way, but we still think that the moves that we can\ndo, like if you think about this as a local search problem, the moves that we can do to go\nfrom the schedule to a better schedule are valuable enough that it’s worth adding this\nextra dimension in the modeling.",
+      "zh": "因此，即使解决给定时间 T 的调度问题也涉及很多问题\n组合工作。随着我们的 GPU 集群变得更加先进，我们希望在拓扑上\n知也。我们希望确保人们被安排在具有良好性能的 GPU 上\n相互连接。当然，因为我们的 GPU 现在处理多个数据\n中心，我们必须选择运行数据的数据中心，这通常意味着复制它们的数据中心\n数据从它所在的地方到空闲计算机所在的地方。所以这也变得非常\n具有挑战性。当然。但最重要的是，我们想添加这个时间维度，这只是\n使问题变得更加复杂。所以我们知道我们不会解决这个问题\n以算法上完美的方式解决问题，但我们仍然认为我们可以采取的行动\n这样做，就像如果你将其视为本地搜索问题一样，我们可以采取哪些措施\n从时间表到更好的时间表都足够有价值，值得添加此内容\n建模中的额外维度。"
+    },
+    {
+      "idx": 276,
+      "en": "Sure. Right. And what’s the key pathology in the original kind of just like where it’s\ngoing to have, everyone’s going to bid for right now, whether they can run and you just\nhave them bid against each other and the highest bid wins. What’s the particular thing\nthat goes wrong in that case?",
+      "zh": "当然。正确的。原始类型的关键病理是什么，就像它在哪里一样\n将会有，现在每个人都会竞标，无论他们是否可以运行，而你只是\n让他们互相竞价，出价最高者获胜。有什么特别的事\n在那种情况下会出错吗？"
+    },
+    {
+      "idx": 277,
+      "en": "So the particular thing that goes wrong is people end up paying much, too much money to\nget their large jobs run and then feeling sad that they didn’t just wait until the\nnight. Essentially, people sort of schedule hive jobs for the future when they think the\nresources are going to be cheap because there’s no good way of them modeling their urgency\nin the bid.",
+      "zh": "因此，最糟糕的事情是人们最终付出了太多太多的钱\n让他们的大型工作顺利进行，然后感到难过，因为他们没有等到\n晚上。从本质上讲，当人们认为未来的蜂巢工作时，他们会安排蜂巢工作。\n资源将会变得便宜，因为没有好的方法来模拟它们的紧迫性\n在投标中。"
+    },
+    {
+      "idx": 278,
+      "en": "Right. So the main issue is the auction happens when you propose the job and what you\nreally want to do is give the system your job and be like, “Here are my preferences, run\nit at some point when it makes sense, given what I’ve told you about my preferences.”",
+      "zh": "正确的。所以主要的问题是，当你提出工作和你的工作内容时，拍卖就会发生。\n真正想做的就是给系统你的工作，然后说：“这是我的偏好，运行\n考虑到我已经告诉过你的我的偏好，在某个有意义的时候就会这么做。”"
+    },
+    {
+      "idx": 279,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 280,
+      "en": "And that’s the thing that’s missing.",
+      "zh": "这就是所缺少的东西。"
+    },
+    {
+      "idx": 281,
+      "en": "Right. People end up doing their own work in their head or sometimes even writing little\nPython notebooks, modeling what they expect to be the future usage of the hive to figure\nout when to submit their jobs.",
+      "zh": "正确的。人们最终只能在脑子里做自己的工作，有时甚至只写很少的内容\nPython 笔记本，对他们期望的 hive 未来用法进行建模来计算\n确定何时提交作业。"
+    },
+    {
+      "idx": 282,
+      "en": "And thus we have pushed a lot of complexity on the users.",
+      "zh": "因此，我们给用户带来了很大的复杂性。"
+    },
+    {
+      "idx": 283,
+      "en": "Exactly.",
+      "zh": "确切地。"
+    },
+    {
+      "idx": 284,
+      "en": "Okay. Okay. So that’s one thing that’s wrong. There’s like some problems in the basic\nscheduling … Mechanism that don’t let us exercise the kind of intelligence we want to in\nterms of picking what jobs run when. What else is wrong with the system?",
+      "zh": "好的。好的。所以这是错误的一件事。基本的还是有一些问题\n调度……不允许我们运用我们想要的智能的机制\n选择何时运行哪些作业。系统还有什么问题吗？"
+    },
+    {
+      "idx": 285,
+      "en": "Well, another class of problems is that we are not very good at starting at running\npeople’s work efficiently on a worker by worker basis. So I want to run this thing on the\nhive. Maybe I want to run a thousand different copies of the same process over a thousand\ndifferent shards of my data. This means that the very first thing that the hive has to do\nis get my code onto a thousand different cores. Okay. There’s a bunch of problems with\nthis. One is, well, maybe my code is quite large and just literally physically copying the\nbytes is going to be an expensive thing to do. Another thing that’s a problem with this\nis, well, right now all of these bytes are located in one particular place and now I have\na thousand different computers all trying to talk to the same one computer that happens to\nhave these bytes.  And that’s not going to necessarily go very well either. Yep. So it\nturns out the way to solve this is more or less with BitTorrent.",
+      "zh": "嗯，另一类问题是我们不太擅长开始跑步\n人们在逐个工人的基础上高效地工作。所以我想在\n蜂巢。也许我想运行同一进程的一千多个不同副本\n我的数据的不同碎片。这意味着蜂巢要做的第一件事\n就是把我的代码放到一千个不同的核心上。好的。存在一系列问题\n这个。一是，好吧，也许我的代码相当大，只是从字面上物理复制\n字节将是一件昂贵的事情。另一个问题是这个\n是的，现在所有这些字节都位于一个特定的位置，现在我有\n一千台不同的计算机都试图与同一台计算机进行对话，但碰巧\n有这些字节。  这也不一定会很顺利。是的。所以它\n事实证明，解决这个问题的方法或多或少是通过 BitTorrent。"
+    },
+    {
+      "idx": 286,
+      "en": "The same thing that we use to download copies of Red Hat Linux back in the day.",
+      "zh": "这与我们过去下载 Red Hat Linux 的副本是一样的。"
+    },
+    {
+      "idx": 287,
+      "en": "Yeah. It’s built almost exactly for this problem of like, I want to have this data fan out\nfrom this one place to many different places. The fundamental insight here is that think\nabout the first person who successfully manages to get a chunk of your file. Well, now\nthey can share that chunk with everyone else while taking load off of the place that the\nfile originally was. So if you have your readers also be writers or your receivers also be\ntransmitters of data, then you end up evening out the work distribution much more nicely\nacross all of the machines that are trying to do work at once. And in this particular case\nof like a hive worker that’s trying to start running a binary that it doesn’t have all of\nyet, that’s just wasted cores. So you might as well use those cores transmitting chunks of\nthe executable to other machines.",
+      "zh": "是的。它几乎完全是为了这个问题而构建的，比如我想让这些数据扇出\n从这个地方到许多不同的地方。这里的基本见解是认为\n关于第一个成功获取您的文件块的人。好吧，现在\n他们可以与其他人共享该块，同时减轻该地方的负担\n文件原来是。因此，如果你的读者也是作家，或者你的接收者也是\n数据传输器，然后您最终可以更好地平衡工作分配\n跨越所有试图同时完成工作的机器。在这个特殊情况下\n就像一个蜂巢工作人员试图开始运行一个它不具备所有功能的二进制文件\n然而，这只是浪费了核心。所以你不妨使用那些传输数据块的核心\n其他机器的可执行文件。"
+    },
+    {
+      "idx": 288,
+      "en": "It’s funny, BitTorrent is also like an exercise in mechanism design. And this is a problem\nthat we don’t have, but the original BitTorrent design is designed for mutually\ndistrustful people to share data. And one of the things that it wanted to do was\nincentivize people to be transmitters by giving them more download speed if they donated\nupload speed.",
+      "zh": "有趣的是，BitTorrent 也像是一种机制设计的练习。这是一个问题\n我们没有，但最初的 BitTorrent 设计是为了相互\n不信任的人共享数据。它想做的事情之一是\n如果人们捐赠的话，可以通过给予他们更快的下载速度来激励他们成为传输者\n上传速度。"
+    },
+    {
+      "idx": 289,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 290,
+      "en": "Which I guess is not actually a part of the thing that we have to worry about here.",
+      "zh": "我想这实际上并不是我们需要担心的事情的一部分。"
+    },
+    {
+      "idx": 291,
+      "en": "No, we like to think that all of our … In fact, not only do we like to think that all of\nour employees are good actors for stuff like this, but also there’s no particular benefit\nto you in not transmitting while you receive, given that you’re just sort of wasting space\nout.",
+      "zh": "不，我们喜欢认为我们所有的……事实上，我们不仅喜欢认为所有的\n我们的员工是此类事情的好演员，但也没有什么特别的好处\n给你在接收时不发送的信息，因为你只是在浪费空间\n出来。"
+    },
+    {
+      "idx": 292,
+      "en": "So the incentives are in fact perfectly well aligned.",
+      "zh": "因此，激励措施实际上是完全一致的。"
+    },
+    {
+      "idx": 293,
+      "en": "Yes.",
+      "zh": "是的。"
+    },
+    {
+      "idx": 294,
+      "en": "Cool. What about the APIs that end users get? Those grew very organically. The initial\nAPIs that we provided were like rock simple and not very scalable and not very\nexpressive. And then people have built lots of stuff on the outside of those and kind of\nextending in all sorts of ways those original designs, but there wasn’t ever a, let’s stop\nand think about what the right API really should be. So what kind of problems does that\ncreate?",
+      "zh": "凉爽的。最终用户获得的 API 怎么样？这些都非常有机地增长。最初的\n我们提供的 API 极其简单，但可扩展性较差，且不是很好\n富有表现力。然后人们在这些之外建造了很多东西\n以各种方式扩展那些原始设计，但从来没有，让我们停下来\n并思考正确的 API 到底应该是什么。那么这会带来什么样的问题\n创造？"
+    },
+    {
+      "idx": 295,
+      "en": "So one of the primary APIs that people use to access the hive is essentially this\ncomputation graph API, where you build this sort of graph of tasks that have dependencies\nof data that are produced by other tasks and so forth and so on. And you end up developing\nthis entire graph where you have your source data at one end of the graph and then like\nyour computation result at the other end. And you tell the hive, “Hey, run this stuff,”\nand it will do it in topological order and so forth. So this is nice that we have\nthis. One question you might ask is, are there optimizations you can do on this graph to\nmake it faster to run? And well, hey, now you’re back to writing a query planner. In fact,\none very common case of this is where your task graph is actually using a data frame\nlibrary like Polars in each individual task.  And then in fact, you can analyze the\ncomputation that polars or a different library is doing and optimize not just how the\ncomputation graph is structured between the machines, but what computation gets done on\neach existing machine versus when the computations get distributed.",
+      "zh": "所以人们用来访问 hive 的主要 API 之一本质上是这样的\n计算图 API，您可以在其中构建此类具有依赖关系的任务图\n由其他任务产生的数据等等。而你最终会发展\n在整个图表中，您的源数据位于图表的一端，然后就像\n另一端的计算结果。然后你告诉蜂巢，“嘿，运行这个东西，”\n它将按照拓扑顺序执行此操作，依此类推。所以这很好，我们有\n这个。您可能会问的一个问题是，是否可以在此图表上进行优化以\n让它跑得更快？好吧，嘿，现在你又开始编写查询规划器了。事实上，\n一种非常常见的情况是您的任务图实际上使用数据框\n在每个单独的任务中，像 Polars 一样的库。  然后事实上，你可以分析\nPolars 或其他库正在执行的计算和优化不仅仅是如何\n计算图是在机器之间构建的，但是计算是在什么上完成的\n每台现有机器与计算分布时的情况。"
+    },
+    {
+      "idx": 296,
+      "en": "And the Polars story kind of brings us all the way back to SQL.",
+      "zh": "Polars 的故事让我们回到了 SQL。"
+    },
+    {
+      "idx": 297,
+      "en": "All the way back to SQL, a lot of the work that’s done on the hive looks a lot like a big\ndistributed query. Not all of it, God knows. I’m not going to say that GPU training is\nsomething we can write SQL for, but a lot of the work that’s done preparing data sets and\nanalyzing data sets on the hive looks much more like an SQL query than most code in the\nworld.",
+      "zh": "一直回到 SQL，在 hive 上完成的很多工作看起来很像一个大的\n分布式查询。天知道，还不是全部。我不会说 GPU 训练是\n我们可以为其编写 SQL，但很多工作是准备数据集和\n分析 Hive 上的数据集看起来更像是 SQL 查询，而不是大多数代码\n世界。"
+    },
+    {
+      "idx": 298,
+      "en": "And if you go look at the difference between Polars and Pandas, which are like Pandas\nbeing the standard dominant data frame library and Polars being this growing upstart, the\nbig difference there is again, the shape of the APIs and Polars is like, rather Pandas is\nthe eager mode thing. It’s just like you tell it what you want it to do and it immediately\ndoes it. And Polars does what’s called lazy execution, but really the way to think about\nit is the operations don’t really run the thing immediately. What they do is they build up\nthe query piece by piece, and then you get the whole query and you can see the whole thing\nand the system can optimize it.",
+      "zh": "如果你去看看北极熊和熊猫之间的区别，它们就像熊猫\n作为标准的主导数据框架库，Polars 是这个不断成长的新贵，\n还有一个很大的区别，API 和 Polars 的形状很像，而 Pandas 是\n急切模式的事情。就像你告诉它你想让它做什么，它会立即执行\n做到了。 Polars 执行所谓的惰性执行，但实际上是一种思考方式\n这是操作并没有真正立即运行。他们所做的就是建立\n一个接一个的查询，然后你得到整个查询，你可以看到整个事情\n并且系统可以对其进行优化。"
+    },
+    {
+      "idx": 299,
+      "en": "Exactly. And other distributed systems like Spark end up having the same insight. Spark\nalso looks a lot like a distributed query engine. So really we want to build sort of a\ndistributed query engine style interface onto the hive. And we’ve been taking a lot of\nsteps in that direction.",
+      "zh": "确切地。 Spark 等其他分布式系统最终也具有相同的洞察力。火花\n看起来也很像分布式查询引擎。所以我们真的想建立一个\n将分布式查询引擎风格的接口放到配置单元上。我们已经采取了很多\n朝这个方向迈进。"
+    },
+    {
+      "idx": 300,
+      "en": "So are you saying that the API that we want is literally Polars or do you think that\nsomething of that style is what you want?",
+      "zh": "那么您是说我们想要的 API 实际上是 Polars 还是您认为\n您想要那种风格的东西吗？"
+    },
+    {
+      "idx": 301,
+      "en": "I want Polars to be part of it. I don’t think … So Polars has a distributed product. I\ndon’t think we are literally going to have people write a Polars LazyFrame, and that is\nthe way that you use this interface in the hive. But my guess is that Polars will be in\nthere somewhere, but you’ll also have other capabilities that map to some of, again, the\nJane Street specific or the finance specific things that we care about where we sort of\nprivilege things like operations over many dates or operations over different symbols, and\nwe can do a better job because we understand our domain of making sure that things are,\nfor instance, balanced across shards.",
+      "zh": "我希望 Polar 成为其中的一部分。我不认为……所以 Polars 有分布式产品。我\n我不认为我们真的会让人们写一个 Polars LazyFrame，那就是\n您在配置单元中使用此接口的方式。但我的猜测是 Polars 会在\n在那里的某个地方，但您还将拥有其他功能，这些功能再次映射到某些\n我们关心的简街特定或金融特定事物\n对许多日期的操作或对不同符号的操作等赋予特权，以及\n我们可以做得更好，因为我们了解我们的领域，确保事情是这样的，\n例如，跨分片平衡。"
+    },
+    {
+      "idx": 302,
+      "en": "But the kind of key enabler is you want the computation to be run in a way that gives you\na kind of graph of a computation that is like-",
+      "zh": "但关键的推动者是你希望计算以一种给你的方式运行\n一种计算图，类似于-"
+    },
+    {
+      "idx": 303,
+      "en": "Exactly. You need some declarative computation graph. And the more that we know about what\nexactly you’re trying to run over what exact data, the better we can do of scheduling this\nand making it efficient.",
+      "zh": "确切地。您需要一些声明性计算图。我们知道的越多\n您想要运行的确切数据是什么，我们就可以更好地安排这个\n并使其高效。"
+    },
+    {
+      "idx": 304,
+      "en": "Awesome. All right. So that is the mission that you are currently on or part of the\nmission",
+      "zh": "惊人的。好的。这就是您当前正在执行的任务或其中的一部分\n使命"
+    },
+    {
+      "idx": 305,
+      "en": "That you’re creating on. That’s definitely part of the mission that I’m currently on is\nhow do we run these very large DAGs of computation efficiently and what’s more information\nthat we can get about these computations that can help us do so?",
+      "zh": "你正在创作的东西。这绝对是我目前正在执行的任务的一部分\n我们如何有效地运行这些非常大的 DAG 计算以及更多信息\n我们可以得到这些可以帮助我们做到这一点的计算吗？"
+    },
+    {
+      "idx": 306,
+      "en": "Awesome. Okay. Well, maybe that’s a good place to stop. All right. Thanks so much.",
+      "zh": "惊人的。好的。好吧，也许这是一个停下来的好地方。好的。非常感谢。"
+    },
+    {
+      "idx": 307,
+      "en": "Thank you, Ron. This is a lot of fun.",
+      "zh": "谢谢你，罗恩。这很有趣。"
+    },
+    {
+      "idx": 308,
+      "en": "You’ll find a complete transcript of the episode along with show notes and links at\nsignalsandthreads.com.",
+      "zh": "您可以在以下位置找到该集的完整文字记录以及演出说明和链接：\nsignalsandthreads.com。"
+    }
+  ]
+}

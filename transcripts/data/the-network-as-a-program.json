@@ -1,0 +1,1567 @@
+{
+  "slug": "the-network-as-a-program",
+  "title": "The Network as a Program with Nate Foster",
+  "mp3_rel": "audio/the-network-as-a-program.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Nate Foster is a professor at EPFL in Switzerland in the Networked Systems Abstractions\nLab, and a visiting researcher at Jane Street on the Networking team. In this episode, he\nand Ron consider what happens when you bring a software mindset to network\nengineering. Can you use programming language theory and formal methods to realize the\ndream of software-defined networks? Along the way, they discuss how hyperscalers have\nshaped networking hardware; the return (or not) of multicast; the ways ML workloads are\nreshaping the networking layer; and the success Jane Street has had using a foundational\nInternet protocol, BGP, together with a more declarative high-level specification\nlanguage."
+    },
+    {
+      "type": "p",
+      "text": "Nate Foster is a professor at EPFL in Switzerland in the Networked Systems Abstractions\nLab, and a visiting researcher at Jane Street on the Networking team. In this episode, he\nand Ron consider what happens when you bring a software mindset to network\nengineering. Can you use programming language theory and formal methods to realize the\ndream of software-defined networks? Along the way, they discuss how hyperscalers have\nshaped networking hardware; the return (or not) of multicast; the ways ML workloads are\nreshaping the networking layer; and the success Jane Street has had using a foundational\nInternet protocol, BGP, together with a more declarative high-level specification\nlanguage."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every layer of the tech stack\nfrom Jane Street. I’m Ron Minsky. It’s my great pleasure to introduce Nate Foster. Nate\nFoster is both an old friend and an accomplished researcher at the intersection of\nprogramming languages and networking. He’s both a professor at EPFL and a visiting\nresearcher here at Jane Street, where he spends a day a week mostly focusing on work with\nour networking team. So thanks for joining me."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Thanks. I’m a big fan of this podcast. It’s great to be here."
+    },
+    {
+      "type": "ts",
+      "text": "00:00:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So to start out, I’d love to hear a little bit more about your origin story. How did you\nactually get into this whole computer science world in the first place and also into the\nplace that you’ve gotten over time in this area of research that you think about?"
+    },
+    {
+      "type": "ts",
+      "text": "00:00:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I didn’t actually get into computer science really until partway through college.\nI started out as a physics major and I like to say I was a failed physics major. I was\ntaking the sort of standard sequence. You take some mechanics, electricity and magnetism,\nyou do quantum. And as I was going through that sequence, I found I was kind of liking\nphysics a little bit less. And on the side, I was taking CS classes and I just loved them.\nI was kind of fully engaged. I was doing well. And I really liked how all the pieces kind\nof fit together. I could understand after a couple years how a program gets implemented\ndown through a compiler, down through the ISA, through the chip, all the way down to gates\nor even lower. And that was very pleasing. And I also really liked the idea that unlike\nphysics say, there’s a lot of creativity. A lot of these abstractions that we have in\ncomputing are really designed by people. So things like lambda calculus and functional\nprogramming, like who would think of that as a basis for computation? And yet it runs on a\ncomputer. I just found that really beautiful."
+    },
+    {
+      "type": "ts",
+      "text": "00:01:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s kind of an amazing thing about computer science. It’s not like a science in a\ntraditional sense, or at least not totally like a science, in that you’re not studying the\nnatural world. You’re studying human creations, and yet those human creations are very\nbounded by both all sorts of things about the physical world of what you can reasonably\nimplement and bounded in important ways by mathematics. It’s something kind of amazing\nabout the field."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So you can say a bit about how I got into research. That was a bit of an accident. I think\nmany things in my career were sort of an accident. I had the idea that I might want to go\nto grad school, but I was maybe a little too shy to articulate that. And there was an ad\nwhen I was my junior year, an ad for a summer research project working on a Java compiler.\nAnd I thought, well, I might want to get a master’s or maybe even a PhD. I’ll spend a\nsummer doing research. And my mentor was a guy named Kim Bruce, who’s a programming\nlanguages researcher, and spent the summer hacking on that Java compiler, working on type\nsystems, and just fell in love."
+    },
+    {
+      "type": "ts",
+      "text": "00:02:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So actually, what were you doing in Java? What were you trying to do with the type system?"
+    },
+    {
+      "type": "ts",
+      "text": "00:02:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, so this is way back. Java originally was sort of a big advance. It sort of brought\nthings like garbage collection to the mainstream for the first time. I mean, garbage\ncollection had existed, but in a language that was being used really widely, that was new."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to be clear, shockingly, 40 years after the invention of garbage collection."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Garbage collection existed decades before."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s like the single biggest advance in programming language productivity and something\nlike 40 years between the time of invention and the time of mainstream use, which I’ve\nalways found a really shocking fact."
+    },
+    {
+      "type": "ts",
+      "text": "00:03:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yep. And Java also had this type system. It had a static, believed to be sound or mostly\nsound type system. And that was very exciting to the academic programming languages crowd\nbecause we love type systems. And yet, again, the mainstream languages at the time, C and\nC++ don’t really have sound static type systems. So the research we were actually doing\nwas adding polymorphism to Java. Now Java has generics, but at the time it didn’t. And\nthere was a process by which the community was allowed to sort of propose ways of bringing\ngenerics to Java. So my advisor, Kim Bruce, had such a proposal and he’s at a small\nteaching college, so he didn’t have grad students, so he found undergrads to work on\nimplementing this type system."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So is the one that you worked on, the one that was in the end adopted?"
+    },
+    {
+      "type": "ts",
+      "text": "00:04:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "No. So the one that was adopted was a very nice design by Phil Wadler and Martin Odersky\ncalled GJ, who was the name of the original paper. And that’s the one that eventually made\nit through the community process. But there were actually lots of teams working on\ndifferent proposals. There was one out of MIT from Barbara Liskov and Andrew Myers, one\nout of Rice by Corky Cartwright, Kim Bruce had his, and they all varied in their notation\nand how expressive they were and different features."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, that’s super cool. And I don’t think I’ve ever heard of another language process that\nquite worked like that."
+    },
+    {
+      "type": "ts",
+      "text": "00:04:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I don’t actually, I was too young to know the reason why Sun Microsystems, who was\nsort of controlling Java at the time, why they did it through this community process. But\nperhaps the feeling was type systems are kind of this thing that seems very simple, but\nactually can be quite subtle. It’s very easy to design a type system that has a soundness\nbug or has some maybe runtime cost. So they tried to leverage the smarts of the community\nto help them design it."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. So that’s how you got your first taste of programming languages. What happened then?"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yep. So then after undergrad, I spent a couple years in England doing not computer science\nactually, but I knew I wanted to come back and do a PhD. And I ended up at Penn where I\nworked with Benjamin Pierce, who’s a friend of yours as well. And I thought that I would\nwork on, I don’t know, more type systems or maybe something in semantics, the kind of\nreally macho kind of big topics in program languages. And when I got to Penn, Benjamin\nsaid, “I’m working on this data synchronizer. That might be a good project for you to\nstart with.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:05:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Unison."
+    },
+    {
+      "type": "ts",
+      "text": "00:05:42"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So Benjamin has this tool built in OCaml called Unison. It’s a file synchronizer.\nAnd at the time he was trying to make it generic so that you could synchronize data that\nwas in different formats and the project was called Harmony. So I’ve never told this story\npublicly. I was actually a little disappointed because I thought I’m going to work on a\nreally crazy type system or some new fancy denotational model. And instead I was working\non a data synchronizer, which sounded like a kind of grubby systems problem. Yeah. But\nembedded in this project was this really beautiful program languages problem. And Benjamin\nand his postdoc at the time, Alan Schmitt, had discovered that in order to synchronize\ndata in different formats, you need to convert between those formats in two directions. So\nsay you’re synchronizing maybe a version of your calendar in the standard iCal format and\nmaybe another version at the time XML was all the rage, so in XML. So it has somehow the\nsame information, but there’s some differences. And if you’re going to synchronize them,\nyou need to basically convert from one into the other and vice versa. And so they’d been\nwriting these conversions, writing sort of functions that go from version A to version B\nand from version B to version A, and very quickly realized these two functions that we’re\nwriting separately, they’re like really close to each other. They’re almost inverses. And\nas programming languages researchers, they said, “Well, maybe we should have some kind of\nabstractions for writing these two mappings.” And that became what’s called lenses. So the\nidea was to have one abstraction from which you can derive both of these functions."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And actually, you worked on this lens idea early on and in fact it’s had a whole\nbig life afterwards. There’s all sorts of people in the Haskell community who have all\nsorts of variations on the lens idea and use it kind of all over the place and seem to be\nvery excited about it."
+    },
+    {
+      "type": "ts",
+      "text": "00:07:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So lenses are one of these ideas that I think was sort of in the air. Benjamin and\nAlan were not the first to discover it. There was prior work in the database community.\nThere was prior work actually in the functional programming community. Someone named\nLambert Meertens had worked on a very similar idea, but their definition was particularly\nsort of clean and elegant, and so it kind of caught people’s attention. And yeah, I worked\non it for my PhD. We worked on a variety of lenses, playing with what we could express,\nhow complicated could we make the functions, using types to make sure that the lenses had\ngood properties. For example, you generally want to know that if you’re making changes to\none side and then you use a lens to push the changes to the other side, somehow those\nchanges should be reflected accurately and you can try to characterize that using some\nkind of laws or some kind of specification. And then building this out and trying to\nfigure out how this could turn into useful tools. So I spent six years working on lenses,\nhad a lot of fun. And you mentioned that lenses have kind of caught fire. Other people,\nmuch smarter than us, took the idea and sort of generalized it. So in Haskell, there are\nversions of lenses that are not exactly our definition. They’ve sort of loosened some of\nthe mathematical definitions, but in ways that allow them to have lenses for all kinds of\ndifferent structures, and it’s really cool."
+    },
+    {
+      "type": "ts",
+      "text": "00:09:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay. But that was still you doing a little bit systemsy, but still like what feels like\npretty straight ahead PL research, but that’s not what you do today. So how did that\nhappen?"
+    },
+    {
+      "type": "ts",
+      "text": "00:09:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So I have this funny kind of right turn in my career. As I was finishing my PhD, I decided\nto apply for faculty jobs, got hired at Cornell where I spent 15 years on the faculty. And\nthen I decided to take a gap year, really for personal reasons. My wife was finishing grad\nschool. I wanted to stay near her. But also I think although programming languages and\nfunctional programming is my home, I kind of felt like I’ve thought about lenses for six\nyears, I’ve kind of had all my good ideas, I want to have something else to work on. And\nso I decided to take a leap and go to Princeton where I worked with Dave Walker and Jen\nRexford on problems in networking. And I described this as a leap of faith for me. It was\nreally a leap of faith, I think, for both sides. Jen in particular kind of hired me almost\nblind and thought that it might be fun to have a project at the intersection of\nprogramming languages and networking and hired me as a postdoc with really no background\nin networking. And that was the start of my current career push."
+    },
+    {
+      "type": "ts",
+      "text": "00:10:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So maybe this is a good moment to stop and just talk about what is actually your current\nresearch like? What’s the overall thrust of your research? What are the kind of core ideas\nthat you’re trying to explore there?"
+    },
+    {
+      "type": "ts",
+      "text": "00:10:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I’ve spent really the last 15 years working at the intersection of programming\nlanguages and networking. And maybe before I answer my own goals, it’s worth giving a\nlittle bit of context. Starting around 15 years ago, there was a big change that happened\nin the networking community. It’s become known as software defined networking, and it was\ndriven by lots of factors, some kind of economics, some based on changes in hardware, but\nthe real technical changes were really twofold. Some of the big organizations like tech\ncompanies, cloud companies, they wanted to have more freedom to change how their networks\nwork. And that was very difficult for them with how networks were built, say circa 2005 to"
+    },
+    {
+      "type": "ts",
+      "text": "00:12:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So just to make sure I’m getting this right. So in some sense, the situation ex ante was,\nthere were a bunch of switch manufacturers. There was a kind of preexisting notion that\nwas kind of built out of the early internet days of like, what does a switch do and what\nis IP and what are the protocols? And then there were actually programming languages of a\nkind. There were like configuration languages that you could use to choose the behavior of\nan individual switch. And then the kind of classic way of managing a big network is you\nfigure out what the layout of this physically should be, how you want to wire things\ntogether. You buy a bunch of these devices, you wire them up, and then you hire a bunch of\nnetwork engineers whose job is to kind of very carefully configure all of this stuff so\nthat it doesn’t break the network and you get the properties out of it that you want. And\nthen SDN in some sense is like, no, no, no, no, we’re going to like … I guess you still\nhave to do a lot of the physical layer work, but then the configuration part is very\ndifferent. Now, instead of configuring each individual piece, you try and have an overall\nprogram that tells you how the network as a whole works. That’s right. And then the\nadvantages, I guess one advantage you’re saying is much more configurable so that you can\nget more behaviors out of the hardware than you could have gotten out of the stock thing\nthat you would get from the vendor before. So there’s like a kind of faster cycle to be\nable to iterate on new things that you want to do. And then maybe another big thing is the\nability to reason about the thing that you’re doing at a higher level. All the things you\nsaid about composition. The thing I hear from that is like, oh, I can actually predict how\nthe thing is going to behave and understand based on a relatively small program, what the\nbehavior of this sprawling network is going to be and make sure that properties that I\ncare about are enforced."
+    },
+    {
+      "type": "ts",
+      "text": "00:14:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yep. And I think one thing that’s different though, we should understand that what counts\nas a program that you might want to run in a network is going to be different than the\nkinds of programs that you might run on a server. So there still are some things about\nhardware, for example, due to the speeds and the sort of scale that networks operate at,\nyou’re not going to write an algorithm that sort of has a heap and is sort of allocating\nmemory on every packet at every hop or something that’s going to be crazy. So you are in\nsomewhat of a special domain. There’s also some differences just from the fact that\nnetworks are part of the infrastructure. So even in, say, a single organization, there’s\nusually a desire to know things about how different pieces of the network are isolated\nfrom each other. Or again, even in a single organization, you may have multiple units that\nare responsible for controlling the network. And so you still have, in some form,\nfederated or distributed control. So this is what makes it not just let’s take Lambda\ncalculus or let’s take Java and that’s our way of writing network algorithms. There’s\nstill some interesting domain specific structure that needs to be explored."
+    },
+    {
+      "type": "ts",
+      "text": "00:15:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And in a lot of ways, this echoes to me the story around hardware synthesis, right?\nWhere again, it’s like there’s a big graph structured computation thing and you need some\nkind of language for expressing it. And then there’s a lot of play there of like how\nsophisticated is the language and how much power does the language give you to kind of\nreason about the thing you’re doing and to flexibly compose bigger designs out of smaller\ndesigns. But again, there are these very profound limitations on what you can do in a\nhardware design. You’re not going to write the same kind of code at all. I guess it’s a\nquestion of like how much of traditional PL theory applies in this world because it’s like\nthe constraints are very different."
+    },
+    {
+      "type": "ts",
+      "text": "00:16:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So maybe I can tell you about a couple of projects so we can work through them, but\none thing that’s been very exciting and kind of cool for me is despite all these\ndifferences, there are some things from classical PL theory that match up quite well. So\none of the languages that we discovered early on is a framework we call NetKAT, and this\nis a language that we’ve designed for describing not the whole network. So we’re not\ndescribing the behavior of the end host. We’re not describing TCP and congestion control.\nWe’re not even describing what’s called the control plane, which is the sort of brains of\nthe network that decides which routes you’re going to use and how to respond to failures.\nSo we’re just describing really how the network processes packets at the forwarding level.\nAnd we’d been working on a sort of series of DSLs for several years and following on from\nmy postdoc at Princeton, and we had, I would say, ideas about how to make these languages,\nwhat features we might need, how to do it in an elegant way. But there was this exciting\nmoment when we realized that all of these languages lined up really well with a system\ncalled KAT, which is shorthand for Kleene algebra with tests, which had been around for a\ncouple decades. In fact, Dexter Kozen at Cornell had discovered this framework and had\nworked on it for a long time. So KAT is really, it’s a pretty high level mathematical\nabstract framework that’s meant to be kind of a model of kind of standard imperative\nprogramming. We can talk more about it, but that actually lines up really well with at\nleast how you can think of the forwarding behavior of packets through a network. And so\nthe reason I say this is exciting is, although you start from a domain that seems to have\nall these weird primitives and weird constraints, you can sort of extract from it this\nthing that looks a lot like finite automata and state machines and all the things you\nlearn about as a second year computer science student, and that alignment is quite cool to\ndiscover."
+    },
+    {
+      "type": "ts",
+      "text": "00:18:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I sort of think of this as the one weird trick of programming language theory, which\nis that there’s this complicated and messy and very human process of writing programs. And\nthen it turns out a lot of the best ideas in programming languages come from relating the\nthing you’re doing to very simple mathematical models. And there’s something nice about\nlanguages that have this tight relationship. Not all of them do. There are languages that\nare kind of much messier mathematically, but the ones that have a kind of tighter and\nsimpler mathematical foundation, at least my sense is, tend to be better at generalizing,\nlike the features that you add to solve one problem, turn out to solve lots of different\nproblems and compose nicely with other ideas. Having this foundation gives you this kind\nof nice playground with the different ideas that you can come up with, end up integrating\nbetter with each other because they kind of all fit into this relatively simple worldview."
+    },
+    {
+      "type": "ts",
+      "text": "00:19:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I completely agree. And actually if in our academic paper on NetKAT, that’s exactly\nwhat we said in the introduction. We sort of said, the value of this framework is not so\nmuch that we can do something we couldn’t do before, but we’ve now aligned ourselves with\nthis theory that is actually backed by going all the way back to Kleene to the 1950s. And\nthat gives us both some confidence that what we’re doing is maybe right or at least\nsensible. It also gives us a whole bunch of constructions and tools that we can pull from\nformal language theory. And in our work, we’ve actually used a bunch of those tools to\nbuild compilers, to build verification tools, but especially it’s what you said. So as\nwe’ve extended NetKAT with new features, now we’re kind of back into being confused\nresearchers, just playing with examples and trying to make things work, but having this\nstructure of Kleene algebra with tests has provided guidance to us. So for example, we’ve\nworked on a probabilistic version of this language, which is very useful in networking\nbecause you have unexpected things. You have traffic and you don’t know how much traffic\nthere’s going to be, you have failures, you don’t know when the failures are going to\nhappen, and you may also have randomized algorithms that are used to load balance across\nthe network. And so reasoning about the behavior of all these things requires reasoning\nabout probabilities. So we extended NetKAT with probabilities, worked out the semantics,\nand that was very not obvious and a bit subtle. And I think if we didn’t have the\nstructure of KAT and other associated theories, we would’ve very easily ended up with a\nlanguage that was kind of incoherent."
+    },
+    {
+      "type": "ts",
+      "text": "00:20:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "We’ve been talking about a mix of some about what software defined networks is and kind of\nin the broader sense, and then also about your research. How would you explain the\nparticular take that you and the other people that you work with have on this field?"
+    },
+    {
+      "type": "ts",
+      "text": "00:21:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, I think the main slogan is the network should just be thought of as another\nprogram. And that’s a short sentence that maybe sounds very trivial, but to networking\npeople, it’s a really different way of thinking about things. For many years, innovation\nin networks has been driven either by things that happen at the hardware level. A vendor\ncomes along with a new router that has a hardware pipeline that has some extra feature,\nand then that turns into something new that you do in load balancing or congestion control\nor something or queuing or something else, or driven by standards bodies. For a long time,\nif you want to do something new, you have to have a good problem, have a solution, and\nthen go convince a vendor to implement it, go convince a bunch of other users of networks\nthat we should standardize this, get it ratified by the standards bodies. It’s a very\nlong, slow process. And so thinking of networks just as programs is like, well, just as we\ndon’t go ask permission from Intel or NVIDIA when we want to deploy a new algorithm on\nhardware, we just write a new program, we should have the same freedom with networks."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How much of this is basically gated on the sort of existence of the hyperscalers of huge\ncompanies like Google and Amazon and stuff that have enormous networks that they can\nconfigure this way? In some senses, an issue around the domain of administrative control.\nIf I need to primarily build a thing that interacts with things I don’t have any control\nover, then I can sort of see how I’m gated by the standards bodies because I have to get\neveryone to agree to share the language with which we communicate. Whereas if I have my\nown enormous network that I’m going to configure, I can just think of the whole thing as a\nprogram and then I maybe have to think about the standards bodies on the edges, but within\nthe network, I get to do that."
+    },
+    {
+      "type": "ts",
+      "text": "00:22:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think that’s right. I mean, if you, again, go back and tell the intellectual\nhistory of software defined networking, it very much did emerge when these really large\nprivate networks became a thing and the companies that were building them wanted to have\nthe freedom to basically define new features at software timescales. And it’s true, the\nthing I was just sort of throwing shade at of vendors and standards bodies, well, that’s\nwhat built the internet. And the internet worked because you took tens of thousands of\nautonomous systems, tens of thousands of networks built by different organizations,\ndifferent people on different hardware in the, originally, like even all the way down to\nthe physical layer, they were using different ways of moving bits around and you connect\nit all and make it all work and interoperate. So the internet was designed for really\nconnecting up all these different networks and making it work worldwide. And that’s why we\nended up with certain solutions. But in these really large networks with hundreds of\nthousands or even millions of computers and a comparable number of switches and routers,\nyou may also want to have the ability to define those networks and to optimize them and to\nhave them implement certain features. And so that’s a big part of the story, more economic\nthan technical, but I think it’s an important change that you do have sort of … Again,\neven in a large organization, you do have often multiple teams or multiple units that are\ninvolved in this, but still there’s sort of one ultimate unit of control that gets to\ndefine the goal."
+    },
+    {
+      "type": "ts",
+      "text": "00:24:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you think the idea of the network as a program generalizes to the open internet?"
+    },
+    {
+      "type": "ts",
+      "text": "00:24:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "This is one of the big challenges that the community’s been thinking about for decades. So\none of the kind of paradoxes of the internet is it’s so successful that you can’t change\nit. And this is something that the community’s been very worried about going back quite a\nnumber of years, at least to the ’90s. So there’ve been a bunch of efforts to think about,\nwell, the internet works really well at today’s scale, for today’s applications, but there\nare things that come along that we’d like it to do and how are you going to change these\ntens of thousands of ASs? How would you decide to move to a different routing protocol for\nthe internet or a different way of moving packets around? You can’t turn it off and turn\nit back on tomorrow with a big flag day. And so there was this sense, and you go back and\nread papers from 20 years ago, people would talk about ossification, the idea that the\ninternet structure and its kind of skeleton were kind of setting in and it was impossible\nto change. So there’s a whole other community that’s been thinking about how we could\ndesign an internet that is extensible and evolvable. And that’s a sort of very rich, cool\nspace. And there are people with cool ideas. Some of them involve program languages, but a\nlot of them also involve different architectures, different ways of getting extensibility."
+    },
+    {
+      "type": "ts",
+      "text": "00:25:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And to what degree do you think this idea of your network as a program has caught on, has\nbeen influential, has kind of changed how people build networks in practice, both among\n… There’s like an academic audience for this, but there’s also lots of practitioners and\ncompanies and also all of these hardware vendors. How is this idea propagated over time?"
+    },
+    {
+      "type": "ts",
+      "text": "00:26:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s funny, if you track ideas or these trends, I mean, my view is this idea has\nbecome just the way things are done. In fact, I can back this up with a little bit of\nevidence. A few years ago, some of my collaborators, including Jen Rexford and Nick\nMcKeown and some others, we wrote a paper basically arguing that the network as a program\nwas here and it was a sort of vision paper for a short conference and it got rejected and\nwe were a little bit miffed. I mean, we get papers rejected all the time, but we’re really\nproud of this paper. But the reviews actually said, “You’re describing the way the world\nworks. Your ideas aren’t spicy enough. This is how things work.” So I think to some\nextent, the network as program or software defined networks just is how things work. Now,\nfor folks who are familiar with the sort of original articulation of software defined\nnetworking, of course, there are some ideas that 15 years ago people were saying, “Well,\nwe should build centralized algorithms or logically centralized algorithms.” And that idea\nhas not so much caught on in practice. Or another example is there was a big push, I\nplayed a small part in it in making network routers sort of truly programmable. Almost\nevery piece of their functionality could be specified in a program. And again, for mostly\neconomic reasons, that idea has not caught on. But at the same time, the sort of ability\nto change the, say, hardware pipelines of these routers is coming, just not in the way\nthat it was originally articulated. So again, I’m biased, but I think it really is the way\nthe networks are going and the path towards this vision of you can write code and get the\nrich behaviors you want. It’s not exactly smooth in the way that was predicted at all\ntimes, but the general trend is in that direction."
+    },
+    {
+      "type": "ts",
+      "text": "00:28:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So the SDN idea is interesting to me because I feel like it falls along another theme\nthat’s a little different from the way you framed it, where you’re kind of talking about\nthis basic, being able to specify things in cleaner ways, getting better abstractions out\nof it. And I think that’s all part of it. But another thing that I think has been very\nvaluable in this kind of work is just adopting the culture of software and the kinds of\ntools of software. There’s all these domains in computer science that just have picked up\ndifferent approaches and techniques for building things. And if you look at the way in\nwhich people think about management of databases or doing hardware synthesis or networks\nor building traditional software, the techniques are actually all really different. And\nthere’s a bunch of really good ideas that have come up in software that I think aren’t as\nclearly expressed in the other domains and things around things like the way that you do\nlike version control and code review and testing and things like that. And in the old\nworld of networking where you just go and configure the switches to do the thing that you\nwant, you kind of don’t have this centralized place where you can do all of these pieces.\nAnd so in some ways, separate from the nice semantic improvements, which I think are super\nimportant, this thing of allowing the kinds of tools that people use and the kind of\nengineering approaches that people use in software to apply that to domains like\nnetworking seems like another advantage of this whole thing, which I guess is maybe hard\nto summarize nicely in an academic paper, but I feel like in practice is a big part of\nwhere the advantage comes from."
+    },
+    {
+      "type": "ts",
+      "text": "00:29:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I completely agree. And the other, so if we’re talking about trends that got a bit\nof maybe hype and a lot of attention and maybe the hype wasn’t quite deserved or things\ndidn’t quite play out, this area Well, you’re talking about something more broad than just\nformal reasoning. I think you’re just talking about adopting modern software practices to\nkeeping things in databases or repositories, having not … Humans don’t just log into a\nrouter and YOLO a change. They run it through a process. Maybe there’s even some checking.\nAbsolutely. And you can actually, I mean, you can go back. People were thinking about this\neven at the ISPs in the ’90s. Large ISPs were sort of the equivalent of the hyperscalers\nback then. They operated big networks that were complicated, expected to work. And they\nhad started to experiment with some of these ideas of having at least sort of centralized\nspecification of the functionality at companies like AT&T and then how to realize that.\nBut the other piece is verification. And this I think is also, it’s maybe not quite as far\nalong, but it’s something that’s becoming quite commonplace. All the hyperscalers are\ndoing it. There’s also some startups. There’s, of course, many academics who are\ninterested in this idea. And here it’s that, well, if you have some representation, maybe\nit’s not a beautiful representation in NetKAT, but you at least have some program that\ndescribes how the network is supposed to behave or how it is configured. You could start\nto apply all the tools of software engineering, testing tools, validation tools, even\nverification tools. And this could then become part of your workflow. So before someone\ndecides to push down a change that might change the routes between two data centers, you\ncould check, is this going to break connectivity anywhere else in my network? And that’s a\ngood idea."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And I guess you actually hear lots of stories of large companies managing large\nnetworks where config changes break things and cause huge outages. It’s actually like one\nof the biggest problems you run into is people having a config change that unexpectedly\nhas some semantic behavior that they didn’t expect."
+    },
+    {
+      "type": "ts",
+      "text": "00:31:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, I think to be clear, this area is really not done. And it’s in part because\nalthough this … I’ll take network verification. It sort of took this one layer that\nbecame exposed. So the idea that there’s a centralized either database or program that is\ndefining the behavior of the network, and then that gets pushed down to the routers who\nthen realize it, that gives you a place where you can sort of interpose and you can\nintercept snapshots of the network and start to test them or reason about them. And so\nthat’s what people mostly have done, but networks are much more than that. And they’re\ndistributed systems. So they have all the complexity of distributed systems where you can\nhave failures that you didn’t expect and interactions that weren’t part of your model. And\nso we’re definitely not done. I mean, you still see outages due to human error or flaws in\nthe model all the time. And I think this will get better, but it is really hard to reason\nabout these complex systems that have components you didn’t even really think about or\nknow about. Multiple control loops, funny interactions. It’s a true puzzle that requires\nsome new ideas to make progress on."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you have a good example of a kind of problem in this space that is now pretty well\nsolved, like a thing that people would pretty routinely get wrong in the past, and that\nnow there are at least in some places, good verification checks to help people not make\nthose mistakes?"
+    },
+    {
+      "type": "ts",
+      "text": "00:33:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yes. I’m going to twist the question slightly and not say that people got it wrong, but\nthat there was also sort of conservatism. People were afraid to make changes because they\nweren’t sure what the impact of those changes would be."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "This is, by the way, just a huge part of the network engineering story, as I’ve\nexperienced it. I think part of the job of a good network engineer to tell you no. It’s\nlike, that’s too complicated. We’re not going to do that."
+    },
+    {
+      "type": "ts",
+      "text": "00:33:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I think, I mean, one example that’s, I think it’s no longer research, it’s sort\nof been fully reduced to practice is reasoning about these snapshots of the so-called\nforwarding plane of a network. So of course, networks have changes happening all the time.\nThere’s failures, there’s different controllers that are maybe monitoring the system and\nmaking changes, but you can pretend that there’s a snapshot and you can … A consistent\nsnapshot maybe that you can extract and then reason about. And that snapshot can be\nmodeled using tools like model checkers or SAT solvers, these automated theorem provers\nthat understand first order logic, or custom tools like NetKAT is such a tool you could\nput it into NetKAT and then ask questions about the model. So this is something that is\npretty widely done and mostly just works. I mean, it does what it’s supposed to do. And so\nit does catch certain errors in the sense that if you could write a specification like\nthese two hosts should always be connected no matter what routes are being used and I want\nthese two hosts to be able to send traffic to each other, or these two hosts should be\nisolated. And if something goes wrong and somehow there’s a path between them, that’s bad.\nSo these kinds of properties you can check. And if your control plane, okay, the brains of\nthe network makes a change that would violate that property, you get some kind of signal\nor exception. And I think that’s useful in, say, cloud companies, but what it doesn’t\nsolve, of course, is what do you do? So if you’re getting a failure of a property because\nthe control plane has done something bad, then what? So it’s not like we’ve sort of made\nnetworks perfectly reliable or perfectly able to satisfy their specifications."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, although if a controller wants to do something and you know it’s bad, can’t you\njust, I don’t know, in a software context be like, “Oh, we won’t merge that PR.” If you\ncan catch it at the time where the change is proposed before it’s accepted, then there’s\nsomething you can do about it, which is just, again, like the network engineer, you can\nsay no."
+    },
+    {
+      "type": "ts",
+      "text": "00:35:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yes. Although there are cases where that may be sort of the wrong move. If it has some\nother effect like you made this change because of a failure, do you keep the failure\nunsolved because you decided to reject this change that violated your spec? This is where\nthings get a little murky."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, interesting. So like.."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "There’s a control system sitting on top and merely saying, “I reject your change.” If the\ncontrol system is not going to then do something better, you may not have actually\nimproved life."
+    },
+    {
+      "type": "ts",
+      "text": "00:36:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it. No, that makes sense. So a lot of the things that you’re talking about seem like\nthey involve a pretty rich connection between a bunch of ideas that you can develop in an\nacademic context and then a bunch of industrial use cases. Some of these at places like\nthe hyperscale or some of them at the actual network switch vendors. And I know that you\nspent some of your career with various kinds of engagements with the kind of industrial\nside. Can you say a little bit more about how that worked and how you’ve integrated that\ninto your career and research and approach to thinking about this space?"
+    },
+    {
+      "type": "ts",
+      "text": "00:36:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So this is something I actually love about the networking research community. And I\nsay the research community and not the academic community because it truly involves the\nhyperscalers and the switch vendors. Somehow, the particular community that identifies as\nresearchers in networking is not just driven by universities and PhD students, it involves\nall these different entities. And so it has a really nice mix of, you have people doing\npure theory, but you also have people who have designed the wide area backbone for a giant\ncloud company and they’re all coming together to share ideas. So that’s really cool as a\nresearcher because you have this relatively small group of people who all know each other\nand they’re working on related ideas and you therefore have this kind of quick, you can\nhave quick transitions of research ideas getting into practice. I think my sort of\noriginal home community of program languages also has this, but as we already said, the\ntimescales are often much longer. We talked about garbage collection from the 1950s till\nthe 1990s or type systems, similar many decades. And actually, I mean, Jane Street’s a\nvery prominent company in the functional programming space. So people understand that\nfunctional programming is being used industrially, but Jane Street’s a little not unique,\nbut there’s not as much of a conversation between sort of mainstream programming languages\nas used by the millions of developers in the world and the academic community. So it’s\nsomething I really love about the networking research community."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although maybe there’s like more now, like Rust is another example of a language where\nthere’s been a lot of very rich connection between academic and industrial."
+    },
+    {
+      "type": "ts",
+      "text": "00:38:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, yeah. I do feel like it’s been changing and yeah, similar kind of short timescales\nto cool academic idea appearing in some mainstream language and then being broadly used.\nThere’s another piece of this that’s kind of interesting, which is when these ideas like\nsoftware defined networking first came out, a lot of the companies decided deliberately to\nsort of engage a broader ecosystem, a broader community. Quite famously, Google was sort\nof very interested in ideas like OpenFlow, which was the early SDN sort of standard, but\nchose to do it in open source for strategic reasons. But that sort of created an\nopportunity to build a community around these things."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And were you involved in thinking through and helping set any of those standards?"
+    },
+    {
+      "type": "ts",
+      "text": "00:39:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "No, I was not involved in OpenFlow at all. That was already pretty baked by the time I did\nmy postdoc with Jen and Dave at Princeton. I did get involved in this second phase of\ntrying to design languages and associated hardware for describing the behavior of\nindividual routers, switches, network interface cards. We worked on a language called P4,\nand that was a similar sort of community effort."
+    },
+    {
+      "type": "ts",
+      "text": "00:39:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And OpenFlow was more like you get to set the routing table, like a little bit more\ngeneral than that, but it was like there are tables that you get to configure there. And\nthen P4 was more like you kind of get to write the whole switch."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. OpenFlow people like to bash on because it was kind of cartoony. I think its\ndesigners did not intend it to be a cartoon, but there’s sort of a big gap between\nOpenFlow’s model of how a router works, which is basically there’s one big lookup table\nand you’re going to cram all your logic into this one big lookup table. And the reality of\nhigh speed routers and switches, which have pretty complex pipelines with specialized\nunits that do certain things. So I think the original hope was that somehow OpenFlow would\nbe realized by smart compiler teams, people who would sort of lower it down to these\npipelines. That’s actually a pretty hard task. And so P4 had the benefit of being sort of\na second mover. It was sort of a second attempt and it just exposes the structure of the\npipeline. So you do get to customize what happens, but there are certain things that can\nbe just exposed in the language or in the programs itself."
+    },
+    {
+      "type": "ts",
+      "text": "00:40:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And the work with P4, this actually involves some pretty deep engagement on the\nindustry side for you as well, right?"
+    },
+    {
+      "type": "ts",
+      "text": "00:40:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So I chose during my first sabbatical at Cornell to go be a part of the company that\nwas developing one of these programmable switches called Barefoot Networks, and then also\nthe P4 community. This was a choice because I think I felt some, maybe, I don’t know if\nimposter syndrome is the right word, but I felt very much like I was sort of the program\nlanguages academic who was sort of going and cosplaying in networking. And I wanted to\nunderstand at a deep level, how does a router really work? And so going to a hardware\ncompany seemed like a great way to do that."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And then I’m a little curious both how did it feel making that transition? I feel like\ngoing to be a CS academic is like a choice, right? You can go and do computer science in\nacademic context, you can go and do it in industrial context. And I’m kind of curious why\nyou in the end made that move and what you felt like you got out of it and how it affected\nyour thinking and research after that."
+    },
+    {
+      "type": "ts",
+      "text": "00:41:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, I can tell you the kind of personal history. There’s, again, mentors who\nsort of provided advice. I was very unsure. My colleague, Fred Schneider, who you know\nwell- My advisor. Your advisor. Yeah. So I remember talking to Fred, should I do this? And\nhe was like, “Absolutely. If you have a chance to go deepen your knowledge and expertise\nin a space, that’s going to pay dividends down the road.” I had other mentors, George\nVarghese, who’s at UCLA now, he was sort of like, “Go do this.” And then Nick McKeown, who\nwas the co-founder of the company and one of the SDN pioneers, he really sort of opened\nthe door to me to come be at the company. So it did not feel like a big risk. I confess,\nof course, really not knowing anything about hardware except for my VLSI class from\nsophomore year, and not that I became a hardware designer, but the hardware is just\namazing. And you have just these people who are the best at what they do at designing\ncircuits, at optimizing them, at physical layout, at integrating all the pieces from\ndifferent vendors, going to the fab and getting it manufactured. I mean, it’s just amazing\nwhat is involved in making a chip. And the startup had some real veterans and people who\nreally knew what they were doing. It was some alumni of Texas Instruments and then others\nfrom around the Bay Area. And I learned a lot. It was really fun to be with those kinds of\nexperts and learn how hardware works and how it’s built."
+    },
+    {
+      "type": "ts",
+      "text": "00:43:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you have any concrete examples of ways in which your research after was different than\nyour research before for having done the experience?"
+    },
+    {
+      "type": "ts",
+      "text": "00:43:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "I think, well, there’s a line of work that came out of the sabbatical that I think I\nwouldn’t have done. I can’t take credit for it. My colleague at Barefoot, Changhoon Kim,\nhe’s now at Google and does lots of AI infrastructure for them, had this idea that if we\nhave routers that are programmable, like fully, I should say on the router chip that\nBarefoot was designing, literally almost the entire behavior end to end you could specify\nin the program. There were a few things that were fixed, but pretty much you sort of\nreceive bits and then you can write a program that parses those bits into some data\nstructures and then you can write some code that interacts with different memories and you\ncan change the bits and you can run them through different hash functions and other\nfunctions, and then you can spit them out the other end, the whole thing you could really\nspecify. And so he sort of realized this is just another kind of processor. It’s a\nprocessor that looks a lot different than a CPU, but it has a little bit of memory, a\nlittle bit of state, and it’s very high throughput. And if you’re thinking about a data\ncenter, what would [… elided 2613 characters …] his thing that … I remember when I\nwas eons ago in grad school and learned about networking, multicast was this important\nthing that was going to be the way that we delivered video to people and that turned out\nnot to happen. And in fact, I think there was a basic confusion wasn’t clear till later,\nwhich is that it turns out multicast, which is a mechanism for essentially broadcasting\ndata, which involves laying out trees that you can use for the automatic transmission and\ntake advantage of the network switch’s capability of copying data in parallel down\nmultiple paths concurrently. And it seems like a great way to get the same data to lots of\ndifferent people. But I think the thing that wasn’t clear at the time was that the data\nplane was going to be super cheap and the control plane was going to be really expensive,\nmeaning you would have a huge amount of bandwidth for sending data around and actually\nvery little space for the control data with which you would lay down the trees. And if\nlots of people want to consume lots of different data in these different logically\nseparate multicasts, then you just weren’t going to have space to kind of specify all\nthat. But in our world, there’s a relatively small number of channels, a small number of\nthings we want to get to everyone. And so the old multicast idea kind of works in this\ncontext, even though it kind of totally failed in the outside world. And now it’s just\nlike in the cloud, there’s just like no multicast. In fact, sometimes cloud vendors will\ngive you things that look like multicast, but they’re implemented really, really badly and\nslowly. And it turns out those are there for if you have some ancient application that you\nwant to run and it thinks it wants multicast, then you can give it that interface and we\nwill do a thing that kind of delivers the right packets at totally the wrong timescales,\nbut you can get some legacy software to work that otherwise wouldn’t work at all. Yeah.\nWell, I want to talk about multicast some more, but I think it’s also interesting, you\nsort of mentioned a way that your grad school version of networking and certain\ndistributed systems kind of was wrong. And I’ve described a few cases where I worked on\nthings that kind of didn’t end up being as successful as we hoped. And I think that’s\nactually really healthy. I mean, certainly university researchers should be working on\nthings that don’t work out. And I don’t mean don’t work out like you couldn’t solve the\nproblem, you couldn’t prove the theorem, you couldn’t build the system or whatever, but\ndon’t end up being the way the world works. I mean, that’s part of being in a creative,\ninnovative community is like, people are trying wild things and not all of them are going\nto be the right thing to do or the good thing to do at a particular juncture. And I think\nwhen communities get too conservative and you’re supposed to do things the sort of\nOrthodox way, that’s actually a recipe for stagnation. And that’s a little bit of the\nossification that happened in the internet community was like, there were these\nprinciples, which are good principles. The end-to-end principle’s a good principle, but\nyou should know when to break it. And breaking it may not be the right thing for every\nscenario, but if we never are allowed to go revisit that rule, somehow the world just got\na little smaller. So I love communities that in some unruly way are like advancing and\nmaking progress towards greater and greater things, but along the perimeter, there’s just\nall kinds of chaos and people doing crazy things. I know you watched this video, we just\nput on a conference called Nines, which is a new conference for the networking community,\ndevoted this idea of like, let’s explore new ideas and we’re going to be, not going to be\nwrong, but we’re going to be very accepting of new ideas. That’s going to be the main\ncriteria we use to evaluate papers. And to accompany some great papers that got published,\nwe also invited some sort of luminaries in the field to lend credibility to our effort and\nalso to tell stories about their experience with new ideas. And there’s a video from Scott\nShenker, What I got wrong about QOS. So Scott is like, for those who don’t know Scott,\nhe’s one of the giants in computer networking. He’s another, well, Scott’s not the failed\nphysicist. He actually is a successful physicist, but who switched to networking. But he\nwas involved in bringing networks that have support for quality of service in the late\n’90s and put his name behind it, wrote lots of papers. And he gave this very thoughtful\npiece about why things didn’t work out and what was wrong, but I mean also what was right.\nBut I just love that piece. I think academics should, A, be doing wild things and then not\nbe so shy about reflecting on, hey, this thing didn’t end up catching fire or being the\nway the world works, but it was still interesting to explore."
+    },
+    {
+      "type": "ts",
+      "text": "00:51:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. Yeah. I think we’ve had our own kind of evolution within Jane Street where I think\nearly on in some sense we only did things that worked. It’s a small company and there was\nlots of low hanging fruit and lots of opportunities and we kind of started out with a\nworking business and there were lots of small things you could do to make that business\nbetter and almost always make things better in relatively short timeframes. And we still\ndo a lot of that. There’s a lot of plucking of low hanging fruit, but as the organization\nhas grown, we’ve had more opportunities to try bigger things and to do projects that\nsometimes take years to bear fruit. And there’s something lovely about that as well. And I\nthink academia can and should and does take an even more extreme version of that where you\ncan take more bets that … Some of these bets might not work out for 10 or 20 years, and\nthat’s okay. And I think it’s an exciting way of moving forward the bounds of knowledge\nand to be able to do that in a way that isn’t as constrained by the needs to get the next\npractical thing up and running. So you’ve had this kind of industry experience at\nBarefoot. Now you’re here at Jane Street with a different kind of industry experience. I\nwas sort of involved in the story of how you got here. We’ve known each other for a long\ntime. I think I first met you when you were, I think, a PhD student at Penn in Benjamin\nPierce’s office talking about the lens work. So we’ve known each other for a long time,\nbut I’m kind of curious just from your perspective, you spent a long time knowing vaguely\nof Jane Street as this weird trading firm that uses functional programming languages. And\nI’m kind of curious how that process felt to you of what you thought about Jane Street in\nthe past and what in the end led you to think, “Ah, actually maybe coming and spending\nsome time here and doing work here would be an interesting thing to do.”"
+    },
+    {
+      "type": "ts",
+      "text": "00:53:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, I think we had been talking, I mean, Jane Street, for those that don’t know, is sort\nof quite prominent in the academic, functional programming community, which I consider\nmyself a part of. So Jane Street sometimes publishes papers at ICFP, which is the main\nconference in functional programming, sends people to the conference. I was sort of aware\nof, here’s this company that is using a functional language for much of its work, happens\nin my favorite functional language, and also really takes on hard technical problems and\nis willing to make these longer term investments in systems and tools. And so I was sort\nof aware of that. And I think we’d been talking, I’d even had some meetings with some\nfolks in the networking team about some of the efforts that were being made to, I would\nsay, bring SDN-ish ideas to Jane Street’s network. I wasn’t around, but my understanding\nis Jane Street’s network has emerged from being a smaller human managed network to\nsomething that’s, well, maybe not quite as big as the hyperscalers, but getting big enough\nthat you want to use those same ideas of top-down specification, having some tools to\nunderstand what’s going on, being able to really make changes with confidence. So to me,\nthe chance to work on those kinds of problems at a place that has, and we should talk more\nabout the firm’s culture, but we talked about ideas that fail. Jane Street has a very open\nculture. There’s a Wiki page, you can just do things. And I think that really appealed to\nme as well, the idea that we’re not going to be just doing things a conventional way.\nWe’re going to think about cool, maybe new ways to solve these problems and then get smart\npeople to work on it together. The other thing that, I don’t know if I’ve told you, but it\nwas definitely in the back of my mind is, although the research community has this lovely\nsort of tight embrace with the hardware vendors and the cloud companies and now the ML\ncompanies, I was very excited about the idea that, well, maybe financial networks are\ndifferent, right? There’s certain things like multicast like latency and latency at a\ndifferent timescale than what the cloud companies care about. And whenever you just take a\nproblem and you tweak it a little bit, you add some new assumption or different\nconstraint, often that leads you to a very different kind of solution. And so I thought it\nmight be fun to understand some of the unique problems that finance and Jane Street has,\nand then to be at a place where there’s going to be the smart people and resources to go\nsolve some of those problems."
+    },
+    {
+      "type": "ts",
+      "text": "00:56:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And for all that academia is a place where you can work on all sorts of wild ideas,\nit’s also the case that in lots of contexts, academic work gets kind of caught up by the\nindustry thing of the moment. And I think in networking, the hyperscalers have that shape\nof it’s a legitimately big and important problem and you see that networking papers kind\nof overwhelmingly want to think about that. There’s like an older fun example of this in\nthe garbage collection world where there’s like a stretch of years where all the garbage\ncollection papers are about Java garbage collection. And Java was like a very particular\nkind of language with a very particular approach to garbage collection that skewed the way\nthings were done. One interesting aspect of this is the way in which you tune a garbage\ncollector, like you always have to tune a garbage collector, trade off between space and\ntime of how much time are you going to spend collecting and versus how big you’re going to\nlet the heap go. And then the traditional way of doing this in Java collectors is a kind\nof roofline model where you’re just going to be like, “How much memory can I use? Well,\nhow much memory do you have?” And you sort of say, it’s like you have this big hulking\nenterprise application and it will run on a box and it’ll be able to use every bit of RAM\non that box. And then when it gets close to using it up, then it’ll have to work harder to\ncollect memory. And that’s not like the only, and for many context, not really the best\nway of tuning it. In fact, OCaml has a very different way of tuning its garbage collector,\nwhich operates in percentage terms and a whole different set of heuristics and stuff is in\nmind. But for a long time, all the papers were structured around this roofline model and\nthen eventually it breaks out of that. And so anyway, I sort of am open to this idea that\nit’s often useful to break away from the standard thing that everybody is doing. Yeah. So\nnow you’ve been here for a while and worked on some interesting problems here. What are\nexamples of problems that you have seen that come up in the Jane Street context that\nactually do look different from the problems you see in the outside?"
+    },
+    {
+      "type": "ts",
+      "text": "00:57:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "And one example, we wrote a short paper on this just getting at this question of\nmulticast. We’ve already talked about a little bit. So I don’t want to summarize the\npaper, but the basic story is support for multicast hasn’t gone away, but it’s really been\nsort of diminishing at the hardware level. And although I think most, if not all trading\nfirms, of course, use multicast because that’s what the exchanges are giving us in terms\nof data. The trend has been that commodity routers have gotten, they have more features,\nthey have a lot more bandwidth, but they’re getting a little bit slower. So the latency is\nkind of creeping up as you make more complex pipelines that can do more processing of\nevery packet. And then relative to the growth in things like bandwidth, support for\nmulticast has sort of been flat or even getting a little worse. And so we wrote this paper\nthat was just asking, this is not yet, I wouldn’t say it’s like a looming problem, but if\nyou sort of follow the trends out for some years, it could become an issue. And then in\nthe second part of the paper, we sort of asked, well, what are some really different\ndesigns that we could think of? Are there different kinds of fabrics that we could build,\nmaybe things based on optical networks or circuit switching, and there’s interesting\ntrade-offs. You can actually build a fabric that sort of delivers lots of traffic\nsimultaneously to lots of places, but then you have sort of a proliferation of traffic\neverywhere and you have to filter it. So you sort of have this trade-off between easy,\ncheap delivery with certain kinds of networks versus the ability to inspect, classify, and\nthen split and drop. And so that’s a paper that I think sort of uniquely could be written\nin this context."
+    },
+    {
+      "type": "ts",
+      "text": "00:59:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you think there are lessons to be learned from places that are in more of the\nhyperscaler mode from the things that you see in more trading style networks? I’ve looked\nover time at the kind of designs that people have built for doing all sorts of standard\nweb style problems of … An example that I remember talking to some of the engineers\nthere about is the way in which Twitter does distribution and analysis and transformation\nof the sequence of tweets, which is like now on the modern scale, a pretty small data\nproblem, but at some point it was a bigger one. And I remember looking at that and thought\nmulticast would be really useful here. And I wonder to what degree whether the kind of\nmagic powers of multicast are kind of underappreciated and underused in other kinds of\ncontext and that maybe they should pick up them, maybe they should pick them up more than\nthey actually do. Another thing that shows up a lot in trading context and showed up a lot\nin my own PhD is state machine replication, which is a kind of core idea for building\ndistributed systems and like shows up a ton everywhere and like cloud providers are also\nbuilding things with this. But multicast is like a super nice primitive for building\nefficient state machine replication systems. And it’s not one that seems to show up a lot\nin practice. And that’s like another just concrete example where I suspect it could be\nmore useful. I think it’s … Multicast gets used for lots of things in a trading context.\nThere’s using it in a very kind of local environment in the middle of building a certain\nkind of more or less super computer. You can have like lots of systems that are hooked up\nto each other with multicast and it’s a way of like giving you an efficient bus for just\ndistributing messages to everyone. And then it can also be used as a way of connecting\ndata across different organizations. And that’s the exchange side of this, right? They\ndeliver multicast as a way of efficiently and fairly getting their data out to all the\nmany people who are consuming it. And then that same multicast tree kind of extends into\nthe network of the consumer. And maybe that latter one is like very trading specific, the\nkind of cross-institution version of it. But the inside of the company version of it or\nthe inside of a system, it feels to me dramatically underused."
+    },
+    {
+      "type": "ts",
+      "text": "01:02:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Again, I don’t have your distributed systems instinct, so I can’t quite a spar with you on\nthat. But one thing that I’ve been pondering recently is, and this is inspired by a paper\nby Nick McKeown and his student, Sundar, that they published just last year. Most\nnetworking infrastructure is still based on the good old packet switching model. And\nthere’s reasons that we moved to packet switching in the 60s. It gives us efficiencies. We\ndon’t have to schedule things. We don’t have to understand reserve capacities and so on.\nIt’s a very simple building block that has really nice properties. And you might wonder,\nwhat does this have to do with packet switching? Well, sorry, with multicast, the\nchallenge with packet switched routers is that building support for multicast is actually\npretty complicated. So doing that with low latency and building in the heart of a router,\na unit that can move packets along any combination of input and output ports at speed,\nmaybe even doing some queuing at that same time, that’s pretty complicated."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I guess, and it’s complicated because if all you had was a single multicast tree to\ndistribute along, then packets would come in and you’d copy them out to multiple outputs\nand everything would be cool, but you actually have many different things happening\nconcurrently. So you both want the parallelism of being able to emit out of multiple wires\nat the same time, but also you have to tolerate all this dynamism. And there’s like some\nfundamental tension there of like, you can’t at the physical layer do things completely in\nparallel if some of the resources you’re trying to address are busy doing something else."
+    },
+    {
+      "type": "ts",
+      "text": "01:03:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "And this part of a router is sort of the middle part that has to run the fastest. It’s\nwhat determines the rest of the performance of your whole router. So that’s generally\ncomplicated. So what this paper that Nick and Sundar wrote is, they were looking at\nmachine learning workloads, in particular training workloads, which are often very\nregular. And so why are we doing packet switching at all? Why don’t we just understand\nwhat’s going to happen when, and then take those schedules, this data here is going to be\ndelivered according to this permutation and this one on this permutation. And then you can\nbuild a much simpler switch that just understands how to implement these permutations on a\nschedule. And Nick has deep hardware understanding. So the paper explains why this would\nlead to simpler, cheaper, faster switches. But for that use case, it seems like the right\nway to do things if you were to be able to boil the ocean and build all the infrastructure\nfrom scratch. So to me, the sort of intellectually interesting question is, we have\ncertain kinds of networks that can do these tasks that are otherwise expensive or slow or\nhard. We know how to build networks that can do those tasks very well, but we’re sort of\nafraid to build them because there’s so many benefits of packet switching that we can just\nsort of spray these packets into the network and whatever resources we have will be used\nefficiently by the herd. But maybe in the future, we’ll start to think about going back to\nsome hybrids where we do a little bit of both."
+    },
+    {
+      "type": "ts",
+      "text": "01:05:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. And in some sense, we are kind of boiling the ocean or maybe making several new\noceans or something because the whole ML world is creating this enormous revolution in\nnetworking and you have both much higher demands in terms of throughput and latency just\nbecause of the … In fact, in part because of this very regular process, right? A lot of\nthe synchronization in machine learning training is this kind of barrier synchronization\nwhere you have a bunch of hardware in parallel doing a thing, that hardware is actually\nvery deterministic. And so it finishes pretty much at the same time across multiple, and\nthen they need to exchange their tensors really quickly. And all that time where they’re\nexchanging tensors, I mean, you can do some overlapping, but sometimes you can’t do\noverlapping. And any uncovered communication is just time where these very expensive GPUs\nare just idle and it’s just wasted money. And so there’s a huge amount of pressure on\nthese networks and people are also increasing the heterogeneity of the networks because\nnow you have the networks on the inside of the … I guess NVIDIA uses, maybe everyone\nuses this kind of somewhat odd terminology of scale up versus scale out, where scale up is\nlike the really fast little network and then scale out is the network beyond that. So that\ncould be a context where you have the freedom to go and try very different things."
+    },
+    {
+      "type": "ts",
+      "text": "01:06:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s actually, I mean, in networking, it’s a pretty exciting time because people are\nplaying with maybe not ideas quite as radical as building just a scheduled crossbar in\nmaking that be the building block. But there is a lot of innovation in transport\nprotocols, collectives, co-optimizing the low level CUDA code and the communication code.\nSo things feel very suddenly like, oh, we can sort of play with all these pieces of the\ndesign. And then because training and serving AI models is sort of the central problem of\nthe day for systems, you kind of get immediate feedback and when something works, people\nget very excited."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another thing you’ve been working on while you’re here is BGP. Maybe you could say a\nfew words about what BGP is and then talk about the problems that we’ve run into that\nyou’re working on making better."
+    },
+    {
+      "type": "ts",
+      "text": "01:07:22"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. So this is maybe one of the areas where Jane Street was sort of, I think, living in\nthe past. We have a by now big, and it’s been growing a lot, worldwide network that\nconnects all of our sites. And although we have a lot of tooling and analysis, we were\nstill expressing what we wanted the wide area network to do in terms of configurations for\nindividual BGP routers. And that very much feels like sort of the dark ages. So maybe I’ll\nquickly explain what BGP is. BGP is what was originally designed as the routing protocol\nfor the internet. So you have the internet with all these tens of thousands of autonomous\nsystems. Every organization is its own system, gets to decide how it routes traffic to\nother autonomous systems, and you need some protocol that these so-called AS’s can use to\nagree on how traffic flows."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "What’s an AS?"
+    },
+    {
+      "type": "ts",
+      "text": "01:08:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Autonomous system."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Oh, okay."
+    },
+    {
+      "type": "ts",
+      "text": "01:08:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "And the way the BGP works is essentially every AS knows who its neighbors are, and it\nselectively shares information about certain paths it knows to reach certain destinations.\nSo for example, our routers that connect to our peers on the internet might say, “Well,\nhey, we’re Jane Street. If you want to reach any Jane Street IP address, come to us.” And\nthen those routers will send to their neighbors a similar advertisement. If you want to\nreach Jane Street, I can reach them in one hop and you can also share other\ncharacteristics about the path. So this is sort of the basics of BGP. It’s a so-called\npath vector protocol. It’s disseminating information through the internet about paths that\nreach certain destinations. And what makes it very rich is there are many so-called\nattributes that you can add to these advertisements. So you can decorate an advertisement,\nnot just with, I know how to reach Jane Street, but I know how to reach Jane Street with\nthis cost. You can add sort of tags, you can add a whole bunch of information. And now\nwhen a router receives this advertisement, it can sort of compare maybe a whole bunch of\nadvertisements it has all for reaching Jane Street on different paths, and it can then\nmake a selection and decide which one it thinks is best. So it lets every node kind of\nmake a local choice and express its own preferences, but it also kind of quickly\ndisseminates information about all the paths through the internet."
+    },
+    {
+      "type": "ts",
+      "text": "01:09:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And in some sense, it’s sort of like the opposite of what we were describing in this kind\nof … I step back and write a big program that lays out a mostly static graph. This is\nlike, instead I have a rich distributed system of individual nodes sharing information and\nthen making local decisions about how to route data. Although hopefully somewhere in\nthere, there’s like some reason to think that those local decisions actually lead to good\nglobal outcomes."
+    },
+    {
+      "type": "ts",
+      "text": "01:10:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. What I’ve described is basically how BGP works on the internet and it’s\nactually, it was not known for a long time why BGP seems to work so well. You would think\nthat a bunch of nodes that are making independent decisions —"
+    },
+    {
+      "type": "ts",
+      "text": "01:10:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That would seem like a very important thing to know."
+    },
+    {
+      "type": "ts",
+      "text": "01:10:31"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Well, in fact, the internet routes are fairly stable. So things sort of converge to … I\nmean, the internet’s always in motion, of course, but if we could pretend that we could\nstop the world, the internet sort of converges to the paths that are sort of at least a\nlocal optimum pretty well. And there’s a really nice paper by Jen Rexford, my postdoc\nadvisor and Lixin Gao that explains why this is the case. And it turns out that the\ninternet has a kind of structure that comes from the economic relationships. You have ISPs\nand customers, and because the kinds of BGP choices that different players in this\necosystem tend to make, it turns out there’s sort of latent properties that cause BGP to\nbehave particularly well. These are the so-called Gao Rexford conditions. This is like\nancient stuff, but it’s kind of cool that this unruly distributed system actually works\npretty well for these reasons."
+    },
+    {
+      "type": "ts",
+      "text": "01:11:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Why did this present problems for us?"
+    },
+    {
+      "type": "ts",
+      "text": "01:11:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So one of the things I haven’t said is that BGP is often also used inside of\norganizations. And it’s a little confusing because it was, again, originally designed for\nthe internet where the nodes that are participating are an entire organization like Jane\nStreet or an entire university like NYU. But of course inside of Jane Street, there are\nalso many thousands of routers and they need to understand how to reach certain\ndestinations, both internal and external. And so there are other protocols that have been\nused in the past, but for many decades now, it’s been really common to use BGP also\ninternally to share knowledge about what paths exist."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Is part of the reason for that, basically the dynamism that you need, like if nothing\nelse, links can fail and you need to be able to recover from link failure."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think it’s a really expressive protocol. It’s got all these ways that you can cram\nin information about different routes and make choices and selectively disseminate\ninformation. It’s widely supported by vendors. All the network engineers know it because\nit’s been this way for a long time. So why not? It’s a good tool for disseminating\ninformation about the network topology and its paths."
+    },
+    {
+      "type": "ts",
+      "text": "01:12:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. I guess in an alternate universe where you’re totally down the SDN route, you could\nimagine that you could just look at your overall network and just decide what you want to\nlay out and then you don’t have to think about the communication part of it, but then\nthere’s no story there for a dynamic."
+    },
+    {
+      "type": "ts",
+      "text": "01:13:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "One of the sort of maybe flaws of the original SDN conception is, although you might want\nto think about your specifications or your program as being truly one program, I have one\nobjective for my network and I’m going to check that into a repository and have people\nreview it and argue about it and test it. But then the way you realize that there are good\nreasons to have distributed protocols. They detect and respond to changes very quickly.\nThey don’t involve lots of coordination. And so if you can map your high level objectives\ninto a distributed implementation, there are good reasons in a large system like one that\nspans the whole world to do that."
+    },
+    {
+      "type": "ts",
+      "text": "01:13:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So maybe you want to compile down to something, but maybe you don’t want to compile down\nto a static graph."
+    },
+    {
+      "type": "ts",
+      "text": "01:13:43"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Right. So the system I’ve worked on here is a system called Butane, and really we’re\ntrying to do exactly this. We’re trying to have, well, we have a sort of higher level and\nin our case, it actually is centralized. It’s like checked into our repositories and if\nyou want to make a change, you go propose a change and it gets reviewed just like our\nother software. But then it gets compiled into snippets of BGP, one for every router in\nthe network, and then the behavior of the whole thing is somehow the distributed behavior\nof all of these routers exchanging BGP messages with each other, and then ultimately\narriving at some graph that forwards packets through the network."
+    },
+    {
+      "type": "ts",
+      "text": "01:14:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So I guess the top level of Butane is some kind of specification of what you want the\nbehavior to be, and then that compiles down to the actual concrete configs that land\neverywhere."
+    },
+    {
+      "type": "ts",
+      "text": "01:14:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "01:14:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So what can you say in that top level spec?"
+    },
+    {
+      "type": "ts",
+      "text": "01:14:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So the top level spec, I guess one thing that we care a lot about is latency. So we, to a\nfirst approximation, would like certain kinds of traffic to absolutely take the fastest\npaths. And then there’s other traffic that we just wanted to get to its destination\nsomehow. And we may not actually care that much if it loops around the world to get there,\nif it takes twice as long or three times as long as it has to, as long as it gets there,\nthat’s okay. And so the Butane’s policy abstractions are really designed to support sort\nof the default case just sort of happens. You don’t have to specify very much. And then\nwhere you want to say, no, this traffic should take a fast path, you can do that. And then\nthere’s some other pieces that are kind of a little bit inside baseball, but we internally\nhave certain structures to the network. And so there’s the policy abstraction sort of\nexpose some of those structures, things like where are their sites? We have certain\nexpectations about how traffic may flow or not flow between certain sites. There’s a whole\nset of ways that we sort of classify and differentiate traffic. So there’s some features\nfor doing that as well."
+    },
+    {
+      "type": "ts",
+      "text": "01:15:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And then what is the technically hard part of this story? I could write a program that\nwrites a bunch of BGP configs, but I don’t have much of a lock between what I wanted to\nhappen and then what’s the dynamic behavior of it. Is that like the central problem here?"
+    },
+    {
+      "type": "ts",
+      "text": "01:16:06"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So yeah, let me not answer the question. I’m not going to talk about the hard part. I want\nto tell you, why has Butane been valuable or what have we found is sort of the most\nimportant parts of Butane? And to a first approximation, it’s a little bit something we\ntalked about before. It’s just bringing a sort of software mindset to thinking about the\nwide area network. So instead of operators having some change they want to do, network\nengineers might want to move this traffic over to this other path and then go make a bunch\nof changes expressed at the BGP config level to several routers. Now you modify a little\nbit of Butane config, the compiler generates the actual BGP code, and then it gets\nvalidated. We have some tools for visualizing and validating the changes, and then it gets\npushed to the network. So there’s actually not, I would say, giant technical challenges.\nThis is all sort of fairly well understood stuff, but for Jane Street, moving us from a\nworld where we’re making changes to individual routers at the BGP config level to being\nable to work with these other abstractions has been pretty exciting. And I’ll say, I was\nactually not sure what the network engineers would think, but so far people seem to really\nlike it. The ability to take these bigger steps has been very exciting. And then the other\npiece, which maybe surprised me a little bit is all of the tooling that we’ve built,\nespecially tooling for testing and visualizing, that’s what they’re actually so excited\nabout, the idea that I can make a change and then we have this UI where you can see what’s\nthe expected change in latency say between sites. And this is something that maybe they\ncould have worked out on paper or could have pushed and then tested, but now we have a\nmodel, again, based on some historical measurements and we have a semantics for both\nButane and BGP, so we can sort of compute what’s the change going to be. And we can do\nthis both for sort of like propose one change and then see what might happen. And we’re in\nthe midst of making this more powerful. So you can do sort of what if kinds of things\nlike-"
+    },
+    {
+      "type": "ts",
+      "text": "01:18:11"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Or like, what if we lose a link?"
+    },
+    {
+      "type": "ts",
+      "text": "01:18:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Well, what if we lose n links or I’d really like this hotspot to disappear. Proposed to me\na set of changes you could make that would move traffic off here while minimizing other\nchanges. So that’s a different kind of, I don’t know, edit or UI that you might like to\nhave where you’re not specifying a different Butane policy abstraction, you’re really kind\nof expressing constraints on what you’d like the system to get to."
+    },
+    {
+      "type": "ts",
+      "text": "01:18:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So do you essentially need a kind of solver which does just like exploration of the space\nof other configs?"
+    },
+    {
+      "type": "ts",
+      "text": "01:18:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "The second thing I described is still research."
+    },
+    {
+      "type": "ts",
+      "text": "01:18:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Got it."
+    },
+    {
+      "type": "ts",
+      "text": "01:18:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yes. So we’re actively working on that, but yeah, it’s going to look very much like ideas\nfrom program synthesis or some kind of solver where you can take these constraints and\nthen explore the space of programs that might meet them. This is something that, again,\nmaybe to a programming languages person doesn’t sound all that wild, but to do this to the\nnetwork infrastructure I think is pretty wild. And what keeps it safe is that we do have\nthis, we have a semantics for both Butane and BGP. It’s extensively tested both kind of\nmathematically and against the actual hardware. You have to make sure that the way that\nBGP is realized by the vendors doesn’t somehow differentiate from the internet standards.\nAnd so we have quite a lot of confidence that our model of BGP is good, and therefore we\ncan do these analyses and give answers to engineers before the"
+    },
+    {
+      "type": "ts",
+      "text": "01:19:38"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Market. Right. And at the end of the day, there’s a kind of formal methods piece where it\nis trying to do something that gives a provable up to the fact that you don’t know if the\nunderlying model is quite right because the vendors might be doing something differently,\nbut gives you a kind of provable guarantee of the fact it is analytically telling you\nabout the network. Is that right?"
+    },
+    {
+      "type": "ts",
+      "text": "01:19:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I think this use of formal methods actually may become a lot much more commonplace.\nSo I think formal methods, people often think, I build a tool to verify something to stop\nbugs. This is going to be the seatbelt of my complex system. But here, of course, we care\nabout stopping bugs and preventing us from making mistakes, but the real power is now we\ncan start to explore. So we can start to take bigger steps and even automate some of the\nexploration of those steps. And that would be unthinkable if you have to reason about the\nimpact of all these changes network-wide and let alone on latency, on congestion. And so\nhaving models that are backed by some kind of mechanical implementation that you believe\nat least closely corresponds to what’s going to happen, that’s what empowers these tools\nthat take bigger steps."
+    },
+    {
+      "type": "ts",
+      "text": "01:20:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And rather than it giving you a single notion of correctness of like, I’ve written a spec\nand does it follow the spec, it’s almost like a kind of observability of like, I get to\nexplore different possible setups and think about how they perform and what their\nbehaviors are so that I can, with more confidence, make trade-offs between different\ndesign decisions and figure out how I want to structure the network."
+    },
+    {
+      "type": "ts",
+      "text": "01:21:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So one surprising use of this that has just happened in the last couple of weeks is some\nof the folks in the team are starting to use it for not actually routing, but capacity\nplanning. So deciding what future links should we buy. And this is something where there\nis actually a well-understood mathematical theory. You can model all the demands for\nbandwidth and the current network and then figure out how to augment it subject to what\nfiber is available. But to do that connected to our current Butane policies and our\nhistorical workloads and latencies is kind of cool. So to put it into not just how do we\nroute today’s traffic, but how do we figure out how to expand the network so that we can\ndo a better job of routing tomorrow’s traffic?"
+    },
+    {
+      "type": "ts",
+      "text": "01:21:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And I guess that’s just all on the back of essentially having a more complete model of the\nnetwork that includes these kind of dynamic behaviors."
+    },
+    {
+      "type": "ts",
+      "text": "01:22:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I’ll maybe say one more thing. You asked about what was hard about Butane, and we\nbenefited from a lot of academic work. People like Zach Tatlock at UDub had written down a\nformal semantics for BGP in the Rocq Proof Assistant, and we didn’t use their\nimplementation, but their paper did a really nice job of spelling out, here’s how BGP\nconfigurations should be understood. There was also work on designing higher level\nabstractions for BGP, and some of these were really different, sort of the analog of like\nOCaml instead of X86. And we actually chose not to adopt those. So our Butane policy\nabstractions are fairly simple and kind of like OCaml, they compile fairly\nstraightforwardly into BGP configs for different vendors. And we made that choice early\nand I was, if I’m honest, a little bit disappointed, it would be fun to do something kind\nof more wild to have something like OCaml as an analogy. But I think it was the right\nchoice to actually pick something where the abstraction abstracts, but in a way that you\ncan, when needed, sort of peel back the abstraction and understand how it might map to all\nthe components of a BGP config. And so there are hard problems we could have solved, like\nhow do you compile some very expressive policy language onto a bunch of distributed router\nconfigs? We did not solve that problem or we didn’t solve it in the fanciest way we could\nhave. Maybe in the future, we will start to explore richer policy abstractions, but in\nthis context, at least, I very much now agree it was the right choice to sort of pick\nsomething relatively simple and then iterate based on that."
+    },
+    {
+      "type": "ts",
+      "text": "01:23:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. There’s something powerful about having an abstraction that isn’t just simple in\nterms of semantics, but is simple in terms of how it elaborates, like how it goes from the\nhigh level thing that you want to the actual thing you’re running. If you’re thinking\nabout people who are trying to in close detail engineer how a system behaves in all sorts\nof different aspects, just giving them that kind of vision onto the behavior. And I think\nthe point about OCaml, it’s sort of both. It’s both like a fancy, wild, high level\nlanguage, and also it has a relatively straight ahead compilation story where it’s\nrelatively easy to understand from looking at the OCaml code, how that code is going to\nexecute. And so that’s, I mean, there are trade-offs here, obviously. I think more\noptimization is good, but also more straight ahead compilation makes it easier to think\nabout what’s happening. How did the process of taking these ideas that came in part from\nyou and in part from the team and turning this into a thing we could actually roll out\ninto the network and use."
+    },
+    {
+      "type": "ts",
+      "text": "01:24:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So it’s kind of amazing it’s worked this way. Maybe I could say a bit about how my\nengagement as a visiting researcher has gone. So I’ve been spending about a day a week\nhere for a few years. I’ve spent some periods of time where I’ve spent more intensely a\nwhole week or several days in a row. And so a lot of the design of the system was done by\nsitting side by side with some network engineers, some folks on our team that builds\nnetworking tools and trying to understand our problems, trying to come up with some\nsolutions and then prototyping them and then seeking feedback from others on the team and\ncontinuing. So for me, this has been really fun because in my day job as a professor, I’m\nteaching and doing research with a team of students. Really the goal is to train students.\nHere I get to work with really great engineers and that’s a great privilege. Not my\nstudents are also great, but it’s fun to work with sort of really smart software engineers\nwho can solve problems really quickly. For me, it’s always a little bit sad when the end\nof my day or week ends, we’ll have had a team meeting and maybe I’ll have done a little\nbit of development and synced with the team. And then I know that by next Thursday when I\nteleport back in, amazing things will have happened. But that’s very much from my\nexperience. So I get the privilege of being sort of a small player in this team and then I\nget to work with some really fantastic engineers."
+    },
+    {
+      "type": "ts",
+      "text": "01:26:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Has the process of actually putting it into production been relatively straightforward or\ncomplicated? How’s that played out?"
+    },
+    {
+      "type": "ts",
+      "text": "01:26:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So I think I have had less of a role to play here than in the design of the system. Again,\nI’ve had the privilege of working with a program manager and some other people from the\nmore operational side that have really helped roll it out. And there’s all kinds of\nproblems that have had to be solved. We had Butane running, its current set of features\nwere more or less done. And then we did a bunch of testing and then we did more testing in\nthe lab and then we started to roll it out. And the first rollout was on a new piece of\ninfrastructure that Jane Street had stood up somewhere else in the country but wasn’t yet\nusing. So we had sort of a living lab that we could roll it out and sort of kick the tires\nand see how it worked. And then rolling it out more broadly across the firm was yet\nanother step. And this involves doing firmware upgrades to the whole fleet of routers,\nmaking sure everything’s on a good version that’s very hard to do. Building all the\ntooling for automation so that these things can go into the standard workflows that we\nhave for making changes to the infrastructure. So again, I did almost nothing here, but\nthere’s an amazing set of people and processes. And maybe to say one thing that’s kind of\nnot just … I mean, every large company has these kinds of processes, but one thing\nthat’s really neat about Jane Street is a lot of these tools are really homegrown. And so\nin some cases, we’ve gotten to work with the team that’s actually building the deployment\ntool. And if there’s something that we need that the tool doesn’t have, they can build it\nfor us."
+    },
+    {
+      "type": "ts",
+      "text": "01:27:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, it’s kind of fun. For both good and ill, like Jane Street has been on its own like\n25 year long software adventure that has been pretty different from other places. And some\nof that had to do with a language choice and some of it has to do with idiosyncrasies of\nthe kind of business that we’re in. But like Jane Street software ecosystem is kind of\nweird. And I think there’s a lot of great things about that. I think there are some pain\npoints about that, but you certainly get a lot of control all the way through the stack,\nwhich is really cool. Yeah. So part of the point of the whole visiting researcher program\nis that it’s a way for us to kind of build good relationships with researchers. And I\nthink part of the value proposition for the researchers is that connection to the kind of\nwork we’re doing internally is a kind of useful way for them to kind of develop ideas and\nlearn about the world in a way that can influence their research beyond our walls. I’m\ncurious to what degree you feel like that has played out and to what degree like you have\nlearned things that affect how you think about research outside of the stuff you do here."
+    },
+    {
+      "type": "ts",
+      "text": "01:29:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "I’ll confess that part of why I’ve had so much fun spending a day a week in industry is I\nactually like maybe playing software engineer. So I really enjoy … I love my job as a\nprofessor. It’s the best job in the world. There are a lot of interruptions. Even if\nyou’re very careful with your time, you end up spending a lot of time on teaching and\nservice. And working with students is a joy, but it takes a lot of time. So it’s really\nwonderful to have a day where my calendar’s blocked off. I have meetings with folks here,\nbut Jane Street’s pretty efficient with meetings. My day doesn’t get filled up with\none-on-one Zoom calls or anything. And I actually get to sit in front of a terminal and\nwrite some code. I have to be very modest about how much I can do in a day, but for me,\nthat gives me a lot of joy. In terms of what I’ve brought back, some of the technical\nideas that we used in Butane are things that I’m now working on in my lab. So I didn’t\ntalk too much about this, but under the hood, the semantics for BGP and Butane that we\nbuilt originally was based on just sort of a simple simulator, a little operational model,\nbut there’s a more powerful mathematical model that’s been studied for some time in the\nnetworking community based on a more algebraic approach. So that’s become a topic that I’m\nworking on with my students in my group."
+    },
+    {
+      "type": "ts",
+      "text": "01:30:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Can I say, what’s the upside of the algebraic approach? How would it be better than this\nkind of more operational models?"
+    },
+    {
+      "type": "ts",
+      "text": "01:30:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "So I think the upside of the algebraic approach is the original vision was to sort of give\nyou the building blocks for building policy DSLs. There’s a paper by Tim Griffin called\nMetaRouting, and that expresses this idea. So the assumption is choices that you make\nabout how to route traffic through a network are very specific to a particular\norganization. Every organization has their own policies about how they want traffic to\nflow, how they want to share information with their neighbors and so on. So you can’t\nreally come up with a one size fits all solution and even what information you choose to\nshare with your neighbors by sharing information about latency or bandwidth or trust. And\nso Tim anticipated that BGP might be the assembly language of many policy languages that\nmight all look really different. And so how could we design some general building blocks\nfor designing these policy languages? And so the algebraic approach is that you sort of\nabstract what’s happening in BGP. There’s basically information being exchanged with your\npeers, and then there’s choices being made about the information you receive from your\npeers. You make a selection. And you can model those abstractly in terms of some kind of\nwhat he calls a rooting algebra because he’s British, but routing algebra. And once you do\nthis, you could sort of write down, here’s what a routing algebra is. Here’s what happens\nif you take a given routing algebra and you sort of run it in a graph, here’s the set of\npaths you’ll get. But also, here are constructions you can do on routing algebras. So I\ncould take two routing algebras, maybe that one that talks about latency and one that\ntalks about bandwidth, and I could run them together. I could sort of glue them together.\nAnd now I get a routing algebra that shares information about both latency and bandwidth,\nand it makes choices in some deterministic way about whether it prefers low latency or\nmore bandwidth, but I can glue them together, glue their preference function together, and\nnow I have a more interesting routing protocol. So this sort of becomes a factory for\nbuilding DSLs. And then the really interesting part is-"
+    },
+    {
+      "type": "ts",
+      "text": "01:32:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So basically more composability in the space of writing policies?"
+    },
+    {
+      "type": "ts",
+      "text": "01:32:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "01:32:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Okay."
+    },
+    {
+      "type": "ts",
+      "text": "01:32:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "And then you can also study, it’s not the case that every instance of BGP or every routing\nalgebra is going to converge to a unique solution. Sometimes, so BGP in general can have\nthis property that you end up oscillating between Multiple solutions. And A prefers these\npaths, use those paths for a while, but then B’s unhappy. So then you switch to the other\npaths and then A’s unhappy. So that’s bad. You would like that not to be the case. And you\ncan study generally what conditions on my algebra do I have to have to ensure convergence.\nGot it. And so anyways, these are kind of old ideas, but we started to play with these in\nmy lab. And I think the grander vision is we’d like to take the sort of original vision of\nSDN that you can write a sort of top level program, but we’d like to have the distributed\nimplementation based on BGP, which is widely supported and such. And so this could be sort\nof the IR of that kind of system."
+    },
+    {
+      "type": "ts",
+      "text": "01:33:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Cool. So like a kind of richer compiler. Can you imagine that work eventually reflecting\nback into the kind of things that we’re doing here?"
+    },
+    {
+      "type": "ts",
+      "text": "01:33:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Potentially. I think, as I mentioned, we were sort of somewhat modest in our original\ngoals for Butane’s policy abstraction, and we have things we know we could do that are\nfancier. And so I think to take that next step, it may be that understanding that the\nsystem as a whole is working well could be done in terms of routing algebras."
+    },
+    {
+      "type": "ts",
+      "text": "01:34:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Cool. All right. Well, maybe that’s a good place to stop. Thank you so much."
+    },
+    {
+      "type": "ts",
+      "text": "01:34:24"
+    },
+    {
+      "type": "speaker",
+      "text": "Nate"
+    },
+    {
+      "type": "p",
+      "text": "Thank you. It’s been a lot of fun."
+    },
+    {
+      "type": "ts",
+      "text": "01:34:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode along with show notes and links at\nsignalsandthreads.com."
+    }
+  ]
+}

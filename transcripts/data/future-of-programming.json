@@ -1,0 +1,1591 @@
+{
+  "slug": "future-of-programming",
+  "title": "The Future of Programming",
+  "mp3_rel": "audio/future-of-programming.mp3",
+  "transcript": [
+    {
+      "type": "p",
+      "text": "Richard Eisenberg is one of the core maintainers of Haskell. He\nrecently joined Jane Street’s Tools and Compilers team, where he hacks\non the OCaml compiler. He and Ron discuss the powerful language\nfeature that got him into PL design in the first place—dependent\ntypes—and its role in a world where AIs can (somewhat) competently\nwrite your code for you. They also discuss the differences between\nHaskell and OCaml; the perils of trying to make a language that works\nfor everybody; and how best a company like Jane Street can collaborate\nwith the open source community."
+    },
+    {
+      "type": "p",
+      "text": "Some links to topics that came up in the discussion:"
+    },
+    {
+      "type": "ts",
+      "text": "00:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Welcome to Signals and Threads, in-depth conversations about every\nlayer of the tech stack, from Jane Street. I’m Ron Minsky. It is my\ngreat pleasure to introduce Richard Eisenberg. Richard’s a senior\ncontributor to the Haskell ecosystem. He’s worked on Haskell’s type\nsystem in a lot of different ways over the last eight years. He’s on\nthe GHC Steering Committee. He’s the Chair of the Haskell\nFoundation. One might wonder, what’s he doing here? Well, it turns out\nRichard has joined Jane Street. He’s working on our Tools and\nCompilers team, and in particular, working on the team that works on\nthe front end of the OCaml compiler. So, thanks for joining me,\nRichard."
+    },
+    {
+      "type": "ts",
+      "text": "00:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "A real pleasure to be here."
+    },
+    {
+      "type": "ts",
+      "text": "00:41"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, maybe a good place to start out with is to talk about your\nbackground. You’ve done all this exciting work in the Haskell\necosystem. Maybe tell us a little bit more about how you got involved\nin Haskell and what kind of work you’ve done there."
+    },
+    {
+      "type": "ts",
+      "text": "00:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, sure. I first really encountered Haskell when I went back to\ngraduate school. I’d been a high school teacher for a little while and\nthen I thought, ‘oh, you know, it’s time to get a Ph.D. in programming\nlanguages,’ kind of, as you do."
+    },
+    {
+      "type": "ts",
+      "text": "01:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Mm. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:02"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "In the process toward that, I discovered dependent types. I didn’t\nwanna just show up in grad school and not know anything. So I did some\nbackground reading and I discovered that, you know, these fancy type\nsystems have so much expressiveness, and so much of a way of being\nable to sort of define what it is that you’re programming before you\neven write a line of code, that you can just express your ideas so\nmuch more clearly and then get the compiler to check that you actually\ndid it correctly. This was just sort of, you know, my brain exploded\nwhen I learned about this."
+    },
+    {
+      "type": "ts",
+      "text": "01:32"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I feel like, you know, I kind of pretend to know something about\nprogramming languages on TV, but like, actually my academic background\nis distributed systems, not programming languages, and there’s lots of\ngaps in my knowledge. And so, I kinda don’t really know what dependent\ntypes are. Can you give a suitably beginner-friendly explanation of\nwhat dependent types are?"
+    },
+    {
+      "type": "ts",
+      "text": "01:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure. And I’m gonna start by avoiding the trap of trying to define the\nterm, ‘dependent type.’"
+    },
+    {
+      "type": "ts",
+      "text": "01:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "01:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "And instead, just sort of describe ‘a language with dependent types\nallows you to do this thing.’ And that thing is to essentially encode\na proof of correctness into your program such that every time you\ncompile your program, that proof is checked. And so you know—if you’ve\nset things up the right way—that your program does what you think it\ndoes. And so, I’ll give a concrete example."
+    },
+    {
+      "type": "p",
+      "text": "And that is, to imagine a sorting function. So normally we think of a\nsorting function, let’s just say, it’s a function from a list of\n‘ints’ to a list of ints, right? It takes this list of ints’ input,\nand then does some transformation, and then produces a list. But\nactually, that’s a very loose description of a sorting function. We\ncan do better than that."
+    },
+    {
+      "type": "p",
+      "text": "I wanna say that a sorting function takes in a list of ints, and it\nproduces a list of ints in, I’m gonna say, non-descending order\n(because maybe there’s duplicates, so I don’t want to say ‘ascending\norder’ because someone out there might say that’s wrong). So we get\nthis list out that’s in non-descending order. Okay, that’s closer, but\nthat’s still not quite right because maybe my function just always\nreturned to the empty list. That’s a list in non-descending order."
+    },
+    {
+      "type": "p",
+      "text": "So instead, I really want to say that it’s a function that takes in a\nlist of ints, and returns a result that is in non-descending order,\nand is a permutation of the input list. And that’s a rather glorious\ntype that I can assign to a sorting function. But it accurately\ndescribes what that sorting function does."
+    },
+    {
+      "type": "p",
+      "text": "And then I can implement that in any number of ways, using any of the\ncommon sorting algorithms that you learn in computer science, and any\nof those different algorithms will meet that specification, and then,\nif I’ve encoded this, my compiler will check that my algorithm\nactually does sorting and doesn’t do some other thing. And so now,\nhaving sort of explained that, I can return back and actually say what\nI mean by ‘dependent type.’"
+    },
+    {
+      "type": "p",
+      "text": "A dependent type is a type that can depend on some input that you give\ninto a function, essentially. So, in this case, the output of the\nfunction, not just a list of ints, but the output depends on the\ninput. The output must be a permutation of the input. And so, that’s\nthe dependent type."
+    },
+    {
+      "type": "p",
+      "text": "So when I started grad school, then I saw Haskell, and here was a\nlanguage that had this fancy type system and had all this\nexpressiveness. Didn’t quite have dependent types, but it had a lot of\nthat stuff. That just got me excited. And then, through that I started\nworking with Stephanie Weirich at University of Pennsylvania. She was\ndoing a lot of Haskell work. She collaborated a bunch with Simon\nPeyton Jones, who then I started collaborating with, and things just\nsort of took off from there. It was a pretty fast introduction into\nthat world."
+    },
+    {
+      "type": "ts",
+      "text": "04:18"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I wanna go a little deeper on that. I feel like we’ve started with\nthe, like, ‘Well, of course I got a Ph.D. in PL and was interested in\ndependent types.’ Like, how do you even get there? Where does your\ninterest and background in programming languages come [from] in the\nfirst place?"
+    },
+    {
+      "type": "ts",
+      "text": "04:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So, once upon a time, I wanted to program. I don’t know why I wanted\nto program. I was too little to have that level of introspection."
+    },
+    {
+      "type": "ts",
+      "text": "04:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "04:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So I guess, uh, I learned Basic when I was, I think, five\nsomehow. There was a friend of my parents that decided I should learn\nBasic and so that happened."
+    },
+    {
+      "type": "ts",
+      "text": "04:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "04:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "But I then got more into it, I guess, when I was in 7th grade, so this\nwas, probably I was 12 years old. And someone told me that Pascal was\na good language to learn. So, you know, I pleaded with my parents and\neventually they bought me the Pascal compiler ‘cause back in those\ndays, you actually had to pay for compilers. At least on, sort of—we\nhad a Macintosh. If I had some kind of Unix system, maybe it would’ve\nbeen different."
+    },
+    {
+      "type": "ts",
+      "text": "05:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Well, which Pascal compiler did you use?"
+    },
+    {
+      "type": "ts",
+      "text": "05:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Um, THINK Pascal? Was that a thing?"
+    },
+    {
+      "type": "ts",
+      "text": "05:12"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "THINK Pascal, so not Borland. I guess Borland was more in the, like,\nDOS side of the world."
+    },
+    {
+      "type": "ts",
+      "text": "05:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, yeah. Borland, yes, Borland was for like, ‘real programmers.’"
+    },
+    {
+      "type": "ts",
+      "text": "05:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "05:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So I got this, and somewhere along the way, I had decided that every\npiece of software should be, like, if you read the instruction manual,\nthat should tell you everything you need to know about that piece of\nsoftware. I don’t know why I assumed that, but that was my starting\npoint. And so, it came with these two big books and most of the books\nwere just like on compiler flags and setting up projects and none of\nthis stuff about programming. At the end of one of the books was a\nsyntax reference with no glosses, no further information, just a\nsyntax reference using those, sort of, block and line diagrams to\nrepresent recursive loops in the syntax. And I was like, ‘Okay, well,\nif my assumption is that this book defines how to program, and this is\nthe only thing it has, then all the information must be here.’"
+    },
+    {
+      "type": "p",
+      "text": "So I just stared at these syntax diagrams probably for hours and\nhours. Like, ‘Okay, what does all of this mean?’ And then eventually\nsort of bootstrapped my way into learning how to program Pascal. And\nso, that being my first ‘real programming experience,’ somehow that\nbuilt the structures in my brain just around syntax and languages, and\nit kind of went from there."
+    },
+    {
+      "type": "p",
+      "text": "And then fast-forward 10 years or so, and I took a PL course as an\nundergrad from Norman Ramsey and it just lit me up. It was just like,\nthis is really cool stuff. I really enjoy this kind of thinking. And\nit turned out, I took that at the end of my senior year of undergrad,\nand so it was sort of too late to immediately go into grad school at\nthat point and I had this whole machine going toward high school\nteaching. So I did that for a while, but then I ended up returning."
+    },
+    {
+      "type": "ts",
+      "text": "06:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I love that your entrée into programming was, roughly speaking, a\ntraumatic experience with syntax. That seems… (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "06:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "But it wasn’t traumatic. It was fantastic. Somehow, this was just what\nI needed. This was what my 12-year-old-self needed: big syntax blocks."
+    },
+    {
+      "type": "ts",
+      "text": "07:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Okay. So, you went off, you got your Ph.D., you started\nworking on Haskell. Where did it go from there?"
+    },
+    {
+      "type": "ts",
+      "text": "07:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Well, I was working on my Ph.D. It was basically, Stephanie and I had\nthis idea about how to encode dependent types, but it required some\nmore support from the Haskell compiler. And so, I was pleading [with]\nthe Haskell people to create this for me. And then, eventually Simon\njust wrote and said, ‘Why don’t you just do it?’ And that was a new\nconcept for me. I was like, ‘I could influence this language? Well,\nyou know, I’m just this random person.’"
+    },
+    {
+      "type": "p",
+      "text": "But between Stephanie and Simon mentoring me, I got to a point where I\ncould contribute and then it just grew from there. So, [I] did a bunch\nof that as a Ph.D. student. Then after leaving my Ph.D., I was a\nprofessor for a few years at Bryn Mawr College. What was great about\nthat experience was, they were open to the idea that open source\ncontributions were a form of publication, right? A lot of professors\nhave a lot of pressure to keep producing papers. That was definitely\nthere for me, too. But alongside papers, I couldn’t just do\nsoftware. But I could do, sort of, traditional scholarly publications\nand software. So that gave me a chance to continue my implementation\nwork, remain a part of this open source community, while still doing\nthe high-level scholarly research that I had been doing. So that was a\nreally nice part of it."
+    },
+    {
+      "type": "p",
+      "text": "It turned out that, to my great surprise, that—well, this wasn’t to my\ngreat surprise—it turned out that this was a lot of work. That\nmaintaining a research program with a bunch of papers every year, and\ndoing these open source contributions, and teaching, there was just\nmore than could comfortably fit into one job, especially during term\ntime. And to my own surprise, I realized that the teaching part was\nthe part that maybe I could pause on. I had done that full-time as a\nhigh school teacher for eight years, now I was back doing it. It was\nfun, but I thought it was time to sort of push in a slightly different\ndirection."
+    },
+    {
+      "type": "p",
+      "text": "So after a couple years at Bryn Mawr, I left to join Tweed which is a\nsoftware consultancy based in Paris. They do a ton of Haskell\nwork. And they hired me, basically just to continue my contributions\nin the Haskell space. So, I continued doing research there, continued\ncontributing to the compiler there. And, you know, after a few years\nof that, that was fun, and I got to a point where I was looking to be\npart of a cohesive team all working together, and realizing that after\nso many years just working in one language, I was really ready to see\nwhat things were like in a different space. And so the timing worked\nout really well when you, Ron, reached out to me and started the\ndiscussions that led to me joining Jane Street."
+    },
+    {
+      "type": "ts",
+      "text": "09:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And often in these interviews, I’ll ask someone, like, ‘so how\ndid you get here?’ But actually, I was part of the dramatis personae\nof how you actually arrived."
+    },
+    {
+      "type": "ts",
+      "text": "09:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "You were the—the dramatis personae, yeah. (laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "09:37"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Right, which is, at some point, I was like, ‘oh, it would be\nreally good if Richard worked here,’ and I started reaching out and\ntrying to convince you to come. Which took, it’s important, I\ncalculated, 11 months from (laughs) when I started."
+    },
+    {
+      "type": "ts",
+      "text": "09:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, yeah. That’s right. I mean, you know, of course the story [of]\nme coming to Jane Street starts with you asking me, and me saying\n‘No.’"
+    },
+    {
+      "type": "ts",
+      "text": "09:54"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "09:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "And again, it was a matter of timing. I’ve been aware of Jane Street\nfor a long time, been sort of wondering what was happening over there,\nand somehow when you first reached out, it just wasn’t the right time\nfor me yet. And then the second time, it was sort of a better time. I\ncouldn’t even tell you why. It’s just, this is the way that life\nflows."
+    },
+    {
+      "type": "p",
+      "text": "But, you know, one of the barriers which we’ve joked about is that I\ngrew up in the New York area and actually ended up going to high\nschool in New York and commuting from New Jersey. So every day I was\ngoing back and forth across the George Washington Bridge, and swore to\nmyself then that I would never commute to and from New York City. And\nalso just sort of had this negative vibe from the financial industry,\nand I was just like, ‘I don’t know. Like, I want to be creating\nsomething that other people use,’ right?"
+    },
+    {
+      "type": "p",
+      "text": "But actually, this is fantastic. I’m having great fun. Part of it is\nthat I’m working as part of this larger ecosystem. It’s not just a\nclosed thing where I’m only doing stuff that’s internal to Jane\nStreet. But instead, contributing to this open source ecosystem,\nworking on an open language, OCaml, and really continuing some of\nthese research trends that I started 10 years ago. Now that I’m here,\nit just all fits very naturally together."
+    },
+    {
+      "type": "ts",
+      "text": "11:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I feel like, in general, one of my takeaways is that there’s lots of\ninteresting work in lots of different places and the preconceptions\nyou have when you are young often (laughs) don’t work out over\ntime. So a thing you talked about earlier is a topic that I feel like\nI should know something about, but don’t. I like your first high-level\ndescription ‘cause it actually lines up with the very little bit I\nknow about dependent types."
+    },
+    {
+      "type": "p",
+      "text": "And there’s also something that’s always made me a little nervous\nabout them because a basic fact about proofs is—proofs seem pretty\nhard to construct. People go to great trouble to build automated\nproving systems where you have tactic libraries, like, little tiny\nprograms that you can run to, like, ‘try this way or try that way’ of\ncoming up with a proof of a thing. And it all sounds really hard and\nwhen you talk to people who do kind of theorem proving on large scale\nsoftware systems, it sounds like a pretty challenging operation where\nthis is kind of a lot of engineering work that just goes into just\nconstructing the proof. So I’m curious how you think of the\npracticalities of that? Like, how convenient can you make it? And if\nyou make it a deeply embedded part of the programming process, does\nthat work well with the other things you might wanna do? Does it\ninterfere with the ordinary process of programming? How do you see the\npragmatics of that working out?"
+    },
+    {
+      "type": "ts",
+      "text": "12:08"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s a great question. And this is a question that doesn’t\nhave an answer yet. This is, I think, still something that the\nprogramming languages community is grappling with. I have my own\ntakes, but this is still sort of an open question out there."
+    },
+    {
+      "type": "p",
+      "text": "I think, first of all, that for a programming language to be\neffective, everything needs to be opt-in, right? If you have a\nlanguage that supports dependent types—and there’s a bunch out\nthere. So actually, OCaml’s module system is a dependent type\nsystem. It’s missing one or two key features that makes it really sort\nof go. But that definitely has aspects of dependent types in\nit. Haskell has aspects of dependent types."
+    },
+    {
+      "type": "p",
+      "text": "There are other languages, Coq, Agda, Idris, Lean, these are the ones\nthat really have embraced dependent types. But in any of these\nlanguages, you don’t have to use these dependent types. You can just\nwrite a sorting function that is described as ‘a list of ints to a\nlist of ints.’ That’s fine. And I think that’s a key aspect of any\nkind of system that’s gonna be using this dependent types feature,\nbecause not everyone wants to prove everything all the time. As you\nsay, proofs are expensive. And so, what you need is, you need the\nability to only prove the parts that you think are worthwhile proving."
+    },
+    {
+      "type": "p",
+      "text": "So let’s say we have an important part of the system that might be\neasy to get wrong that we want to prove something about. How do we do\nthat? Is that still worth it? And one thing to think about is, what’s\nyour cost-benefit analysis, right? If you do this proving, can you\nspend less time on testing? Can you spend less time on debugging? Can\nyou spend less time on catastrophic failure because you missed\nsomething when debugging?"
+    },
+    {
+      "type": "p",
+      "text": "It is a lot harder to do these programs with proofs. But sometimes,\nthat’s really worth it. It’s a matter of applying good taste, like it\nis everywhere in programming, right? Any programming language gives\nyou a ton of tools to work with, and it takes time and experience and\ntaste to figure out when it’s time to use which tools."
+    },
+    {
+      "type": "ts",
+      "text": "13:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And I do really like that, kind of, pay-as-you-go kind of\nattitude of, like, you want some kind of base language that’s\nrelatively simple to work with, and then the ability to add on more\nfeatures that give you more power of various kinds, and not be forced\nto pay for that complexity constantly in everything you do. Which is,\nI think, actually a really hard thing to get right in the design—of\nlike, not having these more powerful features leak in and corrupt the\nrest of your experience within the language."
+    },
+    {
+      "type": "ts",
+      "text": "14:17"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. It’s a very careful thing. And my push in Haskell has\nbeen to try to increase or add new features to help support dependent\ntypes, and there’s been a large community of people really excited for\nthis. And in my measurement, my biased measurement, a smaller\ncommunity of people who have been saying, ‘No, no, no. Don’t do this\nbecause it’s gonna make it impossible to write simple programs.’ And\nmany, many, many times, I’ve had to reassure people, ‘No, no. All\nthose simple programs will continue to exist, they’ll continue to\nwork. You can do what you want.’ But I also wanna give power to people\nwho want to use the fancy dependent types."
+    },
+    {
+      "type": "ts",
+      "text": "14:49"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Great. Okay. So let’s leave Haskell and dependent types behind for the\nmoment because that’s not primarily what you’re working on here. Maybe\nyou can tell us, what are you working on here? Like, what is the\nmission that you are on here, working on OCaml?"
+    },
+    {
+      "type": "ts",
+      "text": "15:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So, I’ll start more broadly and then I’ll get narrower. My broad\nmission is my belief that type systems are a fantastic way to\nstructure thought and structure programs. So by being able to write\ndown what you intend to do before doing it, then you can check what\nyou’ve done, and you can also help formulate your thoughts. And when I\nsay, ‘write down what you intend to do before doing it,’ I mean, write\ndown a specification in types."
+    },
+    {
+      "type": "p",
+      "text": "The flip side of that, is that it must be the case that you can do\nthat without paying a one-time cost. It’s gonna be problematic if you\nwant to write an efficient program, and yet, by defining your program\ncarefully ahead of time, now it’s no longer as efficient at\nruntime. This checking and this writing of a specification should all\nhappen at compile time. This should be happening in front of the\nprogrammer and not in front of any users. If any of those details leak\ninto user land by slowing your program down or somehow interfering\nwith the operation of your program, then there’s a misdesign in the\nlanguage."
+    },
+    {
+      "type": "p",
+      "text": "So coming down to what I’m actually working on here at Jane Street, so\nthe feature I’m working on is something called unboxed types. There’s\nvarious different ways of characterizing it, but one way to do so is,\nit allows inlining of type definitions. So what we might want to have\nin our design is to have a structure that has four fields that\ndescribe some aspects of a trade. And then maybe we store that\nstructure in some larger structure, and maybe that’s stored in some\nlarger structure."
+    },
+    {
+      "type": "p",
+      "text": "Well, if you do that the naïve way in OCaml, every time you store one\nstructure inside of another, it’s stored by a pointer. And it means\nnow when I wanna access the price of this trade that’s all the way\ndown (it’s a nested structure) I have to follow this pointer, then\nthat pointer, then that pointer, then that pointer, each time I have a\ncache miss, each time I have to load into memory. This is really bad."
+    },
+    {
+      "type": "ts",
+      "text": "16:46"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. And this highlights a kind of basic fact about OCaml, that it\nhas a very fancy, at least on the scale of modern language that people\nmight use, a very fancy type system and a brutally simple memory\nrepresentation. OCaml’s internal implementation might have been like a\nScheme or Lisp written in the mid-‘60s or something, which is to say,\neverything looks like either some immediate value, it’s no bigger than\na word that fits in a register, or a heap-allocated value, which is\nlike one header word and then one full word for every slot inside of\nit, and we have all the fancy, like, type goo on top of it that you\nwant, but all of the physical representation looks just like that."
+    },
+    {
+      "type": "ts",
+      "text": "17:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. Exactly. It means that we’re building this beautiful type\ndiscipline in our software to try to avoid errors, and try to express\nourselves, and try to communicate more clearly among developers—and\nwe’re paying for that at runtime! This is ridiculous. To me, every\ntime a type system feature slows down your program or otherwise\ninterferes is just a misdesign. And so, the fact that this is our\ncurrent state of play is problematic. The task I’m working on is\ncoming up with a new design for OCaml’s type system, or this aspect of\nOCaml’s type system, that allows us to have this rich type structure\nwithout paying for it at runtime."
+    },
+    {
+      "type": "ts",
+      "text": "17:56"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. Although it’s not that you can pick a type structure\nthat’s kind of oblivious to the performance details, right? In some\nsense it’s the opposite. The idea of the unboxed type work and a lot\nof the work that we’re doing now is really about taking design\ndecisions that have to do with performance and making them explicit at\nthe level of types."
+    },
+    {
+      "type": "ts",
+      "text": "18:13"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yes, that’s right. Because you can’t, I mean, in the end, we need to\nexecute this somehow. There needs to be an execution model. And so, if\nwe try to ignore all of these execution details in the type system,\nthen there’s not gonna be a way of making it fast. And so, the work\nis, in some sense, taking some of these execution-oriented details,\nmaking them manifest in the type system, getting programmers the\nability to write types that take these into account, so that we can\nthen execute fast."
+    },
+    {
+      "type": "ts",
+      "text": "18:39"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. In some sense, I think of this as really being about enabling\nperformance engineering, right? There’s kind of two different lines of\npeople thinking about how to optimize programs via compilers. One is,\nyou make your compiler smarter so it can do more and optimize things\nfor you. So the user can write kind of an ordinary program that just\nreflects, ‘what do they want to achieve and what’s the logical\nstructure,’ and then the compiler will, like, do something good. And\nthen, the other direction is trying to give a lot of precise\nunderstanding to the programmer so they can know exactly what they’re\ndoing and they can optimize their program. And these are both\nimportant."
+    },
+    {
+      "type": "p",
+      "text": "But, like, in some sense the scale of optimizations are very\ndifferent. Like, if you come up with a way of making your compiler\nfaster that, like, takes most user programs and makes them 20% faster,\nthat’s an enormous win. Like, that’s a shockingly good\noutcome. Whereas, if you give people good performance engineering\ntools, the idea that they can think hard about a particular program\nand make it five, or 10, or 100 times faster is like, in some sense,\ntotally normal. And so, there’s a kind of extra power of giving\nindividuals the ability to optimize. It obviously misses out on scope\nand there’s something great about being able to go and in one swell\nfoop (laughs) make 20 different, or 100 different, or all the\ndifferent programs faster. But you can’t get the same kind of order of\nmagnitude of improvements that you can get from giving one programmer\nthe ability to really carefully engineer their system."
+    },
+    {
+      "type": "ts",
+      "text": "19:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Well, there’s a real tension because what in the end we’re doing in\nprogramming languages is, we’re trying to find a way for humans to\ncommunicate precisely to computers. And we have at our disposal our\ntool, one of our tools is the fact that this is happening on a\ncomputer. So we can write computer programs to try to sort of help\ncover this distance, right?"
+    },
+    {
+      "type": "p",
+      "text": "In the early days, humans were just completely at a disadvantage and\nthe humans wrote in assembly code. And this was kind of terrible. And\nwe’ve come some way since then, and so now instead of writing sort of\ninstruction-by-instruction that’s gonna be executed by the processor,\nwe can write in a high-level language and have a compiler translate\nthat high-level language to something that the computer can\nexecute. Hopefully along the way, it can actually make that\nfaster. But sometimes, we’ve gotten ourselves sort of too\nhigh-level. If we abstract away too many of the details of execution,\nit’s exactly as you were saying. It means that the programmer can no\nlonger do the performance engineering. And so, we need to expose just\nenough to the programmer so that now there’s some more details that\nthey can think about. Now they can do that performance engineering."
+    },
+    {
+      "type": "p",
+      "text": "But still, I think the burden sits on the compiler to take those few\nhints that the programmer gives to make blazingly fast code come out\nthe other end. And it’s just really about this interplay between how\nmany details do we wanna expose? Certainly not all the details because\nthat’s too hard for the programmer. But we need to expose some. And\nso, it’s about, over time, programming languages developing more and\nmore features that sort of figure out the right line and the right\nbalance between this desire for high-level languages, closer to human\nthought, and low-level details, easier to execute."
+    },
+    {
+      "type": "ts",
+      "text": "21:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, before when we were talking about dependent types, we were talking\nabout how it’s important to have this kind of pay-as-you-go\nphenomenon, like, it gets harder as you try and get more power. It\nfeels like the same kind of thing shows up here."
+    },
+    {
+      "type": "ts",
+      "text": "21:44"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Absolutely."
+    },
+    {
+      "type": "ts",
+      "text": "21:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, when you try and get more control over the shape of data in the\nway that you described, what are the trade-offs? And how do you think\nabout designing the language in such a way that you don’t have\nwhatever extra complexity is there infect everything that you do?"
+    },
+    {
+      "type": "ts",
+      "text": "21:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Well, we have to be really careful. So, with unboxed types, one of the\nchallenges is gonna be that unboxed types interfere with\npolymorphism. So, in a language like OCaml, you can write a function,\nsay, that computes the length of a list. And that’s gonna work over a\nlist, no matter what the list contains. And so the way that we say\nthat, is that in the type of the length function, there’s a type\nvariable. We say that it’s an ‘alpha list’ where alpha can stand for\nany type that you might wanna put in there. Once we introduce unboxed\ntypes, that no longer works out. Some of these types won’t be suitable\nreplacements for alpha. And so it means that, by having these unboxed\ntypes in the system, now this really powerful feature of polymorphism\nbecomes constrained. And so, algorithms that people are used to being\nable to use everywhere, no longer work so well."
+    },
+    {
+      "type": "p",
+      "text": "So one of the challenges that we have is, how can we recover that? How\ncan we still keep this nice feature of polymorphism and without having\nunboxed types interfere? And so, one of the things that we’re thinking\nabout doing is some amount of essentially what could become runtime\ncode generation. It comes down to building experience with the\nfeature. As we start understanding this language feature better, we’re\ngoing to create programs using these unboxed types, recognize areas in\nwhich the current programming paradigms that we engage in no longer\nwork, and then figure out ways around them. It’s this give and take as\nwe’re doing the language design."
+    },
+    {
+      "type": "ts",
+      "text": "23:20"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And just to focus in on this code generation thing for a second, the\nbasic issue here is that the way you make in OCaml today, separate\ncompilation of work, and make the ability to write a function in one\nplace and use it polymorphically on lots of different types is, again,\nyou’re just kind of taking advantage of this rock stupid memory\nrepresentation. Like, what’s a list? A list is a collection of\nheap-allocated values, every one has, like, two slots. One is a place\nto put the data and the other is a place to have a pointer to the next\nthing on the list. And when you iterate over it, that thing always has\nthe same shape, it always has the same number of bytes, and so you\ncould just write one piece of code that kind of uniformly walks over\nit. And what happens in the unboxed types world is, suddenly you want\nthe system to contemplate multiple different possible shapes of the\ndata. And so, kind of at a mechanical level, you need different\nmachine instructions in order to do the walking of the data structure,\ndepending on what that structure is."
+    },
+    {
+      "type": "p",
+      "text": "And so, that’s how you might end up with wanting code generations. The\nway to kind of claw back the polymorphism is to generate the\ncode. Maybe you can generate the extra code at compile time, maybe you\nhave to generate the extra code at runtime. But you somehow now have\nto generate code for multiple different scenarios that essentially\nrepresent different physical shapes of the data."
+    },
+    {
+      "type": "ts",
+      "text": "24:33"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Exactly. And right now, our best thought is that this will happen at\ncompile time, that we’ll be able to figure out what code we need to\ngenerate at compile time. That will prevent a few programming idioms\nthat someone might potentially want. I don’t think anyone will ever\nwant those (laughs) idioms in practice so I think we’ll be able to get\naway with it. But it does mean we’re thinking carefully about this\ndesign and it’s a hard thing. I’m not aware of another language that’s\nreally tackled the problem in the way that we expect to tackle it over\nthe next few months."
+    },
+    {
+      "type": "ts",
+      "text": "25:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another language I think is interesting to compare to, in all of\nthis, is Rust."
+    },
+    {
+      "type": "ts",
+      "text": "25:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "ts",
+      "text": "25:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So Rust is a language which tries really hard to do two things at the\nsame time which are not trivial to do at the same time. One is to give\nstronger sense of type safety so that you can write programs that\nyou’re confident aren’t going to crash, so you get lots of protection\nfrom bugs from the type system. And also give the user a lot of\ncontrol over low-level details over how memory is managed. And we’re\nessentially trying to push OCaml in some sense at that high level of\ndescription in the same direction."
+    },
+    {
+      "type": "ts",
+      "text": "25:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "ts",
+      "text": "25:29"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "How do you think the Rust approach differs from the approach you see\nus trying to take with OCaml?"
+    },
+    {
+      "type": "ts",
+      "text": "25:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "This is a good comparison. This takes us a little bit away from\nunboxed types and polymorphism because I think the way that that\nappears in Rust is quite different. But the notion of this sort of\nfiner level of control is definitely accurate. But Rust gives up\nsomething really big to do what they do. They give up garbage\ncollection. Within Jane Street and generally in programming, I think a\nlot of the time garbage collection is fantastic, right? It allows us\nto program without worrying about these low-level details that for\nmost programs, we don’t need to."
+    },
+    {
+      "type": "p",
+      "text": "So, for instance, when I’m writing the OCaml compiler—which is written\nin OCaml, of course—I do want it to be performant, but I don’t really\ncare about microsecond latency. And so, I’m happy to write my compiler\nin a way that allocates a bunch of memory and then when it’s done with\nthat memory, the garbage collector comes and gets rid of it. This is\nreally, really convenient. In Rust, we don’t have that. In Rust, we\nare forced to think about memory, allocation, and deallocation at\nevery point in time. And this gives us this fine level of control, but\nit comes at a real cost, and it means now we’re sort of fighting\nagainst this ‘pay-as-you-go principle’ that we were talking about\nearlier. In Rust, for memory, you don’t pay as you go. Everyone has to\npay all the time for Rust fine memory control. So we wanna keep the\nhigh-level, garbage-collected OCaml for most applications, and then\nwhen we really want to have this fine level of control, we wanna have\nthat, too."
+    },
+    {
+      "type": "p",
+      "text": "And so, some of the work that we’re doing is around adding that finer\nlevel of control, but just where we need it."
+    },
+    {
+      "type": "ts",
+      "text": "26:57"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, one thing I wonder is whether this pay-as-you-go principle really\napplies in general or whether it’s like itself a kind of trade-off? I\nthink, if you’d asked the question of like, ‘well we should think of\ntypes in general as pay-as-you-go.’ Maybe your baseline should be by\ndefault untyped, and then when you want some extra control, you should\nadd types to it and lock it down more."
+    },
+    {
+      "type": "ts",
+      "text": "27:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Mm."
+    },
+    {
+      "type": "ts",
+      "text": "27:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That seems in principle reasonable. But all the languages that I’ve\ndealt with that have pay-as-you-go types or what you might call\ngradual type systems, actually inherit quite a lot of complexity and\nproblems from that choice. It’s often simpler and better, at least for\nsome kinds of problems, to have a uniform approach where you sort of\nfigure out what trade-offs you wanna do and you kind of apply those\ntrade-offs uniformly. And I think, at least from my perspective, the\nbase choice you make in a language like Haskell or OCaml of like,\n‘actually, even though it has some ups and downs, we’re just going to\nhave types everywhere and that’s just how it’s gonna be,’ I think is\nat least a reasonable place in the trade off space of designs."
+    },
+    {
+      "type": "p",
+      "text": "And I wonder if the same is true about this kind of thing about\npay-as-you-go control? Whereas, I can imagine for some kinds of\napplications, you would want the property that, ‘yeah, I am explicit\nabout memory everywhere. I kind of have a hard guarantee that anywhere\nI look I have all of this extra information.’ I don’t know. How do you\nthink about this question of where pay-as-you-go is the right way or\nthe wrong way to think about designing something?"
+    },
+    {
+      "type": "ts",
+      "text": "28:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "I think that’s a great question and I agree. I mean, pay-as-you-go\ntypes, people have wanted that for some time. It hasn’t ever really\nhappened. And, I mean, you could almost say that C++ and C have\npay-as-you-go types and that they have type systems, but the type\nsystems are sort of completely broken."
+    },
+    {
+      "type": "ts",
+      "text": "28:25"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Pay-as-you-go but then what do you get? I like that."
+    },
+    {
+      "type": "ts",
+      "text": "28:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Well, right, but, I mean, just to clarify for our listeners. What I\nmean by ‘completely broken’ is that at any point in time in C and C++\nyou can just say, ‘Oh, ignore the type system. And I’m gonna just take\nthis thing and change its type to be something else.’ And the\nlanguages, you know, they take this stance of, trust the programmer,\nthat when the programmer decides to do this, that this is a good\nidea. But we lose the guarantees that one would want from a type\nsystem like that when you dereference a pointer that there’s actually\nsomething there when you dereference it."
+    },
+    {
+      "type": "ts",
+      "text": "28:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So, getting back to memory control, I like the idea of pay-as-you-go\nthere, or maybe it’s not even pay-as-you-go as much as a language that\ncan have multiple different modes of use with very easy interop. In\nthat we can have a system where there’s not fine memory management,\nthat you just sort of use the current OCaml’s system of uniform memory\nrepresentation, and then another part where maybe this particular team\nor this particular file says, ‘No, no. Here I really want careful\nmemory management.’ This is a different kind of pay-as-you-go. It’s\nsort of at the file level or something like that, or the package\nlevel, I suppose. And then as long as one piece of code can easily\ncall the other, that also works well."
+    },
+    {
+      "type": "p",
+      "text": "We also see this kind of idea coming out in polyglot systems where we\nactually have multiple languages all calling one another because maybe\nthis part of the system is easier to write in some language, that part\nof the system is easier to write in some other language. It’s all a\nway of, these sort of different approaches to attack the same problem\nthat we don’t wanna have all of this complexity. We want to sort of\nnarrow down what complexity we have, where."
+    },
+    {
+      "type": "ts",
+      "text": "29:50"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. So there’s almost a notion of different dialects within the\nsame language?"
+    },
+    {
+      "type": "ts",
+      "text": "29:52"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "ts",
+      "text": "29:53"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "With a really high quality FFI that really captures all of the\nimportant details so you can kind of interoperate, right? In fact, the\nwork of polyglot stories are actually really challenging to\nengineers. There’s like, a ton—"
+    },
+    {
+      "type": "ts",
+      "text": "30:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yes."
+    },
+    {
+      "type": "ts",
+      "text": "30:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "… of hard work. I mean, we’ve done a bunch of work trying to get the\nPython-OCaml interop story working just right. We’ve made good\nprogress there but it’s actually quite challenging. And I feel like\nthe work is quadratic in the number of different (laughs) languages\nthat you need to hook together ‘cause it’s often unique, weird issues\nthat come with every pairing of things that you wanna make all one to\nthe other."
+    },
+    {
+      "type": "ts",
+      "text": "30:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "I think that’s right. And that’s one of the appeals of having one\nlanguage that maybe is flexible enough to operate in multiple\ndifferent modes. So, in particular, in our design for unboxed types,\nwe are planning to make a box operation explicit. And the box\noperation is going to be ‘the spot’ that allocates memory. And so,\nnormally, you’ll be able to get uses of this box operation for\nfree. Programmers won’t ever notice it, they won’t write it. It just,\nall the existing code will have all the boxes inserted. But it would\nbe really easy to imagine some kind of compiler setting that turns\nthat feature off. Meaning that every time you wanna allocate memory,\nyou have to explicitly ask for it."
+    },
+    {
+      "type": "p",
+      "text": "So this doesn’t bring you all the way to Rust, in that there’s still a\ngarbage collector operating, you still don’t have to manually\ndeallocate memory. But if I wanna write a program that absolutely,\nwhere every allocation is known, we haven’t designed this out. Maybe\nwe’re gonna go there, maybe we’re not gonna go there. Nothing is for\ncertain. But it turned out that in our design, it just naturally fell\nout that we could just add this compiler flag that just turns off\nboxing and it would be super easy to implement and we could experiment\nto see how easy it is to work with."
+    },
+    {
+      "type": "ts",
+      "text": "31:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, here we’re talking about a lot of very ambitious changes to\nOCaml. One uncomfortable fact about all of this is, like, we don’t own\nOCaml, we are not the (laughs) primary upstream developers. Every time\nwe wanna make a change to OCaml, there’s a bunch of people who we have\nto convince that it’s a good change. So one of the things that you’re\nthinking about in particular is, the kind of relationship of the work\nthat we’re doing here and our connection to the larger OCaml\ncommunity. Say a little bit more about how you think about this whole\nprocess."
+    },
+    {
+      "type": "ts",
+      "text": "31:51"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So, I wanna start by pushing back against ‘unfortunate fact.’ I don’t\nsee that as an unfortunate fact at all. So OCaml was born as a\nresearch project out of Inria in France and still is there. That’s\nsort of its beating heart. And we are really significant benefactors\nof that work that others have done, that others continue to do. And\nso, Jane Street has chosen to work in part of this open source\nlanguage community where we’re taking others’ ideas and we’re\ncontributing our ideas back."
+    },
+    {
+      "type": "p",
+      "text": "So in this podcast and in our work, we have these grand ideas. ‘Oh,\nwe’re gonna add this to OCaml. We’re gonna do this, we’re gonna do\nthat. Of course, what I really mean is, we’re going to experiment with\nthis idea internally. And then as that experiment unfolds, as we gain\nexperience and become more sure that it’s a right—I shouldn’t say a\nright idea. There’s many right ideas. But as we gain more confidence\nin a particular design, we can then work with the rest of the OCaml\ncommunity to try to make this part of everyone’s OCaml and not just\nJane Street’s."
+    },
+    {
+      "type": "p",
+      "text": "And in that way, we’re giving back to that community. At the same\ntime, we’re continuing to reap rewards from other work happening in\nthat community. So the biggest example of which is the multicore\nsupport that’s coming in OCaml 5. Still gonna be some time before Jane\nStreet’s ready to upgrade to OCaml 5. But that was a huge pile of work\ndone mostly outside, or maybe entirely outside of Jane Street’s walls,\nand we benefit by being part of this open source ecosystem. And so, I\nthink that this is a really great place to be where we’re\nparticipating, we’re getting new input of technical content, like\nmulticore OCaml, as well as design ideas. And I’m even thinking of\nsomething just a few weeks ago where I found an infelicity in the\ncompiler, made an improvement, pushed that upstream, and then we got\nfresh ideas from folks outside of Jane Street’s walls about, ‘Here’s\nactually an even better way to do it,’ and that was great. And then we\ncould incorporate that here. Without being part of this open source\necosystem, we wouldn’t have gotten that insight and we would be poorer\nfor it."
+    },
+    {
+      "type": "ts",
+      "text": "33:47"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, in the Haskell world, you spent a lot of time working on exciting\nnew type system features for Haskell and now you’re doing, in\nsubstance, similar kinds of work here. But I think that work flow is\npretty different, right? I think then, in the Haskell world, it was\nlike the primary work and ideation and evaluation was all deeply\nintegrated from the beginning in the open source world. And here,\nwe’re doing this work where we’re still open source, still, you know,\nyou can go look at the results on GitHub. But we are mostly iterating\ninternally, and then, over time, as we gain experience, as we gain\nmore confidence that the things we’ve built are good ideas, working to\nsee what subsets of these we can get upstreamed. I’m curious how that\nhas changed your feeling about the work, how it changes the texture of\nthe work that you do?"
+    },
+    {
+      "type": "ts",
+      "text": "34:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So working within the context of Jane Street gives us a lot more\nopportunity for experimentation. So a real big challenge of doing\nlanguage design is that, by necessity, you come up with an idea and\nmaybe you think it’s a good idea and you experiment with it on a few\nsmall programs on your own machine or you get your friend to sort of\nexperiment. You bounce the idea. Maybe, you know, you’re even\nproactive and you convene a committee of experts on this idea and now\nyou have, you know, five people thinking really hard about this one\nidea and trying to come up with the absolute best design."
+    },
+    {
+      "type": "p",
+      "text": "But then, once you come up with the design, if you’re just in an open\nsource environment—without the context of a place like Jane Street—you\ndevelop the idea, implement it, and release it, and then now you have\nthousands or hundreds of thousands of programmers using it, and maybe\nit was a bad idea. But by the time you discover that it was a bad\nidea, it’s a little bit too late because maybe you have 90,000\nprogrammers who think it’s a bad idea, but you have a thousand who\nthink it’s a fantastic idea and will be very, very, very upset if you\nbreak their programs by changing it. And now you’re in a bad way."
+    },
+    {
+      "type": "ts",
+      "text": "35:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "And even the people who think it’s a bad idea, who would like to get\nrid of it, don’t necessarily want you to break their programs in the\ninterim before they’ve (laughs) stopped relying on the feature."
+    },
+    {
+      "type": "ts",
+      "text": "35:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "That’s right. And so, it’s really, really hard to make changes to a\nproper open source programming language. In the context of Jane Street\non the other hand, it’s—I don’t wanna say dead easy. There’s work\ninvolved, but it is tractable and somewhat easy in that we can develop\nan idea, push it out there, get other programmers in the firm to start\nusing it, and then as that happens, we can say, ‘Mm. This isn’t quite\nworking out the way that we thought it would.’ That, you know, theory\nmeets reality, and theory loses."
+    },
+    {
+      "type": "p",
+      "text": "And so, then we can make a change to the feature and we have sort of\nan operation that we use internally called a ‘tree smash,’ where some\nJane Street engineers work together to come up with a big diff that\nhappens to all of Jane Street’s code, all at once, and we can change\nthe spelling of a keyword if we want to. And in fact, we’re imagining\nthis now. So Jane Street has been working on a feature called ‘local\ntypes’ or ‘stack allocation.’ These two things are kind of the same\nthing. And we’re realizing that one aspect of the design was just a\nbit wrong. And there’s already a ton of code written using the old\ndesign, but we’ve invented a new keyword and a new place for the\nkeyword to appear, and all this stuff."
+    },
+    {
+      "type": "p",
+      "text": "And so, it’s gonna be some work to fix it, but there’s no part of us\nthat’s saying, ‘Oh no. Now we need to think about a migration plan and\nwe need to make sure that no one is too unhappy with this.’ We’re just\ngonna go do it. And so, it means by the time we get to upstreaming,\neverything is battle-tested. And so, it just increases the level of\nconfidence in the design when we go through that process."
+    },
+    {
+      "type": "ts",
+      "text": "37:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the concerns I could see people having about this kind of\nprocess is, it’s going to do a lot of training on, ‘What are the\nrequirements within Jane Street?’ But there are all sorts of ways in\nwhich you could imagine the requirements in Jane Street and outside of\nJane Street being different. I’m curious how you think about the\ndesign process in a way where you end up with language features that\nare likely to be of quite general utility, ‘cause I think, in the end,\nthe only ones you’re gonna get accepted upstream are the ones that\npeople think are more broadly useful than just being useful for us."
+    },
+    {
+      "type": "ts",
+      "text": "37:30"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So that’s indeed a challenge, right? It’s a challenge of overfitting,\nright? We have a very particular style of code within Jane Street and\na very particular use case that we’re working on. I think that is sort\nof a harder question to answer in some sense. I think one way that we\naddress that is by seeking outside feedback from the very\nbeginning. So, the plan that we have for unboxed types, another Jane\nStreet engineer, Stephen Dolan, he made a presentation about this\ndesign for unboxed types, I think in 2019. We’ve been thinking about\nthis for a long time. The local types and stack allocation feature,\nthis has also been featured in a number of presentations that we’ve\nmade to the OCaml community, out in public."
+    },
+    {
+      "type": "p",
+      "text": "And so, by incorporating that process early, we can get broad\nfeedback. That’s not the kind of feedback that tells us, ‘Oh, should\nthe keyword go here, or should it go there?’ Right? That’s the kind of\nthing that we develop internally. But I think that, by giving these\npresentations, by involving the broader community, even from the very\nbeginning, that helps to prevent some of this overfitting problem."
+    },
+    {
+      "type": "ts",
+      "text": "38:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, another interesting aspect of your background is, you’ve spent a\nlot of time, years really, working in the Haskell community and\nworking on Haskell. And now, you’re working on a totally new\nprogramming language using it both as the surface language in which\nyou write your programs, and also helping to design that language. I’m\ncurious, what struck you about difference? I’m curious, what are the\ndifferences that have struck you about Haskell and OCaml at multiple\ndifferent levels?"
+    },
+    {
+      "type": "ts",
+      "text": "38:48"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "It’s been really fun over the past, I guess, six months now being part\nof these two language communities. So, I should say, I’m still quite\nactive in the Haskell world. I have not left the Haskell world. I’m\nliving both Haskell and OCaml on a daily basis. So let me think of a\ncouple of interesting points of comparison."
+    },
+    {
+      "type": "p",
+      "text": "So, one is, it seems kind of simple, but actually I think it affects\nthe way that we program. The approach toward interfaces. In Haskell,\nyou tend to write your type signatures sort of right next to the\nfunction and Haskell uses a lot of type signatures. OCaml doesn’t so\nmuch. And so, OCaml there’s these separate interface files where you\ndefine the interface to your whole module, but it’s kind of apart and\nit means, in my experience, looking at a bunch of OCaml code. OCaml\ncode tends to be rather less documented than similar Haskell code, and\nI think that’s in part because in Haskell, you put your types right\nthere and that’s a form of documentation. And once you put your types\nin, then you can also put more documentation there and it becomes part\nof the habit of the Haskell programmer to put those comments right in\nthere."
+    },
+    {
+      "type": "p",
+      "text": "A flip side of this, is that Haskell has this feature called\ntypeclasses. And typeclasses allow you to use essentially one\nfunctioning to mean a variety of different things. OCaml doesn’t have\nthat feature. And so, what that can mean sometimes is that Haskell\ncode can become quite a bit harder to understand because if you have a\nbunch of these function names, any of which can mean a variety of\ndifferent things, all strung together, then it takes a lot of work on\nthe part of the reader to try to understand what on earth is going on\nthere. And that problem just doesn’t arise in OCaml. OCaml is much\nmore explicit about what operations it’s taking."
+    },
+    {
+      "type": "p",
+      "text": "So maybe I can even, taking these two examples, generalize that a\nlittle bit and say, I find Haskell to be somewhat more explicit about\nwhat’s happening at compile time. Whereas, OCaml is somewhat more\nexplicit about what’s happening at runtime. So another place where\nthat comes into play is that, the Haskell compiler—and this connects\nwith a topic we were talking about earlier—the Haskell compiler\noptimizes much more aggressively than the OCaml one does. And that’s\nbecause in Haskell, Haskell’s a lazy language which means that if you\nsay, ‘Let X equal some big computation,’ we’re not gonna compute the\nbig computation until we need the value of X. In OCaml, if you say,\n‘Let X equal a big computation,’ we just compute that thing right\naway."
+    },
+    {
+      "type": "p",
+      "text": "And so, that means, on the one hand you might say, ‘Oh, well maybe\nHaskell is more efficient,’ because maybe some code path never uses\nthe value of X and so it means that we can discard that whole big\nthing. But it also means that it’s much harder to predict in Haskell\nhow fast your program is going to run or what its performance\ncharacteristics are gonna be. In OCaml, it’s much easier to predict\nthat. You can just sort of read your file top to bottom and, within a\nfunction, it just performs the operations that you see roughly in the\norder that you see them. And that means, OCaml again is more explicit\nabout what happens at runtime, but without some of the type\nannotations that we see in Haskell, a little less explicit about\nwhat’s happening at compile time."
+    },
+    {
+      "type": "ts",
+      "text": "41:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You mentioned a couple of things that are different that I wonder if\nthey’re really language differences, or just cultural differences. If\nyou look at the tendency to do fewer type annotations on the\ndefinition of functions, you could put more type annotations. And I\nthink there are some people who write OCaml who do, but there’s\ncertainly a tendency not to and I think the Jane Street house style\ncertainly is one that does not have lots of type annotations, outside\nof interface files where those are essentially required everywhere."
+    },
+    {
+      "type": "p",
+      "text": "And the documentation thing, too, like, the interface files are a very\nnatural place to put documentation and I am constantly dissatisfied\nthat I think we put way too little documentation in the (laughs)\nplaces that we could. And I don’t know that there’s anything exactly\nabout the language that forces that. Like, I’m not sure that I buy\n‘the need to put type annotations right on functions’ is the thing\nthat really makes that difference."
+    },
+    {
+      "type": "ts",
+      "text": "42:19"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "That may be true. It’s hard to say. I do think that form follows\nfunction, function follows form a little bit, in that, when you’re\nused to describing the specification of a thing right next to that\nthing, that, to me, is going to encourage you to write\ndocumentation. Whereas, in OCaml, you write the specification over\nthere, in that other file, nowhere near where you write your\nimplementation. And sometimes I think that means that you’re less\nlikely to put those comments on the implementation when you need them."
+    },
+    {
+      "type": "ts",
+      "text": "42:45"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "It’s funny. My intuition is the opposite of, like, ‘Oh, I’ve written\nthis very bare interface file that just has types,’ and I think\nempathetically about the person who’s reading it. It’s like, ‘How will\nthey have any idea what this means? I had better put a comment here.’\n(laughs)"
+    },
+    {
+      "type": "ts",
+      "text": "42:58"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Right. So the comment and the interface files are good, but I think\nit’s not just that. I mean, and this could also be, I have a bias in\nthat, most of the OCaml that I’m reading and writing is in the OCaml\ncompiler itself. Maybe this is different than everything else at Jane\nStreet. In fact, I’m sure it is. And it has been striking for me after\nspending so many years working in Haskell’s compiler, that Haskell’s\ncompiler has many, many, many more comments than OCaml’s compiler\ndoes. Maybe I’m overfitting on this particular piece of software\ninstead of just the language in general."
+    },
+    {
+      "type": "ts",
+      "text": "43:26"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I do think looking at the innards of a compiler is always a weird\nplace to think about how one should write code for the\nlanguage. Because, like, one of the facts about OCaml—as it is often\nthe case for many languages—is that OCaml was written by people who\ndidn’t yet really know how to program in OCaml kind of by\ndefinition. And lots of the code that’s there now has been there for a\nlong time and you can sorta see that. I think if you went to those\nsame people today and been like, ‘How would you write this now?’\nThey’d all be like, ‘Oh, really very differently.’ But, you know,\nparts of it just kind of haven’t been rewritten and have the shape\nthat they did years ago and are harder to understand than kind of\nanyone would exactly like it to be today."
+    },
+    {
+      "type": "ts",
+      "text": "44:00"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "And to be fair, that exact same thing is true in the Haskell\ncompiler. There are stretches of that that no one would write it that\nway today. But it was written that way before anyone really knew how\nto program in Haskell."
+    },
+    {
+      "type": "ts",
+      "text": "44:09"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So another difference that’s always struck me about Haskell is the\ndifferent approach to language extensions. And I think about this in\ntwo different ways. One is, OCaml is just massively more\nconservative. There was a period in time early in OCaml’s development\nwhere you could almost see the process of Ph.D. students\ngraduating. It’s like someone graduates, they write some language\nfeature, and it gets added to the language. And that stopped pretty\nearly in OCaml. OCaml got pretty conservative about making changes. It\nwas like, ‘No, no, no, we’re gonna add things that are like, really\ngood, and it was pretty restrictive about what would go in. And\nthroughout that time, it kind of had one language, pretty much. OCaml\nworked in one particular way and that was kinda that."
+    },
+    {
+      "type": "p",
+      "text": "Haskell on the other hand, has had a lot of glorious experimentation\naround language features and those experimental language features were\noften hidden behind pragmas, right? There’s lots of different things\nyou could turn on and off. And so there kind of isn’t one Haskell or\ntwo Haskells, but there’s like 10,000 different Haskells, depending on\nwhich collection of flags you wanna turn on or turn off. You have 10\ndifferent pragmas and now you have two of the 10 different possible\narrangements of the language features. I’m curious how you think about\nthose different sets of choices?"
+    },
+    {
+      "type": "ts",
+      "text": "45:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. I mean, that’s a great question. So I do have to push back\nagainst your sense of scale. So Haskell has, when I last counted, and\nthis was a few years ago, 150 or so extensions. So Haskell has\nactually 2150 languages."
+    },
+    {
+      "type": "ts",
+      "text": "45:27"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "(laughs) Ouch."
+    },
+    {
+      "type": "ts",
+      "text": "45:28"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Ouch, indeed. So I think that this comes from the origin of Haskell\nversus the origin of OCaml so actually you probably know more about\nthe origin of OCaml than I do. But I know Haskell was started by\ncommittee. There was a committee that met starting in, I think, 1989\ninto 1990, coalescing these ideas around a lazy functional programming\nlanguage. And then this eventually became a Haskell standard and there\nwere multiple different compilers for Haskell that all implemented the\nsame standard Haskell. And then maybe one compiler would think, ‘Ooh,\nwouldn’t it be fun if we had X?’ And so, then they would add that\nfeature, but everyone still wanted to make sure that it was a Haskell\ncompiler and not this other special language based on Haskell\ncompilers. So there was an idea of language extension. So you could\nhave base Haskell plus these various extensions."
+    },
+    {
+      "type": "ts",
+      "text": "46:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, in other words, OCaml is like Python and Haskell is like Scheme?"
+    },
+    {
+      "type": "ts",
+      "text": "46:21"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure. Yes. In that OCaml has a manual for the language, but there is\nnot a standard. There are not multiple different software artifacts\nthat all compile some OCaml language that exists beyond a single\ncompiler. But, in any case, going back to Haskell, that was the early\ndays of Haskell and there were multiple Haskell compilers. As time has\ngone on, all of the other ones have either died off or there are still\na few other Haskell compilers out there, but there’s not really an\nattempt to stay current with the newest features. And there’s really\nnow just one: the Glasgow Haskell Compiler, or GHC. And that’s the one\nthat, when I say that there’s 150 language extensions, the GHC is\nsupporting that."
+    },
+    {
+      "type": "ts",
+      "text": "46:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "And so, when you have multiple different things, if you wanted to find\na common core that all of these different compilers can interop with,\nit makes a lot of sense to have individual extensions when you say\nyou’re deviating from this common core. Now there’s really just one\ncompiler."
+    },
+    {
+      "type": "p",
+      "text": "I think that the current system, the current plan at Haskell, is not\nvery well motivated. And instead, the feedback that I hear from users\nis that they find the whole language extension system very heavy and\nit means that, to get much done in Haskell, you need to now start your\nfile with the list of 20 extensions that you’re using. And newcomers\ncan’t tell the difference between brand new experimental extensions\nthat might change from one compiler to another, or extensions that\nhave been around for 20 years, or there are some extensions that have\nbeen around for 20 years but actually we know are dangerous and you\nreally shouldn’t use."
+    },
+    {
+      "type": "p",
+      "text": "And when I say, ‘We know,’ I mean, like, I know this and a couple of\nother Haskellers know this, but someone just picking up the language\nwon’t know that. And I personally find that quite problematic. And so,\nthere’s a debate going on right now within the GHC Steering Committee\nwho is a body chosen to sort of help evaluate the evolution of the\nlanguage to reimagine all of this. And I’m hoping that we end up with\na structure that looks quite different from what we have today, while\nstill retaining backward compatibility."
+    },
+    {
+      "type": "p",
+      "text": "So if you have your 20 language extensions at the top of your file,\nthat will continue to work in this new vision. But I am hoping that we\ncan reorganize it in a way that’s a little bit more user-friendly."
+    },
+    {
+      "type": "ts",
+      "text": "48:23"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Do you think in the end it would make sense to move toward something\nwhere there’s closer to one standard language that includes most of\nthe extensions, and so that most users end up not thinking about that\n‘two to the whatever’ configuration space?"
+    },
+    {
+      "type": "ts",
+      "text": "48:36"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "I do think settling on one standard language would be good. I think we\ncan get 80% of the way there and go from 150 extensions to maybe seven\nor something like that. I don’t think we’ll be able to get all the way\nthere because there’s just too many different use cases for Haskell,\nthere’s too many different people who have slightly different ideas of\nwhat that core should be. So if we just sort of got rid of the\nextensions mechanism, I think that that would cause too much of a rift\nin the community and probably not be tenable. But we can get close."
+    },
+    {
+      "type": "ts",
+      "text": "49:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "So, throughout this conversation, I feel like there’s been a\nparticular kind of vision and idea of what programming is that’s\nmotivated a lot of your thinking. And that has something to do with\nhaving a language that’s simultaneously expressive, it lets you say\nwhat you wanna say, but also has real tools for reasoning, in both\ntype systems and, you know, more sophisticated mode-dependent types,\nor essentially automated tools for reasoning about your program. So in\nthe last, I don’t know, few months, couple of years, there’s been an\nenormous amount of motion in a totally different direction for making\nprogramming better, which is various AI-assisted ways of making\nprogramming easier. With all of this kind of recent work on large\nlanguage models, things like ChatGPT, Codex, all of that, making an\nenormous difference to how people are programming on a regular\nbasis. I’m curious how you think about this and how it fits into your\nbroader way of thinking about programming?"
+    },
+    {
+      "type": "ts",
+      "text": "49:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "I see this evolution of sort of AI-assisted programming as not quite\nthe sea change that maybe others have seen it to be. I see it as a big\nstep. It’s not a small step change. But it doesn’t remove the need to\ncommunicate precisely. In that, to me, the interesting thing about a\nprogramming language is that it’s a mode of communication that is\nprecise. In a sense, that’s almost the definition of what makes a\nprogramming language a programming language, as opposed to some other\nkind of language. There’s a precise semantics to everything that is\nsaid in that language. And that language is used as a medium of\ncommunication, both from human to computer. That’s how we often think\nof it. But also from human to human."
+    },
+    {
+      "type": "p",
+      "text": "With the advent of AI-assisted programming, now we have sort of a new\nmethod of communication in that it’s a communication from computer\nback to human. In that, you might have something like ChatGPT\nproducing the code, but a human still has to read that code and make\nsure that it does what you think it does. And as a medium of precise\ncommunication, it’s still very important to have a programming\nlanguage that allows that communication to happen."
+    },
+    {
+      "type": "p",
+      "text": "And so, this new mode of communication is going to put different\npressures on language design than what we’ve had in the past. But I\ndon’t think it removes the need for programming language design. But\nlike I said, it does create different pressures and these have been\nevident for some time in that one little maxim I’ve had in my head for\nyears now about language design is that you wanna optimize for\nreading, not for writing. Code gets read much more often than it gets\nwritten."
+    },
+    {
+      "type": "p",
+      "text": "And so, when designing a new language feature, maybe you’re thinking,\n‘Okay, I could do this very cleverly with, like, a nicely placed\ntwiddle in this spot in the code. And I could use that twiddle to mean\nsomething very important about my program. And maybe that’s very\nconcise, but it’s hard to read, it’s hard to search for, it’s hard to\ntrain new people to understand. Instead, it tends to be better to\nwrite out words in your design and programming language, that’s easier\nto search for, and easier to learn, and just easier to organize in\nyour brain. If we end up getting to a mode where humans are doing even\nless and less writing, and computers are doing more and more of it,\nthen those pressures just increase. And we wanna make the language\neasier to read and maybe even harder to write. Maybe we even get to a\npoint where if computers are doing all of the code generation, it’s\njust kind of, you know, symbolic and structured. It’s not just text."
+    },
+    {
+      "type": "p",
+      "text": "So we get these richer programming languages but I just don’t see it\nas, there was yesterday and then there’s tomorrow and it’s gonna be\ntotally different and let’s just start from scratch. I see this as\njust one phase in evolution of this precise communication medium."
+    },
+    {
+      "type": "ts",
+      "text": "52:35"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "One of the things that’s really striking about these AI assistants, at\nleast in their current form, is they’re really surprisingly powerful,\nright? They can really do a kind of stunningly good job of taking a\nquery and understanding it and providing a piece of code that tries to\ndo what it is that you asked for it to do."
+    },
+    {
+      "type": "p",
+      "text": "But they’re also strikingly fallible. They make lots of mistakes. And,\nyeah, the reading thing is pretty important because you ask ChatGPT\nor, you know, whatever your favorite large language model is, to write\na piece of code and look at the result. And it’s super easy for the\nresult to just be wrong in all sorts of different ways. And I can sort\nof see the rising requirement of making things more readable. I’m\ncurious how you think things like dependent types fit into this story?"
+    },
+    {
+      "type": "ts",
+      "text": "53:16"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "So, dependent types in their essence are a way of writing precise\nspecifications. So the sorting example that I gave earlier, I\ndescribed that, you know, you could have a function instead of going\nfrom ‘a list of ints to a list of ints’ to something more\nglorious. Well, before dependent types, or you know, language without\ndependent types, you could just do that in comments. But probably in\nyour comments, you’re not going to be as precise as you could be if\nyou really wrote it in types, right? You say, you know, return to the\ninput list in ascending order, or something like that. But what does\nthat really mean?"
+    },
+    {
+      "type": "p",
+      "text": "We need a language where we can precisely specify what this function\nis doing. So as I said earlier, ascending isn’t quite right. I mean,\nif you write in a comment, ‘This returns the input list in ascending\norder,’ well, what if the input list has duplicates? Now you can’t\neven meet that specification. Where actually, that specification\ndoesn’t make any sense at all because the input list isn’t in\nascending order. What does that mean to say to put the input list in\nascending order? That’s a contradiction in terms, because the input\nlist isn’t in ascending order."
+    },
+    {
+      "type": "p",
+      "text": "And so, there’s some amount of interpretation that humans can provide,\ninterpretation that a large language model can provide, but in the\nend, it’s gonna come down to precise communication and\nspecification. And so, where do dependent types fit in? Well, they can\nbecome the input to the large language model. Maybe now we have\nprogrammers who are well-versed in precise communication of\nspecifications, not implementations, and we can say, ‘ChatGPT, give me\na function of this type.’ And then you have your nice type that takes\nan input list, and it returns an output list that is a permutation of\nthe input list in non-decreasing order and we specify that."
+    },
+    {
+      "type": "p",
+      "text": "And then now, that gives a nice specification for ChatGPT to go off\nand say, ‘Okay, here’s an implementation that meets that. Oh, and by\nthe way, it has this asymptotic running time because I’m a nice large\nlanguage model and I’m gonna tell you that.’ And then, now we actually\nhave a model by which we can check that the result meets its\nspecification if it is in this precise language of dependent types."
+    },
+    {
+      "type": "ts",
+      "text": "55:07"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Although I have to say, I think I am more pessimistic about the idea\nof people actually going off and writing down the specifications\neven. ‘Cause those are actually pretty hard to write."
+    },
+    {
+      "type": "ts",
+      "text": "55:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Sure."
+    },
+    {
+      "type": "ts",
+      "text": "55:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I wonder if a more plausible model is, you go to your large language\nmodel and say, ‘Please write me a specification for a function that\nsorts a list.’ And then it, like, spits something out. And then you\nlook at it and think, yeah, that seems about right. And then you go\nfrom there to next stages. But the role that this kind of concise\nspecification has, it’s like a smaller and maybe more readable thing\nthat you can use as part of verifying whether the later pieces in fact\ndo what you think they’re supposed to do."
+    },
+    {
+      "type": "ts",
+      "text": "55:40"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yes, but I think there’s a real danger here. I agree with what you say\nin that, writing a precise specification is hard. And humans are\nlazy. So if it’s hard, we’re gonna ask the computer to do it. If we’re\nasking the computer to write the specification of the function that\nit’s going to write, now we’re getting into thin ice. Because if we’re\nworking in a system where the human is not expert enough to be able to\nread the specification and know that it’s the right specification, now\nwe’ve lost. Now the computer can just sort of go off and do whatever\nit wants and we have no way of knowing whether it’s right or wrong\nbecause we’ve lost that ability to sort of have that precise\ncommunication."
+    },
+    {
+      "type": "ts",
+      "text": "56:14"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "I think one of the tricky things here is, people are often pretty bad\nat the reading part of this, right? The idea if something gets written\nand now you have to read it, especially if it wasn’t written in a\nreally clear way, reading some piece of code that is not really\nwell-structured is actually really challenging. Like, one of the\nactually most important parts of the process of code review I find, is\nnot so much that, like, one person writes the code and someone else\nreads it to validate that it’s done the right thing. It’s more like,\nsomebody writes the code and the other person says, ‘Oh, man. This is,\nlike, too messy for me to even read.’ And then there’s some kind of\nback and forth process where you try and get something that’s actually\nsimple enough to be understood. And I think it’s an interesting open\nquestion of, like, as we start using more of these AI assistants, how\ngood they will be at generating things that are actually simple."
+    },
+    {
+      "type": "ts",
+      "text": "56:55"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Although, if we have precise specifications, the simplicity of the\nimplementation becomes less important."
+    },
+    {
+      "type": "ts",
+      "text": "57:01"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That’s fair. I mean, in some sense there’s a kind of open\ntechnological question of, like, how good will large language models\nbe, acting as tactics for theorem provers?"
+    },
+    {
+      "type": "ts",
+      "text": "57:10"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Right. Yeah. I mean, but if we’re in an environment where there is a\ntight correspondence between the specification and the implementation,\nand what I mean by ‘tight correspondence’ is this dependent type’s\nmodel where you can—and there’s other models, it’s not just dependent\ntypes, there’s refinement types, there’s other ways of checking an\nimplementation against a specification. But if we’re in an environment\nwhere we can check an implementation against a specification, the\nspecification is simple enough and communicated precisely whether\nthat’s in very careful natural language or probably not just natural\nlanguage ‘cause natural language is very, very squishy. But probably\nin some specification language, you could call that specification\nlanguage ‘dependent types’ if you want or you could call it something\nelse. But if we can communicate that specification, check the\nimplementation against the specification, now suddenly there’s not all\nthat much incentive to ever read the implementation."
+    },
+    {
+      "type": "ts",
+      "text": "57:59"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Right. It becomes a little bit like, you know, reading the output of\nthe compiler."
+    },
+    {
+      "type": "ts",
+      "text": "58:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right."
+    },
+    {
+      "type": "ts",
+      "text": "58:03"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "You don’t normally bother."
+    },
+    {
+      "type": "ts",
+      "text": "58:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "That’s right."
+    },
+    {
+      "type": "ts",
+      "text": "58:04"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "Yeah. It’s interesting. I do wonder whether a whole potential kind of\ndirection for innovation here, which you more or less have pointed in\nthe direction of, is designing languages that work usefully in this\nkind of intermediate things to generate in the process of working with\nsome kind of AI assistant. The thing that’s generated as an\nintermedium really affects the overall process of working on the\nsystem and generating confidence it’s doing the right thing. It’s not\na totally new problem, I guess, in the context of language design. But\nit does put new kinds of pressure and maybe changes the trade-offs\nthat show up."
+    },
+    {
+      "type": "ts",
+      "text": "58:34"
+    },
+    {
+      "type": "speaker",
+      "text": "Richard"
+    },
+    {
+      "type": "p",
+      "text": "Yeah, that’s right. I mean, you know, it’s too early, I think, to\nstart to design a programming language around this kind of\ninteraction. We’ve only been having these interactions with these\nassistants for a few months. And they’re changing fast. So I think now\nwould be the wrong time. In two years, maybe one could start thinking\nabout designing a language from scratch to do this. That sounds\nplausible to me. But I think a good starting point would be languages\nthat we have now because they’re designed for precise\ncommunication. That’s, in the end, what we need. And, again, maybe\nthere’s less pressure on the writing piece and more pressure on the\nreading piece. But I don’t think that they’re so divorced from each\nother that it means that we throw out everything we have and start\nfrom scratch. That seems, to me, pretty unlikely."
+    },
+    {
+      "type": "ts",
+      "text": "59:15"
+    },
+    {
+      "type": "speaker",
+      "text": "Ron"
+    },
+    {
+      "type": "p",
+      "text": "That makes sense. Well, thanks so much for joining me. This has been a\nlot of fun."
+    },
+    {
+      "type": "p",
+      "text": "You’ll find a complete transcript of the episode, along with links to\nsome of the things that we discussed at signalsandthreads.com. Thanks\nfor joining us and see you next time."
+    }
+  ]
+}
