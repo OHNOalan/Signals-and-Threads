@@ -21,6 +21,11 @@
   h3.speaker { margin: 0 0 5px 0; font-size: .95em; color: #c05800;
                 text-transform: uppercase; letter-spacing: .06em; }
   p    { margin: 0 0 .9em 0; }
+  /* Critical dark-mode rules inlined to prevent FOUC before translate-ui.css loads */
+  html.dark body { background: #13161f; color: #c8ccd8; }
+  html.dark h1   { color: #dde0ea; }
+  html.dark hr   { border-top-color: #1e2235; }
+  html.dark h3.speaker { color: #cc7a3a; }
 </style>
 </head>
 <body>
