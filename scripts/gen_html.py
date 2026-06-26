@@ -30,15 +30,17 @@ def render_html(data, translations=None):
     mp3_url = data.get('mp3_url', '')
     blocks  = data['transcript']
 
-    # Two sources: local file first (offline), CDN URL fallback (GitHub Pages / online)
-    sources = ''
+    # Store URLs as data attributes — player.js drives loading entirely.
+    # Using <source> elements caused the browser to auto-fetch with preload="metadata"
+    # before player.js ran, resulting in duplicate requests and canceled CDN loads.
+    audio_attrs = ''
     if mp3_rel:
-        sources += f'\n  <source src="{mp3_rel}" type="audio/mpeg">'
+        audio_attrs += f' data-local="{mp3_rel}"'
     if mp3_url:
-        sources += f'\n  <source src="{mp3_url}" type="audio/mpeg">'
+        audio_attrs += f' data-cdn="{mp3_url}"'
     audio = (
-        f'<audio preload="metadata">{sources}\n</audio>'
-        if sources else
+        f'<audio preload="none"{audio_attrs}></audio>'
+        if audio_attrs else
         '<p style="color:#aaa;font-size:.85em">Audio not downloaded.</p>'
     )
 

@@ -6,18 +6,14 @@
   audio.removeAttribute('controls');
   audio.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;';
 
-  // Mobile browsers (Chrome + Safari) don't reliably fall back through <source>
-  // elements on 404. Take over: collect URLs, remove <source> tags, drive audio.src
-  // directly — this is the most cross-browser reliable approach.
-  (function setupSources() {
-    const srcs = Array.from(audio.querySelectorAll('source')).map(s => s.src);
-    audio.querySelectorAll('source').forEach(s => s.remove());
-    if (!srcs.length) return;
-    let idx = 0;
-    const tryNext = () => { if (idx < srcs.length) { audio.src = srcs[idx++]; audio.load(); } };
-    audio.addEventListener('error', () => { if (idx < srcs.length) tryNext(); });
-    tryNext();
-  })();
+  // Source URLs are stored as data-local / data-cdn to prevent the browser from
+  // auto-fetching with preload="metadata" before this script runs (which caused
+  // duplicate requests and canceled CDN loads visible in the network waterfall).
+  const srcs = [audio.dataset.local, audio.dataset.cdn].filter(Boolean);
+  let srcIdx = 0;
+  const tryNext = () => { if (srcIdx < srcs.length) { audio.src = srcs[srcIdx++]; audio.load(); } };
+  audio.addEventListener('error', () => { if (srcIdx < srcs.length) tryNext(); });
+  if (srcs.length) tryNext();
 
   function fmt(s) {
     s = Math.floor(s) || 0;
