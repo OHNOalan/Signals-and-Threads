@@ -27,12 +27,18 @@ def render_html(data, translations=None):
     slug    = data['slug']
     title   = data['title']
     mp3_rel = data.get('mp3_rel', '')
+    mp3_url = data.get('mp3_url', '')
     blocks  = data['transcript']
 
+    # Two sources: local file first (offline), CDN URL fallback (GitHub Pages / online)
+    sources = ''
+    if mp3_rel:
+        sources += f'\n  <source src="{mp3_rel}" type="audio/mpeg">'
+    if mp3_url:
+        sources += f'\n  <source src="{mp3_url}" type="audio/mpeg">'
     audio = (
-        f'<audio preload="metadata">'
-        f'<source src="{mp3_rel}" type="audio/mpeg"></audio>'
-        if mp3_rel else
+        f'<audio preload="metadata">{sources}\n</audio>'
+        if sources else
         '<p style="color:#aaa;font-size:.85em">Audio not downloaded.</p>'
     )
 
