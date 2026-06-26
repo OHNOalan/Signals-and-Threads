@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><title>Audio Seek Test</title></head>
+<body>
+<h3>Audio Seek Diagnostics</h3>
+<audio id="a" preload="metadata" controls>
+  <source src="audio/build-systems.mp3" type="audio/mpeg">
+</audio>
+<pre id="out">Loading...</pre>
+<script>
+const a = document.getElementById('a');
+const out = document.getElementById('out');
+
+function report() {
+  let s = '';
+  s += 'readyState: ' + a.readyState + ' (0=no data,1=metadata,2=current,3=future,4=enough)\n';
+  s += 'networkState: ' + a.networkState + '\n';
+  s += 'duration: ' + a.duration + '\n';
+  s += 'seekable ranges: ' + a.seekable.length + '\n';
+  for (let i = 0; i < a.seekable.length; i++) {
+    s += '  [' + i + '] ' + a.seekable.start(i).toFixed(1) + 's – ' + a.seekable.end(i).toFixed(1) + 's\n';
+  }
+  s += 'buffered ranges: ' + a.buffered.length + '\n';
+  for (let i = 0; i < a.buffered.length; i++) {
+    s += '  [' + i + '] ' + a.buffered.start(i).toFixed(1) + 's – ' + a.buffered.end(i).toFixed(1) + 's\n';
+  }
+  s += 'currentTime: ' + a.currentTime.toFixed(2) + '\n';
+  out.textContent = s;
+}
+
+a.addEventListener('loadedmetadata', report);
+a.addEventListener('timeupdate', report);
+a.addEventListener('seeking', () => out.textContent += '\n→ seeking...');
+a.addEventListener('seeked',  () => out.textContent += '\n→ seeked OK');
+a.addEventListener('waiting', () => out.textContent += '\n→ WAITING (stalled)');
+a.addEventListener('stalled', () => out.textContent += '\n→ STALLED');
+a.addEventListener('error',   () => out.textContent += '\n→ ERROR: ' + (a.error && a.error.message));
+
+setInterval(report, 1000);
+</script>
+</body>
+</html>

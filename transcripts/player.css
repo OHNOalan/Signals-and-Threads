@@ -1,0 +1,98 @@
+/* Fixed bottom audio player */
+
+body { padding-bottom: 58px; }
+
+.ap-bar {
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 900;
+  height: 52px;
+  background: #1b2033;
+  border-top: 1px solid rgba(255,255,255,.1);
+  box-shadow: 0 -3px 14px rgba(0,0,0,.45);
+  display: flex; align-items: center; gap: 8px; padding: 0 14px;
+  font-family: inherit;
+}
+
+.ap-btn {
+  background: none; border: none; color: #b0bbcc;
+  cursor: pointer; padding: 0; font-family: inherit; flex-shrink: 0;
+  transition: color .15s;
+}
+.ap-btn:hover { color: #fff; }
+
+/* Play/pause circle */
+.ap-play {
+  width: 34px; height: 34px; border-radius: 50%;
+  background: rgba(255,255,255,.13);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 14px;
+  transition: background .15s;
+}
+.ap-play:hover { background: rgba(255,255,255,.24); }
+
+/* Time labels */
+.ap-time {
+  font-size: .72em; font-variant-numeric: tabular-nums;
+  color: #6a7a99; flex-shrink: 0; white-space: nowrap;
+}
+#ap-cur { min-width: 38px; text-align: right; }
+#ap-dur { min-width: 44px; }
+
+/* Progress track */
+.ap-track {
+  flex: 1; height: 16px;
+  display: flex; align-items: center;
+  position: relative; cursor: pointer;
+}
+.ap-fill {
+  position: absolute; left: 0; top: 50%; transform: translateY(-50%);
+  height: 4px; border-radius: 2px; width: 0%;
+  background: #4a7fd4; pointer-events: none;
+  transition: height .12s;
+}
+.ap-track:hover .ap-fill { height: 6px; background: #6b9fe8; }
+
+/* Invisible range input overlaid on track — handles all drag interaction */
+.ap-scrubber {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  opacity: 0; cursor: pointer; margin: 0;
+  -webkit-appearance: none; appearance: none;
+}
+
+/* Skip ±15s buttons */
+.ap-skip {
+  display: flex; align-items: center; gap: 2px;
+  font-size: 11px; color: #7a88aa;
+  padding: 4px 6px; border-radius: 4px;
+  transition: background .12s, color .12s;
+}
+.ap-skip:hover { background: rgba(255,255,255,.1); color: #dde; }
+.ap-skip svg {
+  width: 18px; height: 18px; fill: currentColor; flex-shrink: 0;
+}
+
+/* Speed selector */
+.ap-speed-wrap { position: relative; flex-shrink: 0; }
+.ap-speed-btn {
+  font-size: .72em; padding: 4px 10px; border-radius: 4px;
+  background: rgba(255,255,255,.1); color: #c0cadc;
+  min-width: 34px; text-align: center;
+  transition: background .15s;
+}
+.ap-speed-btn:hover { background: rgba(255,255,255,.2); }
+
+.ap-speed-menu {
+  display: none;
+  position: absolute; bottom: 46px; right: 0;
+  background: #242c40; border: 1px solid rgba(255,255,255,.14);
+  border-radius: 6px; padding: 5px 0; min-width: 70px;
+  box-shadow: 0 -4px 18px rgba(0,0,0,.5);
+}
+.ap-speed-menu.open { display: block; }
+.ap-speed-menu label {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 12px; font-size: .8em; cursor: pointer; color: #a0aec0;
+  transition: background .1s, color .1s;
+}
+.ap-speed-menu label:hover { background: rgba(255,255,255,.07); color: #fff; }
+.ap-speed-menu input[type=radio] { accent-color: #4a7fd4; cursor: pointer; margin: 0; }

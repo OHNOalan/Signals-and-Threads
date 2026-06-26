@@ -30,7 +30,7 @@ def render_html(data, translations=None):
     blocks  = data['transcript']
 
     audio = (
-        f'<audio controls preload="none">'
+        f'<audio preload="metadata">'
         f'<source src="{mp3_rel}" type="audio/mpeg"></audio>'
         if mp3_rel else
         '<p style="color:#aaa;font-size:.85em">Audio not downloaded.</p>'
@@ -63,6 +63,7 @@ def render_html(data, translations=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>{hm.escape(title)}</title>
+<link rel="stylesheet" href="player.css">
 <link rel="stylesheet" href="translate-ui.css">
 <style>
   body  {{ font-family: Georgia, serif; max-width: 800px; margin: 40px auto;
@@ -87,6 +88,7 @@ def render_html(data, translations=None):
 <hr>
 {transcript_html}
 {zh_script}<script src="translate-ui.js"></script>
+<script src="player.js"></script>
 </body>
 </html>"""
 
