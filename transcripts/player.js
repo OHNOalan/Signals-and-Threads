@@ -17,7 +17,7 @@
 
   const bar = document.createElement('div');
   bar.className = 'ap-bar';
-  bar.innerHTML = `
+  bar.innerHTML = `<div class="ap-inner">
     <button class="ap-btn ap-play" title="播放/暂停 (空格)">▶</button>
     <span class="ap-time" id="ap-cur">00:00</span>
     <div class="ap-track">
@@ -36,7 +36,8 @@
       <div class="ap-speed-menu" id="ap-speed-menu">
         ${SPEEDS.map(r => `<label><input type="radio" name="ap-spd" value="${r}"${r === 1 ? ' checked' : ''}> ${r}×</label>`).join('')}
       </div>
-    </div>`;
+    </div>
+  </div>`;
   document.body.appendChild(bar);
 
   const playBtn   = bar.querySelector('.ap-play');

@@ -8,8 +8,18 @@ body { padding-bottom: 58px; }
   background: #1b2033;
   border-top: 1px solid rgba(255,255,255,.1);
   box-shadow: 0 -3px 14px rgba(0,0,0,.45);
-  display: flex; align-items: center; gap: 8px; padding: 0 14px;
   font-family: inherit;
+  /* center contents to match page text width */
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* inner wrapper constrains to same max-width as page content */
+.ap-bar > * { flex-shrink: 0; }
+.ap-bar { gap: 0; padding: 0; }
+
+.ap-inner {
+  display: flex; align-items: center; gap: 8px;
+  width: 100%; max-width: 800px; padding: 0 24px;
 }
 
 .ap-btn {
