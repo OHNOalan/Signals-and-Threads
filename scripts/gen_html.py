@@ -71,6 +71,7 @@ def render_html(data, translations=None):
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <meta name="color-scheme" content="light dark">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='5' fill='%23c05800'/><text x='16' y='23' text-anchor='middle' fill='white' font-family='Georgia,serif' font-size='19' font-weight='bold'>S</text></svg>">
 <title>{hm.escape(title)}</title>
 <script>(function(){{var s=localStorage.getItem('dark'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='1'||(s===null&&d)){{document.documentElement.className='dark';document.documentElement.style.background='#13161f';}}}})();</script>
 <link rel="stylesheet" href="player.css">
