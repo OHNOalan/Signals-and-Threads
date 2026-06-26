@@ -9,7 +9,8 @@
   // Source URLs are stored as data-local / data-cdn to prevent the browser from
   // auto-fetching with preload="metadata" before this script runs (which caused
   // duplicate requests and canceled CDN loads visible in the network waterfall).
-  const srcs = [audio.dataset.local, audio.dataset.cdn].filter(Boolean);
+  const isLocal = location.protocol === 'file:' || ['localhost', '127.0.0.1', ''].includes(location.hostname);
+  const srcs = [isLocal && audio.dataset.local, audio.dataset.cdn].filter(Boolean);
   let srcIdx = 0;
   const tryNext = () => { if (srcIdx < srcs.length) { audio.src = srcs[srcIdx++]; audio.load(); } };
   audio.addEventListener('error', () => { if (srcIdx < srcs.length) tryNext(); });
