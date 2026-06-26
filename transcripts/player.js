@@ -6,6 +6,19 @@
   audio.removeAttribute('controls');
   audio.style.cssText = 'position:fixed;left:-9999px;width:1px;height:1px;';
 
+  // Mobile browsers (Chrome + Safari) don't reliably fall back through <source>
+  // elements on 404. Take over: collect URLs, remove <source> tags, drive audio.src
+  // directly — this is the most cross-browser reliable approach.
+  (function setupSources() {
+    const srcs = Array.from(audio.querySelectorAll('source')).map(s => s.src);
+    audio.querySelectorAll('source').forEach(s => s.remove());
+    if (!srcs.length) return;
+    let idx = 0;
+    const tryNext = () => { if (idx < srcs.length) { audio.src = srcs[idx++]; audio.load(); } };
+    audio.addEventListener('error', () => { if (idx < srcs.length) tryNext(); });
+    tryNext();
+  })();
+
   function fmt(s) {
     s = Math.floor(s) || 0;
     const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sc = s % 60;
@@ -48,8 +61,11 @@
   const speedBtn  = document.getElementById('ap-speed');
   const speedMenu = document.getElementById('ap-speed-menu');
 
-  // Play / pause
-  const toggle = () => audio.paused ? audio.play() : audio.pause();
+  // Play / pause — catch rejection iOS throws when audio isn't ready yet
+  const toggle = () => {
+    const p = audio.paused ? audio.play() : (audio.pause(), undefined);
+    if (p) p.catch(() => {});
+  };
   playBtn.addEventListener('click', toggle);
   audio.addEventListener('play',  () => playBtn.textContent = '⏸');
   audio.addEventListener('pause', () => playBtn.textContent = '▶');

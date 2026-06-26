@@ -1,0 +1,62 @@
+name: Monthly episode update
+
+on:
+  schedule:
+    - cron: '0 6 1 * *'   # 6am UTC on the 1st of every month
+  workflow_dispatch:        # allow manual trigger from Actions tab
+
+permissions:
+  contents: write
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  update-and-deploy:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install deep-translator
+
+      - name: Check for new episodes and update
+        id: update
+        run: |
+          output=$(python3 scripts/update_ci.py transcripts 2>&1)
+          echo "$output"
+          if echo "$output" | grep -q "NO_NEW_EPISODES"; then
+            echo "new=false" >> $GITHUB_OUTPUT
+          else
+            echo "new=true" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Commit new episodes back to repo
+        if: steps.update.outputs.new == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add transcripts/
+          git commit -m "chore: auto-add new episodes"
+          git push
+
+      - name: Upload pages artifact
+        if: steps.update.outputs.new == 'true'
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: transcripts
+
+      - name: Deploy to GitHub Pages
+        if: steps.update.outputs.new == 'true'
+        id: deployment
+        uses: actions/deploy-pages@v4
