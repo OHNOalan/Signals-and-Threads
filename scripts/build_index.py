@@ -36,7 +36,9 @@ html = f"""<!DOCTYPE html>
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="light dark">
 <title>Signals &amp; Threads</title>
+<script>(function(){{var s=localStorage.getItem('dark'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='1'||(s===null&&d))document.documentElement.className='dark';}})();</script>
 <style>
   * {{ box-sizing: border-box; margin: 0; padding: 0; }}
   body {{ font-family: -apple-system, "Segoe UI", sans-serif;
@@ -47,8 +49,13 @@ html = f"""<!DOCTYPE html>
   header h1 {{ font-size: 1.8em; letter-spacing: -.02em; flex-shrink: 0; }}
   header p  {{ color: #666; font-size: .88em; }}
   #search {{ border: 1px solid #ccc; border-radius: 6px; padding: 7px 12px;
-            font-size: .9em; width: 220px; outline: none; background: #fff; }}
+            font-size: .9em; width: 200px; outline: none; background: #fff; color: inherit; }}
   #search:focus {{ border-color: #c05800; }}
+  #dark-btn {{ font-size: .78em; padding: 4px 12px; border-radius: 999px;
+              border: 1px solid #c05800; color: #c05800; background: transparent;
+              cursor: pointer; font-family: inherit; flex-shrink: 0;
+              transition: background .15s, color .15s; }}
+  #dark-btn:hover, #dark-btn.active {{ background: #c05800; color: #fff; }}
   #count {{ color: #999; font-size: .82em; margin-bottom: 16px; min-height: 1.2em; }}
   .card {{ background: #fff; border-radius: 6px; padding: 20px 24px;
           margin-bottom: 14px; border: 1px solid #e0ddd8;
@@ -66,6 +73,21 @@ html = f"""<!DOCTYPE html>
   .abstract {{ margin-top: 10px; font-size: .86em; color: #555; line-height: 1.65; }}
   .hidden {{ display: none; }}
   #no-results {{ text-align: center; color: #999; padding: 60px 0; font-size: .95em; }}
+  /* Dark mode — html.dark body beats the explicit body{{}} rule above */
+  html.dark body {{ background: #13161f; color: #c8ccd8; color-scheme: dark; }}
+  html.dark header {{ border-bottom-color: #1e2235; }}
+  html.dark header h1 {{ color: #dde0ea; }}
+  html.dark header p {{ color: #454a5e; }}
+  html.dark #search {{ background: #1a1e2e; border-color: #2a2e42; color: #c8ccd8; }}
+  html.dark #search:focus {{ border-color: #c05800; }}
+  html.dark #count {{ color: #454a5e; }}
+  html.dark .card {{ background: #1a1e2e; border-color: #1e2235; }}
+  html.dark .card:hover {{ box-shadow: 0 2px 12px rgba(0,0,0,.3); }}
+  html.dark .card-title a {{ color: #dde0ea; }}
+  html.dark .card-title a:hover {{ color: #e07040; }}
+  html.dark .card-meta {{ color: #454a5e; }}
+  html.dark .abstract {{ color: #7a8098; }}
+  html.dark #no-results {{ color: #454a5e; }}
 </style>
 </head>
 <body>
@@ -75,12 +97,34 @@ html = f"""<!DOCTYPE html>
     <p>Jane Street Engineering Podcast — local archive</p>
   </div>
   <input id="search" type="search" placeholder="Search episodes…" autocomplete="off">
+  <button id="dark-btn">夜间</button>
 </header>
 <div id="count"></div>
 <div id="cards"></div>
 <div id="no-results" class="hidden">No episodes match your search.</div>
 
 <script>
+// Dark mode — shared localStorage key with episode pages
+(function() {{
+  const btn = document.getElementById('dark-btn');
+  const sys = window.matchMedia('(prefers-color-scheme: dark)');
+  function apply() {{
+    const stored = localStorage.getItem('dark');
+    const on = stored !== null ? stored === '1' : sys.matches;
+    document.documentElement.classList.toggle('dark', on);
+    btn.textContent = on ? '日间' : '夜间';
+    btn.classList.toggle('active', on);
+    btn.title = stored !== null ? '双击重置为跟随系统' : '跟随系统';
+  }}
+  apply();
+  sys.addEventListener('change', function() {{ if (localStorage.getItem('dark') === null) apply(); }});
+  btn.addEventListener('click', function() {{
+    localStorage.setItem('dark', document.documentElement.classList.contains('dark') ? '0' : '1');
+    apply();
+  }});
+  btn.addEventListener('dblclick', function() {{ localStorage.removeItem('dark'); apply(); }});
+}})();
+
 const TAG_COLORS = {tag_colors_js};
 const episodes = {episodes_js};
 

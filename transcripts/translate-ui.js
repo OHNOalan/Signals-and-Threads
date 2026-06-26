@@ -14,12 +14,47 @@
   bar.innerHTML =
     '<button id="btn-en">隐藏原文</button>' +
     '<button id="btn-zh">折叠译文</button>' +
+    '<button id="btn-dark">夜间</button>' +
     '<span class="tbar-status" id="tstatus">加载中…</span>';
 
   const hr = document.querySelector('hr');
   if (hr) hr.after(bar); else document.body.prepend(bar);
 
   let enHidden = false, zhFolded = false;
+
+  // Dark mode — follows system by default; manual override saved to localStorage
+  const darkBtn = document.getElementById('btn-dark');
+  const sysDark = window.matchMedia('(prefers-color-scheme: dark)');
+
+  function applyDark(on) {
+    document.documentElement.classList.toggle('dark', on);
+    darkBtn.classList.toggle('active', on);
+  }
+  function updateBtn() {
+    const stored = localStorage.getItem('dark');
+    const on = stored !== null ? stored === '1' : sysDark.matches;
+    applyDark(on);
+    // show current state + hint that it's overridden
+    darkBtn.textContent = on ? '日间' : '夜间';
+    darkBtn.title = stored !== null ? '点击切换（双击重置为跟随系统）' : '跟随系统';
+  }
+  updateBtn();
+
+  // Follow system changes when no manual override
+  sysDark.addEventListener('change', function () {
+    if (localStorage.getItem('dark') === null) updateBtn();
+  });
+
+  darkBtn.addEventListener('click', function () {
+    const stored = localStorage.getItem('dark');
+    const current = document.documentElement.classList.contains('dark');
+    localStorage.setItem('dark', current ? '0' : '1');
+    updateBtn();
+  });
+  darkBtn.addEventListener('dblclick', function () {
+    localStorage.removeItem('dark');
+    updateBtn();
+  });
 
   document.getElementById('btn-en').addEventListener('click', function () {
     enHidden = !enHidden;

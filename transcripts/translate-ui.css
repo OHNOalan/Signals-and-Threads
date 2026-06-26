@@ -1,5 +1,25 @@
 /* Bilingual translation UI — loaded by all episode pages */
 
+/* ── Dark mode ────────────────────────────────────────────────── */
+/* html.dark body overrides the explicit body{} rule in the inline <style> */
+html.dark body {
+  background: #13161f;
+  color: #c8ccd8;
+  color-scheme: dark;
+}
+html.dark h1                { color: #dde0ea; }
+html.dark .meta,
+html.dark .meta a           { color: #454a5e; }
+html.dark .ts               { color: #353848; }
+html.dark h3.speaker        { color: #cc7a3a; }
+html.dark p                 { color: #b8bcc8; }
+html.dark hr                { border-top-color: #1e2235; }
+html.dark .translate-bar    { background: #13161f; border-bottom-color: #1e2235; }
+html.dark .para-controls button            { border-color: #252840; color: #454a5e; }
+html.dark .para-controls button:hover      { border-color: #4a4e62; color: #8a8fa8; }
+html.dark .para-controls button.active     { background: #3a3e52; border-color: #3a3e52; color: #c8ccd8; }
+html.dark .zh-block         { background: #161928; border-left-color: #3a558a; color: #9aa4c0; }
+
 .translate-bar {
   position: sticky; top: 0; z-index: 10;
   background: #fafaf8; border-bottom: 1px solid #e0ddd8;
