@@ -73,6 +73,8 @@ def render_html(data, translations=None):
 <script>(function(){{var s=localStorage.getItem('dark'),d=window.matchMedia('(prefers-color-scheme:dark)').matches;if(s==='1'||(s===null&&d)){{document.documentElement.className='dark';document.documentElement.style.background='#13161f';}}}})();</script>
 <link rel="stylesheet" href="player.css">
 <link rel="stylesheet" href="translate-ui.css">
+<script defer src="translate-ui.js"></script>
+<script defer src="player.js"></script>
 <style>
   body  {{ font-family: Georgia, serif; max-width: 800px; margin: 40px auto;
           padding: 0 24px; background: #fafaf8; color: #1a1a1a; line-height: 1.75; }}
@@ -100,9 +102,7 @@ def render_html(data, translations=None):
 {audio}
 <hr>
 {transcript_html}
-{zh_script}<script src="translate-ui.js"></script>
-<script src="player.js"></script>
-</body>
+{zh_script}</body>
 </html>"""
 
 
